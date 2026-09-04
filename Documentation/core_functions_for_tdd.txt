@@ -1,0 +1,87 @@
+# รายชื่อฟังก์ชันหลักสำหรับระบบ Indian Poker Online (Teen Patti)
+เอกสารนี้รวบรวมฟังก์ชันหลักที่จำเป็นต้องพัฒนา เพื่อใช้สำหรับการทำ TDD (Test-Driven Development) และการแบ่งงานให้คนในทีมนำไป Implement ต่อ
+
+---
+
+## 1. Core Game Logic (ตรรกะเกมไพ่ - แนะนำสำหรับการเริ่มทำ TDD)
+กลุ่มฟังก์ชันนี้ไม่มี side effect เกี่ยวข้องกับ Network หรือ State ภายนอก เหมาะสำหรับการเขียน Unit Test เป็นอย่างยิ่ง
+
+- `createDeck() => Card[]`
+  สร้างสำรับไพ่มาตรฐาน 52 ใบ (ไม่รวม Joker)
+
+- `shuffleDeck(deck: Card[]) => Card[]`
+  สับไพ่แบบสุ่ม (Randomize)
+
+- `dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number) => { hands: Card[][], remainingDeck: Card[] }`
+  ดึงไพ่ออกจากสำรับและแจกไพ่ให้ผู้เล่นตามจำนวนที่กำหนด (สำหรับเกมนี้คือคนละ 3 ใบ)
+
+- `evaluateHand(cards: Card[]) => { rank: HandRank, rankValue: number }`
+  ประเมินผลลัพธ์ของไพ่ 3 ใบ ว่าได้รูปแบบใด (TRAIL, PURE_SEQUENCE, SEQUENCE, COLOR, PAIR, HIGH_CARD) พร้อมคำนวณคะแนนย่อยเพื่อใช้ตัดสินตอนแต้มชนกัน
+
+- `compareHands(handA: Card[], handB: Card[]) => number`
+  เปรียบเทียบไพ่ 2 ชุด ว่าใครชนะ (คืนค่า 1 ถ้า A ชนะ, -1 ถ้า B ชนะ, 0 ถ้าเสมอ)
+
+- `determineWinners(players: ServerPlayer[]) => ServerPlayer[]`
+  คำนวณหาผู้ชนะจากกลุ่มผู้เล่นที่ยังอยู่ในเกม (สถานะไม่เป็น FOLDED)
+
+---
+
+## 2. Room & Match Management (ระบบจัดการห้องเกม)
+รับผิดชอบเรื่องการสร้างห้อง รับคนเข้าห้อง และเปลี่ยนสถานะห้อง (Phase)
+
+- `createRoom(host: ServerPlayer) => string`
+  สร้างห้องใหม่, สร้าง Room ID, เพิ่ม Host เข้าไป และกำหนด `RoomPhase` เริ่มต้นเป็น 'LOBBY'
+
+- `joinRoom(roomId: string, player: ServerPlayer) => boolean`
+  ตรวจสอบว่าห้องมีอยู่จริง ห้องยังไม่เต็ม และห้องอยู่ในสถานะที่เข้าได้ จากนั้นเพิ่มผู้เล่นเข้าไปในห้อง
+
+- `leaveRoom(roomId: string, playerId: string) => void`
+  นำผู้เล่นออกจากห้อง หากเป็น Host ที่ออกไป อาจจะต้องเปลี่ยนสิทธิ์ Host ให้คนอื่น หรือทำลายห้องหากไม่เหลือผู้เล่น
+
+- `startGame(roomId: string) => void`
+  ตรวจสอบเงื่อนไขก่อนเริ่ม (เช่น มีผู้เล่น 2 คนขึ้นไป), เปลี่ยน `RoomPhase` เป็น 'PLAYING', ล้างเงินใน Pot, แจกไพ่ (`dealCards`), และสุ่มคนที่จะได้เล่นเทิร์นแรก
+
+---
+
+## 3. Game State & Turn Management (ระบบจัดการเทิร์นและการเดิมพัน)
+จัดการ Action ของผู้เล่นในระหว่างรอบการเล่น
+
+- `processPlayerAction(roomId: string, playerId: string, action: GameActionType, amount?: number) => void`
+  ฟังก์ชันหลักที่รับ Action (BET, CALL, RAISE, FOLD, SHOW) จากผู้เล่น ตรวจสอบว่าเป็นเทิร์นของผู้เล่นคนนั้นจริงหรือไม่ และ Action ถูกต้องหรือไม่
+
+- `processBet(player: ServerPlayer, amount: number) => void`
+  หักชิปจากผู้เล่นและนำไปทบในเงินกองกลาง (Pot) ของห้อง
+
+- `moveToNextTurn(roomId: string) => void`
+  เปลี่ยนเทิร์นไปยังผู้เล่นคนถัดไปตามลำดับ ที่มีสถานะเป็น 'ACTIVE' (ข้ามคนที่ FOLDED หรือ DISCONNECTED)
+
+- `checkEndCondition(roomId: string) => boolean`
+  ตรวจสอบว่ารอบเกมปัจจุบันจบหรือยัง เงื่อนไขการจบเช่น: มีคน FOLD จนเหลือคนเดียว หรือมีคนกด SHOW ในกรณีที่เหลือ 2 คน
+
+- `endGame(roomId: string) => void`
+  จัดการจบรอบ ค้นหาผู้ชนะ (`determineWinners`), โอนเงินกองกลาง (Pot) ให้ผู้ชนะ, รวบรวมข้อมูลไพ่ของทุกคน (exposedCards) และเปลี่ยน `RoomPhase` กลับเป็น 'ENDED' 
+
+---
+
+## 4. Utilities & Data Transformers (ฟังก์ชันช่วยเหลือและแปลงข้อมูล)
+
+- `toPublicPlayerDTO(player: ServerPlayer) => PublicPlayerDTO`
+  แปลงข้อมูล Entity ของผู้เล่น (ฝั่ง Server) เป็น DTO โดยตัดข้อมูลที่ละเอียดอ่อนออก (เช่น `privateCards`) เพื่อส่งไปแสดงผลให้ทุกคนเห็นได้
+
+- `generateRoomId() => string`
+  สุ่มรหัสห้องให้จำง่าย/ไม่ซ้ำกัน (เช่น ตัวอักษรปนตัวเลข 6 หลัก)
+
+- `generatePlayerId() => string`
+  สุ่ม ID สำหรับผู้เล่นตอนเชื่อมต่อเข้ามาใหม่
+
+---
+
+## 5. Network / Socket Interface (ส่วนเชื่อมต่อ WebSocket)
+เหมาะสำหรับให้คนที่ดูแลฝั่ง Server / Network นำไปเชื่อมต่อกับฟังก์ชันด้านบน
+
+- `handleClientMessage(wsClient, message: ClientEvent) => void`
+  ตัวรับ Message (Events) จาก Client (เช่น `CREATE_ROOM`, `PLAYER_ACTION`) ตรวจสอบความถูกต้องและเรียกใช้งานฟังก์ชันในหมวดที่ 2 และ 3
+
+- `broadcastGameStateUpdate(roomId: string) => void`
+  สร้าง Event ประเภท `GAME_STATE_UPDATE` และลูปส่งให้ผู้เล่นทุกคนในห้อง 
+  *ข้อควรระวัง:* ต้องส่ง `myCards` ให้ตรงกับ Client ของผู้เล่นแต่ละคนเท่านั้น ส่วนไพ่คนอื่นไม่ควรส่งไปจนกว่าจะจบเกม
