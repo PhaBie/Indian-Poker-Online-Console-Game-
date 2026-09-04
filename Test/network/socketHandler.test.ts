@@ -1,14 +1,14 @@
 import { expect, test, describe } from "bun:test";
 import { handleClientMessage, broadcastGameStateUpdate, broadcastGameResult, handleClientDisconnect, connectedClients } from "../../src/server/network/socketHandler";
 import { ClientEvent } from "../../src/shared/types";
-import { WebSocket } from "ws";
+import type { WebSocket as WSWebSocket } from "ws";
 
 describe("6. ระบบจัดการเครือข่าย (WebSocket Handler)", () => {
     test("6.1 ระบบตอบกลับด้วย ROOM_CREATED พร้อม roomId เมื่อรับคำสั่ง CREATE_ROOM", () => {
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'CREATE_ROOM',
@@ -26,7 +26,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'JOIN_ROOM',
@@ -44,7 +44,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'PLAYER_ACTION',
@@ -61,7 +61,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         connectedClients.set("room_999", [mockWsClient]);
         
@@ -75,7 +75,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'START_GAME'
@@ -92,7 +92,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         connectedClients.set("room_result", [mockWsClient]);
         
@@ -106,7 +106,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'SEND_CHAT',
@@ -124,7 +124,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'SAVE_GAME'
@@ -140,7 +140,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'LOAD_GAME',
@@ -157,9 +157,9 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentDataToOther: any = null;
         const mockOtherClient = {
             send: (data: string) => { sentDataToOther = JSON.parse(data); }
-        } as unknown as WebSocket;
+        } as unknown as WSWebSocket;
         
-        const mockDisconnectingClient = {} as unknown as WebSocket;
+        const mockDisconnectingClient = {} as unknown as WSWebSocket;
         
         connectedClients.set("room_disc", [mockDisconnectingClient, mockOtherClient]);
         
