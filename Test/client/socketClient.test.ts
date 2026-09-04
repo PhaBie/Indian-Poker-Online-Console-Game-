@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { SocketClient } from "../../src/client/network/socketClient";
-import { ServerEvent } from "../../src/shared/types";
+import { ServerEvent, ClientEvent } from "../../src/shared/types";
 
 describe("10. ระบบเครือข่ายฝั่งผู้เล่น (Client Socket)", () => {
     test("10.1 สามารถเชื่อมต่อและตัดการเชื่อมต่อได้ (เปลี่ยนสถานะ isConnected)", () => {
@@ -23,7 +23,7 @@ describe("10. ระบบเครือข่ายฝั่งผู้เล
 
     test("10.3 ไม่สามารถส่งข้อมูลได้หากยังไม่ได้เชื่อมต่อ (Disconnected State)", () => {
         const client = new SocketClient();
-        const mockEvent = { type: 'START_GAME' } as any;
+        const mockEvent: ClientEvent = { type: 'START_GAME' };
 
         expect(() => {
             client.send(mockEvent);

@@ -7,7 +7,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'CREATE_ROOM',
@@ -25,7 +25,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'JOIN_ROOM',
@@ -43,7 +43,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'PLAYER_ACTION',
@@ -60,7 +60,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         connectedClients.set("room_999", [mockWsClient]);
         
@@ -74,7 +74,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'START_GAME'
@@ -91,7 +91,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         connectedClients.set("room_result", [mockWsClient]);
         
@@ -105,7 +105,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'SEND_CHAT',
@@ -123,7 +123,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'SAVE_GAME'
@@ -139,7 +139,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentData: any = null;
         const mockWsClient = {
             send: (data: string) => { sentData = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
         const mockMessage: ClientEvent = {
             type: 'LOAD_GAME',
@@ -156,9 +156,9 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         let sentDataToOther: any = null;
         const mockOtherClient = {
             send: (data: string) => { sentDataToOther = JSON.parse(data); }
-        } as any;
+        } as unknown as WebSocket;
         
-        const mockDisconnectingClient = {} as any;
+        const mockDisconnectingClient = {} as unknown as WebSocket;
         
         connectedClients.set("room_disc", [mockDisconnectingClient, mockOtherClient]);
         

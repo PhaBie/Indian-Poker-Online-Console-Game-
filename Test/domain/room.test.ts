@@ -140,7 +140,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
         const player1 = new Player("id_thanathon", "Thanathon");
         room.join(player1);
         
-        player1.status = 'DISCONNECTED' as any;
+        player1.status = 'DISCONNECTED';
         
         const reconnectPlayer = new Player("id_thanathon", "Thanathon");
         room.join(reconnectPlayer);

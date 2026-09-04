@@ -12,7 +12,7 @@ describe("5. ระบบช่วยเหลือและคัดกรอ�
             status: 'ACTIVE',
             privateCards: [{ suit: 'SPADES', rank: 14 }],
             isBlind: true
-        } as any;
+        };
 
         const publicPlayer = toPublicPlayerDTO(mockPlayer);
 
