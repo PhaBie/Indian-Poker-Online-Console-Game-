@@ -1,6 +1,7 @@
 import { expect, test, describe } from "bun:test";
 import { handleClientMessage, broadcastGameStateUpdate, broadcastGameResult, handleClientDisconnect, connectedClients } from "../../src/server/network/socketHandler";
 import { ClientEvent } from "../../src/shared/types";
+import { WebSocket } from "ws";
 
 describe("6. ระบบจัดการเครือข่าย (WebSocket Handler)", () => {
     test("6.1 ระบบตอบกลับด้วย ROOM_CREATED พร้อม roomId เมื่อรับคำสั่ง CREATE_ROOM", () => {
