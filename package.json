@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.1",
+    "@types/ws": "^8.18.1"
+  }
+}
