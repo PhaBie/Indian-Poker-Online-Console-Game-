@@ -7,11 +7,11 @@ function createMockGameState(overrides?: Partial<GameState>, playersParams?: { i
     const players = (playersParams || [
         { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000 },
         { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000 }
-    ]).map(p => {
-        const player = new Player(p.id, p.name);
-        player.status = p.status;
-        player.chips = p.chips;
-        if (p.cards) player.privateCards = p.cards;
+    ]).map(playerParam => {
+        const player = new Player(playerParam.id, playerParam.name);
+        player.status = playerParam.status;
+        player.chips = playerParam.chips;
+        if (playerParam.cards) player.privateCards = playerParam.cards;
         return player;
     });
 

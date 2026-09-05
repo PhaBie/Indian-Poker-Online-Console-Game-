@@ -235,7 +235,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(originalDeck).toEqual(before);
 
         expect(shuffledDeck.length).toBe(3);
-        const unique = new Set(shuffledDeck.map(c => `${c.suit}-${c.rank}`));
+        const unique = new Set(shuffledDeck.map(card => `${card.suit}-${card.rank}`));
         expect(unique.size).toBe(3);
     });
 
