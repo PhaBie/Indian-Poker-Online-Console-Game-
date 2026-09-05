@@ -58,9 +58,9 @@ describe("3. ระบบการกระทำของผู้เล่น 
 
         test("3.6 ผู้เล่นเคลียร์ข้อมูลสำหรับการเริ่มรอบใหม่ ชิปคงเหลือเท่าเดิมแต่สถานะและไพ่ถูกล้าง", () => {
             const player = new Player("id_pun", "Pun");
-            player.chips = 800;
+            player.chips = 800; // Currently 800
             player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
-            player.placeBet(100);
+            player.bet = 100; // Manually mock bet state
             player.status = 'FOLDED';
             player.isBlind = false;
             
@@ -76,6 +76,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
         test("3.7 ผู้เล่นสามารถ Call ตามน้ำ และหักชิปเฉพาะส่วนต่างเพื่อให้ถึงเป้าหมายได้ถูกต้อง", () => {
             const player = new Player("id_beam", "Beam");
             player.chips = 1000;
+            player.status = 'ACTIVE';
             player.placeBet(50); 
             player.call(100); 
             
@@ -86,6 +87,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
         test("3.8 ผู้เล่นสามารถ Raise เกทับ และหักชิปเพิ่มเพื่อให้ถึงเป้าหมายใหม่ได้ถูกต้อง", () => {
             const player = new Player("id_extra", "Extra");
             player.chips = 1000;
+            player.status = 'ACTIVE';
             player.placeBet(50);
             player.raiseTo(150);
             

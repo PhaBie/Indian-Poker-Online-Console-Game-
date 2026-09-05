@@ -216,7 +216,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(uniqueCards.size).toBe(52);
     });
 
-    test("3.2 เมื่อสับไพ่ ต้นฉบับต้องไม่ถูกแก้ไข (Pure Function) และได้ผลลัพธ์ที่สามารถคาดเดาได้ผ่าน RNG", () => {
+    test("3.2 เมื่อสับไพ่ ต้นฉบับต้องไม่ถูกแก้ไข (ไม่แก้ไข input) และได้ผลลัพธ์ที่ตรงตาม Algorithm ที่กำหนดผ่าน RNG", () => {
         const originalDeck: Card[] = [
             { suit: 'SPADES', rank: 2 },
             { suit: 'HEARTS', rank: 3 },
@@ -224,19 +224,25 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         ];
         const before = structuredClone(originalDeck);
         
+        // Fisher-Yates (from end) with 3 elements:
+        // 1st iteration: i=2, j=floor(0.9 * 3) = 2 -> swap(2, 2)
+        // 2nd iteration: i=1, j=floor(0.1 * 2) = 0 -> swap(1, 0)
         let callCount = 0;
         const mockRng = () => {
-            const seq = [0.9, 0.1, 0.5];
+            const seq = [0.9, 0.1];
             return seq[callCount++];
         };
 
         const shuffledDeck = shuffleDeck(originalDeck, mockRng);
 
-        expect(originalDeck).toEqual(before);
+        expect(originalDeck).toEqual(before); // Does not mutate input
 
         expect(shuffledDeck.length).toBe(3);
-        const unique = new Set(shuffledDeck.map(card => `${card.suit}-${card.rank}`));
-        expect(unique.size).toBe(3);
+        expect(shuffledDeck).toEqual([
+            { suit: 'HEARTS', rank: 3 }, // index 1 swapped to 0
+            { suit: 'SPADES', rank: 2 }, // index 0 swapped to 1
+            { suit: 'CLUBS', rank: 4 }   // index 2 stayed at 2
+        ]);
     });
 
     test("3.3 แจกไพ่ตามจำนวนผู้เล่นได้ถูกต้อง ไพ่บนมือและในกองรวมกันต้องครบ 52 ใบโดยไม่ซ้ำกัน", () => {
@@ -312,18 +318,25 @@ describe("4. ระบบค้นหาผู้ชนะจากวงเล�
 });
 
 describe("5. ระบบจัดการกองกลางและการจ่ายเงิน (Pot Settlement)", () => {
-    test("5.1 แบ่งเงินกองกลางให้ผู้ชนะหลายคนได้ถูกต้อง และจัดการเศษชิป", () => {
-        const pot = 1000;
-        const winnerIds = ["player_1", "player_2", "player_3"];
+    test("5.1 แบ่งเงินกองกลางให้ผู้ชนะหลายคนได้ถูกต้อง หารลงตัวและไม่ลงตัว (แจกเศษตามลำดับ winnerIds)", () => {
+        // หารไม่ลงตัว
+        const pot1 = 1000;
+        const winnerIds1 = ["player_1", "player_2", "player_3"];
+        const payouts1 = calculateSplitPot(pot1, winnerIds1);
         
-        const payouts = calculateSplitPot(pot, winnerIds);
-        
-        expect(payouts["player_1"]).toBeDefined();
-        expect(payouts["player_2"]).toBeDefined();
-        expect(payouts["player_3"]).toBeDefined();
-        
-        const totalPaid = payouts["player_1"] + payouts["player_2"] + payouts["player_3"];
-        expect(totalPaid).toBeLessThanOrEqual(1000);
-        expect(totalPaid).toBeGreaterThan(990);
+        expect(payouts1["player_1"]).toBe(334);
+        expect(payouts1["player_2"]).toBe(333);
+        expect(payouts1["player_3"]).toBe(333);
+        expect(payouts1["player_1"] + payouts1["player_2"] + payouts1["player_3"]).toBe(1000);
+
+        // หารลงตัว
+        const pot2 = 900;
+        const winnerIds2 = ["player_A", "player_B", "player_C"];
+        const payouts2 = calculateSplitPot(pot2, winnerIds2);
+
+        expect(payouts2["player_A"]).toBe(300);
+        expect(payouts2["player_B"]).toBe(300);
+        expect(payouts2["player_C"]).toBe(300);
+        expect(payouts2["player_A"] + payouts2["player_B"] + payouts2["player_C"]).toBe(900);
     });
 });

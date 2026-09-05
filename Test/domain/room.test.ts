@@ -86,12 +86,60 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             room.join(player);
 
             const publicState = room.getPublicState();
+            expect(publicState).toHaveLength(1);
             expect(publicState[0]).not.toHaveProperty("privateCards");
+        });
+
+        test("1.7 ค่า Boot ของห้อง ต้องถูกส่งต่อไปใช้หักเงินตอนเริ่ม GameState (Boot 100)", () => {
+            const room = new Room("room_boot_100", 100);
+            const host = new Player("id_host", "Host");
+            const p2 = new Player("id_p2", "Player2");
+            host.chips = 1000;
+            p2.chips = 1000;
+            
+            room.join(host);
+            room.join(p2);
+            room.startGame("id_host");
+            
+            // Should access GameState to check pot
+            expect(room.gameState).toBeDefined();
+            expect(room.gameState?.pot).toBe(200); // 100 * 2
+            expect(host.chips).toBe(900);
+            expect(p2.chips).toBe(900);
+        });
+
+        test("1.8 ฟังก์ชัน leave() ต้องให้โฮสต์ตกไปเป็นคนถัดไปเมื่อโฮสต์ปัจจุบันออก", () => {
+            const room = new Room("room_leave");
+            const host = new Player("id_host", "Host");
+            const p2 = new Player("id_p2", "Player2");
+            room.join(host);
+            room.join(p2);
+            
+            room.leave("id_host");
+            
+            expect(room.getPlayerCount()).toBe(1);
+            expect(room.hostId).toBe("id_p2");
+        });
+
+        test("1.9 ฟังก์ชัน resetToLobby() ต้องล้างสถานะเกมแต่รักษาผู้เล่นและชิปไว้", () => {
+            const room = new Room("room_reset");
+            const host = new Player("id_host", "Host");
+            host.chips = 1500; // Won some chips
+            room.join(host);
+            
+            room.startGame("id_host"); // Phase PLAYING
+            
+            room.resetToLobby();
+            
+            expect(room.phase).toBe("LOBBY");
+            expect(room.gameState).toBeUndefined(); // GameState cleared
+            expect(room.getPlayerCount()).toBe(1);
+            expect(room.getPlayer("id_host")?.chips).toBe(1500); // Chips kept
         });
     });
 
     describe("Unhappy Paths", () => {
-        test("1.7 ไม่สามารถเข้าร่วมห้องที่เต็มแล้ว (4 คน) ได้", () => {
+        test("1.11 ไม่สามารถเข้าร่วมห้องที่เต็มแล้ว (4 คน) ได้", () => {
             const room = new Room("room_full");
             room.join(new Player("id_first", "First"));
             room.join(new Player("id_second", "Second"));
@@ -105,7 +153,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.getPlayerCount()).toBe(4);
         });
 
-        test("1.8 ผู้ที่ไม่ใช่ Host ไม่สามารถสั่งเริ่มเกมได้", () => {
+        test("1.12 ผู้ที่ไม่ใช่ Host ไม่สามารถสั่งเริ่มเกมได้", () => {
             const room = new Room("room_not_host");
             room.join(new Player("id_host", "Host"));
             room.join(new Player("id_player", "Player"));
@@ -117,7 +165,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("LOBBY");
         });
 
-        test("1.9 Host ไม่สามารถเริ่มเกมได้หากมีผู้เล่นไม่ถึง 2 คน", () => {
+        test("1.13 Host ไม่สามารถเริ่มเกมได้หากมีผู้เล่นไม่ถึง 2 คน", () => {
             const room = new Room("room_alone");
             room.join(new Player("id_host", "Host"));
 
@@ -128,7 +176,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("LOBBY");
         });
 
-        test("1.10 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ", () => {
+        test("1.14 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ", () => {
             const room = new Room("room_token");
             const player = new Player("id_target", "Target");
             room.join(player);
