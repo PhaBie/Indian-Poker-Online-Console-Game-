@@ -11,6 +11,7 @@ function createMockGameState(overrides?: Partial<GameState>, playersParams?: { i
         const player = new Player(playerParam.id, playerParam.name);
         player.status = playerParam.status;
         player.chips = playerParam.chips;
+        
         if (playerParam.cards) player.privateCards = playerParam.cards;
         return player;
     });
