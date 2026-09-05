@@ -220,9 +220,11 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR');
             expect(errorEvent).toBeDefined();
-            expect(errorEvent.payload.code).toBe("INVALID_TOKEN");
+            if (errorEvent && errorEvent.type === 'ERROR') {
+                expect(errorEvent.code).toBe("INVALID_TOKEN");
+            }
             
             const session = mockContext.connectedClients.get(mockWsClient);
             expect(session).toBeUndefined();

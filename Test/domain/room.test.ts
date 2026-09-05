@@ -1,6 +1,7 @@
 import { expect, test, describe } from "bun:test";
 import { Room } from "../../src/server/domain/models/Room";
 import { Player } from "../../src/server/domain/models/Player";
+import { GameState } from "../../src/server/domain/models/GameState";
 import { RoomFullError, NotHostError, GameError, InvalidTokenError } from "../../src/server/domain/errors/GameError";
 
 describe("1. ระบบการจัดการห้องเล่น (Room Management)", () => {
@@ -131,7 +132,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             room.join(secondPlayer);
             
             room.phase = "ENDED";
-            room.gameState = { dummyData: "should_be_cleared" } as any;
+            room.gameState = new GameState([host, secondPlayer]);
             
             room.resetToLobby();
             
