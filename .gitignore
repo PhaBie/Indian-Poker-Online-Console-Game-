@@ -1,5 +1,23 @@
+# Dependencies
 node_modules/
+
+# Build Output
 dist/
+build/
+
+# Environment Variables
 .env
+.env.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Project specifics
 bun.lockb
 Coverage/
