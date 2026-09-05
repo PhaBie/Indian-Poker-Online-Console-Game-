@@ -1,4 +1,4 @@
-import { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
+import type { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
 
 export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
     // รอคนเลือก
@@ -7,7 +7,8 @@ export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
         name: player.name,
         chips: player.chips,
         bet: player.bet,
-        status: player.status
+        status: player.status,
+        isBlind: player.isBlind !== undefined ? player.isBlind : true
     };
 }
 

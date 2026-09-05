@@ -24,7 +24,7 @@ export type HandRank =
     | 'HIGH_CARD';
 
 export type PlayerStatus = 'WAITING' | 'ACTIVE' | 'FOLDED' | 'DISCONNECTED';
-export type GameActionType = 'BET' | 'CALL' | 'RAISE' | 'FOLD' | 'SHOW';
+export type GameActionType = 'BET' | 'CALL' | 'RAISE' | 'FOLD' | 'SHOW' | 'SIDESHOW' | 'SEEN';
 
 /** สถานะของห้อง เพื่อให้ Client สลับหน้าจอระหว่าง Lobby กับโต๊ะเกมได้ถูก */
 export type RoomPhase = 'LOBBY' | 'PLAYING' | 'ENDED';
@@ -49,6 +49,7 @@ export interface ServerPlayer {
     bet: number;
     status: PlayerStatus;
     privateCards: Card[];
+    isBlind: boolean;
 }
 
 /**
@@ -61,6 +62,7 @@ export interface PublicPlayerDTO {
     chips: number;
     bet: number;
     status: PlayerStatus;
+    isBlind: boolean;
 }
 
 /**
@@ -68,7 +70,7 @@ export interface PublicPlayerDTO {
  */
 export interface RoomSaveData {
     roomId: string;
-    history: any[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
+    history: unknown[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
 }
 
 // ==========================================
@@ -79,15 +81,17 @@ export interface RoomSaveData {
  * โครงสร้างข้อมูลขาเข้า (Client -> Server)
  */
 export type ClientEvent =
-    | { type: 'CREATE_ROOM'; payload: { playerName: string } }
-    | { type: 'JOIN_ROOM'; payload: { playerName: string; roomId: string } }
+    | { type: 'CREATE_ROOM'; payload: { playerName: string; bootAmount: number } }
+    | { type: 'JOIN_ROOM'; payload: { playerName: string; roomId: string; reconnectToken?: string } }
     | { type: 'LEAVE_ROOM' }
-    | { type: 'START_GAME' } // Host กดเริ่มเกม
+    | { type: 'START_GAME' }
+    | { type: 'SAVE_GAME' }
+    | { type: 'LOAD_GAME'; payload: { roomId: string } }
+    | { type: 'SEND_CHAT'; payload: { message: string } }
     | {
         type: 'PLAYER_ACTION';
         payload: {
             action: GameActionType;
-            /** จำเป็นต้องระบุค่าเมื่อ action เป็น BET หรือ RAISE */
             amount?: number;
         };
     };
@@ -96,11 +100,12 @@ export type ClientEvent =
  * โครงสร้างข้อมูลขาออก (Server -> Client)
  */
 export type ServerEvent =
-    | { type: 'ERROR'; message: string }
-    | {
-        type: 'ROOM_CREATED'; // Server ตอบกลับเมื่อสร้างห้องสำเร็จ
-        payload: { roomId: string };
-    }
+    | { type: 'ERROR'; message: string; code?: string }
+    | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
+    | { type: 'ROOM_CREATED'; payload: { roomId: string } }
+    | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
+    | { type: 'GAME_SAVED'; payload: { roomId: string } }
+    | { type: 'GAME_LOADED'; payload: { roomId: string } }
     | {
         type: 'GAME_STATE_UPDATE';
         payload: {
@@ -109,6 +114,7 @@ export type ServerEvent =
             hostId: string; // ใช้บอกว่าใครคือเจ้าของห้อง
             pot: number;
             currentTurnPlayerId: string | null;
+            turnEndTime: number | null;
             players: PublicPlayerDTO[];
             /** ไพ่ส่วนตัว จะถูกส่งให้ตรงกับ session ของ Client เท่านั้น (ถ้าอยู่ใน Lobby จะเป็น array ว่าง) */
             myCards: Card[];
@@ -117,8 +123,9 @@ export type ServerEvent =
     | {
         type: 'GAME_RESULT';
         payload: {
-            winnerId: string;
+            winnerIds: string[];
             winningHand: HandRank;
+            payouts: Record<string, number>;
             /** ข้อมูลไพ่ที่ถูกเปิดเผยเมื่อจบเกม Key คือ Player ID */
             exposedCards: Record<string, Card[]>;
         };

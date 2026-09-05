@@ -42,7 +42,9 @@ bun install
 ## 📂 โครงสร้างโฟลเดอร์หลัก (Project Structure)
 - `src/shared/` - เก็บ Type และกติกาที่ต้องรู้ตรงกันทั้ง Server และ Client (เช่น ข้อมูลไพ่)
 - `src/server/core/` - ระบบกติกาเกม (Game Logic) เหมาะสำหรับเขียน Unit Test (TDD)
-- `src/server/room/` - ระบบจัดการห้องเกม
-- `src/server/game/` - ระบบจัดการเทิร์นและการวางเดิมพัน
+- `src/server/domain/` - ระบบจำลองสถานะเกม (GameState, Room, Player)
 - `src/server/network/` - ระบบ WebSocket รับส่งข้อมูล
+- `src/server/infrastructure/` - ระบบบันทึกและจัดการข้อมูล
+- `src/client/` - ระบบจัดการการเชื่อมต่อฝั่งคลายเอนต์และหน้าจอ (React + Ink)
+- `Test/` - ชุดทดสอบครอบคลุมการทำงาน (Unit Tests)
 - `Documentation/` - เอกสารการออกแบบและ TDD

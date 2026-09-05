@@ -17,3 +17,7 @@ npm-debug.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Project specifics
+bun.lockb
+Coverage/
