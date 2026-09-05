@@ -17,15 +17,15 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
 
         test("1.2 ผู้เล่นคนอื่นสามารถเข้าร่วมห้องได้สูงสุด 4 คนตามกติกา", () => {
             const room = new Room("room_002");
-            const p1 = new Player("id_p1", "P1");
-            const p2 = new Player("id_p2", "P2");
-            const p3 = new Player("id_p3", "P3");
-            const p4 = new Player("id_p4", "P4");
+            const firstPlayer = new Player("id_first", "First");
+            const secondPlayer = new Player("id_second", "Second");
+            const thirdPlayer = new Player("id_third", "Third");
+            const fourthPlayer = new Player("id_fourth", "Fourth");
 
-            room.join(p1);
-            room.join(p2);
-            room.join(p3);
-            room.join(p4);
+            room.join(firstPlayer);
+            room.join(secondPlayer);
+            room.join(thirdPlayer);
+            room.join(fourthPlayer);
 
             expect(room.getPlayerCount()).toBe(4);
             expect(room.phase).toBe("LOBBY");
@@ -65,14 +65,16 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
 
         test("1.5 ผู้เล่นสามารถเข้าร่วมห้องขณะที่เกม PLAYING ได้ โดยจะอยู่ในสถานะ WAITING รอรอบถัดไป", () => {
             const room = new Room("room_005");
-            room.join(new Player("id_p1", "P1"));
-            room.join(new Player("id_p2", "P2"));
-            room.startGame("id_p1");
+            const firstPlayer = new Player("id_first", "First Player");
+            const secondPlayer = new Player("id_second", "Second Player");
+            room.join(firstPlayer);
+            room.join(secondPlayer);
+            room.startGame("id_first");
             
-            const latePlayer = new Player("id_p3", "P3");
+            const latePlayer = new Player("id_late", "Late Player");
             room.join(latePlayer);
             
-            const addedPlayer = room.getPlayer("id_p3");
+            const addedPlayer = room.getPlayer("id_late");
             expect(addedPlayer?.status).toBe("WAITING");
             expect(room.phase).toBe("PLAYING");
         });
@@ -91,13 +93,13 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
     describe("Unhappy Paths", () => {
         test("1.7 ไม่สามารถเข้าร่วมห้องที่เต็มแล้ว (4 คน) ได้", () => {
             const room = new Room("room_full");
-            room.join(new Player("id_p1", "P1"));
-            room.join(new Player("id_p2", "P2"));
-            room.join(new Player("id_p3", "P3"));
-            room.join(new Player("id_p4", "P4"));
+            room.join(new Player("id_first", "First"));
+            room.join(new Player("id_second", "Second"));
+            room.join(new Player("id_third", "Third"));
+            room.join(new Player("id_fourth", "Fourth"));
 
             expect(() => {
-                room.join(new Player("id_p5", "P5"));
+                room.join(new Player("id_fifth", "Fifth"));
             }).toThrow(RoomFullError);
             
             expect(room.getPlayerCount()).toBe(4);

@@ -31,12 +31,12 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-            const sessionEvent = sentMessages.find(msg => msg.type === 'SESSION_CREATED') as any;
+            const sessionEvent = sentMessages.find(message => message.type === 'SESSION_CREATED') as any;
             expect(sessionEvent).toBeDefined();
             expect(sessionEvent.payload).toHaveProperty('reconnectToken');
             expect(sessionEvent.payload).toHaveProperty('playerId');
             
-            const roomEvent = sentMessages.find(msg => msg.type === 'ROOM_CREATED') as any;
+            const roomEvent = sentMessages.find(message => message.type === 'ROOM_CREATED') as any;
             expect(roomEvent).toBeDefined();
             expect(roomEvent.payload).toHaveProperty('roomId');
         });
@@ -78,9 +78,9 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             mockRoomManager.createRoom("room_123", { id: "host_id", name: "Host" } as any);
             handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-            const stateEvent = sentMessages.find(msg => msg.type === 'GAME_STATE_UPDATE') as any;
+            const stateEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as any;
             expect(stateEvent).toBeDefined();
-            expect(stateEvent.payload.players.some((p: any) => p.privateCards !== undefined)).toBe(false); 
+            expect(stateEvent.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
         });
         
         test("6.4 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อโฮสต์ส่งคำสั่ง START_GAME ได้ถูกต้อง", () => {
@@ -97,7 +97,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-            const updateEvent = sentMessages.find(msg => msg.type === 'GAME_STATE_UPDATE') as any;
+            const updateEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as any;
             expect(updateEvent).toBeDefined();
             expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
         });
@@ -117,7 +117,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-            const errorEvent = sentMessages.find(msg => msg.type === 'ERROR') as any;
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
             expect(errorEvent).toBeDefined();
         });
 
@@ -134,7 +134,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-            const errorEvent = sentMessages.find(msg => msg.type === 'ERROR') as any;
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
             expect(errorEvent).toBeDefined();
         });
     });
