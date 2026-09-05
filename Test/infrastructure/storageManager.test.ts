@@ -30,20 +30,17 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         player.chips = 9999;
         player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
         room.join(player);
-        room.startGame("id_save"); // Will transition to PLAYING and set pot
+        room.startGame("id_save"); 
         
         storage1.saveRoomState(room);
         
-        // Assert raw file exists without using storage methods
         const filePath = join(dir, "room_file_001.json");
         expect(existsSync(filePath)).toBe(true);
         
-        // Assert raw file content contains sensitive and game state data
         const rawJson = JSON.parse(readFileSync(filePath, 'utf-8'));
         expect(rawJson.phase).toBe("PLAYING");
         expect(rawJson.gameState).toBeDefined();
-        expect(rawJson.gameState.pot).toBe(0); // Player alone, but GameState exists. Pot is 50 if boot collected, wait, if alone startGame throws error?
-        // Wait, room.startGame with 1 player throws GameError! I need 2 players.
+        expect(rawJson.gameState.pot).toBe(0); 
         
         cleanupTempDir(dir);
     });
@@ -53,16 +50,15 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         const storage1 = new StorageManager(dir);
         
         const room = new Room("room_file_001", 50);
-        const p1 = new Player("id_p1", "Player1");
-        const p2 = new Player("id_p2", "Player2");
-        p1.chips = 1000;
-        p2.chips = 1000;
+        const firstPlayer = new Player("id_p1", "Player1");
+        const secondPlayer = new Player("id_p2", "Player2");
+        firstPlayer.chips = 1000;
+        secondPlayer.chips = 1000;
         
-        room.join(p1);
-        room.join(p2);
+        room.join(firstPlayer);
+        room.join(secondPlayer);
         room.startGame("id_p1"); 
         
-        // Manipulate game state to ensure it's saved
         if (room.gameState) {
             room.gameState.pot = 500; 
             room.gameState.currentHighestBet = 100;
@@ -71,23 +67,19 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         
         storage1.saveRoomState(room);
         
-        // Assert raw file exists without using storage methods
         const filePath = join(dir, "room_file_001.json");
         expect(existsSync(filePath)).toBe(true);
         
-        // Assert raw file content contains sensitive and game state data
         const rawJson = JSON.parse(readFileSync(filePath, 'utf-8'));
         expect(rawJson.phase).toBe("PLAYING");
         expect(rawJson.gameState).toBeDefined();
         expect(rawJson.gameState.pot).toBe(500);
         expect(rawJson.gameState.currentHighestBet).toBe(100);
         
-        // Check that privateCards are preserved for persistence (unlike public DTO)
-        const savedP1 = rawJson.gameState.activePlayers.find((p: any) => p.id === "id_p1");
-        expect(savedP1.privateCards).toBeDefined();
-        expect(savedP1.privateCards.length).toBeGreaterThan(0);
+        const savedFirstPlayer = rawJson.gameState.activePlayers.find((player: any) => player.id === "id_p1");
+        expect(savedFirstPlayer.privateCards).toBeDefined();
+        expect(savedFirstPlayer.privateCards.length).toBeGreaterThan(0);
         
-        // Use a BRAND NEW instance to load to avoid memory map faking
         const storage2 = new StorageManager(dir);
         const loadedRoom = storage2.loadRoomState("room_file_001");
         
@@ -96,8 +88,8 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         expect(loadedRoom?.phase).toBe("PLAYING");
         expect(loadedRoom?.gameState?.pot).toBe(500);
         
-        const loadedP1 = loadedRoom?.gameState?.activePlayers.find(p => p.id === "id_p1");
-        expect(loadedP1?.privateCards.length).toBe(1);
+        const loadedFirstPlayer = loadedRoom?.gameState?.activePlayers.find(player => player.id === "id_p1");
+        expect(loadedFirstPlayer?.privateCards.length).toBe(1);
         
         cleanupTempDir(dir);
     });

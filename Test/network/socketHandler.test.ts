@@ -9,7 +9,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
     let mockContext: NetworkContext;
 
     beforeEach(() => {
-        const sessionMap = new Map<string, string>(); // token -> playerId
+        const sessionMap = new Map<string, string>();
         let tokenCounter = 1;
 
         mockContext = {
@@ -58,9 +58,9 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             const mockWsClient2 = { send: (data: string) => sentMessages2.push(JSON.parse(data)) } as unknown as WSWebSocket;
             
             const host = new Player("player_1", "Host");
-            const p2 = new Player("player_2", "P2");
+            const secondPlayer = new Player("player_2", "P2");
             const room = mockContext.roomManager.createRoom("room_999", host);
-            room.join(p2);
+            room.join(secondPlayer);
 
             mockContext.connectedClients.set(mockWsClient1, { playerId: "player_1", roomId: "room_999" });
             mockContext.connectedClients.set(mockWsClient2, { playerId: "player_2", roomId: "room_999" });
@@ -83,11 +83,11 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             const host = new Player("player_1", "Phupa");
             host.receiveCards([{ suit: 'SPADES', rank: 14 }]);
             
-            const p2 = new Player("player_2", "Beam");
-            p2.receiveCards([{ suit: 'HEARTS', rank: 2 }]);
+            const secondPlayer = new Player("player_2", "Beam");
+            secondPlayer.receiveCards([{ suit: 'HEARTS', rank: 2 }]);
             
             const room = mockContext.roomManager.createRoom("room_123", host);
-            room.join(p2);
+            room.join(secondPlayer);
 
             mockContext.connectedClients.set(mockWsClient1, { playerId: "player_1", roomId: "room_123" });
             mockContext.connectedClients.set(mockWsClient2, { playerId: "player_2", roomId: "room_123" });
@@ -100,10 +100,8 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(stateEvent1).toBeDefined();
             expect(stateEvent2).toBeDefined();
             
-            // Verify public DTO doesn't leak cards
             expect(stateEvent1.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
             
-            // Verify myCards are correct and private to each
             expect(stateEvent1.payload.myCards[0].suit).toBe('SPADES');
             expect(stateEvent2.payload.myCards[0].suit).toBe('HEARTS');
         });
@@ -115,9 +113,9 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             } as unknown as WSWebSocket;
             
             const host = new Player("host_id", "Host");
-            const p2 = new Player("player_2", "P2");
+            const secondPlayer = new Player("player_2", "P2");
             const room = mockContext.roomManager.createRoom("room_123", host);
-            room.join(p2);
+            room.join(secondPlayer);
             
             mockContext.connectedClients.set(mockWsClient, { playerId: "host_id", roomId: "room_123" });
             

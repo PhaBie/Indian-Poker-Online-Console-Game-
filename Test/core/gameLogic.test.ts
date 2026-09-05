@@ -224,9 +224,6 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         ];
         const before = structuredClone(originalDeck);
         
-        // Fisher-Yates (from end) with 3 elements:
-        // 1st iteration: i=2, j=floor(0.9 * 3) = 2 -> swap(2, 2)
-        // 2nd iteration: i=1, j=floor(0.1 * 2) = 0 -> swap(1, 0)
         let callCount = 0;
         const mockRng = () => {
             const seq = [0.9, 0.1];
@@ -235,13 +232,13 @@ describe("3. ระบบจัดการสำรับไพ่และก�
 
         const shuffledDeck = shuffleDeck(originalDeck, mockRng);
 
-        expect(originalDeck).toEqual(before); // Does not mutate input
+        expect(originalDeck).toEqual(before);
 
         expect(shuffledDeck.length).toBe(3);
         expect(shuffledDeck).toEqual([
-            { suit: 'HEARTS', rank: 3 }, // index 1 swapped to 0
-            { suit: 'SPADES', rank: 2 }, // index 0 swapped to 1
-            { suit: 'CLUBS', rank: 4 }   // index 2 stayed at 2
+            { suit: 'HEARTS', rank: 3 },
+            { suit: 'SPADES', rank: 2 },
+            { suit: 'CLUBS', rank: 4 }
         ]);
     });
 
@@ -319,7 +316,6 @@ describe("4. ระบบค้นหาผู้ชนะจากวงเล�
 
 describe("5. ระบบจัดการกองกลางและการจ่ายเงิน (Pot Settlement)", () => {
     test("5.1 แบ่งเงินกองกลางให้ผู้ชนะหลายคนได้ถูกต้อง หารลงตัวและไม่ลงตัว (แจกเศษตามลำดับ winnerIds)", () => {
-        // หารไม่ลงตัว
         const pot1 = 1000;
         const winnerIds1 = ["player_1", "player_2", "player_3"];
         const payouts1 = calculateSplitPot(pot1, winnerIds1);
@@ -329,7 +325,6 @@ describe("5. ระบบจัดการกองกลางและกา�
         expect(payouts1["player_3"]).toBe(333);
         expect(payouts1["player_1"] + payouts1["player_2"] + payouts1["player_3"]).toBe(1000);
 
-        // หารลงตัว
         const pot2 = 900;
         const winnerIds2 = ["player_A", "player_B", "player_C"];
         const payouts2 = calculateSplitPot(pot2, winnerIds2);

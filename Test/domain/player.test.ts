@@ -58,9 +58,9 @@ describe("3. ระบบการกระทำของผู้เล่น 
 
         test("3.6 ผู้เล่นเคลียร์ข้อมูลสำหรับการเริ่มรอบใหม่ ชิปคงเหลือเท่าเดิมแต่สถานะและไพ่ถูกล้าง", () => {
             const player = new Player("id_pun", "Pun");
-            player.chips = 800; // Currently 800
+            player.chips = 800;
             player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
-            player.bet = 100; // Manually mock bet state
+            player.bet = 100;
             player.status = 'FOLDED';
             player.isBlind = false;
             

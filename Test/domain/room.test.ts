@@ -93,27 +93,26 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
         test("1.7 ค่า Boot ของห้อง ต้องถูกส่งต่อไปใช้หักเงินตอนเริ่ม GameState (Boot 100)", () => {
             const room = new Room("room_boot_100", 100);
             const host = new Player("id_host", "Host");
-            const p2 = new Player("id_p2", "Player2");
+            const secondPlayer = new Player("id_p2", "Player2");
             host.chips = 1000;
-            p2.chips = 1000;
+            secondPlayer.chips = 1000;
             
             room.join(host);
-            room.join(p2);
+            room.join(secondPlayer);
             room.startGame("id_host");
             
-            // Should access GameState to check pot
             expect(room.gameState).toBeDefined();
-            expect(room.gameState?.pot).toBe(200); // 100 * 2
+            expect(room.gameState?.pot).toBe(200);
             expect(host.chips).toBe(900);
-            expect(p2.chips).toBe(900);
+            expect(secondPlayer.chips).toBe(900);
         });
 
         test("1.8 ฟังก์ชัน leave() ต้องให้โฮสต์ตกไปเป็นคนถัดไปเมื่อโฮสต์ปัจจุบันออก", () => {
             const room = new Room("room_leave");
             const host = new Player("id_host", "Host");
-            const p2 = new Player("id_p2", "Player2");
+            const secondPlayer = new Player("id_p2", "Player2");
             room.join(host);
-            room.join(p2);
+            room.join(secondPlayer);
             
             room.leave("id_host");
             
@@ -124,17 +123,17 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
         test("1.9 ฟังก์ชัน resetToLobby() ต้องล้างสถานะเกมแต่รักษาผู้เล่นและชิปไว้", () => {
             const room = new Room("room_reset");
             const host = new Player("id_host", "Host");
-            host.chips = 1500; // Won some chips
+            host.chips = 1500;
             room.join(host);
             
-            room.startGame("id_host"); // Phase PLAYING
+            room.startGame("id_host");
             
             room.resetToLobby();
             
             expect(room.phase).toBe("LOBBY");
-            expect(room.gameState).toBeUndefined(); // GameState cleared
+            expect(room.gameState).toBeUndefined();
             expect(room.getPlayerCount()).toBe(1);
-            expect(room.getPlayer("id_host")?.chips).toBe(1500); // Chips kept
+            expect(room.getPlayer("id_host")?.chips).toBe(1500);
         });
     });
 
