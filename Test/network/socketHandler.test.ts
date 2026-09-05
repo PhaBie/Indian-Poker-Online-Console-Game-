@@ -204,6 +204,10 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         });
 
         test("6.8 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ (ERROR)", () => {
+            const host = new Player("player_1", "Host");
+            mockContext.roomManager.createRoom("room_123", host);
+            host.status = 'DISCONNECTED';
+            
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = {
                 send: (data: string) => { sentMessages.push(JSON.parse(data)); }
@@ -218,6 +222,11 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
             expect(errorEvent).toBeDefined();
+            expect(errorEvent.payload.code).toBe("INVALID_TOKEN");
+            
+            const session = mockContext.connectedClients.get(mockWsClient);
+            expect(session).toBeUndefined();
+            expect(host.status).toBe('DISCONNECTED');
         });
     });
 });

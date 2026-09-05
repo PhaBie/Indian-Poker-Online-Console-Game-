@@ -131,6 +131,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             room.join(secondPlayer);
             
             room.phase = "ENDED";
+            room.gameState = { dummyData: "should_be_cleared" } as any;
             
             room.resetToLobby();
             
