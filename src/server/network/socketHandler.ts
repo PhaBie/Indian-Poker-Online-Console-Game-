@@ -1,6 +1,6 @@
-import { WebSocket } from 'ws';
-import { ClientEvent, HandRank, Card } from '../../shared/types';
-import { RoomManager } from '../domain/models/RoomManager';
+import type { WebSocket } from 'ws';
+import type { ClientEvent, HandRank, Card } from '../../shared/types';
+import type { RoomManager } from '../domain/models/RoomManager';
 
 export interface SocketSession {
     playerId: string;
@@ -16,18 +16,18 @@ export interface NetworkContext {
     connectedClients: Map<WebSocket, SocketSession>;
 }
 
-export function handleClientMessage(wsClient: WebSocket, message: ClientEvent, context: NetworkContext): void {
+export function handleClientMessage(_wsClient: WebSocket, _message: ClientEvent, _context: NetworkContext): void {
     // รอคนเลือก
 }
 
-export function handleClientDisconnect(wsClient: WebSocket, context: NetworkContext): void {
+export function handleClientDisconnect(_wsClient: WebSocket, _context: NetworkContext): void {
     // รอคนเลือก
 }
 
-export function broadcastGameStateUpdate(roomId: string, context: NetworkContext): void {
+export function broadcastGameStateUpdate(_roomId: string, _context: NetworkContext): void {
     // รอคนเลือก
 }
 
-export function broadcastGameResult(roomId: string, winnerIds: string[], winningHand: HandRank, payouts: Record<string, number>, exposedCards: Record<string, Card[]>, context: NetworkContext): void {
+export function broadcastGameResult(_roomId: string, _winnerIds: string[], _winningHand: HandRank, _payouts: Record<string, number>, _exposedCards: Record<string, Card[]>, _context: NetworkContext): void {
     // รอคนเลือก
 }

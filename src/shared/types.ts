@@ -70,7 +70,7 @@ export interface PublicPlayerDTO {
  */
 export interface RoomSaveData {
     roomId: string;
-    history: any[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
+    history: unknown[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
 }
 
 // ==========================================

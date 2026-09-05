@@ -1,9 +1,9 @@
 export class Logger {
-    public info(message: string, context?: any): void {
+    public info(_message: string, _context?: unknown): void {
         // รอคนเลือก
     }
 
-    public error(message: string, error?: Error): void {
+    public error(_message: string, _error?: Error): void {
         // รอคนเลือก
     }
 }

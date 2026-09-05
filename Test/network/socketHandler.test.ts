@@ -1,6 +1,7 @@
 import { expect, test, describe, beforeEach } from "bun:test";
-import { handleClientMessage, broadcastGameStateUpdate, NetworkContext } from "../../src/server/network/socketHandler";
-import { ClientEvent, ServerEvent } from "../../src/shared/types";
+import type { NetworkContext } from "../../src/server/network/socketHandler";
+import { handleClientMessage, broadcastGameStateUpdate } from "../../src/server/network/socketHandler";
+import type { ClientEvent, ServerEvent } from "../../src/shared/types";
 import { RoomManager } from "../../src/server/domain/models/RoomManager";
 import { Player } from "../../src/server/domain/models/Player";
 import type { WebSocket as WSWebSocket } from "ws";
@@ -40,12 +41,12 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const sessionEvent = sentMessages.find(message => message.type === 'SESSION_CREATED') as any;
+            const sessionEvent = sentMessages.find(message => message.type === 'SESSION_CREATED') as Extract<ServerEvent, { type: 'SESSION_CREATED' }>;
             expect(sessionEvent).toBeDefined();
             expect(sessionEvent.payload).toHaveProperty('reconnectToken');
             expect(sessionEvent.payload).toHaveProperty('playerId');
             
-            const roomEvent = sentMessages.find(message => message.type === 'ROOM_CREATED') as any;
+            const roomEvent = sentMessages.find(message => message.type === 'ROOM_CREATED') as Extract<ServerEvent, { type: 'ROOM_CREATED' }>;
             expect(roomEvent).toBeDefined();
             expect(roomEvent.payload).toHaveProperty('roomId');
         });
@@ -95,15 +96,15 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             
             broadcastGameStateUpdate("room_123", mockContext);
 
-            const stateEvent1 = sentMessages1.find(message => message.type === 'GAME_STATE_UPDATE') as any;
-            const stateEvent2 = sentMessages2.find(message => message.type === 'GAME_STATE_UPDATE') as any;
+            const stateEvent1 = sentMessages1.find(message => message.type === 'GAME_STATE_UPDATE') as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
+            const stateEvent2 = sentMessages2.find(message => message.type === 'GAME_STATE_UPDATE') as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
             
             expect(stateEvent1).toBeDefined();
             expect(stateEvent2).toBeDefined();
             
             expect(stateEvent1.payload.players.length).toBe(2);
-            expect(stateEvent1.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
-            expect(stateEvent2.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
+            expect(stateEvent1.payload.players.some(playerData => 'privateCards' in playerData)).toBe(false);
+            expect(stateEvent2.payload.players.some(playerData => 'privateCards' in playerData)).toBe(false);
             
             expect(stateEvent1.payload.myCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
             expect(stateEvent2.payload.myCards).toEqual([{ suit: 'HEARTS', rank: 2 }]);
@@ -128,7 +129,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const updateEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as any;
+            const updateEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
             expect(updateEvent).toBeDefined();
             expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
         });
@@ -153,7 +154,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const joinedEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as any;
+            const joinedEvent = sentMessages.find(message => message.type === 'GAME_STATE_UPDATE') as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
             expect(joinedEvent).toBeDefined();
             
             const session = mockContext.connectedClients.get(mockWsClient);
@@ -180,7 +181,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as Extract<ServerEvent, { type: 'ERROR' }>;
             expect(errorEvent).toBeDefined();
         });
 
@@ -199,7 +200,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);
 
-            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as Extract<ServerEvent, { type: 'ERROR' }>;
             expect(errorEvent).toBeDefined();
         });
 

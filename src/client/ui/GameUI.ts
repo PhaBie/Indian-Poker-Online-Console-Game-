@@ -1,12 +1,12 @@
-import { ClientEvent, ServerEvent } from '../../shared/types';
+import type { ClientEvent, ServerEvent } from '../../shared/types';
 
 export class GameUI {
-    public render(gameState: Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>['payload']): string {
+    public render(_gameState: Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>['payload']): string {
         // รอคนเลือก
         return "";
     }
 
-    public handleInput(input: string): ClientEvent | null {
+    public handleInput(_input: string): ClientEvent | null {
         // รอคนเลือก
         return null;
     }

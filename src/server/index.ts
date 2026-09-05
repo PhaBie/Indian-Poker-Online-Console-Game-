@@ -12,7 +12,7 @@ export class PokerServer {
         this.isRunning = false;
     }
 
-    public start(port: number): void {
+    public start(_port: number): void {
         // รอคนเลือก
     }
 

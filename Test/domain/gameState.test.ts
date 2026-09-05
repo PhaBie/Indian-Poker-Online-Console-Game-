@@ -2,17 +2,28 @@ import { expect, test, describe } from "bun:test";
 import { GameState } from "../../src/server/domain/models/GameState";
 import { Player } from "../../src/server/domain/models/Player";
 import { WrongTurnError, PlayerStateError } from "../../src/server/domain/errors/GameError";
+import type { PlayerStatus, Card } from "../../src/shared/types";
 
-function createMockGameState(overrides?: Partial<GameState>, playersParams?: { id: string, name: string, status: any, chips: number, cards?: any[] }[]): GameState {
-    const players = (playersParams || [
+type PlayerFixture = {
+    id: string;
+    name: string;
+    status: PlayerStatus;
+    chips: number;
+    cards?: Card[];
+};
+
+function createMockGameState(overrides?: Partial<GameState>, playersParams?: PlayerFixture[]): GameState {
+    const defaultPlayers: PlayerFixture[] = [
         { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000 },
         { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000 }
-    ]).map(playerParam => {
+    ];
+
+    const players = (playersParams ?? defaultPlayers).map(playerParam => {
         const player = new Player(playerParam.id, playerParam.name);
         player.status = playerParam.status;
         player.chips = playerParam.chips;
         
-        if (playerParam.cards) player.privateCards = playerParam.cards;
+        if (playerParam.cards) {player.privateCards = playerParam.cards;}
         return player;
     });
 

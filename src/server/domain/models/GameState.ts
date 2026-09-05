@@ -1,5 +1,5 @@
-import { Card, GameActionType } from '../../../shared/types';
-import { Player } from './Player';
+import type { Card, GameActionType } from '../../../shared/types';
+import type { Player } from './Player';
 
 export class GameState {
     public pot: number;
@@ -30,7 +30,7 @@ export class GameState {
         // รอคนเลือก
     }
 
-    public processAction(playerId: string, action: GameActionType, amount?: number): void {
+    public processAction(_playerId: string, _action: GameActionType, _amount?: number): void {
         // รอคนเลือก
     }
 
@@ -42,7 +42,7 @@ export class GameState {
         // รอคนเลือก
     }
 
-    public executeSideshow(challengerId: string, targetId: string): void {
+    public executeSideshow(_challengerId: string, _targetId: string): void {
         // รอคนเลือก
     }
 
@@ -61,7 +61,7 @@ export class GameState {
         return false;
     }
 
-    public handleTie(winners: Player[]): void {
+    public handleTie(_winners: Player[]): void {
         // รอคนเลือก
     }
 
@@ -73,7 +73,7 @@ export class GameState {
         // รอคนเลือก
     }
 
-    public handlePlayerDisconnect(playerId: string): void {
+    public handlePlayerDisconnect(_playerId: string): void {
         // รอคนเลือก
     }
 

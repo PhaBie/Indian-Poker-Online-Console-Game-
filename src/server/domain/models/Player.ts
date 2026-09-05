@@ -1,4 +1,4 @@
-import { ServerPlayer, PlayerStatus, Card, GameActionType } from '../../../shared/types';
+import type { ServerPlayer, PlayerStatus, Card} from '../../../shared/types';
 
 export abstract class BaseUser {
     public id: string;
@@ -32,19 +32,19 @@ export class Player extends BaseUser implements ServerPlayer {
         return "PLAYER";
     }
 
-    public receiveCards(cards: Card[]): void {
+    public receiveCards(_cards: Card[]): void {
         // รอคนเลือก
     }
 
-    public placeBet(amount: number): void {
+    public placeBet(_amount: number): void {
         // รอคนเลือก
     }
 
-    public call(amountToMatch: number): void {
+    public call(_amountToMatch: number): void {
         // รอคนเลือก
     }
 
-    public raiseTo(amount: number): void {
+    public raiseTo(_amount: number): void {
         // รอคนเลือก
     }
 
@@ -57,7 +57,7 @@ export class Player extends BaseUser implements ServerPlayer {
         return [];
     }
 
-    public addChips(amount: number): void {
+    public addChips(_amount: number): void {
         // รอคนเลือก
     }
 
@@ -74,7 +74,7 @@ export class Player extends BaseUser implements ServerPlayer {
         return {};
     }
 
-    public static fromJSON(json: any): Player {
+    public static fromJSON(_json: unknown): Player {
         // รอคนเลือก
         return new Player("dummy", "dummy");
     }

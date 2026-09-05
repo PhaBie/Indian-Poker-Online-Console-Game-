@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { toPublicPlayerDTO, generateRoomId, generatePlayerId } from "../../src/server/utils/helpers";
-import { ServerPlayer } from "../../src/shared/types";
+import type { ServerPlayer } from "../../src/shared/types";
 
 describe("5. ระบบช่วยเหลือและคัดกรองข้อมูล (Utils & Helpers)", () => {
     test("5.1 ฟังก์ชัน toPublicPlayerDTO ต้องคัดกรองเฉพาะข้อมูลที่อนุญาตให้เปิดเผยได้เท่านั้น", () => {

@@ -1,4 +1,4 @@
-import { ClientEvent } from '../../shared/types';
+import type { ClientEvent } from '../../shared/types';
 
 export interface RoomInfo {
     roomId: string;
@@ -7,12 +7,12 @@ export interface RoomInfo {
 }
 
 export class LobbyUI {
-    public render(rooms: RoomInfo[]): string {
+    public render(_rooms: RoomInfo[]): string {
         // รอคนเลือก
         return "";
     }
 
-    public handleInput(input: string): ClientEvent | null {
+    public handleInput(_input: string): ClientEvent | null {
         // รอคนเลือก
         return null;
     }

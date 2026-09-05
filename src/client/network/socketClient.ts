@@ -1,4 +1,4 @@
-import { ClientEvent, ServerEvent } from '../../shared/types';
+import type { ClientEvent, ServerEvent } from '../../shared/types';
 
 export class SocketClient {
     public isConnected: boolean;
@@ -9,15 +9,15 @@ export class SocketClient {
         this.lastReceivedEvent = null;
     }
 
-    public connect(url: string, transport?: any): void {
+    public connect(_url: string, _transport?: unknown): void {
         // รอคนเลือก
     }
 
-    public send(event: ClientEvent): void {
+    public send(_event: ClientEvent): void {
         // รอคนเลือก
     }
 
-    public onReceive(event: ServerEvent): void {
+    public onReceive(_event: ServerEvent): void {
         // รอคนเลือก
     }
 

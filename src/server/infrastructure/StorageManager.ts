@@ -1,4 +1,4 @@
-import { Room } from '../domain/models/Room';
+import type { Room } from '../domain/models/Room';
 
 export class StorageManager {
     public basePath: string;
@@ -7,21 +7,21 @@ export class StorageManager {
         this.basePath = basePath;
     }
 
-    public saveRoomState(room: Room): void {
+    public saveRoomState(_room: Room): void {
         // รอคนเลือก
     }
 
-    public loadRoomState(roomId: string): Room | null {
+    public loadRoomState(_roomId: string): Room | null {
         // รอคนเลือก
         return null;
     }
 
-    public checkSaveExists(roomId: string): boolean {
+    public checkSaveExists(_roomId: string): boolean {
         // รอคนเลือก
         return false;
     }
 
-    public deleteSavedRoom(roomId: string): void {
+    public deleteSavedRoom(_roomId: string): void {
         // รอคนเลือก
     }
 

@@ -1,5 +1,6 @@
-import { Player } from './Player';
-import { RoomPhase, PublicPlayerDTO } from '../../../shared/types';
+import type { Player } from './Player';
+import type { RoomPhase, PublicPlayerDTO } from '../../../shared/types';
+import type { GameState } from './GameState';
 
 export class Room {
     public roomId: string;
@@ -7,7 +8,7 @@ export class Room {
     public hostId: string | null;
     public players: Map<string, Player>;
     public bootAmount: number;
-    public gameState: import('./GameState').GameState | null;
+    public gameState: GameState | null;
     private readonly MAX_PLAYERS = 4;
 
     constructor(roomId: string, bootAmount: number = 50) {
@@ -19,19 +20,19 @@ export class Room {
         this.gameState = null;
     }
 
-    public join(player: Player): void {
+    public join(_player: Player): void {
         // รอคนเลือก
     }
 
-    public reconnect(playerId: string): void {
+    public reconnect(_playerId: string): void {
         // รอคนเลือก
     }
 
-    public leave(playerId: string): void {
+    public leave(_playerId: string): void {
         // รอคนเลือก
     }
 
-    public startGame(requestingPlayerId: string): void {
+    public startGame(_requestingPlayerId: string): void {
         // รอคนเลือก
     }
 
@@ -43,7 +44,7 @@ export class Room {
         // รอคนเลือก
     }
     
-    public getPlayer(playerId: string): Player | undefined {
+    public getPlayer(_playerId: string): Player | undefined {
         // รอคนเลือก
         return undefined;
     }
@@ -63,7 +64,7 @@ export class Room {
         return {};
     }
 
-    public static fromJSON(json: any): Room {
+    public static fromJSON(_json: unknown): Room {
         // รอคนเลือก
         return new Room("dummy");
     }

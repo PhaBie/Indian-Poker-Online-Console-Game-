@@ -51,7 +51,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
             expect(rawJson.gameState.pot).toBe(500);
             expect(rawJson.gameState.currentHighestBet).toBe(100);
             
-            const savedFirstPlayer = rawJson.gameState.activePlayers.find((player: any) => player.id === "id_p1");
+            const savedFirstPlayer = rawJson.gameState.activePlayers.find((player: { id: string, privateCards?: unknown[] }) => player.id === "id_p1");
             expect(savedFirstPlayer.privateCards).toBeDefined();
             expect(savedFirstPlayer.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
             

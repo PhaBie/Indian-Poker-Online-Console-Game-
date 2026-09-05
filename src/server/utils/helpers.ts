@@ -1,4 +1,4 @@
-import { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
+import type { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
 
 export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
     // รอคนเลือก

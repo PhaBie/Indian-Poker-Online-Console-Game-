@@ -1,4 +1,4 @@
-import { ServerEvent, Card } from '../../shared/types';
+import type { ServerEvent, Card } from '../../shared/types';
 
 export class ClientState {
     public myPlayerId: string | null;
@@ -13,7 +13,7 @@ export class ClientState {
         this.lastError = null;
     }
 
-    public updateState(event: ServerEvent): void {
+    public updateState(_event: ServerEvent): void {
         // รอคนเลือก
     }
 
@@ -21,7 +21,7 @@ export class ClientState {
         // รอคนเลือก
     }
 
-    public setPlayerId(playerId: string): void {
+    public setPlayerId(_playerId: string): void {
         // รอคนเลือก
     }
 

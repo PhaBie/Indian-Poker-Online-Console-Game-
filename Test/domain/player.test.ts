@@ -32,7 +32,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
         test("3.4 ผู้เล่นสามารถแปลงข้อมูลเป็น JSON โดยไม่มีข้อมูลไพ่ส่วนตัวหลุดออกไป", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
-            const json: any = player.toJSON();
+            const json: Record<string, unknown> = player.toJSON() as Record<string, unknown>;
             
             expect(json.id).toBe("id_thanathon");
             expect(json.chips).toBe(1000);
