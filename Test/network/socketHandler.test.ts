@@ -88,6 +88,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             
             const room = mockContext.roomManager.createRoom("room_123", host);
             room.join(secondPlayer);
+            room.phase = 'PLAYING';
 
             mockContext.connectedClients.set(mockWsClient1, { playerId: "player_1", roomId: "room_123" });
             mockContext.connectedClients.set(mockWsClient2, { playerId: "player_2", roomId: "room_123" });
@@ -100,10 +101,12 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(stateEvent1).toBeDefined();
             expect(stateEvent2).toBeDefined();
             
+            expect(stateEvent1.payload.players.length).toBe(2);
             expect(stateEvent1.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
+            expect(stateEvent2.payload.players.some((playerData: any) => playerData.privateCards !== undefined)).toBe(false); 
             
-            expect(stateEvent1.payload.myCards[0].suit).toBe('SPADES');
-            expect(stateEvent2.payload.myCards[0].suit).toBe('HEARTS');
+            expect(stateEvent1.payload.myCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
+            expect(stateEvent2.payload.myCards).toEqual([{ suit: 'HEARTS', rank: 2 }]);
         });
         
         test("6.4 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อโฮสต์ส่งคำสั่ง START_GAME ได้ถูกต้อง", () => {
@@ -130,11 +133,15 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
         });
 
-        test("6.5 การส่ง JOIN_ROOM พร้อม reconnectToken ต้องคืนค่า Session เดิมโดยไม่สร้างผู้เล่นใหม่", () => {
+        test("6.5 การส่ง JOIN_ROOM พร้อม reconnectToken ต้องคืนค่า Session เดิมพร้อมกู้คืนข้อมูลครบถ้วน", () => {
             const host = new Player("player_1", "Host");
+            host.chips = 800;
+            host.bet = 200;
+            host.receiveCards([{ suit: 'SPADES', rank: 14 }]);
             mockContext.roomManager.createRoom("room_123", host);
             
             const validToken = mockContext.sessionStore.createSession("player_1");
+            host.status = 'DISCONNECTED';
 
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = { send: (data: string) => sentMessages.push(JSON.parse(data)) } as unknown as WSWebSocket;
@@ -151,6 +158,11 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             
             const session = mockContext.connectedClients.get(mockWsClient);
             expect(session?.playerId).toBe("player_1");
+            
+            expect(host.status).not.toBe('DISCONNECTED');
+            expect(host.chips).toBe(800);
+            expect(host.bet).toBe(200);
+            expect(host.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
         });
     });
 
@@ -183,6 +195,23 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             const mockMessage: ClientEvent = {
                 type: 'PLAYER_ACTION',
                 payload: { action: "CALL" }
+            };
+
+            handleClientMessage(mockWsClient, mockMessage, mockContext);
+
+            const errorEvent = sentMessages.find(message => message.type === 'ERROR') as any;
+            expect(errorEvent).toBeDefined();
+        });
+
+        test("6.8 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ (ERROR)", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const mockMessage: ClientEvent = {
+                type: 'JOIN_ROOM',
+                payload: { playerName: "Hacker", roomId: "room_123", reconnectToken: "wrong_token" }
             };
 
             handleClientMessage(mockWsClient, mockMessage, mockContext);

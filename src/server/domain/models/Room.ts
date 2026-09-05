@@ -23,7 +23,7 @@ export class Room {
         // รอคนเลือก
     }
 
-    public reconnect(playerId: string, token: string): void {
+    public reconnect(playerId: string): void {
         // รอคนเลือก
     }
 

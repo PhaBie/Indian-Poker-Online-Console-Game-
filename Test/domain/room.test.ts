@@ -52,9 +52,8 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             room.join(player1);
             
             player1.status = 'DISCONNECTED';
-            const mockToken = "valid_token_xyz";
             
-            room.reconnect("id_thanathon", mockToken);
+            room.reconnect("id_thanathon");
             
             const activePlayer = room.getPlayer("id_thanathon");
             expect(activePlayer?.status).toBe('WAITING');
@@ -123,17 +122,23 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
         test("1.9 ฟังก์ชัน resetToLobby() ต้องล้างสถานะเกมแต่รักษาผู้เล่นและชิปไว้", () => {
             const room = new Room("room_reset");
             const host = new Player("id_host", "Host");
-            host.chips = 1500;
-            room.join(host);
+            const secondPlayer = new Player("id_p2", "Player2");
             
-            room.startGame("id_host");
+            host.chips = 1500;
+            secondPlayer.chips = 500;
+            
+            room.join(host);
+            room.join(secondPlayer);
+            
+            room.phase = "ENDED";
             
             room.resetToLobby();
             
-            expect(room.phase).toBe("LOBBY");
-            expect(room.gameState).toBeUndefined();
-            expect(room.getPlayerCount()).toBe(1);
+            expect(room.phase as string).toBe("LOBBY");
+            expect(room.gameState).toBeNull();
+            expect(room.getPlayerCount()).toBe(2);
             expect(room.getPlayer("id_host")?.chips).toBe(1500);
+            expect(room.getPlayer("id_p2")?.chips).toBe(500);
         });
     });
 
@@ -173,19 +178,6 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             }).toThrow(GameError);
             
             expect(room.phase).toBe("LOBBY");
-        });
-
-        test("1.14 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ", () => {
-            const room = new Room("room_token");
-            const player = new Player("id_target", "Target");
-            room.join(player);
-            player.status = 'DISCONNECTED';
-
-            expect(() => {
-                room.reconnect("id_target", "wrong_token");
-            }).toThrow(InvalidTokenError);
-            
-            expect(player.status).toBe('DISCONNECTED');
         });
     });
 });
