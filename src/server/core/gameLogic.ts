@@ -4,7 +4,7 @@ export function createDeck(): Card[] {
     return [];
 }
 
-export function shuffleDeck(deck: Card[]): Card[] {
+export function shuffleDeck(deck: Card[], rng?: () => number): Card[] {
     return [];
 }
 
@@ -22,4 +22,8 @@ export function compareHands(handA: Card[], handB: Card[]): number {
 
 export function getWinners(players: { id: string, cards: Card[] }[]): string[] {
     return [];
+}
+
+export function calculateSplitPot(pot: number, winnerIds: string[]): Record<string, number> {
+    return {};
 }

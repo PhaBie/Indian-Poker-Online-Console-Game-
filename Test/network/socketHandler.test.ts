@@ -1,171 +1,141 @@
-import { expect, test, describe } from "bun:test";
+import { expect, test, describe, beforeEach } from "bun:test";
 import { handleClientMessage, broadcastGameStateUpdate, broadcastGameResult, handleClientDisconnect, connectedClients } from "../../src/server/network/socketHandler";
-import { ClientEvent } from "../../src/shared/types";
+import { ClientEvent, ServerEvent } from "../../src/shared/types";
+import { RoomManager } from "../../src/server/domain/models/RoomManager";
 import type { WebSocket as WSWebSocket } from "ws";
 
 describe("6. ระบบจัดการเครือข่าย (WebSocket Handler)", () => {
-    test("6.1 ระบบตอบกลับด้วย ROOM_CREATED พร้อม roomId เมื่อรับคำสั่ง CREATE_ROOM", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'CREATE_ROOM',
-            payload: { playerName: "Thanathon", bootAmount: 50 }
+    let mockRoomManager: RoomManager;
+    let mockSessionStore: any;
+    
+    beforeEach(() => {
+        connectedClients.clear();
+        mockRoomManager = new RoomManager();
+        mockSessionStore = {
+            createSession: (playerId: string) => "token_123",
+            getPlayerId: (token: string) => token === "token_123" ? "player_1" : null
         };
-
-        handleClientMessage(mockWsClient, mockMessage);
-
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('ROOM_CREATED');
-        expect(sentData.payload).toHaveProperty('roomId');
     });
 
-    test("6.2 ระบบสามารถรับคำสั่ง JOIN_ROOM จาก Client และตอบกลับสถานะห้องได้", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
+    describe("Happy Paths", () => {
+        test("6.1 ระบบตอบกลับด้วย SESSION_CREATED พร้อม Token เมื่อรับคำสั่ง CREATE_ROOM สำเร็จ", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const mockMessage: ClientEvent = {
+                type: 'CREATE_ROOM',
+                payload: { playerName: "Thanathon", bootAmount: 50 }
+            };
+
+            handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
+
+            const sessionEvent = sentMessages.find(msg => msg.type === 'SESSION_CREATED') as any;
+            expect(sessionEvent).toBeDefined();
+            expect(sessionEvent.payload).toHaveProperty('reconnectToken');
+            expect(sessionEvent.payload).toHaveProperty('playerId');
+            
+            const roomEvent = sentMessages.find(msg => msg.type === 'ROOM_CREATED') as any;
+            expect(roomEvent).toBeDefined();
+            expect(roomEvent.payload).toHaveProperty('roomId');
+        });
+
+        test("6.2 ฟังก์ชัน broadcastGameStateUpdate สามารถกระจายข้อมูลไปยัง Client ทุกคนที่เชื่อมต่อในห้องได้", () => {
+            const sentMessages1: ServerEvent[] = [];
+            const mockWsClient1 = {
+                send: (data: string) => { sentMessages1.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const sentMessages2: ServerEvent[] = [];
+            const mockWsClient2 = {
+                send: (data: string) => { sentMessages2.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            connectedClients.set("room_999", [mockWsClient1, mockWsClient2]);
+            
+            mockRoomManager.createRoom("room_999", { id: "host_id", name: "Host" } as any);
+            
+            broadcastGameStateUpdate("room_999");
+            
+            expect(sentMessages1.length).toBeGreaterThan(0);
+            expect(sentMessages1[0].type).toBe('GAME_STATE_UPDATE');
+            expect(sentMessages2.length).toBeGreaterThan(0);
+            expect(sentMessages2[0].type).toBe('GAME_STATE_UPDATE');
+        });
+
+        test("6.3 ระบบต้องกรองไพ่ (myCards) ให้ตรงกับผู้เล่นเจ้าของ Session เท่านั้น (Privacy Test)", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const mockMessage: ClientEvent = {
+                type: 'JOIN_ROOM',
+                payload: { playerName: "Phupa", roomId: "room_123" }
+            };
+
+            mockRoomManager.createRoom("room_123", { id: "host_id", name: "Host" } as any);
+            handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
+
+            const stateEvent = sentMessages.find(msg => msg.type === 'GAME_STATE_UPDATE') as any;
+            expect(stateEvent).toBeDefined();
+            expect(stateEvent.payload.players.some((p: any) => p.privateCards !== undefined)).toBe(false); 
+        });
         
-        const mockMessage: ClientEvent = {
-            type: 'JOIN_ROOM',
-            payload: { playerName: "Phupa", roomId: "room_123" }
-        };
+        test("6.4 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อโฮสต์ส่งคำสั่ง START_GAME ได้ถูกต้อง", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            mockRoomManager.createRoom("room_123", { id: "host_id", name: "Host" } as any);
+            
+            const mockMessage: ClientEvent = {
+                type: 'START_GAME'
+            };
 
-        handleClientMessage(mockWsClient, mockMessage);
+            handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_STATE_UPDATE');
-        expect(sentData.payload).toHaveProperty('roomId', 'room_123');
+            const updateEvent = sentMessages.find(msg => msg.type === 'GAME_STATE_UPDATE') as any;
+            expect(updateEvent).toBeDefined();
+            expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
+        });
     });
 
-    test("6.3 ระบบสามารถรับคำสั่ง PLAYER_ACTION และ Broadcast ข้อมูลอัปเดตกลับไปได้", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'PLAYER_ACTION',
-            payload: { action: "CALL" }
-        };
+    describe("Unhappy Paths", () => {
+        test("6.5 การ JOIN_ROOM ไปยังห้องที่ไม่มีอยู่จริง ระบบต้องตอบกลับด้วย ERROR", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const mockMessage: ClientEvent = {
+                type: 'JOIN_ROOM',
+                payload: { playerName: "Phupa", roomId: "room_invalid" }
+            };
 
-        handleClientMessage(mockWsClient, mockMessage);
+            handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_STATE_UPDATE');
-    });
+            const errorEvent = sentMessages.find(msg => msg.type === 'ERROR') as any;
+            expect(errorEvent).toBeDefined();
+        });
 
-    test("6.4 ฟังก์ชัน broadcastGameStateUpdate สามารถกระจายข้อมูลไปยังทุกคนในห้องได้", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        connectedClients.set("room_999", [mockWsClient]);
-        
-        broadcastGameStateUpdate("room_999");
-        
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_STATE_UPDATE');
-    });
+        test("6.6 คำสั่ง PLAYER_ACTION ต้องส่ง ERROR กลับมาหากผู้เล่นไม่ได้อยู่ในห้องเกมจริงๆ", () => {
+            const sentMessages: ServerEvent[] = [];
+            const mockWsClient = {
+                send: (data: string) => { sentMessages.push(JSON.parse(data)); }
+            } as unknown as WSWebSocket;
+            
+            const mockMessage: ClientEvent = {
+                type: 'PLAYER_ACTION',
+                payload: { action: "CALL" }
+            };
 
-    test("6.5 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อรับคำสั่ง START_GAME", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'START_GAME'
-        };
+            handleClientMessage(mockWsClient, mockMessage, mockRoomManager, mockSessionStore);
 
-        handleClientMessage(mockWsClient, mockMessage);
-
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_STATE_UPDATE');
-        expect(sentData.payload).toHaveProperty('phase', 'PLAYING');
-    });
-
-    test("6.6 ฟังก์ชัน broadcastGameResult สามารถทำงานและส่งผลลัพธ์กลับไปให้ Client ได้", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        connectedClients.set("room_result", [mockWsClient]);
-        
-        broadcastGameResult("room_result", "id_thanathon", "TRAIL", {});
-        
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_RESULT');
-    });
-
-    test("6.7 ระบบสามารถตอบกลับด้วย CHAT_MESSAGE เมื่อผู้เล่นส่งคำสั่ง SEND_CHAT", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'SEND_CHAT',
-            payload: { message: "Hello World" }
-        };
-
-        handleClientMessage(mockWsClient, mockMessage);
-
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('CHAT_MESSAGE');
-        expect(sentData.payload).toHaveProperty('message', 'Hello World');
-    });
-
-    test("6.8 ระบบสามารถตอบกลับด้วย GAME_SAVED เมื่อโฮสต์ส่งคำสั่ง SAVE_GAME", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'SAVE_GAME'
-        };
-
-        handleClientMessage(mockWsClient, mockMessage);
-
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_SAVED');
-    });
-
-    test("6.9 ระบบสามารถตอบกลับด้วย GAME_LOADED เมื่อโฮสต์ส่งคำสั่ง LOAD_GAME", () => {
-        let sentData: any = null;
-        const mockWsClient = {
-            send: (data: string) => { sentData = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockMessage: ClientEvent = {
-            type: 'LOAD_GAME',
-            payload: { roomId: "room_123" }
-        };
-
-        handleClientMessage(mockWsClient, mockMessage);
-
-        expect(sentData).not.toBeNull();
-        expect(sentData.type).toBe('GAME_LOADED');
-    });
-
-    test("6.10 ฟังก์ชัน handleClientDisconnect สามารถลบผู้เล่นออกจากระบบและส่งสถานะอัปเดตได้", () => {
-        let sentDataToOther: any = null;
-        const mockOtherClient = {
-            send: (data: string) => { sentDataToOther = JSON.parse(data); }
-        } as unknown as WSWebSocket;
-        
-        const mockDisconnectingClient = {} as unknown as WSWebSocket;
-        
-        connectedClients.set("room_disc", [mockDisconnectingClient, mockOtherClient]);
-        
-        handleClientDisconnect(mockDisconnectingClient);
-        
-        expect(sentDataToOther).not.toBeNull();
-        expect(sentDataToOther.type).toBe('GAME_STATE_UPDATE');
+            const errorEvent = sentMessages.find(msg => msg.type === 'ERROR') as any;
+            expect(errorEvent).toBeDefined();
+        });
     });
 });

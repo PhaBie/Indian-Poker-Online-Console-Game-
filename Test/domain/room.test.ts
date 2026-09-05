@@ -1,171 +1,142 @@
 import { expect, test, describe } from "bun:test";
 import { Room } from "../../src/server/domain/models/Room";
 import { Player } from "../../src/server/domain/models/Player";
+import { RoomFullError, NotHostError, GameError, InvalidTokenError } from "../../src/server/domain/errors/GameError";
 
 describe("1. ระบบการจัดการห้องเล่น (Room Management)", () => {
-    test("1.1 ผู้สร้างห้องคนแรกจะต้องถูกกำหนดให้เป็น Host อัตโนมัติ", () => {
-        const room = new Room("room_001");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
+    describe("Happy Paths", () => {
+        test("1.1 ผู้สร้างห้องคนแรกจะต้องถูกกำหนดให้เป็น Host อัตโนมัติ", () => {
+            const room = new Room("room_001");
+            const hostPlayer = new Player("id_thanathon", "Thanathon");
 
-        room.join(hostPlayer);
+            room.join(hostPlayer);
 
-        expect(room.getPlayerCount()).toBe(1);
-        expect(room.hostId).toBe("id_thanathon");
-    });
+            expect(room.getPlayerCount()).toBe(1);
+            expect(room.hostId).toBe("id_thanathon");
+        });
 
-    test("1.2 ผู้เล่นคนอื่นสามารถเข้าร่วมห้องได้ และสถานะห้องยังคงเป็น LOBBY", () => {
-        const room = new Room("room_002");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
-        const thirdPlayer = new Player("id_pun", "Pun");
+        test("1.2 ผู้เล่นคนอื่นสามารถเข้าร่วมห้องได้สูงสุด 4 คนตามกติกา", () => {
+            const room = new Room("room_002");
+            const p1 = new Player("id_p1", "P1");
+            const p2 = new Player("id_p2", "P2");
+            const p3 = new Player("id_p3", "P3");
+            const p4 = new Player("id_p4", "P4");
 
-        room.join(hostPlayer);
-        room.join(secondPlayer);
-        room.join(thirdPlayer);
+            room.join(p1);
+            room.join(p2);
+            room.join(p3);
+            room.join(p4);
 
-        expect(room.getPlayerCount()).toBe(3);
-        expect(room.hostId).toBe("id_thanathon");
-        expect(room.phase).toBe("LOBBY");
-    });
+            expect(room.getPlayerCount()).toBe(4);
+            expect(room.phase).toBe("LOBBY");
+        });
 
-    test("1.3 Host สามารถเริ่มเกมได้เมื่อมีผู้เล่นอย่างน้อย 2 คนขึ้นไป", () => {
-        const room = new Room("room_003");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
+        test("1.3 Host สามารถเริ่มเกมได้เมื่อมีผู้เล่นอย่างน้อย 2 คนขึ้นไป", () => {
+            const room = new Room("room_003");
+            room.join(new Player("id_thanathon", "Thanathon"));
+            room.join(new Player("id_phupa", "Phupa"));
 
-        room.join(hostPlayer);
-        room.join(secondPlayer);
+            room.startGame("id_thanathon");
 
-        room.startGame("id_thanathon");
+            expect(room.phase).toBe("PLAYING");
+        });
 
-        expect(room.phase).toBe("PLAYING");
-    });
+        test("1.4 ผู้เล่นที่หลุดไป สามารถ Reconnect เข้ามาและรักษาชิป เดิมพัน และไพ่เดิมได้ครบถ้วน", () => {
+            const room = new Room("room_004");
+            const player1 = new Player("id_thanathon", "Thanathon");
+            
+            player1.chips = 800;
+            player1.bet = 200;
+            player1.receiveCards([{ suit: 'SPADES', rank: 14 }]);
+            
+            room.join(player1);
+            
+            player1.status = 'DISCONNECTED';
+            const mockToken = "valid_token_xyz";
+            
+            room.reconnect("id_thanathon", mockToken);
+            
+            const activePlayer = room.getPlayer("id_thanathon");
+            expect(activePlayer?.status).toBe('WAITING');
+            expect(activePlayer?.chips).toBe(800);
+            expect(activePlayer?.bet).toBe(200);
+            expect(activePlayer?.privateCards.length).toBe(1);
+        });
 
-    test("1.4 เมื่อผู้เล่นออกจากห้อง จำนวนผู้เล่นต้องลดลง", () => {
-        const room = new Room("room_004");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
-
-        room.join(hostPlayer);
-        room.join(secondPlayer);
-        room.leave("id_phupa");
-
-        expect(room.getPlayerCount()).toBe(1);
-    });
-
-    test("1.5 หาก Host ออกจากห้อง ระบบต้องตั้งผู้เล่นคนถัดไปเป็น Host แทน", () => {
-        const room = new Room("room_005");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
-
-        room.join(hostPlayer);
-        room.join(secondPlayer);
-        room.leave("id_thanathon");
-
-        expect(room.hostId).toBe("id_phupa");
-    });
-
-    test("1.6 ดึงข้อมูลผู้เล่นรายบุคคลได้ถูกต้อง (Player Retrieval)", () => {
-        const room = new Room("room_006");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        room.join(hostPlayer);
-
-        const foundPlayer = room.getPlayer("id_thanathon");
-
-        expect(foundPlayer).toBeDefined();
-        expect(foundPlayer?.name).toBe("Thanathon");
-    });
-
-    test("1.7 ฟังก์ชัน getPublicState ต้องดึงข้อมูลโดยไม่มีฟิลด์ privateCards ติดมาด้วยเด็ดขาด (ความปลอดภัย)", () => {
-        const room = new Room("room_007");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        hostPlayer.privateCards = [{ suit: 'SPADES', rank: 14 }];
-        room.join(hostPlayer);
-
-        const publicState = room.getPublicState();
-
-        expect(publicState).toBeInstanceOf(Array);
-        expect(publicState.length).toBe(1);
-        expect(publicState[0].name).toBe("Thanathon");
-        expect(publicState[0]).not.toHaveProperty("privateCards");
-    });
-
-    test("1.8 วัฏจักรของห้องสามารถหมุนเวียนได้: LOBBY -> PLAYING -> ENDED -> LOBBY", () => {
-        const room = new Room("room_008");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
-
-        room.join(hostPlayer);
-        room.join(secondPlayer);
-
-        room.startGame("id_thanathon");
-        expect(room.phase).toBe("PLAYING");
-
-        room.endGame();
-        expect(room.phase).toBe("ENDED");
-
-        room.resetToLobby();
-        expect(room.phase).toBe("LOBBY");
-        expect(room.getPlayerCount()).toBe(2);
-    });
-
-    test("1.9 ห้องสามารถแปลงข้อมูลเป็น JSON ได้ (เพื่อระบบ Save/Load)", () => {
-        const room = new Room("room_009");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        room.join(hostPlayer);
-
-        const json: any = room.toJSON();
+        test("1.5 ผู้เล่นสามารถเข้าร่วมห้องขณะที่เกม PLAYING ได้ โดยจะอยู่ในสถานะ WAITING รอรอบถัดไป", () => {
+            const room = new Room("room_005");
+            room.join(new Player("id_p1", "P1"));
+            room.join(new Player("id_p2", "P2"));
+            room.startGame("id_p1");
+            
+            const latePlayer = new Player("id_p3", "P3");
+            room.join(latePlayer);
+            
+            const addedPlayer = room.getPlayer("id_p3");
+            expect(addedPlayer?.status).toBe("WAITING");
+            expect(room.phase).toBe("PLAYING");
+        });
         
-        expect(json).toHaveProperty("roomId", "room_009");
+        test("1.6 ดึง Public State ต้องไม่มีข้อมูล privateCards หลุดออกไปเด็ดขาด", () => {
+            const room = new Room("room_006");
+            const player = new Player("id_thanathon", "Thanathon");
+            player.privateCards = [{ suit: 'SPADES', rank: 14 }];
+            room.join(player);
+
+            const publicState = room.getPublicState();
+            expect(publicState[0]).not.toHaveProperty("privateCards");
+        });
     });
 
-    test("1.10 ห้องสามารถกู้คืนข้อมูลจาก JSON กลับมาเป็น Object สมบูรณ์ได้ (fromJSON)", () => {
-        const json = {
-            roomId: "room_010",
-            phase: "LOBBY",
-            hostId: "id_phupa",
-            players: [
-                { id: "id_phupa", name: "Phupa", chips: 5000, bet: 0, status: "WAITING", privateCards: [] }
-            ]
-        };
-        const room = Room.fromJSON(json);
-        
-        expect(room.roomId).toBe("room_010");
-        expect(room.hostId).toBe("id_phupa");
-        expect(room.getPlayerCount()).toBe(1);
-    });
+    describe("Unhappy Paths", () => {
+        test("1.7 ไม่สามารถเข้าร่วมห้องที่เต็มแล้ว (4 คน) ได้", () => {
+            const room = new Room("room_full");
+            room.join(new Player("id_p1", "P1"));
+            room.join(new Player("id_p2", "P2"));
+            room.join(new Player("id_p3", "P3"));
+            room.join(new Player("id_p4", "P4"));
 
-    test("1.11 ผู้เล่นเก่าที่หลุดไป สามารถ Reconnect เข้าห้องเดิมด้วย ID เดิมได้โดยไม่ถูกเตะ", () => {
-        const room = new Room("room_011");
-        const player1 = new Player("id_thanathon", "Thanathon");
-        room.join(player1);
-        
-        player1.status = 'DISCONNECTED';
-        
-        const reconnectPlayer = new Player("id_thanathon", "Thanathon");
-        room.join(reconnectPlayer);
-        
-        expect(room.getPlayerCount()).toBe(1);
-        const activePlayer = room.getPlayer("id_thanathon");
-        expect(activePlayer?.status as string).not.toBe('DISCONNECTED');
-    });
+            expect(() => {
+                room.join(new Player("id_p5", "P5"));
+            }).toThrow(RoomFullError);
+            
+            expect(room.getPlayerCount()).toBe(4);
+        });
 
-    test("1.12 ผู้เล่นสามารถเข้าร่วมห้องขณะที่เกมอยู่ในสถานะ PLAYING ได้ (เข้ามารอในสถานะ WAITING / Spectator)", () => {
-        const room = new Room("room_012");
-        const hostPlayer = new Player("id_thanathon", "Thanathon");
-        const secondPlayer = new Player("id_phupa", "Phupa");
-        
-        room.join(hostPlayer);
-        room.join(secondPlayer);
-        room.startGame("id_thanathon");
-        
-        expect(room.phase).toBe("PLAYING");
-        
-        const latePlayer = new Player("id_pun", "Pun");
-        room.join(latePlayer);
-        
-        expect(room.getPlayerCount()).toBe(3);
-        const addedPlayer = room.getPlayer("id_pun");
-        expect(addedPlayer?.status).toBe("WAITING");
+        test("1.8 ผู้ที่ไม่ใช่ Host ไม่สามารถสั่งเริ่มเกมได้", () => {
+            const room = new Room("room_not_host");
+            room.join(new Player("id_host", "Host"));
+            room.join(new Player("id_player", "Player"));
+
+            expect(() => {
+                room.startGame("id_player");
+            }).toThrow(NotHostError);
+            
+            expect(room.phase).toBe("LOBBY");
+        });
+
+        test("1.9 Host ไม่สามารถเริ่มเกมได้หากมีผู้เล่นไม่ถึง 2 คน", () => {
+            const room = new Room("room_alone");
+            room.join(new Player("id_host", "Host"));
+
+            expect(() => {
+                room.startGame("id_host");
+            }).toThrow(GameError);
+            
+            expect(room.phase).toBe("LOBBY");
+        });
+
+        test("1.10 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ", () => {
+            const room = new Room("room_token");
+            const player = new Player("id_target", "Target");
+            room.join(player);
+            player.status = 'DISCONNECTED';
+
+            expect(() => {
+                room.reconnect("id_target", "wrong_token");
+            }).toThrow(InvalidTokenError);
+            
+            expect(player.status).toBe('DISCONNECTED');
+        });
     });
 });

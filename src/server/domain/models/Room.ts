@@ -6,16 +6,24 @@ export class Room {
     public phase: RoomPhase;
     public hostId: string | null;
     public players: Map<string, Player>;
+    public bootAmount: number;
+    public gameState: import('./GameState').GameState | null;
     private readonly MAX_PLAYERS = 4;
 
-    constructor(roomId: string) {
+    constructor(roomId: string, bootAmount: number = 50) {
         this.roomId = roomId;
         this.phase = 'LOBBY';
         this.hostId = null;
         this.players = new Map();
+        this.bootAmount = bootAmount;
+        this.gameState = null;
     }
 
     public join(player: Player): void {
+        // รอคนเลือก
+    }
+
+    public reconnect(playerId: string, token: string): void {
         // รอคนเลือก
     }
 

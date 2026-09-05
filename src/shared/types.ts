@@ -82,7 +82,7 @@ export interface RoomSaveData {
  */
 export type ClientEvent =
     | { type: 'CREATE_ROOM'; payload: { playerName: string; bootAmount: number } }
-    | { type: 'JOIN_ROOM'; payload: { playerName: string; roomId: string } }
+    | { type: 'JOIN_ROOM'; payload: { playerName: string; roomId: string; reconnectToken?: string } }
     | { type: 'LEAVE_ROOM' }
     | { type: 'START_GAME' }
     | { type: 'SAVE_GAME' }
@@ -100,7 +100,8 @@ export type ClientEvent =
  * โครงสร้างข้อมูลขาออก (Server -> Client)
  */
 export type ServerEvent =
-    | { type: 'ERROR'; message: string }
+    | { type: 'ERROR'; message: string; code?: string }
+    | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
     | { type: 'ROOM_CREATED'; payload: { roomId: string } }
     | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
     | { type: 'GAME_SAVED'; payload: { roomId: string } }
@@ -122,8 +123,9 @@ export type ServerEvent =
     | {
         type: 'GAME_RESULT';
         payload: {
-            winnerId: string;
+            winnerIds: string[];
             winningHand: HandRank;
+            payouts: Record<string, number>;
             /** ข้อมูลไพ่ที่ถูกเปิดเผยเมื่อจบเกม Key คือ Player ID */
             exposedCards: Record<string, Card[]>;
         };

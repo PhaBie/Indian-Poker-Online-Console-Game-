@@ -7,15 +7,17 @@ export class GameState {
     public currentPlayerIndex: number;
     public deck: Card[];
     public activePlayers: Player[];
+    public bootAmount: number;
     public maxPotLimit: number;
     public dealerIndex: number;
 
-    constructor(players: Player[], maxPotLimit: number = 10000) {
+    constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
         this.pot = 0;
         this.currentHighestBet = 0;
         this.currentPlayerIndex = 0;
         this.deck = [];
         this.activePlayers = players;
+        this.bootAmount = bootAmount;
         this.maxPotLimit = maxPotLimit;
         this.dealerIndex = 0;
     }

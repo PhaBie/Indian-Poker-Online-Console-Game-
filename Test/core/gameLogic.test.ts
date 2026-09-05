@@ -6,7 +6,8 @@ import {
     dealCards,
     evaluateHand,
     compareHands,
-    getWinners
+    getWinners,
+    calculateSplitPot
 } from "../../src/server/core/gameLogic";
 
 import type { Card } from "../../src/shared/types";
@@ -215,12 +216,27 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(uniqueCards.size).toBe(52);
     });
 
-    test("3.2 เมื่อสับไพ่ จำนวนไพ่ต้องเท่าเดิม แต่ลำดับของไพ่ต้องเปลี่ยนไปจากเดิม", () => {
-        const originalDeck = createDeck();
-        const shuffledDeck = shuffleDeck([...originalDeck]);
+    test("3.2 เมื่อสับไพ่ ต้นฉบับต้องไม่ถูกแก้ไข (Pure Function) และได้ผลลัพธ์ที่สามารถคาดเดาได้ผ่าน RNG", () => {
+        const originalDeck: Card[] = [
+            { suit: 'SPADES', rank: 2 },
+            { suit: 'HEARTS', rank: 3 },
+            { suit: 'CLUBS', rank: 4 }
+        ];
+        const before = structuredClone(originalDeck);
+        
+        let callCount = 0;
+        const mockRng = () => {
+            const seq = [0.9, 0.1, 0.5];
+            return seq[callCount++];
+        };
 
-        expect(shuffledDeck.length).toBe(52);
-        expect(shuffledDeck).not.toEqual(originalDeck);
+        const shuffledDeck = shuffleDeck(originalDeck, mockRng);
+
+        expect(originalDeck).toEqual(before);
+
+        expect(shuffledDeck.length).toBe(3);
+        const unique = new Set(shuffledDeck.map(c => `${c.suit}-${c.rank}`));
+        expect(unique.size).toBe(3);
     });
 
     test("3.3 แจกไพ่ตามจำนวนผู้เล่นได้ถูกต้อง ไพ่บนมือและในกองรวมกันต้องครบ 52 ใบโดยไม่ซ้ำกัน", () => {
@@ -292,5 +308,22 @@ describe("4. ระบบค้นหาผู้ชนะจากวงเล�
         expect(winners.length).toBe(2);
         expect(winners).toContain("player_1");
         expect(winners).toContain("player_2");
+    });
+});
+
+describe("5. ระบบจัดการกองกลางและการจ่ายเงิน (Pot Settlement)", () => {
+    test("5.1 แบ่งเงินกองกลางให้ผู้ชนะหลายคนได้ถูกต้อง และจัดการเศษชิป", () => {
+        const pot = 1000;
+        const winnerIds = ["player_1", "player_2", "player_3"];
+        
+        const payouts = calculateSplitPot(pot, winnerIds);
+        
+        expect(payouts["player_1"]).toBeDefined();
+        expect(payouts["player_2"]).toBeDefined();
+        expect(payouts["player_3"]).toBeDefined();
+        
+        const totalPaid = payouts["player_1"] + payouts["player_2"] + payouts["player_3"];
+        expect(totalPaid).toBeLessThanOrEqual(1000);
+        expect(totalPaid).toBeGreaterThan(990);
     });
 });

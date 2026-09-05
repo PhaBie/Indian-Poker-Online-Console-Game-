@@ -9,7 +9,7 @@ export class SocketClient {
         this.lastReceivedEvent = null;
     }
 
-    public connect(url: string): void {
+    public connect(url: string, transport?: any): void {
         // รอคนเลือก
     }
 

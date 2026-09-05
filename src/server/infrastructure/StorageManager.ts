@@ -1,6 +1,12 @@
 import { Room } from '../domain/models/Room';
 
 export class StorageManager {
+    public basePath: string;
+
+    constructor(basePath: string = './data') {
+        this.basePath = basePath;
+    }
+
     public saveRoomState(room: Room): void {
         // รอคนเลือก
     }

@@ -44,7 +44,7 @@ export class Player extends BaseUser implements ServerPlayer {
         // รอคนเลือก
     }
 
-    public raise(amount: number): void {
+    public raiseTo(amount: number): void {
         // รอคนเลือก
     }
 
