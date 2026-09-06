@@ -31,16 +31,16 @@ export function getWinners(_players: { id: string, cards: Card[] }[]): string[] 
     return [];
 }
 
-export function calculateSplitPot(_pot: number, _winnerIds: string[]): Record<string, number> {
-    if (_winnerIds.length === 0) {
+export function calculateSplitPot(pot: number, winnerIds: string[]): Record<string, number> {
+    if (winnerIds.length === 0) {
         return {};
     }
 
-    const share = Math.floor(_pot / _winnerIds.length);
-    const remainder = _pot % _winnerIds.length;
+    const share = Math.floor(pot / winnerIds.length);
+    const remainder = pot % winnerIds.length;
 
     return Object.fromEntries(
-        _winnerIds.map((winnerId, index) => [
+        winnerIds.map((winnerId, index) => [
             winnerId,
             share + (index < remainder ? 1 : 0)
         ])
