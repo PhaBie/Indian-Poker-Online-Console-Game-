@@ -1,8 +1,9 @@
-import type { Card, HandRank} from '../../shared/types';
+import type { Card, HandRank } from '../../shared/types';
 
 export function createDeck(): Card[] {
-    // รอคนเลือก
-    return [];
+    const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
+    const ranks: Card['rank'][] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
 }
 
 export function shuffleDeck(_deck: Card[], _rng?: () => number): Card[] {
