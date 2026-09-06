@@ -1,4 +1,4 @@
-import type { Card, HandRank} from '../../shared/types';
+import type { Card, HandRank } from '../../shared/types';
 
 export function createDeck(): Card[] {
     // รอคนเลือก
@@ -17,20 +17,14 @@ export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: num
 
     const totalCardsNeeded = playerCount * cardsPerPlayer;
     if (deck.length < totalCardsNeeded) {
-        throw new Error("Not enough cards in deck to deal");
+        throw new Error("Not enough cards in deck.");
     }
 
     const hands: Card[][] = Array.from({ length: playerCount }, () => []);
-    let cardIndex = 0;
-
-    for (let round = 0; round < cardsPerPlayer; round++) {
-        for (let player = 0; player < playerCount; player++) {
-            hands[player].push(deck[cardIndex++]);
-        }
+    for (let i = 0; i < totalCardsNeeded; i++) {
+        hands[i % playerCount].push(deck[i]);
     }
-
-    const remainingDeck = deck.slice(cardIndex);
-
+    const remainingDeck = deck.slice(totalCardsNeeded);
     return { hands, remainingDeck };
 }
 
