@@ -11,9 +11,22 @@ export function shuffleDeck(_deck: Card[], _rng?: () => number): Card[] {
     return [];
 }
 
-export function dealCards(_deck: Card[], _playerCount: number, _cardsPerPlayer: number): { hands: Card[][], remainingDeck: Card[] } {
-    // รอคนเลือก
-    return { hands: [], remainingDeck: [] };
+export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number): { hands: Card[][], remainingDeck: Card[] } {
+    if (playerCount <= 0 || cardsPerPlayer <= 0) {
+        return { hands: [], remainingDeck: [...deck] };
+    }
+
+    const totalCardsNeeded = playerCount * cardsPerPlayer;
+    if (deck.length < totalCardsNeeded) {
+        throw new Error("Not enough cards in deck.");
+    }
+
+    const hands: Card[][] = Array.from({ length: playerCount }, () => []);
+    for (let i = 0; i < totalCardsNeeded; i++) {
+        hands[i % playerCount].push(deck[i]);
+    }
+    const remainingDeck = deck.slice(totalCardsNeeded);
+    return { hands, remainingDeck };
 }
 
 export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
