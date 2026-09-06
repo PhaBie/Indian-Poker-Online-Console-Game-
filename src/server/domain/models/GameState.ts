@@ -3,7 +3,7 @@ import type { Player } from './Player';
 
 export class GameState {
     public pot: number;
-    public currentHighestBet: number;
+    public currentStake: number;
     public currentPlayerIndex: number;
     public deck: Card[];
     public activePlayers: Player[];
@@ -13,7 +13,7 @@ export class GameState {
 
     constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
         this.pot = 0;
-        this.currentHighestBet = 0;
+        this.currentStake = 0;
         this.currentPlayerIndex = 0;
         this.deck = [];
         this.activePlayers = players;
@@ -43,6 +43,10 @@ export class GameState {
     }
 
     public executeSideshow(_challengerId: string, _targetId: string): void {
+        // รอคนเลือก
+    }
+
+    public requestShow(_playerId: string): void {
         // รอคนเลือก
     }
 

@@ -35,7 +35,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
             
             if (room.gameState) {
                 room.gameState.pot = 500; 
-                room.gameState.currentHighestBet = 100;
+                room.gameState.currentStake = 100;
                 room.gameState.activePlayers[0].privateCards = [{ suit: 'SPADES', rank: 14 }];
                 room.gameState.activePlayers[1].privateCards = [{ suit: 'HEARTS', rank: 2 }];
             }
@@ -49,7 +49,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
             expect(rawJson.phase).toBe("PLAYING");
             expect(rawJson.gameState).toBeDefined();
             expect(rawJson.gameState.pot).toBe(500);
-            expect(rawJson.gameState.currentHighestBet).toBe(100);
+            expect(rawJson.gameState.currentStake).toBe(100);
             
             const savedFirstPlayer = rawJson.gameState.activePlayers.find((player: { id: string, privateCards?: unknown[] }) => player.id === "id_p1");
             expect(savedFirstPlayer.privateCards).toBeDefined();
@@ -62,6 +62,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
             expect(loadedRoom?.roomId).toBe("room_file_001");
             expect(loadedRoom?.phase).toBe("PLAYING");
             expect(loadedRoom?.gameState?.pot).toBe(500);
+            expect(loadedRoom?.gameState?.currentStake).toBe(100);
             
             const loadedFirstPlayer = loadedRoom?.gameState?.activePlayers.find(player => player.id === "id_p1");
             expect(loadedFirstPlayer?.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);

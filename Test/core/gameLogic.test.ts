@@ -108,6 +108,18 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         const result = evaluateHand(cards);
         expect(result.rank).toBe('PURE_SEQUENCE');
     });
+
+    test("1.9 กฎของไพ่ K-A-2 ต้องไม่นับเป็นไพ่เรียง (ไม่ใช่ SEQUENCE)", () => {
+        const cards: Card[] = [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 14 },
+            { suit: 'DIAMONDS', rank: 2 }
+        ];
+
+        const result = evaluateHand(cards);
+        expect(result.rank).not.toBe('SEQUENCE');
+        expect(result.rank).not.toBe('PURE_SEQUENCE');
+    });
 });
 
 describe("2. ระบบเปรียบเทียบเพื่อหาผู้ชนะ (compareHands)", () => {
@@ -179,15 +191,22 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(compareHands(highColor, lowColor)).toBeGreaterThan(0);
     });
 
-    test("2.6 ลำดับความใหญ่ของ SEQUENCE ตามกฎ A-2-3 ต้องถูกต้อง", () => {
-        const seqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 12 }];
+    test("2.6 ลำดับความใหญ่ของ SEQUENCE ตามกฎ Pagat (A-2-3 สูงสุด รองลงมา A-K-Q) ต้องถูกต้อง", () => {
         const seqA23: Card[] = [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 2 }, { suit: 'SPADES', rank: 3 }];
+        const seqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 12 }];
         const seqKQJ: Card[] = [{ suit: 'HEARTS', rank: 13 }, { suit: 'SPADES', rank: 12 }, { suit: 'CLUBS', rank: 11 }];
         const seq432: Card[] = [{ suit: 'DIAMONDS', rank: 4 }, { suit: 'CLUBS', rank: 3 }, { suit: 'HEARTS', rank: 2 }];
 
-        expect(compareHands(seqAKQ, seqA23)).toBeGreaterThan(0);
-        expect(compareHands(seqA23, seqKQJ)).toBeGreaterThan(0);
+        expect(compareHands(seqA23, seqAKQ)).toBeGreaterThan(0);
+        expect(compareHands(seqAKQ, seqKQJ)).toBeGreaterThan(0);
         expect(compareHands(seqKQJ, seq432)).toBeGreaterThan(0);
+    });
+
+    test("2.6.1 ลำดับความใหญ่ของ PURE_SEQUENCE ตามกฎ Pagat (A-2-3 สูงสุด รองลงมา A-K-Q) ต้องถูกต้อง", () => {
+        const pureSeqA23: Card[] = [{ suit: 'CLUBS', rank: 14 }, { suit: 'CLUBS', rank: 2 }, { suit: 'CLUBS', rank: 3 }];
+        const pureSeqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'SPADES', rank: 13 }, { suit: 'SPADES', rank: 12 }];
+        
+        expect(compareHands(pureSeqA23, pureSeqAKQ)).toBeGreaterThan(0);
     });
 
     test("2.7 หากได้ไพ่รูปแบบเดียวกันและแต้มเท่ากันทุกใบ ต้องตัดสินว่าเสมอ (คืนค่า 0)", () => {
