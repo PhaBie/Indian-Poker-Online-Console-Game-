@@ -74,7 +74,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(sentMessages2[0].type).toBe('GAME_STATE_UPDATE');
         });
 
-        test("6.3 ระบบต้องกรองไพ่ (myCards) ให้ตรงกับผู้เล่นเจ้าของ Session เท่านั้น (Privacy Test)", () => {
+        test("6.3 ระบบต้องกรองไพ่ (myCards) ให้ตรงกับผู้เล่นเจ้าของ Session เท่านั้น โดยผู้เล่น Blind ต้องได้รับอาร์เรย์ว่าง และผู้เล่น Seen ต้องได้รับไพ่ตัวเองครบถ้วนแต่ไม่เห็นไพ่คนอื่น", () => {
             const sentMessages1: ServerEvent[] = [];
             const mockWsClient1 = { send: (data: string) => sentMessages1.push(JSON.parse(data)) } as unknown as WSWebSocket;
             
@@ -82,10 +82,12 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             const mockWsClient2 = { send: (data: string) => sentMessages2.push(JSON.parse(data)) } as unknown as WSWebSocket;
             
             const host = new Player("player_1", "Phupa");
-            host.receiveCards([{ suit: 'SPADES', rank: 14 }]);
+            host.isBlind = true;
+            host.receiveCards([{ suit: 'SPADES', rank: 14 }, { suit: 'SPADES', rank: 13 }, { suit: 'SPADES', rank: 12 }]);
             
             const secondPlayer = new Player("player_2", "Beam");
-            secondPlayer.receiveCards([{ suit: 'HEARTS', rank: 2 }]);
+            secondPlayer.isBlind = false;
+            secondPlayer.receiveCards([{ suit: 'HEARTS', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'HEARTS', rank: 4 }]);
             
             const room = mockContext.roomManager.createRoom("room_123", host);
             room.join(secondPlayer);
@@ -106,8 +108,8 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(stateEvent1.payload.players.some(playerData => 'privateCards' in playerData)).toBe(false);
             expect(stateEvent2.payload.players.some(playerData => 'privateCards' in playerData)).toBe(false);
             
-            expect(stateEvent1.payload.myCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
-            expect(stateEvent2.payload.myCards).toEqual([{ suit: 'HEARTS', rank: 2 }]);
+            expect(stateEvent1.payload.myCards).toEqual([]);
+            expect(stateEvent2.payload.myCards).toEqual([{ suit: 'HEARTS', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'HEARTS', rank: 4 }]);
         });
         
         test("6.4 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อโฮสต์ส่งคำสั่ง START_GAME ได้ถูกต้อง", () => {

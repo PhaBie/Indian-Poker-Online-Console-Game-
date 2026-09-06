@@ -36,15 +36,7 @@ export class Player extends BaseUser implements ServerPlayer {
         // รอคนเลือก
     }
 
-    public placeBet(_amount: number): void {
-        // รอคนเลือก
-    }
-
-    public call(_amountToMatch: number): void {
-        // รอคนเลือก
-    }
-
-    public raiseTo(_amount: number): void {
+    public payBet(_amount: number): void {
         // รอคนเลือก
     }
 
