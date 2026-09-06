@@ -205,7 +205,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
     test("2.6.1 ลำดับความใหญ่ของ PURE_SEQUENCE ตามกฎ Pagat (A-2-3 สูงสุด รองลงมา A-K-Q) ต้องถูกต้อง", () => {
         const pureSeqA23: Card[] = [{ suit: 'CLUBS', rank: 14 }, { suit: 'CLUBS', rank: 2 }, { suit: 'CLUBS', rank: 3 }];
         const pureSeqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'SPADES', rank: 13 }, { suit: 'SPADES', rank: 12 }];
-        
+
         expect(compareHands(pureSeqA23, pureSeqAKQ)).toBeGreaterThan(0);
     });
 
@@ -242,7 +242,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
             { suit: 'CLUBS', rank: 4 }
         ];
         const before = structuredClone(originalDeck);
-        
+
         let callCount = 0;
         const mockRng = () => {
             const seq = [0.9, 0.1];
@@ -286,7 +286,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
             { suit: 'SPADES', rank: 6 }, { suit: 'HEARTS', rank: 7 }
         ];
         const result = dealCards(mockDeck, 2, 3);
-        
+
         expect(result.hands[0]).toEqual([
             { suit: 'SPADES', rank: 2 },
             { suit: 'CLUBS', rank: 4 },
@@ -338,7 +338,7 @@ describe("5. ระบบจัดการกองกลางและกา�
         const pot1 = 1000;
         const winnerIds1 = ["player_1", "player_2", "player_3"];
         const payouts1 = calculateSplitPot(pot1, winnerIds1);
-        
+
         expect(payouts1["player_1"]).toBe(334);
         expect(payouts1["player_2"]).toBe(333);
         expect(payouts1["player_3"]).toBe(333);
