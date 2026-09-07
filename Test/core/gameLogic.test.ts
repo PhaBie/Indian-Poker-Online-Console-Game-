@@ -364,17 +364,14 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(deck).toEqual(clonedDeck);
     });
 
-    test("[dealCards] 3.6 แจกไพ่ 2, 3 และ 4 คน → ไพ่ในมือและไพ่ที่เหลือต้องรวมกันได้เท่ากับสำรับต้นฉบับเป๊ะ", () => {
-        const deck = createDeck();
-        
-        for (const playerCount of [2, 3, 4]) {
+    for (const playerCount of [2, 3, 4]) {
+        test(`[dealCards] 3.6 แจกไพ่ ${playerCount} คน → ไพ่ในมือและไพ่ที่เหลือต้องรวมกันได้เท่ากับสำรับต้นฉบับเป๊ะ`, () => {
+            const deck = createDeck();
             const result = dealCards(deck, playerCount, 3);
             
             expect(result.hands.length).toBe(playerCount);
-            for (const hand of result.hands) {
-                expect(hand.length).toBe(3);
-            }
-            expect(result.remainingDeck.length).toBe(52 - playerCount * 3);
+            result.hands.forEach(hand => expect(hand.length).toBe(3));
+            expect(result.remainingDeck.length).toBe(52 - (playerCount * 3));
             
             const allDealtCards = result.hands.flat();
             const combinedCards = [...allDealtCards, ...result.remainingDeck];
@@ -382,8 +379,8 @@ describe("3. ระบบจัดการสำรับไพ่และก�
             const sortCards = (cards: Card[]) => cards.sort((a, b) => a.rank - b.rank || a.suit.localeCompare(b.suit));
             
             expect(sortCards(combinedCards)).toEqual(sortCards(structuredClone(deck)));
-        }
-    });
+        });
+    }
 });
 
 describe("[gameLogic.getWinners] 4. ค้นหาผู้เล่นที่ถือมือดีที่สุด", () => {
