@@ -92,9 +92,77 @@ export function compareHands(_handA: Card[], _handB: Card[]): number {
     return 0;
 }
 
-export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
-    // รอคนเลือก
-    return [];
+export function getWinners(players: { id: string, cards: Card[] }[]): string[] {
+    // ถ้าไม่มีผู้เล่น ให้คืนค่าเป็น array ว่าง
+    if (players.length === 0) {
+        return [];
+    }
+
+    // กำหนดน้ำหนักความแรงของแต่ละ rank (มากไปน้อย: TRAIL > PURE_SEQUENCE > SEQUENCE > COLOR > PAIR > HIGH_CARD)
+    const rankWeight: Record<HandRank, number> = {
+        TRAIL: 6,
+        PURE_SEQUENCE: 5,
+        SEQUENCE: 4,
+        COLOR: 3,
+        PAIR: 2,
+        HIGH_CARD: 1
+    };
+
+    // ประเมินผลหน้าไพ่ของผู้เล่นแต่ละคน
+    const evaluatedPlayers = players.map(player => ({
+        id: player.id,
+        hand: evaluateHand(player.cards)
+    }));
+
+    // ฟังก์ชันสำหรับเปรียบเทียบมือไพ่สองมือ (คืนค่า > 0 ถ้า handA ชนะ, < 0 ถ้า handB ชนะ, 0 ถ้าเสมอ)
+    const compareEvaluatedHands = (
+        handA: { rank: HandRank, rankValue: number, kickers: number[] },
+        handB: { rank: HandRank, rankValue: number, kickers: number[] }
+    ): number => {
+        // 1. เทียบลำดับความแรงของ rank
+        const rankDiff = rankWeight[handA.rank] - rankWeight[handB.rank];
+        if (rankDiff !== 0) {
+            return rankDiff;
+        }
+
+        // 2. ถ้า rank เท่ากัน ให้เทียบ rankValue
+        if (handA.rankValue !== handB.rankValue) {
+            return handA.rankValue - handB.rankValue;
+        }
+
+        // 3. ถ้า rankValue เท่ากัน ให้เทียบ kickers ทีละตัวตามลำดับ index
+        const kickerCount = Math.max(handA.kickers.length, handB.kickers.length);
+        for (let i = 0; i < kickerCount; i++) {
+            const kickerA = handA.kickers[i] ?? 0;
+            const kickerB = handB.kickers[i] ?? 0;
+            if (kickerA !== kickerB) {
+                return kickerA - kickerB;
+            }
+        }
+
+        // 4. ถ้าเท่ากันหมดทุกอย่าง ถือว่าเสมอกัน
+        return 0;
+    };
+
+    // หาผู้เล่นที่มีมือดีที่สุด
+    let bestHand = evaluatedPlayers[0].hand;
+    let winnerIds: string[] = [evaluatedPlayers[0].id];
+
+    for (let i = 1; i < evaluatedPlayers.length; i++) {
+        const current = evaluatedPlayers[i];
+        const cmp = compareEvaluatedHands(current.hand, bestHand);
+
+        if (cmp > 0) {
+            // เจอผู้เล่นที่มีมือดีกว่า ให้เริ่มรายการผู้ชนะใหม่
+            bestHand = current.hand;
+            winnerIds = [current.id];
+        } else if (cmp === 0) {
+            // มือเท่ากับแต้มที่ดีที่สุด ให้เพิ่มเข้าไปเป็นผู้ชนะร่วม (Split Pot)
+            winnerIds.push(current.id);
+        }
+    }
+
+    return winnerIds;
 }
 
 export function calculateSplitPot(pot: number, winnerIds: string[]): Record<string, number> {
