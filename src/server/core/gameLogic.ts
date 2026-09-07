@@ -76,10 +76,34 @@ export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: numbe
     return { rank: 'HIGH_CARD', rankValue: cards[0].rank, kickers: [cards[1].rank, cards[2].rank] };
 }
 
-export function compareHands(_handA: Card[], _handB: Card[]): number {
-    // รอคนเลือก
-    return 0;
-}
+// 1. สร้างตารางคะแนน (Rank Weight) เพื่อให้เปรียบเทียบง่าย
+const RANK_WEIGHT: Record<HandRank, number> = {
+    'TRAIL': 6,
+    'PURE_SEQUENCE': 5,
+    'SEQUENCE': 4,
+    'COLOR': 3,
+    'PAIR': 2,
+    'HIGH_CARD': 1
+};
+
+export const compareHands = (_handA: Card[], _handB: Card[]): number => {
+    const handA = evaluateHand(_handA);
+    const handB = evaluateHand(_handB);
+
+    const rankDiff = RANK_WEIGHT[handA.rank] - RANK_WEIGHT[handB.rank];
+    if (rankDiff !== 0) { 
+        return rankDiff;
+    }
+
+    const valueDiff = handA.rankValue - handB.rankValue;
+    if (valueDiff !== 0) { 
+        return valueDiff;
+    }
+
+    return handA.kickers
+        .map((k, i) => k - handB.kickers[i])
+        .find(d => d !== 0) ?? 0;
+};
 
 export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
     // รอคนเลือก
