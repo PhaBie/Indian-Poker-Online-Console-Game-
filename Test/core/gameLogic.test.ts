@@ -128,7 +128,6 @@ describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้
             { suit: 'DIAMONDS', rank: 2 }
         ];
 
-        // หา permutations ทั้ง 6 รูปแบบ
         const perms = [
             [cards[0], cards[1], cards[2]],
             [cards[0], cards[2], cards[1]],
@@ -138,7 +137,11 @@ describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้
             [cards[2], cards[1], cards[0]]
         ];
 
-        const expected = evaluateHand(perms[0]);
+        const expected = {
+            rank: 'HIGH_CARD',
+            rankValue: 13,
+            kickers: [7, 2]
+        };
 
         for (const perm of perms) {
             expect(evaluateHand(perm)).toEqual(expected);
@@ -147,8 +150,8 @@ describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้
 
     test("1.11 ประเมินหน้าไพ่แล้วออบเจกต์ไพ่ต้นฉบับต้องไม่ถูกเปลี่ยนแปลง (Immutability)", () => {
         const originalCards: Card[] = [
-            { suit: 'SPADES', rank: 13 },
             { suit: 'HEARTS', rank: 7 },
+            { suit: 'SPADES', rank: 13 },
             { suit: 'DIAMONDS', rank: 2 }
         ];
         const clonedCards = structuredClone(originalCards);
@@ -260,8 +263,7 @@ describe("[gameLogic.compareHands] 2. ระบบเปรียบเทีย
         expect(compareHands(handA, handB)).toBe(0);
     });
 
-    test("2.8 เปรียบเทียบ HIGH_CARD ที่มี Kicker ตัวสุดท้ายต่างกัน", () => {
-        // A-9-5 vs A-9-4
+    test("2.8 เปรียบเทียบ HIGH_CARD ที่มี Kicker ใบสุดท้ายต่างกัน → A-9-5 ชนะ A-9-4 และสลับคู่แล้วแพ้", () => {
         const handA95: Card[] = [
             { suit: 'SPADES', rank: 14 },
             { suit: 'HEARTS', rank: 9 },
@@ -368,10 +370,15 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         for (const playerCount of [2, 3, 4]) {
             const result = dealCards(deck, playerCount, 3);
             
+            expect(result.hands.length).toBe(playerCount);
+            for (const hand of result.hands) {
+                expect(hand.length).toBe(3);
+            }
+            expect(result.remainingDeck.length).toBe(52 - playerCount * 3);
+            
             const allDealtCards = result.hands.flat();
             const combinedCards = [...allDealtCards, ...result.remainingDeck];
             
-            // เรียงไพ่ทั้งสองชุดเพื่อเปรียบเทียบให้ง่ายขึ้น
             const sortCards = (cards: Card[]) => cards.sort((a, b) => a.rank - b.rank || a.suit.localeCompare(b.suit));
             
             expect(sortCards(combinedCards)).toEqual(sortCards(structuredClone(deck)));
@@ -413,11 +420,8 @@ describe("[gameLogic.getWinners] 4. ค้นหาผู้เล่นที�
 
     test("4.3 ผู้เล่นคนแรกแพ้, คนที่สองชนะ, และคนที่สามเสมอกับคนที่สอง → ต้องคืนค่าแค่คนที่สองและสาม", () => {
         const players: { id: string, cards: Card[] }[] = [
-            // คนแรกลำดับชั้นต่ำ (HIGH_CARD)
             { id: "player_1", cards: [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 7 }, { suit: 'DIAMONDS', rank: 9 }] },
-            // คนที่สองลำดับชั้นสูง (PAIR)
             { id: "player_2", cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }, { suit: 'SPADES', rank: 5 }] },
-            // คนที่สามลำดับชั้นสูงเท่ากับคนที่สอง (PAIR)
             { id: "player_3", cards: [{ suit: 'HEARTS', rank: 14 }, { suit: 'SPADES', rank: 14 }, { suit: 'CLUBS', rank: 5 }] }
         ];
 
