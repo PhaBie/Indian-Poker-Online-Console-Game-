@@ -86,9 +86,9 @@ const RANK_WEIGHT: Record<HandRank, number> = {
     'HIGH_CARD': 1
 };
 
-export const compareHands = (_handA: Card[], _handB: Card[]): number => {
-    const handA = evaluateHand(_handA);
-    const handB = evaluateHand(_handB);
+export function compareHands(handa: Card[], handb: Card[]): number {
+    const handA = evaluateHand(handa);
+    const handB = evaluateHand(handb);
 
     const rankDiff = RANK_WEIGHT[handA.rank] - RANK_WEIGHT[handB.rank];
     if (rankDiff !== 0) { 
@@ -100,10 +100,12 @@ export const compareHands = (_handA: Card[], _handB: Card[]): number => {
         return valueDiff;
     }
 
-    return handA.kickers
-        .map((k, i) => k - handB.kickers[i])
-        .find(d => d !== 0) ?? 0;
-};
+    const kickerDifference = handA.kickers
+        .map((kicker, index) => kicker - handB.kickers[index])
+        .find(difference => difference !== 0);
+
+    return kickerDifference ?? 0;
+}
 
 export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
     // รอคนเลือก
