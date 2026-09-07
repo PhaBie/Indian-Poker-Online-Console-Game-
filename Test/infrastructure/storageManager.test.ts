@@ -19,7 +19,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         }
     }
 
-    test("9.1 ระบบสามารถบันทึกและโหลดข้อมูล Room กลับมาได้อย่างถูกต้องบน File System และต้องรักษาข้อมูลรอบ (Persistence)", () => {
+    test("[StorageManager.saveRoomState → loadRoomState] 9.1 บันทึกสถานะห้องลงไฟล์ → โหลดกลับแล้ว roomId, phase, pot, currentStake และไพ่ผู้เล่นคนแรกตรงตามที่บันทึก", () => {
         withTempDir((dir) => {
             const storage1 = new StorageManager(dir);
             
@@ -69,7 +69,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         });
     });
 
-    test("9.2 ระบบสามารถลบไฟล์ Save ของห้องได้เมื่อไม่มีความจำเป็นแล้ว", () => {
+    test("[StorageManager.deleteSavedRoom] 9.2 ลบไฟล์ Save ของห้อง → ไฟล์ถูกลบออกจาก File System", () => {
         withTempDir((dir) => {
             const storage = new StorageManager(dir);
             const room = new Room("room_file_delete");
@@ -83,7 +83,7 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         });
     });
 
-    test("9.3 เมื่อระบุรหัสห้องที่ไม่มีไฟล์เซฟ ระบบต้องคืนค่า null", () => {
+    test("[StorageManager.loadRoomState] 9.3 โหลดข้อมูลจากรหัสห้องที่ไม่มีไฟล์เซฟ → คืนค่า null", () => {
         withTempDir((dir) => {
             const storage = new StorageManager(dir);
             const result = storage.loadRoomState("room_ghost");
@@ -91,3 +91,5 @@ describe("9. ระบบบันทึกและกู้คืนสถา�
         });
     });
 });
+
+

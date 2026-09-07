@@ -28,7 +28,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
     });
 
     describe("Happy Paths", () => {
-        test("6.1 ระบบตอบกลับด้วย SESSION_CREATED พร้อม Token เมื่อรับคำสั่ง CREATE_ROOM สำเร็จ", () => {
+        test("[socketHandler.handleClientMessage] 6.1 ส่ง CREATE_ROOM → คืนค่า SESSION_CREATED พร้อม Token และ ROOM_CREATED พร้อม roomId", () => {
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = {
                 send: (data: string) => { sentMessages.push(JSON.parse(data)); }
@@ -51,7 +51,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(roomEvent.payload).toHaveProperty('roomId');
         });
 
-        test("6.2 ฟังก์ชัน broadcastGameStateUpdate สามารถกระจายข้อมูลไปยัง Client ทุกคนที่เชื่อมต่อในห้องได้", () => {
+        test("[socketHandler.broadcastGameStateUpdate] 6.2 สั่งกระจายสถานะห้อง → Client ทุกคนที่อยู่ในห้องได้รับ GAME_STATE_UPDATE", () => {
             const sentMessages1: ServerEvent[] = [];
             const mockWsClient1 = { send: (data: string) => sentMessages1.push(JSON.parse(data)) } as unknown as WSWebSocket;
             
@@ -74,7 +74,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(sentMessages2[0].type).toBe('GAME_STATE_UPDATE');
         });
 
-        test("6.3 ระบบต้องกรองไพ่ (myCards) ให้ตรงกับผู้เล่นเจ้าของ Session เท่านั้น โดยผู้เล่น Blind ต้องได้รับอาร์เรย์ว่าง และผู้เล่น Seen ต้องได้รับไพ่ตัวเองครบถ้วนแต่ไม่เห็นไพ่คนอื่น", () => {
+        test("[socketHandler.broadcastGameStateUpdate] 6.3 กระจายสถานะห้อง → ผู้เล่น Blind ได้รับ myCards ว่าง ส่วน Seen ได้รับไพ่ตัวเองครบ และทุกคนไม่เห็นไพ่ privateCards ของคนอื่น", () => {
             const sentMessages1: ServerEvent[] = [];
             const mockWsClient1 = { send: (data: string) => sentMessages1.push(JSON.parse(data)) } as unknown as WSWebSocket;
             
@@ -112,7 +112,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(stateEvent2.payload.myCards).toEqual([{ suit: 'HEARTS', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'HEARTS', rank: 4 }]);
         });
         
-        test("6.4 ระบบตอบกลับด้วย GAME_STATE_UPDATE (PLAYING) เมื่อโฮสต์ส่งคำสั่ง START_GAME ได้ถูกต้อง", () => {
+        test("[socketHandler.handleClientMessage] 6.4 โฮสต์ส่ง START_GAME → คืนค่า GAME_STATE_UPDATE ที่มี phase เป็น PLAYING", () => {
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = {
                 send: (data: string) => { sentMessages.push(JSON.parse(data)); }
@@ -136,7 +136,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
         });
 
-        test("6.5 การส่ง JOIN_ROOM พร้อม reconnectToken ต้องคืนค่า Session เดิมพร้อมกู้คืนข้อมูลครบถ้วน", () => {
+        test("[socketHandler.handleClientMessage] 6.5 ส่ง JOIN_ROOM พร้อม Token ที่ถูกต้องของคนที่หลุด → คืนค่า GAME_STATE_UPDATE และผูก Session กับผู้เล่นเดิม รักษาชิป เดิมพันและไพ่ และออกจากสถานะ DISCONNECTED", () => {
             const host = new Player("player_1", "Host");
             host.chips = 800;
             host.bet = 200;
@@ -170,7 +170,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
     });
 
     describe("Unhappy Paths", () => {
-        test("6.6 การ JOIN_ROOM ไปยังห้องที่ไม่มีอยู่จริง ระบบต้องตอบกลับด้วย ERROR", () => {
+        test("[socketHandler.handleClientMessage] 6.6 ส่ง JOIN_ROOM รหัสห้องไม่มีอยู่จริง → คืนค่า ERROR", () => {
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = {
                 send: (data: string) => { sentMessages.push(JSON.parse(data)); }
@@ -187,7 +187,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(errorEvent).toBeDefined();
         });
 
-        test("6.7 คำสั่ง PLAYER_ACTION ต้องส่ง ERROR กลับมาหากผู้เล่นไม่ได้อยู่ในห้องเกมจริงๆ", () => {
+        test("[socketHandler.handleClientMessage] 6.7 ส่ง PLAYER_ACTION แต่ไม่อยู่ในห้อง → คืนค่า ERROR", () => {
             const sentMessages: ServerEvent[] = [];
             const mockWsClient = {
                 send: (data: string) => { sentMessages.push(JSON.parse(data)); }
@@ -206,7 +206,7 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
             expect(errorEvent).toBeDefined();
         });
 
-        test("6.8 การ Reconnect ด้วย Token ที่ไม่ถูกต้องต้องถูกปฏิเสธ (ERROR)", () => {
+        test("[socketHandler.handleClientMessage] 6.8 ส่ง JOIN_ROOM พร้อม Token ผิด → คืนค่า ERROR (INVALID_TOKEN) และสถานะยังคง DISCONNECTED", () => {
             const host = new Player("player_1", "Host");
             mockContext.roomManager.createRoom("room_123", host);
             host.status = 'DISCONNECTED';
@@ -235,3 +235,5 @@ describe("6. ระบบจัดการเครือข่าย (WebSocke
         });
     });
 });
+
+

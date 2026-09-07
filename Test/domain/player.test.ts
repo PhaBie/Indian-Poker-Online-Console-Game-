@@ -4,7 +4,7 @@ import { InsufficientChipsError, PlayerStateError } from "../../src/server/domai
 
 describe("3. ระบบการกระทำของผู้เล่น (Player Actions)", () => {
     describe("Happy Paths", () => {
-        test("3.1 ผู้เล่นสามารถรับไพ่ได้ถูกต้อง", () => {
+        test("[Player.receiveCards] 3.1 รับไพ่ 3 ใบ → อัปเดต privateCards มี 3 ใบและใบแรกแต้ม 14", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.receiveCards([{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }]);
             
@@ -12,7 +12,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.privateCards[0].rank).toBe(14);
         });
 
-        test("3.2 ผู้เล่นสามารถจ่ายเงินเดิมพัน (payBet) และชิปลดลงตามจำนวนที่ระบุ", () => {
+        test("[Player.payBet] 3.2 จ่ายเดิมพัน 100 → ชิปลดลง 100 และ bet สะสมเป็น 100", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.chips = 1000;
             player.status = 'ACTIVE';
@@ -22,7 +22,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.bet).toBe(100);
         });
 
-        test("3.3 ผู้เล่นสามารถหมอบและสถานะจะเปลี่ยนเป็น FOLDED", () => {
+        test("[Player.fold] 3.3 สั่งหมอบ → สถานะผู้เล่นเปลี่ยนเป็น FOLDED", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.status = 'ACTIVE';
             player.fold();
@@ -30,7 +30,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.status as string).toBe('FOLDED');
         });
 
-        test("3.4 ผู้เล่นสามารถแปลงข้อมูลเป็น JSON โดยไม่มีข้อมูลไพ่ส่วนตัวหลุดออกไป", () => {
+        test("[Player.toJSON] 3.4 แปลงข้อมูลเป็น JSON → ออบเจกต์ที่ได้ไม่มีข้อมูล privateCards", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
             const json: Record<string, unknown> = player.toJSON() as Record<string, unknown>;
@@ -40,7 +40,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(json.privateCards).toBeUndefined();
         });
 
-        test("3.5 ผู้เล่นสามารถโหลดข้อมูลจาก JSON กลับมาเป็น Object ได้ครบถ้วน", () => {
+        test("[Player.fromJSON] 3.5 โหลดข้อมูลจาก JSON → คืนค่าออบเจกต์ Player ที่มี id, chips, isBlind ตรงตาม JSON", () => {
             const json = {
                 id: "id_phupa",
                 name: "Phupa",
@@ -57,7 +57,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.isBlind).toBe(false);
         });
 
-        test("3.6 ผู้เล่นเคลียร์ข้อมูลสำหรับการเริ่มรอบใหม่ ชิปคงเหลือเท่าเดิมแต่สถานะและไพ่ถูกล้าง", () => {
+        test("[Player.resetForNewRound] 3.6 เคลียร์ข้อมูลรอบใหม่ → สถานะเป็น WAITING, ล้าง privateCards และคงชิปเดิมไว้", () => {
             const player = new Player("id_pun", "Pun");
             player.chips = 800;
             player.receiveCards([{ suit: 'SPADES', rank: 14 }]);
@@ -74,7 +74,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.isBlind).toBe(true);
         });
 
-        test("3.7 ผู้เล่นสามารถจ่ายเงินเพิ่มหลายครั้ง และหักชิปลดลงตามจำนวนที่ระบุเต็มๆ พร้อมบวกยอดสะสม", () => {
+        test("[Player.payBet] 3.7 จ่าย 50 สองครั้ง → ชิปลดรวม 100 และ bet สะสมเป็น 100", () => {
             const player = new Player("id_beam", "Beam");
             player.chips = 1000;
             player.status = 'ACTIVE';
@@ -89,7 +89,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.bet).toBe(100);
         });
 
-        test("3.8 ผู้เล่นสามารถจ่ายเงินก้อนใหญ่ (payBet) และหักชิปถูกต้อง", () => {
+        test("[Player.payBet] 3.8 จ่าย 50 แล้วจ่าย 150 → ชิปลดลงรวม 200 และ bet สะสมเป็น 200", () => {
             const player = new Player("id_extra", "Extra");
             player.chips = 1000;
             player.status = 'ACTIVE';
@@ -100,7 +100,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.bet).toBe(200);
         });
 
-        test("3.9 ผู้เล่นได้รับชิปเพิ่มเมื่อชนะและรับเงินจากกองกลาง", () => {
+        test("[Player.addChips] 3.9 ได้รับชิปเพิ่ม 500 → ชิปเพิ่มขึ้น 500", () => {
             const player = new Player("id_thanathon", "Thanathon");
             player.chips = 1000;
             player.addChips(500);
@@ -110,7 +110,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
     });
 
     describe("Unhappy Paths", () => {
-        test("3.10 ผู้เล่นไม่สามารถเดิมพันเกินกว่าชิปที่มีอยู่ได้ ระบบปฏิเสธโดยสถานะไม่เปลี่ยนแปลง", () => {
+        test("[Player.payBet] 3.10 จ่ายเดิมพันเกินชิปที่มี → โยน InsufficientChipsError และ chips กับ bet ไม่เปลี่ยน", () => {
             const player = new Player("id_poor", "Poor");
             player.status = 'ACTIVE';
             player.chips = 100;
@@ -124,7 +124,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.bet).toBe(50);
         });
 
-        test("3.11 ผู้เล่นไม่สามารถจ่ายเงิน (payBet) เกินชิปที่มีอยู่ได้แม้จะมียอดเดิม", () => {
+        test("[Player.payBet] 3.11 จ่ายเดิมพันทบยอดจนเกินชิปที่มี → โยน InsufficientChipsError", () => {
             const player = new Player("id_poor", "Poor");
             player.status = 'ACTIVE';
             player.chips = 200;
@@ -138,7 +138,7 @@ describe("3. ระบบการกระทำของผู้เล่น 
             expect(player.bet).toBe(100);
         });
 
-        test("3.12 ผู้เล่นไม่สามารถจ่ายเงิน (payBet) เมื่อไม่ได้มีสถานะ ACTIVE", () => {
+        test("[Player.payBet] 3.12 จ่ายเดิมพันขณะสถานะเป็น FOLDED → โยน PlayerStateError", () => {
             const player = new Player("id_folded", "Folded");
             player.chips = 1000;
             player.status = 'FOLDED';
@@ -151,3 +151,5 @@ describe("3. ระบบการกระทำของผู้เล่น 
         });
     });
 });
+
+

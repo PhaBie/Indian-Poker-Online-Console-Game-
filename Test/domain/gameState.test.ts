@@ -36,7 +36,7 @@ function createMockGameState(overrides?: Partial<GameState>, playersParams?: Pla
 
 describe("4. ระบบการเล่นบนโต๊ะ (Game State Engine)", () => {
     describe("Happy Paths", () => {
-        test("4.1 เมื่อเริ่มเกม ระบบจะต้องหักเงิน Boot 50 จากผู้เล่นทุกคนไปรวมที่กองกลางและแจกไพ่ 3 ใบให้ทุกคน", () => {
+        test("[GameState.startGame] 4.1 เริ่มเกม → หักชิปเป็น Boot 50 เข้า Pot 100, ผู้เล่นได้รับไพ่คนละ 3 ใบ และผู้เล่นคนแรกสถานะเป็น ACTIVE", () => {
             const gameState = createMockGameState({}, [
                 { id: "player1", name: "Player1", status: "WAITING", chips: 1000 },
                 { id: "player2", name: "Player2", status: "WAITING", chips: 1000 }
@@ -52,13 +52,13 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].status).toBe("ACTIVE");
         });
 
-        test("4.2 ระบบสามารถเปลี่ยนเทิร์นไปยังผู้เล่นคนถัดไปได้อย่างถูกต้อง", () => {
+        test("[GameState.nextTurn] 4.2 เปลี่ยนเทิร์น → เปลี่ยนไปยังผู้เล่นคนถัดไป", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0 });
             gameState.nextTurn();
             expect(gameState.currentPlayerIndex).toBe(1);
         });
 
-        test("4.3 ระบบสามารถข้ามเทิร์นผู้เล่นที่หมอบ (FOLDED) หรือหลุด (DISCONNECTED) ไปยังคนถัดไปได้", () => {
+        test("[GameState.nextTurn] 4.3 ผู้เล่นสถานะ FOLDED หรือ DISCONNECTED → ข้ามเทิร์นไปยังคนถัดไปที่เป็น ACTIVE", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000 },
                 { id: "player2", name: "Player2", status: "FOLDED", chips: 1000 },
@@ -69,7 +69,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.currentPlayerIndex).toBe(3);
         });
 
-        test("4.4 ผู้เล่น (Blind) สามารถ Call ตามขั้นต่ำ (currentStake) โดยกองกลางและระดับเดิมพันถัดไปจะถูกอัปเดต", () => {
+        test("[GameState.processAction] 4.4 ผู้เล่น Blind ขอ CALL → หักชิปเท่า currentStake 50 เข้า Pot 150 และ currentStake คงเดิมที่ 50", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, currentStake: 50, pot: 100 });
             gameState.processAction("player1", "CALL");
             
@@ -79,7 +79,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(50);
         });
 
-        test("4.5 ผู้เล่น (Blind) สามารถ Raise โดยระบุจำนวนชิปที่จ่ายเพิ่ม (amount) และระดับเดิมพันถัดไปจะเปลี่ยนตาม", () => {
+        test("[GameState.processAction] 4.5 ผู้เล่น Blind ขอ RAISE ด้วย 100 → หักชิป 100 เข้า Pot 200 และ currentStake เปลี่ยนเป็น 100", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, currentStake: 50, pot: 100 });
             gameState.processAction("player1", "RAISE", 100);
             
@@ -89,7 +89,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(100);
         });
 
-        test("4.6 คนที่ดูไพ่แล้ว (Seen) จะต้องจ่าย 2 เท่าของระดับเดิมพันถัดไปเมื่อขอ Call และ currentStake ใหม่คือครึ่งหนึ่งของที่จ่าย", () => {
+        test("[GameState.processAction] 4.6 ผู้เล่น Seen ขอ CALL → หักชิป 100 เข้า Pot 200 และ currentStake คงเดิมที่ 50", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, currentStake: 50, pot: 100 });
             gameState.activePlayers[0].isBlind = false; 
             
@@ -101,7 +101,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(100);
         });
 
-        test("4.6.1 คนที่ดูไพ่แล้ว (Seen) เมื่อ Raise ด้วย amount ระดับเดิมพันถัดไป (currentStake) จะเป็น amount / 2", () => {
+        test("[GameState.processAction] 4.6.1 ผู้เล่น Seen ขอ RAISE ด้วย 200 → หักชิป 200 เข้า Pot 300 และ currentStake เปลี่ยนเป็น 100", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, currentStake: 50, pot: 100 });
             gameState.activePlayers[0].isBlind = false; 
             
@@ -113,7 +113,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(200);
         });
 
-        test("4.6.2 เมื่อวนเทิร์นกลับมาที่ผู้เล่นเดิม ต้องจ่ายเต็มตาม currentStake ใหม่โดยไม่หักลบยอดเดิม", () => {
+        test("[GameState.processAction] 4.6.2 วนเทิร์นกลับมาที่ผู้เล่นเดิมแล้วขอ CALL → หักชิปเต็ม 100 เข้า Pot 350 โดยไม่หักลบยอดเดิม", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, currentStake: 50, pot: 100 });
             
             gameState.processAction("player1", "CALL");
@@ -129,7 +129,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(150);
         });
 
-        test("4.7 ระบบหาผู้ชนะเมื่อจบเกมและโอนเงินกองกลางทั้งหมดให้ผู้ชนะ", () => {
+        test("[GameState.evaluateWinner] 4.7 จบเกมและผู้เล่นคนแรกถือมือดีกว่า → โอนเงินใน Pot 500 ให้ผู้ชนะ", () => {
             const gameState = createMockGameState({ pot: 500 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'DIAMONDS', rank: 4 }] }
@@ -142,7 +142,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.pot).toBe(0);
         });
 
-        test.skip("4.8 [พักไว้หลังเดโม] ระบบสามารถประมวลผล Sideshow และบังคับคนแพ้หมอบ", () => {
+        test.skip("[GameState.executeSideshow] 4.8 [พักไว้หลังเดโม] → ผู้แพ้เปลี่ยนสถานะเป็น FOLDED", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'DIAMONDS', rank: 4 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }] }
@@ -154,7 +154,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[1].status).toBe('ACTIVE');
         });
 
-        test("4.9 ระบบจบเกมอัตโนมัติและมอบเงินให้ผู้เล่นที่เหลือรอดเมื่อคนอื่นหมอบหมด (Last Man Standing)", () => {
+        test("[GameState.endGame] 4.9 คนอื่นหมอบหมดเหลือผู้เล่นคนเดียว → จบเกมและโอนเงิน Pot 1500 ให้ผู้เล่นที่เหลือรอด", () => {
             const gameState = createMockGameState({ pot: 1500 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000 },
                 { id: "player2", name: "Player2", status: "FOLDED", chips: 1000 },
@@ -167,7 +167,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.pot).toBe(0);
         });
 
-        test("4.10 ระบบประมวลผลคำสั่ง SHOW ได้ถูกต้องผ่านทางเข้า processAction (หักเงิน, เหลือ 2 คน, เสมอผู้ขอแพ้)", () => {
+        test("[GameState.processAction] 4.10 เหลือผู้เล่น Blind 2 คนและไพ่เสมอ → ผู้ขอจ่ายค่า SHOW และอีกคนรับกองกลางทั้งหมด", () => {
             const gameState = createMockGameState({ pot: 500, currentPlayerIndex: 0, currentStake: 100 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] }
@@ -180,7 +180,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[1].chips).toBe(1600);
         });
 
-        test("4.10.1 ผู้เล่น Seen ขอ SHOW กับ Seen ต้องจ่าย 2 เท่าของ currentStake", () => {
+        test("[GameState.processAction] 4.10.1 ผู้เล่น Seen ขอ SHOW กับ Seen และไพ่เสมอ → ผู้ขอจ่ายค่า SHOW สองเท่า (200) และอีกคนรับกองกลางทั้งหมด", () => {
             const gameState = createMockGameState({ pot: 500, currentPlayerIndex: 0, currentStake: 100 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] }
@@ -194,7 +194,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[1].chips).toBe(1700); 
         });
 
-        test("4.10.2 ผู้เล่นไม่สามารถขอ SHOW ได้หากยังเหลือผู้เล่นมากกว่า 2 คน", () => {
+        test("[GameState.processAction] 4.10.2 ขอ SHOW เมื่อเหลือผู้เล่นมากกว่า 2 คน → โยน InvalidActionError", () => {
             const gameState = createMockGameState({ pot: 500, currentPlayerIndex: 0, currentStake: 100 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] },
@@ -208,7 +208,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].chips).toBe(1000);
         });
 
-        test("4.10.3 ผู้เล่นไม่สามารถขอ SHOW หากไม่ใช่เทิร์นของตนเอง", () => {
+        test("[GameState.processAction] 4.10.3 ขอ SHOW เมื่อไม่ใช่เทิร์นตนเอง → โยน WrongTurnError", () => {
             const gameState = createMockGameState({ pot: 500, currentPlayerIndex: 1, currentStake: 100 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] }
@@ -221,7 +221,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].chips).toBe(1000);
         });
 
-        test("4.10.4 ผู้เล่น Seen ไม่สามารถขอ SHOW กับผู้เล่น Blind ได้", () => {
+        test("[GameState.processAction] 4.10.4 ผู้เล่น Seen ขอ SHOW กับผู้เล่น Blind → โยน InvalidActionError", () => {
             const gameState = createMockGameState({ pot: 500, currentPlayerIndex: 0, currentStake: 100 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000, cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] }
@@ -237,7 +237,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].chips).toBe(1000);
         });
 
-        test("4.11 ผู้เล่นสถานะ Blind จะยังมีข้อมูล privateCards อยู่บน Server ครบถ้วน", () => {
+        test("[GameState.startGame] 4.11 เริ่มเกมกับผู้เล่นสถานะ Blind → ผู้เล่นได้รับ privateCards ครบ 3 ใบและ isBlind ยังเป็น true", () => {
             const gameState = createMockGameState({}, [
                 { id: "player1", name: "Player1", status: "WAITING", chips: 1000 },
                 { id: "player2", name: "Player2", status: "WAITING", chips: 1000 }
@@ -250,7 +250,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
     });
 
     describe("Unhappy Paths", () => {
-        test("4.11 ไม่อนุญาตให้สั่งเล่นเมื่อยังไม่ถึงเทิร์นของตัวเอง และกองกลาง/เทิร์นต้องไม่เปลี่ยนแปลง", () => {
+        test("[GameState.processAction] 4.11 สั่งเล่น CALL นอกเทิร์นตนเอง → โยน WrongTurnError และ pot, currentPlayerIndex และ bet ของผู้ขอไม่เปลี่ยน", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 1, pot: 500, currentStake: 50 });
             
             expect(() => {
@@ -262,7 +262,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.activePlayers[0].bet).toBe(0);
         });
 
-        test("4.12 ผู้เล่นที่มีสถานะ WAITING หรือ FOLDED ไม่สามารถทำ Action ได้", () => {
+        test("[GameState.processAction] 4.12 ผู้เล่นที่มีสถานะ FOLDED ขอ CALL → โยน PlayerStateError", () => {
             const gameState = createMockGameState({ currentPlayerIndex: 0, pot: 500, currentStake: 50 }, [
                 { id: "player1", name: "Player1", status: "FOLDED", chips: 1000 },
                 { id: "player2", name: "Player2", status: "ACTIVE", chips: 1000 }
@@ -275,7 +275,7 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
             expect(gameState.pot).toBe(500);
         });
 
-        test("4.13 หากจบรอบซ้ำ (End Game Double Call) ต้องไม่มีการจ่ายเงินเบิ้ล", () => {
+        test("[GameState.endGame] 4.13 จบรอบซ้ำสองครั้ง → ผู้ชนะรับเงินจาก Pot แค่รอบแรก และชิปไม่เพิ่มเบิ้ล", () => {
             const gameState = createMockGameState({ pot: 1000 }, [
                 { id: "player1", name: "Player1", status: "ACTIVE", chips: 1000, cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }] },
                 { id: "player2", name: "Player2", status: "FOLDED", chips: 1000 }
@@ -290,3 +290,5 @@ describe("4. ระบบการเล่นบนโต๊ะ (Game State Eng
         });
     });
 });
+
+
