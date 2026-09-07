@@ -1,12 +1,23 @@
 import type { Card, HandRank } from '../../shared/types';
 
 export function createDeck(): Card[] {
-    return [];
+    const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
+    const ranks: Card['rank'][] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
 }
 
-export function shuffleDeck(_deck: Card[], _rng?: () => number): Card[] {
-    // รอคนเลือก
-    return [];
+export function shuffleDeck(_deck: Card[], _rng: () => number = Math.random): Card[] {
+    const shuffledDeck = [..._deck];
+
+    for (let index = shuffledDeck.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(_rng() * (index + 1));
+        [shuffledDeck[index], shuffledDeck[swapIndex]] = [
+            shuffledDeck[swapIndex],
+            shuffledDeck[index]
+        ];
+    }
+
+    return shuffledDeck;
 }
 
 export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number): { hands: Card[][], remainingDeck: Card[] } {
