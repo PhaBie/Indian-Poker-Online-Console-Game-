@@ -120,6 +120,43 @@ describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้
         expect(result.rank).not.toBe('SEQUENCE');
         expect(result.rank).not.toBe('PURE_SEQUENCE');
     });
+
+    test("1.10 สลับลำดับไพ่ในมือแล้วผลประเมินต้องเท่าเดิม (HIGH_CARD)", () => {
+        const cards: Card[] = [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 7 },
+            { suit: 'DIAMONDS', rank: 2 }
+        ];
+
+        // หา permutations ทั้ง 6 รูปแบบ
+        const perms = [
+            [cards[0], cards[1], cards[2]],
+            [cards[0], cards[2], cards[1]],
+            [cards[1], cards[0], cards[2]],
+            [cards[1], cards[2], cards[0]],
+            [cards[2], cards[0], cards[1]],
+            [cards[2], cards[1], cards[0]]
+        ];
+
+        const expected = evaluateHand(perms[0]);
+
+        for (const perm of perms) {
+            expect(evaluateHand(perm)).toEqual(expected);
+        }
+    });
+
+    test("1.11 ประเมินหน้าไพ่แล้วออบเจกต์ไพ่ต้นฉบับต้องไม่ถูกเปลี่ยนแปลง (Immutability)", () => {
+        const originalCards: Card[] = [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 7 },
+            { suit: 'DIAMONDS', rank: 2 }
+        ];
+        const clonedCards = structuredClone(originalCards);
+
+        evaluateHand(originalCards);
+
+        expect(originalCards).toEqual(clonedCards);
+    });
 });
 
 describe("[gameLogic.compareHands] 2. ระบบเปรียบเทียบเพื่อหาผู้ชนะ", () => {
@@ -222,6 +259,23 @@ describe("[gameLogic.compareHands] 2. ระบบเปรียบเทีย
         ];
         expect(compareHands(handA, handB)).toBe(0);
     });
+
+    test("2.8 เปรียบเทียบ HIGH_CARD ที่มี Kicker ตัวสุดท้ายต่างกัน", () => {
+        // A-9-5 vs A-9-4
+        const handA95: Card[] = [
+            { suit: 'SPADES', rank: 14 },
+            { suit: 'HEARTS', rank: 9 },
+            { suit: 'DIAMONDS', rank: 5 }
+        ];
+        const handA94: Card[] = [
+            { suit: 'CLUBS', rank: 14 },
+            { suit: 'DIAMONDS', rank: 9 },
+            { suit: 'SPADES', rank: 4 }
+        ];
+
+        expect(compareHands(handA95, handA94)).toBeGreaterThan(0);
+        expect(compareHands(handA94, handA95)).toBeLessThan(0);
+    });
 });
 
 describe("3. ระบบจัดการสำรับไพ่และการแจกไพ่", () => {
@@ -298,6 +352,31 @@ describe("3. ระบบจัดการสำรับไพ่และก�
             { suit: 'HEARTS', rank: 7 }
         ]);
     });
+
+    test("[dealCards] 3.5 แจกไพ่แล้วออบเจกต์สำรับต้นฉบับต้องไม่ถูกเปลี่ยนแปลง (Immutability)", () => {
+        const deck = createDeck();
+        const clonedDeck = structuredClone(deck);
+
+        dealCards(deck, 4, 3);
+
+        expect(deck).toEqual(clonedDeck);
+    });
+
+    test("[dealCards] 3.6 แจกไพ่ 2, 3 และ 4 คน → ไพ่ในมือและไพ่ที่เหลือต้องรวมกันได้เท่ากับสำรับต้นฉบับเป๊ะ", () => {
+        const deck = createDeck();
+        
+        for (const playerCount of [2, 3, 4]) {
+            const result = dealCards(deck, playerCount, 3);
+            
+            const allDealtCards = result.hands.flat();
+            const combinedCards = [...allDealtCards, ...result.remainingDeck];
+            
+            // เรียงไพ่ทั้งสองชุดเพื่อเปรียบเทียบให้ง่ายขึ้น
+            const sortCards = (cards: Card[]) => cards.sort((a, b) => a.rank - b.rank || a.suit.localeCompare(b.suit));
+            
+            expect(sortCards(combinedCards)).toEqual(sortCards(structuredClone(deck)));
+        }
+    });
 });
 
 describe("[gameLogic.getWinners] 4. ค้นหาผู้เล่นที่ถือมือดีที่สุด", () => {
@@ -330,6 +409,25 @@ describe("[gameLogic.getWinners] 4. ค้นหาผู้เล่นที�
         expect(winners.length).toBe(2);
         expect(winners).toContain("player_1");
         expect(winners).toContain("player_2");
+    });
+
+    test("4.3 ผู้เล่นคนแรกแพ้, คนที่สองชนะ, และคนที่สามเสมอกับคนที่สอง → ต้องคืนค่าแค่คนที่สองและสาม", () => {
+        const players: { id: string, cards: Card[] }[] = [
+            // คนแรกลำดับชั้นต่ำ (HIGH_CARD)
+            { id: "player_1", cards: [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 7 }, { suit: 'DIAMONDS', rank: 9 }] },
+            // คนที่สองลำดับชั้นสูง (PAIR)
+            { id: "player_2", cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }, { suit: 'SPADES', rank: 5 }] },
+            // คนที่สามลำดับชั้นสูงเท่ากับคนที่สอง (PAIR)
+            { id: "player_3", cards: [{ suit: 'HEARTS', rank: 14 }, { suit: 'SPADES', rank: 14 }, { suit: 'CLUBS', rank: 5 }] }
+        ];
+
+        const winners = getWinners(players);
+
+        expect(winners).toBeInstanceOf(Array);
+        expect(winners.length).toBe(2);
+        expect(winners).toContain("player_2");
+        expect(winners).toContain("player_3");
+        expect(winners).not.toContain("player_1");
     });
 });
 
