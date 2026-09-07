@@ -118,27 +118,9 @@ export function compareHands(firstHand: Card[], secondHand: Card[]): number {
     return kickerDifference ?? 0;
 }
 
-export function getWinners(players: { id: string, cards: Card[] }[]): string[] {
-    if (players.length === 0) {
-        return [];
-    }
-
-    let bestPlayers: string[] = [players[0].id];
-    let bestHand = players[0].cards;
-
-    for (let i = 1; i < players.length; i++) {
-        const currentPlayer = players[i];
-        const cmp = compareHands(currentPlayer.cards, bestHand);
-        
-        if (cmp > 0) {
-            bestPlayers = [currentPlayer.id];
-            bestHand = currentPlayer.cards;
-        } else if (cmp === 0) {
-            bestPlayers.push(currentPlayer.id);
-        }
-    }
-
-    return bestPlayers;
+export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
+    // รอคนเลือก
+    return [];
 }
 
 export function calculateSplitPot(pot: number, winnerIds: string[]): Record<string, number> {
