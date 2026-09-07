@@ -118,9 +118,31 @@ export function compareHands(firstHand: Card[], secondHand: Card[]): number {
     return kickerDifference ?? 0;
 }
 
-export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
-    // รอคนเลือก
-    return [];
+export function getWinners(players: { id: string, cards: Card[] }[]): string[] {
+    // ถ้าไม่มีผู้เล่น ให้คืนค่าเป็น array ว่าง
+    if (players.length === 0) {
+        return [];
+    }
+
+    // หาผู้เล่นที่มีมือดีที่สุด
+    let bestCards = players[0].cards;
+    let winnerIds: string[] = [players[0].id];
+
+    for (let i = 1; i < players.length; i++) {
+        const current = players[i];
+        const cmp = compareHands(current.cards, bestCards);
+
+        if (cmp > 0) {
+            // เจอผู้เล่นที่มีมือดีกว่า ให้เริ่มรายการผู้ชนะใหม่
+            bestCards = current.cards;
+            winnerIds = [current.id];
+        } else if (cmp === 0) {
+            // มือเท่ากับแต้มที่ดีที่สุด ให้เพิ่มเข้าไปเป็นผู้ชนะร่วม (Split Pot)
+            winnerIds.push(current.id);
+        }
+    }
+
+    return winnerIds;
 }
 
 export function calculateSplitPot(pot: number, winnerIds: string[]): Record<string, number> {
