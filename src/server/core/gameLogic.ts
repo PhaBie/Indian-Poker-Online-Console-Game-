@@ -86,9 +86,9 @@ const RANK_WEIGHT: Record<HandRank, number> = {
     'HIGH_CARD': 1
 };
 
-export function compareHands(handa: Card[], handb: Card[]): number {
-    const handA = evaluateHand(handa);
-    const handB = evaluateHand(handb);
+export function compareHands(firstHand: Card[], secondHand: Card[]): number {
+    const handA = evaluateHand(firstHand);
+    const handB = evaluateHand(secondHand);
 
     const rankDiff = RANK_WEIGHT[handA.rank] - RANK_WEIGHT[handB.rank];
     if (rankDiff !== 0) { 
