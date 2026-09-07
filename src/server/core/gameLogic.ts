@@ -6,11 +6,11 @@ export function createDeck(): Card[] {
     return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
 }
 
-export function shuffleDeck(_deck: Card[], _rng: () => number = Math.random): Card[] {
-    const shuffledDeck = [..._deck];
+export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
+    const shuffledDeck = [...deck];
 
     for (let index = shuffledDeck.length - 1; index > 0; index--) {
-        const swapIndex = Math.floor(_rng() * (index + 1));
+        const swapIndex = Math.floor(rng() * (index + 1));
         [shuffledDeck[index], shuffledDeck[swapIndex]] = [
             shuffledDeck[swapIndex],
             shuffledDeck[index]
@@ -38,13 +38,13 @@ export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: num
     return { hands, remainingDeck };
 }
 
-export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
-    if (_cards.length !== 3) {
+export function evaluateHand(cardsInput: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
+    if (cardsInput.length !== 3) {
         throw new Error('At least 3 cards are required to evaluate.');
     }
 
     // เรียงไพ่จากแต้มมากไปน้อย (A=14, K=13, ..., 2=2)
-    const cards = [..._cards].sort((a, b) => b.rank - a.rank);
+    const cards = [...cardsInput].sort((a, b) => b.rank - a.rank);
 
     // เช็คว่าดอกเดียวกันหมดหรือไม่
     const isFlush = cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
@@ -138,3 +138,5 @@ export function calculateSplitPot(pot: number, winnerIds: string[]): Record<stri
         ])
     );
 }
+
+
