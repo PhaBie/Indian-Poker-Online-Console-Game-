@@ -5,7 +5,7 @@ import { GameError } from "../../src/server/domain/errors/GameError";
 
 describe("8. ระบบจัดการล็อบบี้ส่วนกลาง (Room Manager)", () => {
     describe("Happy Paths", () => {
-        test("8.1 สามารถสร้างห้องใหม่และจัดเก็บลงระบบได้", () => {
+        test("[RoomManager.createRoom] 8.1 สร้างห้องใหม่ → ออบเจกต์ห้องถูกสร้างและถูกเก็บลงระบบ", () => {
             const manager = new RoomManager();
             const host = new Player("id_host", "Host");
             const room = manager.createRoom("room_001", host);
@@ -15,7 +15,7 @@ describe("8. ระบบจัดการล็อบบี้ส่วนก�
             expect(manager.getAllRooms().length).toBe(1);
         });
 
-        test("8.2 สามารถค้นหาห้องจาก ID ได้", () => {
+        test("[RoomManager.getRoom] 8.2 ค้นหาห้องจาก ID → คืนค่าออบเจกต์ห้องที่ตรงกับ ID", () => {
             const manager = new RoomManager();
             const host = new Player("id_host", "Host");
             manager.createRoom("room_002", host);
@@ -25,7 +25,7 @@ describe("8. ระบบจัดการล็อบบี้ส่วนก�
             expect(found?.roomId).toBe("room_002");
         });
 
-        test("8.3 สามารถลบห้องเฉพาะห้องเป้าหมายทิ้งได้ โดยห้องอื่นต้องยังคงอยู่", () => {
+        test("[RoomManager.deleteRoom] 8.3 ลบห้องเป้าหมาย → ห้องเป้าหมายถูกลบและห้องอื่นยังคงอยู่", () => {
             const manager = new RoomManager();
             const host = new Player("id_host", "Host");
             manager.createRoom("room_target", host);
@@ -40,7 +40,7 @@ describe("8. ระบบจัดการล็อบบี้ส่วนก�
     });
 
     describe("Unhappy Paths", () => {
-        test("8.4 ไม่สามารถสร้างห้องที่มีรหัสซ้ำกับห้องที่เปิดอยู่แล้วได้ (ป้องกัน Duplicate Room ID)", () => {
+        test("[RoomManager.createRoom] 8.4 สร้างห้องด้วย ID ซ้ำ → โยน GameError", () => {
             const manager = new RoomManager();
             const host1 = new Player("id_host1", "Host 1");
             const host2 = new Player("id_host2", "Host 2");
@@ -53,3 +53,4 @@ describe("8. ระบบจัดการล็อบบี้ส่วนก�
         });
     });
 });
+

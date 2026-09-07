@@ -3,7 +3,7 @@ import { toPublicPlayerDTO, generateRoomId, generatePlayerId } from "../../src/s
 import type { ServerPlayer } from "../../src/shared/types";
 
 describe("5. ระบบช่วยเหลือและคัดกรองข้อมูล (Utils & Helpers)", () => {
-    test("5.1 ฟังก์ชัน toPublicPlayerDTO ต้องคัดกรองเฉพาะข้อมูลที่อนุญาตให้เปิดเผยได้เท่านั้น", () => {
+    test("[helpers.toPublicPlayerDTO] 5.1 แปลงข้อมูลผู้เล่น → คืนค่าออบเจกต์ที่ไม่มี property privateCards", () => {
         const mockPlayer: ServerPlayer = {
             id: "id_secret_123",
             name: "Thanathon",
@@ -26,7 +26,7 @@ describe("5. ระบบช่วยเหลือและคัดกรอ�
         expect(publicPlayer).not.toHaveProperty("privateCards");
     });
 
-    test("5.2 ฟังก์ชัน generateRoomId ต้องสร้างรหัสห้องที่ไม่ซ้ำกันได้", () => {
+    test("[helpers.generateRoomId] 5.2 สร้างรหัสห้องสองครั้ง → ได้รหัสห้องที่ไม่ซ้ำกัน", () => {
         const roomId1 = generateRoomId();
         const roomId2 = generateRoomId();
 
@@ -35,7 +35,7 @@ describe("5. ระบบช่วยเหลือและคัดกรอ�
         expect(roomId1).not.toBe(roomId2);
     });
 
-    test("5.3 ฟังก์ชัน generatePlayerId ต้องสร้างรหัสผู้เล่นที่ไม่ซ้ำกันได้", () => {
+    test("[helpers.generatePlayerId] 5.3 สร้างรหัสผู้เล่นสองครั้ง → ได้รหัสผู้เล่นที่ไม่ซ้ำกัน", () => {
         const playerId1 = generatePlayerId();
         const playerId2 = generatePlayerId();
 
@@ -44,10 +44,11 @@ describe("5. ระบบช่วยเหลือและคัดกรอ�
         expect(playerId1).not.toBe(playerId2);
     });
 
-    test("5.4 ฟังก์ชัน generateRoomId ต้องได้รหัสความยาว 6 ตัวอักษรและมีเฉพาะตัวเลขหรือตัวอักษรภาษาอังกฤษ", () => {
+    test("[helpers.generateRoomId] 5.4 สร้างรหัสห้อง → คืนค่ารหัสความยาว 6 ตัวอักษรที่มีเฉพาะตัวเลขหรืออักษรภาษาอังกฤษ", () => {
         const roomId = generateRoomId();
         
         expect(roomId.length).toBe(6);
         expect(/^[a-zA-Z0-9]+$/.test(roomId)).toBe(true);
     });
 });
+

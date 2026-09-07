@@ -12,9 +12,9 @@ import {
 
 import type { Card } from "../../src/shared/types";
 
-describe("1. ระบบประเมินหน้าไพ่ (evaluateHand)", () => {
+describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้าไพ่", () => {
 
-    test("1.1 ประเมินผลเป็น 'ไพ่ตอง (TRAIL)' เมื่อไพ่ทั้ง 3 ใบมีแต้มเท่ากัน", () => {
+    test("1.1 ไพ่ทั้ง 3 ใบมีแต้มเท่ากัน → คืนค่า rank เป็น TRAIL และ rankValue เท่ากับแต้ม", () => {
         const cards: Card[] = [
             { suit: 'SPADES', rank: 14 },
             { suit: 'HEARTS', rank: 14 },
@@ -27,7 +27,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.kickers).toBeInstanceOf(Array);
     });
 
-    test("1.2 ประเมินผลเป็น 'สเตรทฟลัช (PURE SEQUENCE)' เมื่อไพ่เรียงกันและดอกเดียวกัน", () => {
+    test("1.2 ไพ่เรียงกันและดอกเดียวกัน → คืนค่า rank เป็น PURE_SEQUENCE", () => {
         const cards: Card[] = [
             { suit: 'HEARTS', rank: 12 },
             { suit: 'HEARTS', rank: 13 },
@@ -39,7 +39,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.rankValue).toBe(14);
     });
 
-    test("1.3 ประเมินผลเป็น 'สเตรท (SEQUENCE)' โดยที่ไพ่เข้ามือแบบสลับตำแหน่งกัน", () => {
+    test("1.3 ไพ่เรียงกันสลับดอกสลับตำแหน่ง → คืนค่า rank เป็น SEQUENCE", () => {
         const cards: Card[] = [
             { suit: 'HEARTS', rank: 3 },
             { suit: 'SPADES', rank: 4 },
@@ -51,7 +51,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.rankValue).toBe(4);
     });
 
-    test("1.4 ประเมินผลเป็น 'ฟลัช (COLOR)' เมื่อไพ่เป็นดอกเดียวกันทั้งหมดโดยแต้มไม่เรียงกัน", () => {
+    test("1.4 ไพ่ดอกเดียวกันทั้งหมดโดยแต้มไม่เรียงกัน → คืนค่า rank เป็น COLOR", () => {
         const cards: Card[] = [
             { suit: 'CLUBS', rank: 2 },
             { suit: 'CLUBS', rank: 8 },
@@ -62,7 +62,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.rank).toBe('COLOR');
     });
 
-    test("1.5 ประเมินผลเป็น 'ไพ่คู่ (PAIR)' เมื่อไพ่มีแต้มซ้ำกันแค่ 2 ใบ", () => {
+    test("1.5 ไพ่แต้มซ้ำกัน 2 ใบ → คืนค่า rank เป็น PAIR พร้อมระบุ kickers", () => {
         const cards: Card[] = [
             { suit: 'SPADES', rank: 9 },
             { suit: 'HEARTS', rank: 9 },
@@ -75,7 +75,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.kickers).toContain(11);
     });
 
-    test("1.6 ประเมินผลเป็น 'ไพ่สูง (HIGH CARD)' เมื่อไม่เข้าเงื่อนไขใดเลย", () => {
+    test("1.6 ไม่เข้าเงื่อนไขใดเลย → คืนค่า rank เป็น HIGH_CARD พร้อมเรียง kickers จากมากไปน้อย", () => {
         const cards: Card[] = [
             { suit: 'SPADES', rank: 2 },
             { suit: 'HEARTS', rank: 7 },
@@ -88,7 +88,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.kickers).toEqual([7, 2]);
     });
 
-    test("1.7 กฎของไพ่ A-2-3 ถือเป็น SEQUENCE", () => {
+    test("1.7 ไพ่ A-2-3 → คืนค่า rank เป็น SEQUENCE", () => {
         const cards: Card[] = [
             { suit: 'SPADES', rank: 14 },
             { suit: 'HEARTS', rank: 2 },
@@ -99,7 +99,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.rank).toBe('SEQUENCE');
     });
 
-    test("1.8 กฎของไพ่ A-2-3 ที่เป็นดอกเดียวกัน ต้องถือเป็น PURE_SEQUENCE", () => {
+    test("1.8 ไพ่ A-2-3 ดอกเดียวกัน → คืนค่า rank เป็น PURE_SEQUENCE", () => {
         const cards: Card[] = [
             { suit: 'CLUBS', rank: 14 },
             { suit: 'CLUBS', rank: 2 },
@@ -109,7 +109,7 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
         expect(result.rank).toBe('PURE_SEQUENCE');
     });
 
-    test("1.9 กฎของไพ่ K-A-2 ต้องไม่นับเป็นไพ่เรียง (ไม่ใช่ SEQUENCE)", () => {
+    test("1.9 ไพ่ K-A-2 → ไม่คืนค่า rank เป็น SEQUENCE หรือ PURE_SEQUENCE", () => {
         const cards: Card[] = [
             { suit: 'SPADES', rank: 13 },
             { suit: 'HEARTS', rank: 14 },
@@ -122,9 +122,9 @@ describe("1. ระบบประเมินหน้าไพ่ (evaluateHan
     });
 });
 
-describe("2. ระบบเปรียบเทียบเพื่อหาผู้ชนะ (compareHands)", () => {
+describe("[gameLogic.compareHands] 2. ระบบเปรียบเทียบเพื่อหาผู้ชนะ", () => {
 
-    test("2.1 ลำดับชั้นความใหญ่ของไพ่ต้องถูกต้อง (Hierarchy Validation)", () => {
+    test("2.1 เปรียบเทียบไพ่ต่างลำดับชั้น → คืนค่ามากกว่า 0 เมื่อไพ่ลำดับชั้นสูงกว่าชนะ", () => {
         const handTrail: Card[] = [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 2 }, { suit: 'DIAMONDS', rank: 2 }];
         const handPureSeq: Card[] = [{ suit: 'HEARTS', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'HEARTS', rank: 4 }];
         const handSeq: Card[] = [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 3 }, { suit: 'DIAMONDS', rank: 4 }];
@@ -139,7 +139,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(compareHands(handPair, handHigh)).toBeGreaterThan(0);
     });
 
-    test("2.2 หากได้ไพ่รูปแบบเดียวกัน ให้ตัดสินแพ้ชนะจากตัวเตะ (Kicker) ที่สูงกว่า", () => {
+    test("2.2 เปรียบเทียบไพ่คู่ระดับเดียวกันที่มีแต้มคู่เท่ากัน → ตัดสินผู้ชนะจากตัวเตะ (Kicker) ที่สูงกว่า", () => {
         const highPair: Card[] = [
             { suit: 'SPADES', rank: 9 },
             { suit: 'HEARTS', rank: 9 },
@@ -155,7 +155,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(result).toBeGreaterThan(0);
     });
 
-    test("2.3 หากได้ไพ่ HIGH_CARD ที่ไพ่สูงสุดเท่ากัน ให้ตัดสินแพ้ชนะจากไพ่ใบรอง (Kicker)", () => {
+    test("2.3 เปรียบเทียบ HIGH_CARD ที่แต้มสูงสุดเท่ากัน → ตัดสินผู้ชนะจากไพ่ใบรองลงมา", () => {
         const handAK5: Card[] = [
             { suit: 'SPADES', rank: 14 },
             { suit: 'HEARTS', rank: 13 },
@@ -171,7 +171,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(result).toBeGreaterThan(0);
     });
 
-    test("2.4 หากได้ไพ่รูปแบบเดียวกัน ให้ไพ่ที่มี Rank สูงสุดชนะ", () => {
+    test("2.4 เปรียบเทียบไพ่ลำดับชั้นเดียวกัน → ตัดสินผู้ชนะจากแต้มหลักที่สูงกว่า", () => {
         const highTrail: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 14 }, { suit: 'DIAMONDS', rank: 14 }];
         const lowTrail: Card[] = [{ suit: 'CLUBS', rank: 13 }, { suit: 'SPADES', rank: 13 }, { suit: 'HEARTS', rank: 13 }];
         expect(compareHands(highTrail, lowTrail)).toBeGreaterThan(0);
@@ -181,7 +181,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(compareHands(highSeq, lowSeq)).toBeGreaterThan(0);
     });
 
-    test("2.5 การตัดสินแพ้ชนะของ PAIR และ COLOR ที่แต้มหลักต่างกัน ต้องอ้างอิงจากแต้มหลักก่อนเสมอ", () => {
+    test("2.5 เปรียบเทียบ PAIR และ COLOR ที่แต้มหลักต่างกัน → ตัดสินผู้ชนะจากแต้มหลักก่อนเสมอ", () => {
         const highPair: Card[] = [{ suit: 'SPADES', rank: 13 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 2 }];
         const lowPair: Card[] = [{ suit: 'CLUBS', rank: 12 }, { suit: 'DIAMONDS', rank: 12 }, { suit: 'SPADES', rank: 14 }];
         expect(compareHands(highPair, lowPair)).toBeGreaterThan(0);
@@ -191,7 +191,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(compareHands(highColor, lowColor)).toBeGreaterThan(0);
     });
 
-    test("2.6 ลำดับความใหญ่ของ SEQUENCE ตามกฎ Pagat (A-2-3 สูงสุด รองลงมา A-K-Q) ต้องถูกต้อง", () => {
+    test("2.6 เปรียบเทียบ SEQUENCE ตามกฎ Pagat → ลำดับความใหญ่ A-2-3 ชนะ A-K-Q และลดหลั่นตามลำดับ", () => {
         const seqA23: Card[] = [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 2 }, { suit: 'SPADES', rank: 3 }];
         const seqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 12 }];
         const seqKQJ: Card[] = [{ suit: 'HEARTS', rank: 13 }, { suit: 'SPADES', rank: 12 }, { suit: 'CLUBS', rank: 11 }];
@@ -202,14 +202,14 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
         expect(compareHands(seqKQJ, seq432)).toBeGreaterThan(0);
     });
 
-    test("2.6.1 ลำดับความใหญ่ของ PURE_SEQUENCE ตามกฎ Pagat (A-2-3 สูงสุด รองลงมา A-K-Q) ต้องถูกต้อง", () => {
+    test("2.6.1 เปรียบเทียบ PURE_SEQUENCE ตามกฎ Pagat → ลำดับความใหญ่ A-2-3 ชนะ A-K-Q", () => {
         const pureSeqA23: Card[] = [{ suit: 'CLUBS', rank: 14 }, { suit: 'CLUBS', rank: 2 }, { suit: 'CLUBS', rank: 3 }];
         const pureSeqAKQ: Card[] = [{ suit: 'SPADES', rank: 14 }, { suit: 'SPADES', rank: 13 }, { suit: 'SPADES', rank: 12 }];
 
         expect(compareHands(pureSeqA23, pureSeqAKQ)).toBeGreaterThan(0);
     });
 
-    test("2.7 หากได้ไพ่รูปแบบเดียวกันและแต้มเท่ากันทุกใบ ต้องตัดสินว่าเสมอ (คืนค่า 0)", () => {
+    test("2.7 เปรียบเทียบไพ่รูปแบบเดียวกันและแต้มเท่ากันทุกใบ → คืนค่า 0 (เสมอ)", () => {
         const handA: Card[] = [
             { suit: 'SPADES', rank: 14 },
             { suit: 'HEARTS', rank: 13 },
@@ -226,7 +226,7 @@ describe("2. ระบบเปรียบเทียบเพื่อหา�
 
 describe("3. ระบบจัดการสำรับไพ่และการแจกไพ่", () => {
 
-    test("3.1 เมื่อสร้างสำรับใหม่ ต้องได้ไพ่ครบ 52 ใบและต้องไม่มีไพ่ซ้ำกัน", () => {
+    test("[createDeck] 3.1 สร้างสำรับใหม่ → ได้ไพ่ 52 ใบและไม่มีคู่ดอก-แต้มซ้ำ", () => {
         const deck = createDeck();
         expect(deck).toBeInstanceOf(Array);
         expect(deck.length).toBe(52);
@@ -235,7 +235,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(uniqueCards.size).toBe(52);
     });
 
-    test("3.2 เมื่อสับไพ่ ต้นฉบับต้องไม่ถูกแก้ไข (ไม่แก้ไข input) และได้ผลลัพธ์ที่ตรงตาม Algorithm ที่กำหนดผ่าน RNG", () => {
+    test("[shuffleDeck] 3.2 สับไพ่ด้วย RNG → ต้นฉบับไม่ถูกแก้ไขและได้ไพ่เรียงใหม่ตามลำดับ RNG", () => {
         const originalDeck: Card[] = [
             { suit: 'SPADES', rank: 2 },
             { suit: 'HEARTS', rank: 3 },
@@ -261,7 +261,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         ]);
     });
 
-    test("3.3 แจกไพ่ตามจำนวนผู้เล่นได้ถูกต้อง ไพ่บนมือและในกองรวมกันต้องครบ 52 ใบโดยไม่ซ้ำกัน", () => {
+    test("[dealCards] 3.3 แจกให้ 4 คน คนละ 3 ใบ → มือแรกมี 3 ใบ กองเหลือ 40 ใบ และไพ่รวมมี 52 คู่ดอก-แต้มไม่ซ้ำ", () => {
         const deck = createDeck();
         const playerCount = 4;
         const cardsPerPlayer = 3;
@@ -279,7 +279,7 @@ describe("3. ระบบจัดการสำรับไพ่และก�
         expect(uniqueCombinedCards.size).toBe(52);
     });
 
-    test("3.4 การแจกไพ่ต้องแจกแบบวนทีละใบ (Round-Robin)", () => {
+    test("[dealCards] 3.4 แจกไพ่ 2 คน คนละ 3 ใบ → ไพ่ถูกแจกแบบวนทีละใบ (Round-Robin)", () => {
         const mockDeck: Card[] = [
             { suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 3 },
             { suit: 'CLUBS', rank: 4 }, { suit: 'DIAMONDS', rank: 5 },
@@ -300,9 +300,9 @@ describe("3. ระบบจัดการสำรับไพ่และก�
     });
 });
 
-describe("4. ระบบค้นหาผู้ชนะจากวงเล่น (Multiplayer Winner Evaluation)", () => {
+describe("[gameLogic.getWinners] 4. ค้นหาผู้เล่นที่ถือมือดีที่สุด", () => {
 
-    test("4.1 สามารถค้นหาผู้ชนะเพียงหนึ่งเดียวจากผู้เล่น 4 คนได้ถูกต้อง", () => {
+    test("4.1 มีผู้ชนะอันดับสูงสุดคนเดียวจาก 4 คน → คืน ID ผู้ชนะเพียงคนเดียว", () => {
         const players: { id: string, cards: Card[] }[] = [
             { id: "player_1", cards: [{ suit: 'SPADES', rank: 2 }, { suit: 'HEARTS', rank: 7 }, { suit: 'DIAMONDS', rank: 13 }] },
             { id: "player_2", cards: [{ suit: 'SPADES', rank: 9 }, { suit: 'HEARTS', rank: 9 }, { suit: 'DIAMONDS', rank: 11 }] },
@@ -317,7 +317,7 @@ describe("4. ระบบค้นหาผู้ชนะจากวงเล�
         expect(winners[0]).toBe("player_4");
     });
 
-    test("4.2 หากมีผู้เล่นถือไพ่ที่คะแนนเท่ากันเป๊ะ ต้องคืนค่าผู้ชนะมากกว่า 1 คน (Split Pot)", () => {
+    test("4.2 เมื่อผู้เล่นสองคนเสมอกันที่อันดับสูงสุด → ต้องคืน ID ทั้งสองคนและไม่รวมผู้เล่นที่แพ้", () => {
         const players: { id: string, cards: Card[] }[] = [
             { id: "player_1", cards: [{ suit: 'SPADES', rank: 14 }, { suit: 'HEARTS', rank: 13 }, { suit: 'DIAMONDS', rank: 5 }] },
             { id: "player_2", cards: [{ suit: 'CLUBS', rank: 14 }, { suit: 'DIAMONDS', rank: 13 }, { suit: 'SPADES', rank: 5 }] },
@@ -333,8 +333,8 @@ describe("4. ระบบค้นหาผู้ชนะจากวงเล�
     });
 });
 
-describe("5. ระบบจัดการกองกลางและการจ่ายเงิน (Pot Settlement)", () => {
-    test("5.1 แบ่งเงินกองกลางให้ผู้ชนะหลายคนได้ถูกต้อง หารลงตัวและไม่ลงตัว (แจกเศษตามลำดับ winnerIds)", () => {
+describe("[gameLogic.calculateSplitPot] 5. แบ่งเงินให้ผู้ชนะ", () => {
+    test("5.1 ผู้ชนะ 3 คน กองกลาง 1000 และ 900 → แบ่งเงินลงตัวและแจกเศษส่วนเกินให้คนแรกๆ", () => {
         const pot1 = 1000;
         const winnerIds1 = ["player_1", "player_2", "player_3"];
         const payouts1 = calculateSplitPot(pot1, winnerIds1);
@@ -354,3 +354,6 @@ describe("5. ระบบจัดการกองกลางและกา�
         expect(payouts2["player_A"] + payouts2["player_B"] + payouts2["player_C"]).toBe(900);
     });
 });
+
+
+

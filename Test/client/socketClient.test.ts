@@ -4,7 +4,7 @@ import type { ServerEvent, ClientEvent } from "../../src/shared/types";
 
 describe("10. ระบบเครือข่ายฝั่งผู้เล่น (Client Socket)", () => {
     describe("Happy Paths", () => {
-        test("10.1 สถานะ isConnected จะเป็น true เมื่อ Transport ส่งเหตุการณ์เชื่อมต่อสำเร็จมาให้เท่านั้น", () => {
+        test("[SocketClient.connect] 10.1 รับเหตุการณ์เชื่อมต่อสำเร็จ → isConnected เป็น true", () => {
             const client = new SocketClient();
             
             const fakeTransport = {
@@ -24,7 +24,7 @@ describe("10. ระบบเครือข่ายฝั่งผู้เล
             expect(client.isConnected).toBe(false);
         });
 
-        test("10.2 สามารถรับ ServerEvent และบันทึกลงตัวแปรได้ (onReceive)", () => {
+        test("[SocketClient.onReceive] 10.2 รับ ServerEvent → บันทึกลงตัวแปร lastReceivedEvent", () => {
             const client = new SocketClient();
             const mockEvent: ServerEvent = { type: 'ERROR', message: "Test" };
 
@@ -34,7 +34,7 @@ describe("10. ระบบเครือข่ายฝั่งผู้เล
     });
 
     describe("Unhappy Paths", () => {
-        test("10.3 ไม่สามารถส่งข้อมูลได้หากยังไม่ได้เชื่อมต่อ (Disconnected State)", () => {
+        test("[SocketClient.send] 10.3 ส่งข้อมูลขณะยังไม่เชื่อมต่อ → โยน Error", () => {
             const client = new SocketClient();
             const mockEvent: ClientEvent = { type: 'START_GAME' };
 

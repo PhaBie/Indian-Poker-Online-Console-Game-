@@ -2,7 +2,7 @@ import { expect, test, describe } from "bun:test";
 import { PokerServer } from "../../src/server/index";
 
 describe("7. ระบบเซิร์ฟเวอร์หลัก (Server Entry)", () => {
-    test("7.1 สามารถสร้าง Server และเรียกใช้ start/stop ได้ (เปลี่ยนสถานะ isRunning)", () => {
+    test("[PokerServer.start] 7.1 เรียกใช้ start และ stop → เปลี่ยนสถานะ isRunning เป็น true และ false ตามลำดับ", () => {
         const server = new PokerServer();
         
         server.start(8080);
@@ -12,3 +12,4 @@ describe("7. ระบบเซิร์ฟเวอร์หลัก (Server E
         expect(server.isRunning).toBe(false);
     });
 });
+

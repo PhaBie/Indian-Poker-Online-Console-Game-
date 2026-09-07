@@ -6,7 +6,7 @@ import { RoomFullError, NotHostError, GameError } from "../../src/server/domain/
 
 describe("1. ระบบการจัดการห้องเล่น (Room Management)", () => {
     describe("Happy Paths", () => {
-        test("1.1 ผู้สร้างห้องคนแรกจะต้องถูกกำหนดให้เป็น Host อัตโนมัติ", () => {
+        test("[Room.join] 1.1 ผู้เล่นคนแรกเข้าห้อง → hostId เป็น ID ของผู้เล่นคนนั้น", () => {
             const room = new Room("room_001");
             const hostPlayer = new Player("id_thanathon", "Thanathon");
 
@@ -16,7 +16,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.hostId).toBe("id_thanathon");
         });
 
-        test("1.2 ผู้เล่นคนอื่นสามารถเข้าร่วมห้องได้สูงสุด 4 คนตามกติกา", () => {
+        test("[Room.join] 1.2 ผู้เล่นเข้าร่วม 4 คน → จำนวนผู้เล่นเป็น 4 และ phase เป็น LOBBY", () => {
             const room = new Room("room_002");
             const firstPlayer = new Player("id_first", "First");
             const secondPlayer = new Player("id_second", "Second");
@@ -32,7 +32,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("LOBBY");
         });
 
-        test("1.3 Host สามารถเริ่มเกมได้เมื่อมีผู้เล่นอย่างน้อย 2 คนขึ้นไป", () => {
+        test("[Room.startGame] 1.3 Host เริ่มเกมเมื่อมีผู้เล่น 2 คน → phase เปลี่ยนเป็น PLAYING", () => {
             const room = new Room("room_003");
             room.join(new Player("id_thanathon", "Thanathon"));
             room.join(new Player("id_phupa", "Phupa"));
@@ -42,7 +42,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("PLAYING");
         });
 
-        test("1.4 ผู้เล่นที่หลุดไป สามารถ Reconnect เข้ามาและรักษาชิป เดิมพัน และไพ่เดิมได้ครบถ้วน", () => {
+        test("[Room.reconnect] 1.4 ผู้เล่น DISCONNECTED ทำการ Reconnect → สถานะเปลี่ยนเป็น WAITING พร้อมข้อมูลชิป เดิมพัน และจำนวนไพ่ 1 ใบ", () => {
             const room = new Room("room_004");
             const player1 = new Player("id_thanathon", "Thanathon");
             
@@ -63,7 +63,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(activePlayer?.privateCards.length).toBe(1);
         });
 
-        test("1.5 ผู้เล่นสามารถเข้าร่วมห้องขณะที่เกม PLAYING ได้ โดยจะอยู่ในสถานะ WAITING รอรอบถัดไป", () => {
+        test("[Room.join] 1.5 ผู้เล่นใหม่เข้าห้องขณะเกม PLAYING → สถานะผู้เล่นเป็น WAITING และห้องยังคง PLAYING", () => {
             const room = new Room("room_005");
             const firstPlayer = new Player("id_first", "First Player");
             const secondPlayer = new Player("id_second", "Second Player");
@@ -79,7 +79,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("PLAYING");
         });
         
-        test("1.6 ดึง Public State ต้องไม่มีข้อมูล privateCards หลุดออกไปเด็ดขาด", () => {
+        test("[Room.getPublicState] 1.6 ดึง Public State → คืนค่าข้อมูลที่ไม่มี property privateCards", () => {
             const room = new Room("room_006");
             const player = new Player("id_thanathon", "Thanathon");
             player.privateCards = [{ suit: 'SPADES', rank: 14 }];
@@ -90,7 +90,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(publicState[0]).not.toHaveProperty("privateCards");
         });
 
-        test("1.7 ค่า Boot ของห้อง ต้องถูกส่งต่อไปใช้หักเงินตอนเริ่ม GameState (Boot 100)", () => {
+        test("[Room.startGame] 1.7 เริ่มเกมด้วย Boot 100 และผู้เล่น 2 คน → หักชิปคนละ 100 และ Pot เป็น 200", () => {
             const room = new Room("room_boot_100", 100);
             const host = new Player("id_host", "Host");
             const secondPlayer = new Player("id_p2", "Player2");
@@ -107,7 +107,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(secondPlayer.chips).toBe(900);
         });
 
-        test("1.8 ฟังก์ชัน leave() ต้องให้โฮสต์ตกไปเป็นคนถัดไปเมื่อโฮสต์ปัจจุบันออก", () => {
+        test("[Room.leave] 1.8 โฮสต์ปัจจุบันออกจากการเล่น → โฮสต์ตกไปเป็นคนถัดไปและผู้เล่นเหลือ 1 คน", () => {
             const room = new Room("room_leave");
             const host = new Player("id_host", "Host");
             const secondPlayer = new Player("id_p2", "Player2");
@@ -120,7 +120,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.hostId).toBe("id_p2");
         });
 
-        test("1.9 ฟังก์ชัน resetToLobby() ต้องล้างสถานะเกมแต่รักษาผู้เล่นและชิปไว้", () => {
+        test("[Room.resetToLobby] 1.9 รีเซ็ตห้องที่จบรอบ → phase เป็น LOBBY, gameState เป็น null และรักษาผู้เล่นกับชิป", () => {
             const room = new Room("room_reset");
             const host = new Player("id_host", "Host");
             const secondPlayer = new Player("id_p2", "Player2");
@@ -145,7 +145,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
     });
 
     describe("Unhappy Paths", () => {
-        test("1.11 ไม่สามารถเข้าร่วมห้องที่เต็มแล้ว (4 คน) ได้", () => {
+        test("[Room.join] 1.11 เข้าห้องที่ผู้เล่นเต็ม 4 คนแล้ว → โยน RoomFullError", () => {
             const room = new Room("room_full");
             room.join(new Player("id_first", "First"));
             room.join(new Player("id_second", "Second"));
@@ -159,7 +159,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.getPlayerCount()).toBe(4);
         });
 
-        test("1.12 ผู้ที่ไม่ใช่ Host ไม่สามารถสั่งเริ่มเกมได้", () => {
+        test("[Room.startGame] 1.12 ผู้เล่นที่ไม่ใช่โฮสต์สั่งเริ่มเกม → โยน NotHostError และห้องยังคงเป็น LOBBY", () => {
             const room = new Room("room_not_host");
             room.join(new Player("id_host", "Host"));
             room.join(new Player("id_player", "Player"));
@@ -171,7 +171,7 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
             expect(room.phase).toBe("LOBBY");
         });
 
-        test("1.13 Host ไม่สามารถเริ่มเกมได้หากมีผู้เล่นไม่ถึง 2 คน", () => {
+        test("[Room.startGame] 1.13 โฮสต์เริ่มเกมด้วยผู้เล่นคนเดียว → โยน GameError และห้องยังคงเป็น LOBBY", () => {
             const room = new Room("room_alone");
             room.join(new Player("id_host", "Host"));
 
@@ -183,3 +183,5 @@ describe("1. ระบบการจัดการห้องเล่น (Ro
         });
     });
 });
+
+
