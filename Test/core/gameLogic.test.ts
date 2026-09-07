@@ -138,7 +138,7 @@ describe("[gameLogic.evaluateHand] 1. ระบบประเมินหน้
         ];
 
         const expected = {
-            rank: 'HIGH_CARD',
+            rank: 'HIGH_CARD' as const,
             rankValue: 13,
             kickers: [7, 2]
         };
