@@ -38,6 +38,17 @@ export default [
                     format: ["camelCase", "UPPER_CASE"],
                 },
                 {
+                    selector: "parameter",
+                    modifiers: ["unused"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: "parameter",
+                    format: ["camelCase"],
+                    leadingUnderscore: "forbid",
+                },
+                {
                     selector: "variable",
                     types: ["boolean"],
                     format: ["PascalCase"],
@@ -99,6 +110,17 @@ export default [
                 {
                     selector: "variable",
                     format: ["camelCase", "UPPER_CASE", "PascalCase"],
+                },
+                {
+                    selector: "parameter",
+                    modifiers: ["unused"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: "parameter",
+                    format: ["camelCase"],
+                    leadingUnderscore: "forbid",
                 },
                 {
                     selector: "variable",

@@ -6,11 +6,11 @@ export function createDeck(): Card[] {
     return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
 }
 
-export function shuffleDeck(_deck: Card[], _rng: () => number = Math.random): Card[] {
-    const shuffledDeck = [..._deck];
+export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
+    const shuffledDeck = [...deck];
 
     for (let index = shuffledDeck.length - 1; index > 0; index--) {
-        const swapIndex = Math.floor(_rng() * (index + 1));
+        const swapIndex = Math.floor(rng() * (index + 1));
         [shuffledDeck[index], shuffledDeck[swapIndex]] = [
             shuffledDeck[swapIndex],
             shuffledDeck[index]
@@ -38,13 +38,13 @@ export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: num
     return { hands, remainingDeck };
 }
 
-export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
-    if (_cards.length !== 3) {
+export function evaluateHand(cardsInput: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
+    if (cardsInput.length !== 3) {
         throw new Error('At least 3 cards are required to evaluate.');
     }
 
     // เรียงไพ่จากแต้มมากไปน้อย (A=14, K=13, ..., 2=2)
-    const cards = [..._cards].sort((a, b) => b.rank - a.rank);
+    const cards = [...cardsInput].sort((a, b) => b.rank - a.rank);
 
     // เช็คว่าดอกเดียวกันหมดหรือไม่
     const isFlush = cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
@@ -87,9 +87,35 @@ export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: numbe
     return { rank: 'HIGH_CARD', rankValue: cards[0].rank, kickers: [cards[1].rank, cards[2].rank] };
 }
 
-export function compareHands(_handA: Card[], _handB: Card[]): number {
-    // รอคนเลือก
-    return 0;
+// 1. สร้างตารางคะแนน (Rank Weight) เพื่อให้เปรียบเทียบง่าย
+const RANK_WEIGHT: Record<HandRank, number> = {
+    'TRAIL': 6,
+    'PURE_SEQUENCE': 5,
+    'SEQUENCE': 4,
+    'COLOR': 3,
+    'PAIR': 2,
+    'HIGH_CARD': 1
+};
+
+export function compareHands(firstHand: Card[], secondHand: Card[]): number {
+    const handA = evaluateHand(firstHand);
+    const handB = evaluateHand(secondHand);
+
+    const rankDiff = RANK_WEIGHT[handA.rank] - RANK_WEIGHT[handB.rank];
+    if (rankDiff !== 0) { 
+        return rankDiff;
+    }
+
+    const valueDiff = handA.rankValue - handB.rankValue;
+    if (valueDiff !== 0) { 
+        return valueDiff;
+    }
+
+    const kickerDifference = handA.kickers
+        .map((kicker, index) => kicker - handB.kickers[index])
+        .find(difference => difference !== 0);
+
+    return kickerDifference ?? 0;
 }
 
 export function getWinners(players: { id: string, cards: Card[] }[]): string[] {
@@ -180,3 +206,5 @@ export function calculateSplitPot(pot: number, winnerIds: string[]): Record<stri
         ])
     );
 }
+
+
