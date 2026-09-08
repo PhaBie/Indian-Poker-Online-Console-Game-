@@ -4,6 +4,7 @@
 เอกสารนี้อธิบายวิธีนำ gameSchema.ts ที่เขียนเสร็จแล้ว ไปครอบตรวจสอบข้อมูลให้กับฟังก์ชันต่างๆ ใน gameLogic.ts เพื่อให้โค้ดส่วนการทำงานหลัก (Core Logic) สะอาดขึ้น และผลักภาระการตรวจสอบข้อมูลที่ไม่ถูกต้องไปให้ Zod เป็นคนจัดการ
 
 กฎที่ต้องทำตาม:
+
 1. ห้ามเขียนโค้ดดักจับ (catch) Error ของ Zod ภายในฟังก์ชัน Core Logic เด็ดขาด ปล่อยให้ Error ทะลุออกไปเพื่อให้ระบบส่วนอื่น (เช่น Controller) เป็นคนรับไปจัดการต่อ
 2. ห้ามไปแก้ไข Test เดิมที่ผ่านอยู่แล้ว (Happy Paths)
 
@@ -11,16 +12,19 @@
 เมื่อจะเขียนฟังก์ชันแจกไพ่ (dealCards) ให้เรียกใช้ .parse() ในบรรทัดแรกสุดของฟังก์ชัน ถ้ารูปแบบข้อมูลไม่ถูกต้อง โค้ดจะหยุดทำงานและโยน ZodError ออกไปทันที
 
 ```typescript
-import { dealCardsInputSchema } from "./gameSchema";
+import { dealCardsInputSchema } from './gameSchema';
 
-export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number): { hands: Card[][]; remainingDeck: Card[] } {
-    
-    // ตรวจสอบข้อมูลขาเข้าก่อนเริ่มทำงาน
-    dealCardsInputSchema.parse({ deck, playerCount, cardsPerPlayer });
-    
-    // (ตัวอย่างนี้แสดงเฉพาะการแทรก Validation เท่านั้น ไม่ใช่ฟังก์ชันฉบับสมบูรณ์)
-    
-    // หลังจากบรรทัดนี้ลงไป สามารถเขียนโค้ดการแจกไพ่ตามปกติได้เลย เพราะข้อมูลผ่านข้อกำหนดที่ Schema ตรวจ
+export function dealCards(
+  deck: Card[],
+  playerCount: number,
+  cardsPerPlayer: number,
+): { hands: Card[][]; remainingDeck: Card[] } {
+  // ตรวจสอบข้อมูลขาเข้าก่อนเริ่มทำงาน
+  dealCardsInputSchema.parse({ deck, playerCount, cardsPerPlayer });
+
+  // (ตัวอย่างนี้แสดงเฉพาะการแทรก Validation เท่านั้น ไม่ใช่ฟังก์ชันฉบับสมบูรณ์)
+
+  // หลังจากบรรทัดนี้ลงไป สามารถเขียนโค้ดการแจกไพ่ตามปกติได้เลย เพราะข้อมูลผ่านข้อกำหนดที่ Schema ตรวจ
 }
 ```
 
@@ -30,32 +34,33 @@ export function dealCards(deck: Card[], playerCount: number, cardsPerPlayer: num
 ตัวอย่างการสับไพ่ที่ถูกต้อง:
 
 ```typescript
-import { rngValueSchema, shuffleDeckInputSchema } from "./gameSchema";
+import { rngValueSchema, shuffleDeckInputSchema } from './gameSchema';
 
-export function shuffleDeck(deck: Card[], rngGenerator: () => number = Math.random): Card[] {
-    
-    shuffleDeckInputSchema.parse(deck);
-    const shuffledDeck = [...deck];
-    
-    // ใช้ชื่อตัวแปรที่สื่อความหมายชัดเจน
-    for (let currentIndex = shuffledDeck.length - 1; currentIndex > 0; currentIndex--) {
-        
-        // 1. เรียกใช้งานฟังก์ชันสุ่มเพียงหนึ่งครั้ง
-        const randomDecimal = rngGenerator();
-        
-        // 2. ตรวจสอบว่าค่าที่สุ่มได้อยู่ในเกณฑ์ที่ถูกต้องหรือไม่ (ต้องอยู่ระหว่าง 0 ถึง 0.999...)
-        rngValueSchema.parse(randomDecimal);
-        
-        // 3. คำนวณหาตำแหน่งไพ่ใบที่จะนำมาสลับ
-        const targetSwapIndex = Math.floor(randomDecimal * (currentIndex + 1));
-        
-        // 4. สลับไพ่สองตำแหน่ง
-        const tempCard = shuffledDeck[currentIndex];
-        shuffledDeck[currentIndex] = shuffledDeck[targetSwapIndex];
-        shuffledDeck[targetSwapIndex] = tempCard;
-    }
-    
-    return shuffledDeck;
+export function shuffleDeck(
+  deck: Card[],
+  rngGenerator: () => number = Math.random,
+): Card[] {
+  shuffleDeckInputSchema.parse(deck);
+  const shuffledDeck = [...deck];
+
+  // ใช้ชื่อตัวแปรที่สื่อความหมายชัดเจน
+  for (let currentIndex = shuffledDeck.length - 1; currentIndex > 0; currentIndex--) {
+    // 1. เรียกใช้งานฟังก์ชันสุ่มเพียงหนึ่งครั้ง
+    const randomDecimal = rngGenerator();
+
+    // 2. ตรวจสอบว่าค่าที่สุ่มได้อยู่ในเกณฑ์ที่ถูกต้องหรือไม่ (ต้องอยู่ระหว่าง 0 ถึง 0.999...)
+    rngValueSchema.parse(randomDecimal);
+
+    // 3. คำนวณหาตำแหน่งไพ่ใบที่จะนำมาสลับ
+    const targetSwapIndex = Math.floor(randomDecimal * (currentIndex + 1));
+
+    // 4. สลับไพ่สองตำแหน่ง
+    const tempCard = shuffledDeck[currentIndex];
+    shuffledDeck[currentIndex] = shuffledDeck[targetSwapIndex];
+    shuffledDeck[targetSwapIndex] = tempCard;
+  }
+
+  return shuffledDeck;
 }
 ```
 

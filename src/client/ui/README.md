@@ -25,12 +25,12 @@ src/client/
 
 ## หน้าที่ของแต่ละโฟลเดอร์
 
-| โฟลเดอร์ | หน้าที่ | ตัวอย่างไฟล์ที่จะเพิ่มเมื่อเริ่ม implement |
-| --- | --- | --- |
-| `components/` | ชิ้นส่วนแสดงผลที่รับข้อมูลและ callback ผ่าน props และนำกลับมาใช้ได้ | `CardView.tsx`, `PlayerList.tsx`, `ActionMenu.tsx` |
-| `screens/` | หน้าจอหลักที่ประกอบ components และเชื่อมกับ hooks | `LobbyScreen.tsx`, `GameScreen.tsx`, `ResultScreen.tsx` |
-| `hooks/` | Custom hooks สำหรับเชื่อม state, subscription และ input เข้ากับ React | `useGameState.ts`, `useSocket.ts`, `useGameInput.ts` |
-| `theme/` | ค่าร่วมสำหรับสี ระยะห่าง และรูปแบบแสดงผลใน terminal | `colors.ts`, `spacing.ts` |
+| โฟลเดอร์      | หน้าที่                                                               | ตัวอย่างไฟล์ที่จะเพิ่มเมื่อเริ่ม implement              |
+| ------------- | --------------------------------------------------------------------- | ------------------------------------------------------- |
+| `components/` | ชิ้นส่วนแสดงผลที่รับข้อมูลและ callback ผ่าน props และนำกลับมาใช้ได้   | `CardView.tsx`, `PlayerList.tsx`, `ActionMenu.tsx`      |
+| `screens/`    | หน้าจอหลักที่ประกอบ components และเชื่อมกับ hooks                     | `LobbyScreen.tsx`, `GameScreen.tsx`, `ResultScreen.tsx` |
+| `hooks/`      | Custom hooks สำหรับเชื่อม state, subscription และ input เข้ากับ React | `useGameState.ts`, `useSocket.ts`, `useGameInput.ts`    |
+| `theme/`      | ค่าร่วมสำหรับสี ระยะห่าง และรูปแบบแสดงผลใน terminal                   | `colors.ts`, `spacing.ts`                               |
 
 เมื่อเริ่ม implement ให้เพิ่ม `ui/App.tsx` เป็น root component สำหรับเลือกหน้าจอ และให้ `src/client/index.ts` รับผิดชอบการเริ่ม client และ mount Ink
 
@@ -62,6 +62,7 @@ src/client/
 รอบนี้เตรียมโฟลเดอร์และแนวทางแบ่งงาน ยังไม่ได้เพิ่ม dependencies หรือ entry point ของ React + Ink
 
 งานเริ่มต้นของทีม UI:
+
 1. ติดตั้ง React, Ink และ React type definitions ที่เข้ากันได้
 2. ตั้งค่า TypeScript ให้รองรับ JSX และตรวจ module configuration ให้เข้ากับแพ็กเกจที่เลือก
 3. เพิ่ม `App.tsx`, เชื่อม Ink กับ `startClient()` และเพิ่มคำสั่งรัน client ใน `package.json`

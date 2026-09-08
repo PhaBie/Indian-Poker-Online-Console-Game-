@@ -1,3 +1,3 @@
 export function startClient(): void {
-    // รอคนเลือก
+  // รอคนเลือก
 }
