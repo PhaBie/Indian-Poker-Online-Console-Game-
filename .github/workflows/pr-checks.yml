@@ -54,7 +54,7 @@ jobs:
 
       - name: Run Core Logic Tests
         run: bun run test:logic
-        
+
       # หากมีเทสต์ส่วนอื่นที่อยากให้รัน สามารถเพิ่มบรรทัดด้านล่างได้ เช่น
       # - name: Run Schema Tests
       #   run: bun test Test/core/gameSchema.test.ts
