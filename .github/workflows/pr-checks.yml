@@ -1,0 +1,60 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - demo
+  push:
+    branches:
+      - main
+      - demo
+
+jobs:
+  # 1. Job สำหรับตรวจคุณภาพโค้ด (บังคับให้ผ่าน)
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Prettier Check
+        run: bunx prettier --check .
+
+      - name: Run ESLint
+        run: bun run lint
+
+      - name: Run Type Check (TypeScript)
+        run: bunx tsc --noEmit
+
+  # 2. Job สำหรับรัน Test (ยอมให้แดงได้)
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Core Logic Tests
+        run: bun run test:logic
+        
+      # หากมีเทสต์ส่วนอื่นที่อยากให้รัน สามารถเพิ่มบรรทัดด้านล่างได้ เช่น
+      # - name: Run Schema Tests
+      #   run: bun test Test/core/gameSchema.test.ts
