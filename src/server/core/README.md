@@ -177,7 +177,7 @@ export function shuffleDeck(
    ```
 2. **รัน Core Logic Tests** (ยืนยันว่าโค้ดหลักทำงานถูกต้องและดักจับ Error ได้)
    ```bash
-   bun test Test/core/gameLogic.test.ts
+   bun run test:logic
    ```
 3. **ตรวจสอบ Typescript (Static Analysis)**
    ```bash
