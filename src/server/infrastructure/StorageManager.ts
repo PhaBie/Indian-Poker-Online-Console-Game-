@@ -1,32 +1,32 @@
 import type { Room } from '../domain/models/Room';
 
 export class StorageManager {
-    public basePath: string;
+  public basePath: string;
 
-    constructor(basePath: string = './data') {
-        this.basePath = basePath;
-    }
+  constructor(basePath: string = './data') {
+    this.basePath = basePath;
+  }
 
-    public saveRoomState(_room: Room): void {
-        // รอคนเลือก
-    }
+  public saveRoomState(_room: Room): void {
+    // รอคนเลือก
+  }
 
-    public loadRoomState(_roomId: string): Room | null {
-        // รอคนเลือก
-        return null;
-    }
+  public loadRoomState(_roomId: string): Room | null {
+    // รอคนเลือก
+    return null;
+  }
 
-    public checkSaveExists(_roomId: string): boolean {
-        // รอคนเลือก
-        return false;
-    }
+  public checkSaveExists(_roomId: string): boolean {
+    // รอคนเลือก
+    return false;
+  }
 
-    public deleteSavedRoom(_roomId: string): void {
-        // รอคนเลือก
-    }
+  public deleteSavedRoom(_roomId: string): void {
+    // รอคนเลือก
+  }
 
-    public getAllSavedRoomIds(): string[] {
-        // รอคนเลือก
-        return [];
-    }
+  public getAllSavedRoomIds(): string[] {
+    // รอคนเลือก
+    return [];
+  }
 }

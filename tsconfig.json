@@ -12,12 +12,6 @@
     "rootDir": "./",
     "types": ["bun-types"]
   },
-  "include": [
-    "src/**/*",
-    "Test/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "Test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
