@@ -37,19 +37,20 @@ export class Player extends BaseUser implements ServerPlayer {
   /**
    * รับไพ่ที่เซิร์ฟเวอร์แจกให้
    * เอาไพ่ที่แจกมาบันทึกเก็บไว้ใน privateCards
-   * อนุญาตเฉพาะสถานะ WAITING และ ACTIVE
+   * เก็บเป็น State ประจำตัวผู้เล่นฝั่ง Server ไม่เปิดเผยให้คนอื่นเห็น
    */
   public receiveCards(cards: Card[]): void {
     if (this.status === 'FOLDED' || this.status === 'DISCONNECTED') {
       throw new PlayerStateError(this.id, this.status);
     }
-    this.privateCards = cards.map((card) => ({ ...card }));
+    this.privateCards = cards;
   }
 
   /**
    * วางเงินเดิมพัน
    * หักเงินออกจากผู้เล่น และนำไปบวกสะสมในยอด bet ของรอบนั้น
-   * ตรวจสอบสถานะ ความถูกต้องของจำนวนเงิน และชิปคงเหลือ
+   * เช็คสถานะก่อน หากผู้เล่นหมอบไปแล้ว จะเดิมพันไม่ได้ เลยโยน PlayerStateError
+   * เช็คว่าชิปพอจ่ายไหม กันไม่ให้ติดลบ เลยโยน InsufficientChipsError
    */
   public payBet(amount: number): void {
     if (this.status === 'FOLDED' || this.status === 'DISCONNECTED') {
@@ -58,30 +59,27 @@ export class Player extends BaseUser implements ServerPlayer {
 
     if (
       typeof amount !== 'number' ||
-      !Number.isFinite(amount) ||
-      Number.isNaN(amount) ||
       !Number.isInteger(amount) ||
       amount <= 0 ||
       amount > Number.MAX_SAFE_INTEGER
     ) {
-      throw new GameError('Invalid bet amount', 'INVALID_AMOUNT');
+      throw new GameError('Invalid amount', 'INVALID_AMOUNT');
     }
 
     if (this.bet + amount > Number.MAX_SAFE_INTEGER) {
-      throw new GameError('Bet exceeds maximum safe integer', 'INVALID_AMOUNT');
+      throw new GameError('Bet exceeds max safe integer', 'INVALID_AMOUNT');
     }
 
     if (amount > this.chips) {
       throw new InsufficientChipsError(this.name);
     }
-
     this.chips -= amount;
     this.bet += amount;
   }
 
   /**
    * หมอบ
-   * ปรับสถานะของผู้เล่นเป็น 'FOLDED' อนุญาตเฉพาะสถานะ ACTIVE
+   * ปรับสถานะของผู้เล่นเป็น 'FOLDED' ถ้าหมอบ ก็โดนตัดสิทธิ์ในการเล่นรอบนี้
    */
   public fold(): void {
     if (this.status !== 'ACTIVE') {
@@ -92,31 +90,29 @@ export class Player extends BaseUser implements ServerPlayer {
 
   /**
    * เปิดไพ่ในมือ
-   * คืนค่ารายการไพ่ privateCards ทั้งหมดของผู้เล่น
+   * คืนค่ารายการไพ่ privateCards ทั้งหมดของผู้เล่น ใช้ตอน Showdown หรือจบเกม เพื่อนำไพ่จริงไปเปรียบเทียบแต้ม
    */
   public showCards(): Card[] {
-    return this.privateCards.map((card) => ({ ...card }));
+    return this.privateCards;
   }
 
   /**
    * เพิ่มเงิน
    * บวกยอดเงินเข้าตัวผู้เล่นตามจำนวน amount
-   * ตรวจสอบความถูกต้องของจำนวนเงินและเพดาน MAX_SAFE_INTEGER
+   * ถ้าชนะ จะได้เงิน จากกองกลาง (Pot )
    */
   public addChips(amount: number): void {
     if (
       typeof amount !== 'number' ||
-      !Number.isFinite(amount) ||
-      Number.isNaN(amount) ||
       !Number.isInteger(amount) ||
       amount < 0 ||
       amount > Number.MAX_SAFE_INTEGER
     ) {
-      throw new GameError('Invalid chip amount', 'INVALID_AMOUNT');
+      throw new GameError('Invalid amount', 'INVALID_AMOUNT');
     }
 
     if (this.chips + amount > Number.MAX_SAFE_INTEGER) {
-      throw new GameError('Chips exceed maximum safe integer', 'INVALID_AMOUNT');
+      throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
     }
 
     this.chips += amount;
@@ -136,7 +132,7 @@ export class Player extends BaseUser implements ServerPlayer {
 
   /**
    * เปิดไพ่ของตัวเอง (เปลี่ยนสถานะจาก Blind เป็น Seen)
-   * อนุญาตเฉพาะสถานะ ACTIVE
+   * เปลี่ยนค่า isBlind เป็น false
    */
   public seeCards(): void {
     if (this.status !== 'ACTIVE') {
@@ -166,21 +162,37 @@ export class Player extends BaseUser implements ServerPlayer {
    * รองรับระบบ Persistence (Save/Load Game) และการ Reconnect ทำให้สามารถนำข้อมูลกลับมาใช้งานต่อได้ทันที
    */
   public static fromJSON(json: unknown): Player {
+    // ตรวจข้อมูลจริงที่ได้รับ โดย safeParse คืนผลสำเร็จหรือข้อผิดพลาด
+    // แทนการใช้ as ซึ่งไม่ได้ตรวจข้อมูลตอนโปรแกรมทำงาน
     const result = playerSaveSchema.safeParse(json);
 
+    // หากข้อมูลผิด ให้หยุดก่อนสร้าง Player
+    // ใช้ GameError ตาม Contract ของ Player ไม่ปล่อย ZodError ออกไป
     if (!result.success) {
       throw new GameError('Invalid player data', 'INVALID_PLAYER_DATA');
     }
 
+    // ใช้ข้อมูลผลลัพธ์ที่ผ่านการตรวจและตัดฟิลด์ส่วนเกินแล้ว
     const data = result.data;
+
+    // สร้าง Player ด้วย ID และชื่อจากข้อมูลที่โหลด
     const player = new Player(data.id, data.name);
 
+    // คืนยอดชิปและเดิมพันตามที่บันทึกไว้
     player.chips = data.chips;
     player.bet = data.bet;
+
+    // รักษาสถานะเดิม ไม่เปลี่ยนเป็น WAITING โดยอัตโนมัติ
     player.status = data.status;
-    player.privateCards = data.privateCards.map((card) => ({ ...card }));
+
+    // คืนไพ่จริงฝั่ง Server รวมถึงไพ่ของผู้เล่น Blind
+    // การซ่อนไพ่จาก Client เป็นหน้าที่ของ Network
+    player.privateCards = data.privateCards;
+
+    // รักษาสถานะ Blind/Seen ตามที่บันทึกไว้
     player.isBlind = data.isBlind;
 
+    // คืน Instance ของ Player ที่มีข้อมูลและเมธอดพร้อมให้ระบบเรียกใช้
     return player;
   }
 }
