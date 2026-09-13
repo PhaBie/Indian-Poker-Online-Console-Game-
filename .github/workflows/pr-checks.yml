@@ -83,4 +83,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run Test for ${{ matrix.test_file }}
-        run: bun test ${{ matrix.test_file }}
+        env:
+          TEST_FILE: ${{ matrix.test_file }}
+        run: bun test "./$TEST_FILE"
