@@ -1,30 +1,18 @@
-import WebSocket from 'ws';
+import { SocketClient } from './network/socketClient';
+import { ClientState } from './state/ClientState';
 
-export function startClient(): void {
-  // เชื่อมต่อไปที่ Server ของเราที่พอร์ต 8080
-  const ws = new WebSocket('ws://localhost:8080');
-  const name = prompt('โปรดระบุชื่อผู้เล่น: ');
-  // เมื่อ Client เชื่อมต่อกับ Server สำเร็จ
-  ws.on('open', () => {
-    console.log(`✅ ${name} เชื่อมต่อกับ Server สำเร็จแล้ว!`);
-    // สร้าง Object ระบุคำสั่งและข้อมูลที่ต้องการส่ง
-    const request = {
-      type: 'JOIN_ROOM',
-      payload: { playerName: name },
-    };
+export function startClient(customUrl?: string): void {
+    // 1. รับ URL จาก Parameter หรือ argument ตอนรัน (ถ้าไม่ใส่ให้เป็น localhost:8080)
+    const serverUrl = customUrl || process.argv[2] || 'ws://localhost:8080';
 
-    // ต้องแปลง Object เป็น JSON String เสมอก่อนส่ง
-    ws.send(JSON.stringify(request));
-  });
-  // ดักรับข้อความที่ Server ส่งกลับมา
-  ws.on('message', (data) => {
-    // แปลง JSON String ที่ได้จาก Server กลับเป็น Object
-    const response = JSON.parse(data.toString());
+    console.log(`[Client] กำลังเชื่อมต่อไปยัง Server: ${serverUrl}`);
 
-    // ดึงเฉพาะ message ออกมาโชว์
-    console.log(`📩 [Status] : ${response.message}`);
-  });
+    // 2. สร้างตัวจัดการ Network และ State
+    const socketClient = new SocketClient();
+    const clientState = new ClientState();
+
+    // 3. สั่งเชื่อมต่อ
+    socketClient.connect(serverUrl);
+
+
 }
-
-// สั่งรันฟังก์ชันทันทีเมื่อรันไฟล์นี้
-startClient();
