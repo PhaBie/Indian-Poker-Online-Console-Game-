@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import {
   WrongTurnError,
   InvalidActionError,
-} from '../../src/server/domain/errors/GameError';
+} from '../../../../src/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.show', () => {

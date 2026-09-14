@@ -3,8 +3,8 @@ import {
   toPublicPlayerDTO,
   generateRoomId,
   generatePlayerId,
-} from '../../src/server/utils/helpers';
-import type { ServerPlayer } from '../../src/shared/types';
+} from '../../../src/server/utils/helpers';
+import type { ServerPlayer } from '../../../src/shared/types';
 
 describe('5. ระบบช่วยเหลือและคัดกรองข้อมูล (Utils & Helpers)', () => {
   test('[helpers.toPublicPlayerDTO] 5.1 แปลงข้อมูลผู้เล่น → คืนค่าออบเจกต์ที่ไม่มี property privateCards', () => {

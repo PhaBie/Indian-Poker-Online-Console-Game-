@@ -4,8 +4,8 @@ import {
   WrongTurnError,
   PlayerStateError,
   InvalidActionError,
-} from '../../src/server/domain/errors/GameError';
-import type { GameActionType } from '../../src/shared/types';
+} from '../../../../src/server/domain/errors/GameError';
+import type { GameActionType } from '../../../../src/shared/types';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.actions', () => {

@@ -1,6 +1,6 @@
-import { GameState } from '../../../src/server/domain/models/GameState';
-import { Player } from '../../../src/server/domain/models/Player';
-import type { PlayerStatus, Card } from '../../../src/shared/types';
+import { GameState } from '../../../../../src/server/domain/models/GameState';
+import { Player } from '../../../../../src/server/domain/models/Player';
+import type { PlayerStatus, Card } from '../../../../../src/shared/types';
 
 /**
  * โครงสร้างข้อมูลสำหรับจำลองสถานะของผู้เล่นแต่ละคนในระหว่างการทดสอบ

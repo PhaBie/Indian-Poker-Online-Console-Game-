@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test';
-import { PlayerStateError } from '../../src/server/domain/errors/GameError';
+import { PlayerStateError } from '../../../../src/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.lifecycle', () => {

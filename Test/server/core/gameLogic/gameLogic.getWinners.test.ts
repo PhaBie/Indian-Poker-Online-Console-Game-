@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'bun:test';
 
-import { getWinners } from '../../src/server/core/gameLogic';
+import { getWinners } from '../../../../src/server/core/gameLogic';
 
-import type { Card } from '../../src/shared/types';
+import type { Card } from '../../../../src/shared/types';
 import { ZodError } from 'zod';
 
 describe('[gameLogic.getWinners] 4. ค้นหาผู้เล่นที่ถือมือดีที่สุด', () => {

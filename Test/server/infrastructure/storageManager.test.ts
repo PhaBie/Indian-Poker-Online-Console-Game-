@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'bun:test';
-import { StorageManager } from '../../src/server/infrastructure/StorageManager';
-import { Room } from '../../src/server/domain/models/Room';
-import { Player } from '../../src/server/domain/models/Player';
+import { StorageManager } from '../../../src/server/infrastructure/StorageManager';
+import { Room } from '../../../src/server/domain/models/Room';
+import { Player } from '../../../src/server/domain/models/Player';
 import { rmSync, existsSync, readFileSync, mkdtempSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

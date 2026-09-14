@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'bun:test';
 
-import { evaluateHand } from '../../src/server/core/gameLogic';
+import { evaluateHand } from '../../../../src/server/core/gameLogic';
 
-import type { Card } from '../../src/shared/types';
+import type { Card } from '../../../../src/shared/types';
 import { ZodError } from 'zod';
 
 describe('[gameLogic.evaluateHand] 1. ระบบประเมินหน้าไพ่', () => {

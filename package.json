@@ -22,13 +22,17 @@
     "typescript": "~5.6.0"
   },
   "scripts": {
-    "test": "bun test",
-    "test:logic": "bun test gameLogic",
+    "test": "bun test ./Test",
+    "test:server": "bun test ./Test/server",
+    "test:client": "bun test ./Test/client",
+    "test:logic": "bun test ./Test/server/core/gameLogic",
+    "test:game-state": "bun test ./Test/server/domain/gameState",
+    "test:player": "bun test ./Test/server/domain/player.test.ts",
+    "test:schema": "bun test ./Test/server/core/gameSchema.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "prepare": "husky",
-    "test:game-state": "bun test gameState"
+    "prepare": "husky"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js}": [

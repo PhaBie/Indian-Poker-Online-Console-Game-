@@ -1,11 +1,11 @@
 import { expect, test, describe } from 'bun:test';
-import { Player } from '../../src/server/domain/models/Player';
+import { Player } from '../../../src/server/domain/models/Player';
 import {
   GameError,
   InsufficientChipsError,
   PlayerStateError,
-} from '../../src/server/domain/errors/GameError';
-import type { PlayerStatus, Card } from '../../src/shared/types';
+} from '../../../src/server/domain/errors/GameError';
+import type { PlayerStatus, Card } from '../../../src/shared/types';
 
 const expectGameErrorWithCode = (fn: () => void, expectedCode: string) => {
   let thrownError: unknown;
