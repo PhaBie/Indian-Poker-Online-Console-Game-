@@ -73,7 +73,7 @@ describe('gameState.flow', () => {
     } catch (e) {
       err = e;
     }
-    expect(err.code).toBe('INVALID_AMOUNT');
+    expect(err?.code).toBe('INVALID_AMOUNT');
     expect(gameState.pot).toBe(100);
     expect(gameState.activePlayers[0].chips).toBe(950);
 

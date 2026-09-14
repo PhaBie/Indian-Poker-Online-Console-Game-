@@ -292,7 +292,7 @@ describe('gameState.actions', () => {
       err = e;
     }
     expect(err).toBeInstanceOf(GameError);
-    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
     expect(p1.chips).toBe(40);
   });
 
@@ -312,7 +312,7 @@ describe('gameState.actions', () => {
       err = e;
     }
     expect(err).toBeInstanceOf(GameError);
-    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
     expect(p1.chips).toBe(90);
   });
 
@@ -422,5 +422,44 @@ describe('gameState.actions', () => {
 
     gameState.processAction(p1.id, 'CALL');
     expect(p1.chips).toBe(900); // 1000 - (50*2) = 900
+  });
+
+  test('[GameState.processAction] การกระทำเช่น CALL จะไม่เปลี่ยน currentPlayerIndex เอง', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+
+    gameState.processAction(p1.id, 'CALL');
+
+    // ตาต้องไม่เปลี่ยน ฝั่ง Room/Server จะเป็นคนเรียก nextTurn เอง
+    expect(gameState.currentPlayerIndex).toBe(0);
+  });
+
+  test('[GameState.processAction] Seen จ่ายเดิมพันแล้วหารสองเป็นทศนิยม -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: false },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+
+    // currentStake = 50, Seen ต้องจ่าย 2S (100) เพื่อให้ stake ใหม่เป็น 50
+    // หาก Seen ขอจ่าย 105 (หารสองได้ 52.5) ต้องโดนปฏิเสธ
+    let err;
+    try {
+      gameState.processAction(p1.id, 'RAISE', 105);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeDefined();
+    expect(err?.code).toBe('INVALID_AMOUNT');
+    expect(p1.chips).toBe(1000);
   });
 });

@@ -372,7 +372,7 @@ describe('gameState.show', () => {
     } catch (e) {
       err = e;
     }
-    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
     expect(gameState.activePlayers[0].chips).toBe(40);
   });
 

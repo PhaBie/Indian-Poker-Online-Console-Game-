@@ -200,4 +200,51 @@ describe('gameState.lifecycle', () => {
     gameState.nextTurn();
     expect(gameState.currentPlayerIndex).toBe(0);
   });
+
+  test('[GameState.startGame] เริ่มเกมแต่มีผู้เล่นเงินไม่พอจ่าย Boot -> ปฏิเสธการเริ่มและไม่หักเงินใคร', () => {
+    const gameState = createGameStateFixture({ bootAmount: 50 }, [
+      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
+      { id: 'p2', name: 'P2', status: 'WAITING', chips: 40 },
+    ]);
+
+    let err;
+    try {
+      gameState.startGame();
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeDefined();
+    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
+
+    expect(gameState.pot).toBe(0);
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.activePlayers[1].chips).toBe(40);
+    expect(gameState.activePlayers[0].privateCards.length).toBe(0);
+  });
+
+  test('[GameState.handlePlayerDisconnect] เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
+    const gameState = createGameStateFixture({}, [
+      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
+    ]);
+
+    let err;
+    try {
+      gameState.handlePlayerDisconnect('ghost');
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeDefined();
+    expect(err?.code).toBe('PLAYER_NOT_FOUND');
+  });
+
+  test('[GameState.handlePlayerDisconnect] หลุดนอกตาตัวเอง -> เปลี่ยนสถานะเป็น DISCONNECTED แต่ไม่ขยับตา', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
+      { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+    ]);
+
+    gameState.handlePlayerDisconnect('p2');
+    expect(gameState.activePlayers[1].status).toBe('DISCONNECTED');
+    expect(gameState.currentPlayerIndex).toBe(0); // ตาคงเดิม
+  });
 });
