@@ -337,26 +337,18 @@ describe('gameState.settlement', () => {
       },
     ]);
 
-    // Simulate tie by evaluating winner when hands are exactly tied, or calling handleTie
-    // Note: this assumes we can test it through evaluateWinner if cards tie, or call handleTie directly if exposed.
-    // The contract says: แบ่ง pot ตามจำนวน winners และจัดการเศษ
-    // If evaluateWinner handles the tie:
     gameState.evaluateWinner();
 
-    // Since we want to hardcode Expected without relying on same core function:
-    // Total chips before = 2101. Total chips after must be 2101.
-    const totalBefore = 2101;
-    const totalAfter =
+    const expectedTotalChips = 2101;
+    const actualTotalChips =
       gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
-    expect(totalAfter).toBe(totalBefore);
+    expect(actualTotalChips).toBe(expectedTotalChips);
 
-    // According to standard split rules, one gets 51, the other 50.
-    // Hardcode this expectation. Let's just assert one gets 1051 and one 1050 (order depends on policy, but we check values).
-    const chips = [
+    const sortedChips = [
       gameState.activePlayers[0].chips,
       gameState.activePlayers[1].chips,
     ].sort((a, b) => a - b);
-    expect(chips[0]).toBe(1050);
-    expect(chips[1]).toBe(1051);
+    expect(sortedChips[0]).toBe(1050);
+    expect(sortedChips[1]).toBe(1051);
   });
 });
