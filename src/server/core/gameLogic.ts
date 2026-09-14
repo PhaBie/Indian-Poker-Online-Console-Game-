@@ -1,4 +1,13 @@
 import type { Card, HandRank } from '../../shared/types';
+import {
+  evaluateHandInputSchema,
+  compareHandsInputSchema,
+  getWinnersInputSchema,
+  calculateSplitPotInputSchema,
+  shuffleDeckInputSchema,
+  dealCardsInputSchema,
+  rngValueSchema, // สำหรับตัวแปร rng ในฟังก์ชัน shuffleDeck
+} from './gameSchema';
 
 export function createDeck(): Card[] {
   const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
@@ -7,10 +16,14 @@ export function createDeck(): Card[] {
 }
 
 export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
-  const shuffledDeck = [...deck];
+  const validDeck = shuffleDeckInputSchema.parse(deck);
+  const shuffledDeck = [...validDeck];
 
   for (let index = shuffledDeck.length - 1; index > 0; index--) {
-    const swapIndex = Math.floor(rng() * (index + 1));
+    const rawRngValue = rng();
+    const validRngValue = rngValueSchema.parse(rawRngValue);
+    const swapIndex = Math.floor(validRngValue * (index + 1));
+
     [shuffledDeck[index], shuffledDeck[swapIndex]] = [
       shuffledDeck[swapIndex],
       shuffledDeck[index],
@@ -25,20 +38,22 @@ export function dealCards(
   playerCount: number,
   cardsPerPlayer: number,
 ): { hands: Card[][]; remainingDeck: Card[] } {
-  if (playerCount <= 0 || cardsPerPlayer <= 0) {
-    return { hands: [], remainingDeck: [...deck] };
+  const validArgs = dealCardsInputSchema.parse({ deck, playerCount, cardsPerPlayer });
+
+  if (validArgs.playerCount <= 0 || validArgs.cardsPerPlayer <= 0) {
+    return { hands: [], remainingDeck: [...validArgs.deck] };
   }
 
-  const totalCardsNeeded = playerCount * cardsPerPlayer;
-  if (deck.length < totalCardsNeeded) {
+  const totalCardsNeeded = validArgs.playerCount * validArgs.cardsPerPlayer;
+  if (validArgs.deck.length < totalCardsNeeded) {
     throw new Error('Not enough cards in deck.');
   }
 
-  const hands: Card[][] = Array.from({ length: playerCount }, () => []);
+  const hands: Card[][] = Array.from({ length: validArgs.playerCount }, () => []);
   for (let i = 0; i < totalCardsNeeded; i++) {
-    hands[i % playerCount].push(deck[i]);
+    hands[i % validArgs.playerCount].push(validArgs.deck[i]);
   }
-  const remainingDeck = deck.slice(totalCardsNeeded);
+  const remainingDeck = validArgs.deck.slice(totalCardsNeeded);
   return { hands, remainingDeck };
 }
 
@@ -47,12 +62,14 @@ export function evaluateHand(cardsInput: Card[]): {
   rankValue: number;
   kickers: number[];
 } {
+  const validCardsInput = evaluateHandInputSchema.parse(cardsInput);
+
   if (cardsInput.length !== 3) {
     throw new Error('At least 3 cards are required to evaluate.');
   }
 
   // เรียงไพ่จากแต้มมากไปน้อย (A=14, K=13, ..., 2=2)
-  const cards = [...cardsInput].sort((a, b) => b.rank - a.rank);
+  const cards = [...validCardsInput].sort((a, b) => b.rank - a.rank);
 
   // เช็คว่าดอกเดียวกันหมดหรือไม่
   const isFlush = cards[0].suit === cards[1].suit && cards[1].suit === cards[2].suit;
@@ -115,8 +132,9 @@ const RANK_WEIGHT: Record<HandRank, number> = {
 };
 
 export function compareHands(firstHand: Card[], secondHand: Card[]): number {
-  const handA = evaluateHand(firstHand);
-  const handB = evaluateHand(secondHand);
+  const valid = compareHandsInputSchema.parse({ firstHand, secondHand });
+  const handA = evaluateHand(valid.firstHand);
+  const handB = evaluateHand(valid.secondHand);
 
   const rankDiff = RANK_WEIGHT[handA.rank] - RANK_WEIGHT[handB.rank];
   if (rankDiff !== 0) {
@@ -136,17 +154,19 @@ export function compareHands(firstHand: Card[], secondHand: Card[]): number {
 }
 
 export function getWinners(players: { id: string; cards: Card[] }[]): string[] {
+  const validPlayers = getWinnersInputSchema.parse(players);
+
   // ถ้าไม่มีผู้เล่น ให้คืนค่าเป็น array ว่าง
-  if (players.length === 0) {
+  if (validPlayers.length === 0) {
     return [];
   }
 
   // หาผู้เล่นที่มีมือดีที่สุด
-  let bestCards = players[0].cards;
-  let winnerIds: string[] = [players[0].id];
+  let bestCards = validPlayers[0].cards;
+  let winnerIds: string[] = [validPlayers[0].id];
 
-  for (let i = 1; i < players.length; i++) {
-    const current = players[i];
+  for (let i = 1; i < validPlayers.length; i++) {
+    const current = validPlayers[i];
     const cmp = compareHands(current.cards, bestCards);
 
     if (cmp > 0) {
@@ -166,14 +186,19 @@ export function calculateSplitPot(
   pot: number,
   winnerIds: string[],
 ): Record<string, number> {
-  if (winnerIds.length === 0) {
+  const validCheck = calculateSplitPotInputSchema.parse({ pot, winnerIds });
+
+  if (validCheck.winnerIds.length === 0) {
     return {};
   }
 
-  const share = Math.floor(pot / winnerIds.length);
-  const remainder = pot % winnerIds.length;
+  const share = Math.floor(validCheck.pot / validCheck.winnerIds.length);
+  const remainder = validCheck.pot % validCheck.winnerIds.length;
 
   return Object.fromEntries(
-    winnerIds.map((winnerId, index) => [winnerId, share + (index < remainder ? 1 : 0)]),
+    validCheck.winnerIds.map((winnerId, index) => [
+      winnerId,
+      share + (index < remainder ? 1 : 0),
+    ]),
   );
 }
