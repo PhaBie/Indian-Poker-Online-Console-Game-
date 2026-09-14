@@ -25,7 +25,10 @@ export type PlayerFixture = {
  */
 export function createGameStateFixture(
   stateOverrides: Partial<GameState> = {},
-  playerConfigs: PlayerFixture[] = [],
+  playerConfigs: PlayerFixture[] = [
+    { id: 'player1', name: 'Player 1', status: 'ACTIVE', chips: 1000 },
+    { id: 'player2', name: 'Player 2', status: 'ACTIVE', chips: 1000 },
+  ],
 ): GameState {
   // สร้าง Player Instance ตาม Config ที่ส่งมาให้ครบทุกคน
   const mockPlayers = playerConfigs.map((config) => {

@@ -92,6 +92,6 @@
 
 ## มาตรฐานการตรวจรับ (Verification Plan)
 
-- **เครื่องมือตรวจ**: ใช้คำสั่ง `bun test Test/domain/gameState.test.ts`, `bunx tsc --noEmit` สำหรับการเช็ค Type และ `bunx eslint Test/domain/gameState.test.ts`
+- **เครื่องมือตรวจ**: ใช้คำสั่ง `bun run test:game-state`, `bunx tsc --noEmit` สำหรับการเช็ค Type และ `bunx eslint Test/server/domain/gameState/`
 - **โครงสร้าง Test**: ไม่มีคอมเมนต์, ห้ามใช้ `@ts-ignore` หรือ `any`, ใช้ `test.each` สำหรับข้อมูลที่ผิดรูปแบบ
 - **การทดสอบต่อเนื่องแบบไร้เซิร์ฟเวอร์**: จะมีการจำลองเคสแบบ Flow ต่อเนื่อง (เช่น เริ่มรอบ → CALL → RAISE → FOLD → จบรอบและจ่ายรางวัล) เพื่อดูสภาวะ State ว่าทำงานประสานกันได้สมบูรณ์โดยไม่ต้องเปิด Backend
