@@ -259,7 +259,7 @@ describe('gameState.actions', () => {
     });
   });
 
-  test('[GameState.processAction] CALL เงินไม่พอ (Blind) -> โยน GameError และเงินไม่เปลี่ยน', () => {
+  test('[GameState.processAction] 4.45 CALL เงินไม่พอ (Blind) -> โยน GameError และเงินไม่เปลี่ยน', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -282,7 +282,7 @@ describe('gameState.actions', () => {
     expect(playerOne.chips).toBe(40);
   });
 
-  test('[GameState.processAction] CALL เงินไม่พอ (Seen) -> โยน GameError และเงินไม่เปลี่ยน', () => {
+  test('[GameState.processAction] 4.46 CALL เงินไม่พอ (Seen) -> โยน GameError และเงินไม่เปลี่ยน', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -305,7 +305,7 @@ describe('gameState.actions', () => {
     expect(playerOne.chips).toBe(90);
   });
 
-  test('[GameState.processAction] CALL จ่ายเท่าชิปที่เหลือพอดี (All-in แบบพอดี) -> สำเร็จ', () => {
+  test('[GameState.processAction] 4.47 CALL จ่ายเท่าชิปที่เหลือพอดี (All-in แบบพอดี) -> สำเร็จ', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -325,7 +325,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
+  test('[GameState.processAction] 4.48 ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'DISCONNECTED', chips: 1000 },
@@ -343,7 +343,7 @@ describe('gameState.actions', () => {
     expect(gameState.activePlayers[0].chips).toBe(1000);
   });
 
-  test('[GameState.processAction] SEEN ซ้ำไม่เสียเงิน และแทงรอบถัดไปคิดแบบ Seen', () => {
+  test('[GameState.processAction] 4.49 SEEN ซ้ำไม่เสียเงิน และแทงรอบถัดไปคิดแบบ Seen', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -371,7 +371,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] Seen จ่ายเดิมพันแล้วหารสองเป็นทศนิยม -> โยน INVALID_AMOUNT', () => {
+  test('[GameState.processAction] 4.50 Seen จ่ายเดิมพันแล้วหารสองเป็นทศนิยม -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -400,7 +400,7 @@ describe('gameState.actions', () => {
     expect(playerOne.chips).toBe(1000);
   });
 
-  test('[GameState.processAction] BET ด้วยยอดที่ไม่ใช่ระหว่าง S ถึง 2S สำหรับ Blind -> โยน INVALID_AMOUNT', () => {
+  test('[GameState.processAction] 4.51 BET ด้วยยอดที่ไม่ใช่ระหว่าง S ถึง 2S สำหรับ Blind -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
@@ -422,7 +422,6 @@ describe('gameState.actions', () => {
     );
     const playerOne = gameState.activePlayers[0];
 
-    // S = 50. Valid BET range for Blind: [50, 100]
     expectGameErrorWithCode(
       () => gameState.processAction(playerOne.id, 'BET', 49),
       'INVALID_AMOUNT',
@@ -432,14 +431,13 @@ describe('gameState.actions', () => {
       'INVALID_AMOUNT',
     );
 
-    // Test valid BET
     gameState.processAction(playerOne.id, 'BET', 75);
     expect(playerOne.chips).toBe(925);
     expect(gameState.currentStake).toBe(75);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] BET ด้วยยอดที่ไม่ใช่ระหว่าง 2S ถึง 4S สำหรับ Seen -> โยน INVALID_AMOUNT', () => {
+  test('[GameState.processAction] 4.52 BET ด้วยยอดที่ไม่ใช่ระหว่าง 2S ถึง 4S สำหรับ Seen -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
@@ -461,7 +459,6 @@ describe('gameState.actions', () => {
     );
     const playerOne = gameState.activePlayers[0];
 
-    // S = 50. Valid BET range for Seen: [100, 200]
     expectGameErrorWithCode(
       () => gameState.processAction(playerOne.id, 'BET', 99),
       'INVALID_AMOUNT',
@@ -471,14 +468,13 @@ describe('gameState.actions', () => {
       'INVALID_AMOUNT',
     );
 
-    // Test valid BET
     gameState.processAction(playerOne.id, 'BET', 150);
     expect(playerOne.chips).toBe(850);
     expect(gameState.currentStake).toBe(75);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] Overflow ตรวจสอบว่ารวม Pot แล้วต้องไม่เกิน MAX_SAFE_INTEGER', () => {
+  test('[GameState.processAction] 4.53 Overflow ตรวจสอบว่ารวม Pot แล้วต้องไม่เกิน MAX_SAFE_INTEGER', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 50 },
       [
@@ -500,7 +496,7 @@ describe('gameState.actions', () => {
     );
     const playerOne = gameState.activePlayers[0];
 
-    // pot is almost MAX. Adding 100 to it will exceed MAX_SAFE_INTEGER
+    // Pot ใกล้เต็มขีดจำกัด การบวกเพิ่ม 100 จะทำให้ล้น MAX_SAFE_INTEGER
     expectGameErrorWithCode(
       () => gameState.processAction(playerOne.id, 'RAISE', 100),
       'INVALID_AMOUNT',

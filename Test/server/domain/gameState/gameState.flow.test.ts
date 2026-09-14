@@ -22,7 +22,7 @@ describe('gameState.flow', () => {
     expect(survivor.chips).toBe(1050);
   });
 
-  test('[Continuous Flow Test] เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
+  test('[Continuous Flow Test] 4.70 เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
     const gameState = createGameStateFixture({ bootAmount: 50, maxPotLimit: 10000 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },
@@ -63,7 +63,7 @@ describe('gameState.flow', () => {
     expect(totalChipsInSystem).toBe(3000);
   });
 
-  test('[Error Injection in Flow] คำสั่งผิดแทรกกลางเกม -> State คงเดิม -> คำสั่งถูกทำงานต่อได้', () => {
+  test('[Error Injection in Flow] 4.71 คำสั่งผิดแทรกกลางเกม -> State คงเดิม -> คำสั่งถูกทำงานต่อได้', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },

@@ -185,7 +185,7 @@ describe('gameState.settlement', () => {
     expect(winner.chips).toBe(2000);
   });
 
-  test('[GameState.evaluateWinner] ผู้เล่น DISCONNECTED หรือ WAITING ไม่ได้รับรางวัล แม้ไพ่ดีที่สุด', () => {
+  test('[GameState.evaluateWinner] 4.64 ผู้เล่น DISCONNECTED หรือ WAITING ไม่ได้รับรางวัล แม้ไพ่ดีที่สุด', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
         id: 'playerOne',
@@ -227,7 +227,7 @@ describe('gameState.settlement', () => {
     expect(gameState.activePlayers[2].chips).toBe(2000);
   });
 
-  test('[GameState.evaluateWinner] ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {
+  test('[GameState.evaluateWinner] 4.65 ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
         id: 'playerOne',
@@ -257,7 +257,7 @@ describe('gameState.settlement', () => {
     expect(gameState.activePlayers[1].chips).toBe(2000);
   });
 
-  test('[GameState.checkLastManStanding] คืน Player ตัวจริง และไม่เปลี่ยน State รวมกรณี Array ว่าง', () => {
+  test('[GameState.checkLastManStanding] 4.66 คืน Player ตัวจริง และไม่เปลี่ยน State รวมกรณี Array ว่าง', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'FOLDED', chips: 1000 },
@@ -270,7 +270,7 @@ describe('gameState.settlement', () => {
     expect(emptyGame.checkLastManStanding()).toBeNull();
   });
 
-  test('[GameState.checkPotLimitReached] Pot Limit ใช้ค่าอื่นที่ไม่ใช่ 10000 และเรียกตรวจแล้ว State ไม่เปลี่ยน', () => {
+  test('[GameState.checkPotLimitReached] 4.67 Pot Limit ใช้ค่าอื่นที่ไม่ใช่ 10000 และเรียกตรวจแล้ว State ไม่เปลี่ยน', () => {
     const gameState = createGameStateFixture({ pot: 5000 });
     gameState.maxPotLimit = 5000;
     const isReached = gameState.checkPotLimitReached();
@@ -278,7 +278,7 @@ describe('gameState.settlement', () => {
     expect(gameState.pot).toBe(5000);
   });
 
-  test('[GameState.evaluateWinner] เรียก evaluateWinner() ซ้ำแล้วไม่จ่ายเงินซ้ำ', () => {
+  test('[GameState.evaluateWinner] 4.68 เรียก evaluateWinner() ซ้ำแล้วไม่จ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
         id: 'playerOne',
@@ -311,7 +311,7 @@ describe('gameState.settlement', () => {
     expect(gameState.activePlayers[0].chips).toBe(2000);
   });
 
-  test('[GameState.handleTie] จัดการเศษชิปเมื่อแบ่งไม่ลงตัว (Pot 101 แบ่ง 2 คน)', () => {
+  test('[GameState.handleTie] 4.69 จัดการเศษชิปเมื่อแบ่งไม่ลงตัว (Pot 101 แบ่ง 2 คน)', () => {
     const gameState = createGameStateFixture({ pot: 101 }, [
       {
         id: 'playerOne',

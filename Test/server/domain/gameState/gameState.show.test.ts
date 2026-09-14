@@ -315,7 +315,7 @@ describe('gameState.show', () => {
     expect(target.chips).toBe(1000);
   });
 
-  test('[GameState.requestShow] ผู้ขอ SHOW แพ้ด้วยไพ่ที่ต่ำกว่า (ไม่ใช่แค่เสมอ)', () => {
+  test('[GameState.requestShow] 4.59 ผู้ขอ SHOW แพ้ด้วยไพ่ที่ต่ำกว่า (ไม่ใช่แค่เสมอ)', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -347,7 +347,7 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
-  test('[GameState.requestShow] Blind ขอ SHOW กับ Seen ได้', () => {
+  test('[GameState.requestShow] 4.60 Blind ขอ SHOW กับ Seen ได้', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -381,7 +381,7 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].chips).toBe(950);
   });
 
-  test('[GameState.requestShow] เงินไม่พอจ่าย SHOW ต้องไม่เปลี่ยนข้อมูล', () => {
+  test('[GameState.requestShow] 4.61 เงินไม่พอจ่าย SHOW ต้องไม่เปลี่ยนข้อมูล', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -418,7 +418,7 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].chips).toBe(40);
   });
 
-  test('[GameState.requestShow] มีผู้เล่นใน Array มากกว่าสองคน แต่เหลือ ACTIVE สองคน ต้องขอ SHOW ได้', () => {
+  test('[GameState.requestShow] 4.62 มีผู้เล่นใน Array มากกว่าสองคน แต่เหลือ ACTIVE สองคน ต้องขอ SHOW ได้', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -454,7 +454,7 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].chips).toBe(950);
   });
 
-  test('[GameState.requestShow] เรียก requestShow() โดยตรง ไม่ผ่าน processAction()', () => {
+  test('[GameState.requestShow] 4.63 เรียก requestShow() โดยตรง ไม่ผ่าน processAction()', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [

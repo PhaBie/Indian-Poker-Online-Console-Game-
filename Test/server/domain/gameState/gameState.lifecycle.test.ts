@@ -205,7 +205,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.startGame] เริ่มเกมแต่มีผู้เล่นเงินไม่พอจ่าย Boot -> ปฏิเสธการเริ่มและไม่หักเงินใคร', () => {
+  test('[GameState.startGame] 4.54 เริ่มเกมแต่มีผู้เล่นเงินไม่พอจ่าย Boot -> ปฏิเสธการเริ่มและไม่หักเงินใคร', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 40 },
@@ -219,7 +219,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.activePlayers[0].privateCards.length).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
+  test('[GameState.handlePlayerDisconnect] 4.55 เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
     ]);
@@ -230,7 +230,7 @@ describe('gameState.lifecycle', () => {
     );
   });
 
-  test('[GameState.handlePlayerDisconnect] หลุดนอกตาตัวเอง -> เปลี่ยนสถานะเป็น DISCONNECTED แต่ไม่ขยับตา', () => {
+  test('[GameState.handlePlayerDisconnect] 4.56 หลุดนอกตาตัวเอง -> เปลี่ยนสถานะเป็น DISCONNECTED แต่ไม่ขยับตา', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
@@ -242,7 +242,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] ตัดการเชื่อมต่อซ้ำ (DISCONNECTED อยู่แล้ว) ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
+  test('[GameState.handlePlayerDisconnect] 4.57 ตัดการเชื่อมต่อซ้ำ (DISCONNECTED อยู่แล้ว) ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
@@ -253,7 +253,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.autoFoldTimeout] บังคับหมอบทันที และไม่เลื่อนตาเอง', () => {
+  test('[GameState.autoFoldTimeout] 4.58 บังคับหมอบทันที และไม่เลื่อนตาเอง', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
