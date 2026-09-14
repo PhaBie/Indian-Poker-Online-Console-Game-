@@ -184,4 +184,130 @@ describe('gameState.settlement', () => {
     gameState.endGame();
     expect(winner.chips).toBe(2000);
   });
+
+  test('[GameState.evaluateWinner] ผู้เล่น DISCONNECTED หรือ WAITING ไม่ได้รับรางวัล แม้ไพ่ดีที่สุด', () => {
+    const gameState = createGameStateFixture({ pot: 1000 }, [
+      {
+        id: 'p1',
+        name: 'P1',
+        status: 'DISCONNECTED',
+        chips: 1000,
+        privateCards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'p2',
+        name: 'P2',
+        status: 'WAITING',
+        chips: 1000,
+        privateCards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'p3',
+        name: 'P3',
+        status: 'ACTIVE',
+        chips: 1000,
+        privateCards: [
+          { rank: 2, suit: 'SPADES' },
+          { rank: 3, suit: 'SPADES' },
+          { rank: 5, suit: 'HEARTS' },
+        ],
+      },
+    ]);
+    gameState.evaluateWinner();
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.activePlayers[1].chips).toBe(1000);
+    expect(gameState.activePlayers[2].chips).toBe(2000);
+  });
+
+  test('[GameState.evaluateWinner] ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {
+    const gameState = createGameStateFixture({ pot: 1000 }, [
+      {
+        id: 'p1',
+        name: 'P1',
+        status: 'ACTIVE',
+        chips: 1000,
+        privateCards: [
+          { rank: 2, suit: 'SPADES' },
+          { rank: 3, suit: 'SPADES' },
+          { rank: 5, suit: 'HEARTS' },
+        ],
+      },
+      {
+        id: 'p2',
+        name: 'P2',
+        status: 'ACTIVE',
+        chips: 1000,
+        privateCards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+    ]);
+    gameState.evaluateWinner();
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.activePlayers[1].chips).toBe(2000);
+  });
+
+  test('[GameState.checkLastManStanding] คืน Player ตัวจริง และไม่เปลี่ยน State รวมกรณี Array ว่าง', () => {
+    const gameState = createGameStateFixture({ pot: 1000 }, [
+      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
+      { id: 'p2', name: 'P2', status: 'FOLDED', chips: 1000 },
+    ]);
+    const winner = gameState.checkLastManStanding();
+    expect(winner?.id).toBe('p1');
+    expect(gameState.pot).toBe(1000);
+
+    const emptyGame = createGameStateFixture({}, []);
+    expect(emptyGame.checkLastManStanding()).toBeNull();
+  });
+
+  test('[GameState.checkPotLimitReached] Pot Limit ใช้ค่าอื่นที่ไม่ใช่ 10000 และเรียกตรวจแล้ว State ไม่เปลี่ยน', () => {
+    const gameState = createGameStateFixture({ pot: 5000 });
+    gameState.potLimit = 5000;
+    const isReached = gameState.checkPotLimitReached();
+    expect(isReached).toBe(true);
+    expect(gameState.pot).toBe(5000);
+  });
+
+  test('[GameState.evaluateWinner] เรียก evaluateWinner() ซ้ำแล้วไม่จ่ายเงินซ้ำ', () => {
+    const gameState = createGameStateFixture({ pot: 1000 }, [
+      {
+        id: 'p1',
+        name: 'P1',
+        status: 'ACTIVE',
+        chips: 1000,
+        privateCards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'p2',
+        name: 'P2',
+        status: 'ACTIVE',
+        chips: 1000,
+        privateCards: [
+          { rank: 2, suit: 'SPADES' },
+          { rank: 3, suit: 'SPADES' },
+          { rank: 5, suit: 'HEARTS' },
+        ],
+      },
+    ]);
+    gameState.evaluateWinner();
+    expect(gameState.activePlayers[0].chips).toBe(2000);
+    expect(gameState.pot).toBe(0);
+
+    gameState.evaluateWinner();
+    expect(gameState.activePlayers[0].chips).toBe(2000);
+  });
 });

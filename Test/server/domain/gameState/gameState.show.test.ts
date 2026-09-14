@@ -313,4 +313,92 @@ describe('gameState.show', () => {
     expect(requester.chips).toBe(1500);
     expect(target.chips).toBe(1000);
   });
+
+  test('[GameState.requestShow] ผู้ขอ SHOW แพ้ด้วยไพ่ที่ต่ำกว่า (ไม่ใช่แค่เสมอ)', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        {
+          id: 'p1',
+          name: 'P1',
+          status: 'ACTIVE',
+          chips: 1000,
+          privateCards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        {
+          id: 'p2',
+          name: 'P2',
+          status: 'ACTIVE',
+          chips: 1000,
+          privateCards: [
+            { rank: 14, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+          ],
+        },
+      ],
+    );
+    gameState.processAction('p1', 'SHOW');
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+  });
+
+  test('[GameState.requestShow] Blind ขอ SHOW กับ Seen ได้', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: false },
+      ],
+    );
+    gameState.processAction('p1', 'SHOW');
+    expect(gameState.activePlayers[0].chips).toBe(950);
+  });
+
+  test('[GameState.requestShow] เงินไม่พอจ่าย SHOW ต้องไม่เปลี่ยนข้อมูล', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 40, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+      ],
+    );
+    let err;
+    try {
+      gameState.processAction('p1', 'SHOW');
+    } catch (e) {
+      err = e;
+    }
+    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(gameState.activePlayers[0].chips).toBe(40);
+  });
+
+  test('[GameState.requestShow] มีผู้เล่นใน Array มากกว่าสองคน แต่เหลือ ACTIVE สองคน ต้องขอ SHOW ได้', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'FOLDED', chips: 1000 },
+        { id: 'p3', name: 'P3', status: 'DISCONNECTED', chips: 1000 },
+        { id: 'p4', name: 'P4', status: 'ACTIVE', chips: 1000, isBlind: true },
+      ],
+    );
+    gameState.processAction('p1', 'SHOW');
+    expect(gameState.activePlayers[0].chips).toBe(950);
+  });
+
+  test('[GameState.requestShow] เรียก requestShow() โดยตรง ไม่ผ่าน processAction()', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+      ],
+    );
+    gameState.requestShow('p1');
+    expect(gameState.activePlayers[0].chips).toBe(950);
+  });
 });

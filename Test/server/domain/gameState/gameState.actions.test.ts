@@ -275,4 +275,152 @@ describe('gameState.actions', () => {
       expect(activePlayer2.status).toBe('ACTIVE');
     });
   });
+
+  test('[GameState.processAction] CALL เงินไม่พอ (Blind) -> โยน GameError และเงินไม่เปลี่ยน', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 40, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+    let err;
+    try {
+      gameState.processAction(p1.id, 'CALL');
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(GameError);
+    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(p1.chips).toBe(40);
+  });
+
+  test('[GameState.processAction] CALL เงินไม่พอ (Seen) -> โยน GameError และเงินไม่เปลี่ยน', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 90, isBlind: false },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+    let err;
+    try {
+      gameState.processAction(p1.id, 'CALL');
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(GameError);
+    expect(err.code).toBe('INSUFFICIENT_CHIPS');
+    expect(p1.chips).toBe(90);
+  });
+
+  test('[GameState.processAction] CALL จ่ายเท่าชิปที่เหลือพอดี (All-in แบบพอดี) -> สำเร็จ', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 50, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+    gameState.processAction(p1.id, 'CALL');
+    expect(p1.chips).toBe(0);
+  });
+
+  test('[GameState.processAction] RAISE ขอบเขตที่รับได้และรับไม่ได้ (Boundary)', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+
+    // เกินจำนวนเต็ม (Infinity)
+    let err1;
+    try {
+      gameState.processAction(p1.id, 'RAISE', Infinity);
+    } catch (e) {
+      err1 = e;
+    }
+    expect(err1.code).toBe('INVALID_AMOUNT');
+
+    // ติดลบ Infinity
+    let err2;
+    try {
+      gameState.processAction(p1.id, 'RAISE', -Infinity);
+    } catch (e) {
+      err2 = e;
+    }
+    expect(err2.code).toBe('INVALID_AMOUNT');
+
+    // ไม่ส่ง Amount
+    let err3;
+    try {
+      gameState.processAction(p1.id, 'RAISE');
+    } catch (e) {
+      err3 = e;
+    }
+    expect(err3.code).toBe('INVALID_AMOUNT');
+
+    // เกิน MAX_SAFE_INTEGER
+    let err4;
+    try {
+      gameState.processAction(p1.id, 'RAISE', Number.MAX_SAFE_INTEGER + 1);
+    } catch (e) {
+      err4 = e;
+    }
+    expect(err4.code).toBe('INVALID_AMOUNT');
+
+    expect(p1.chips).toBe(1000);
+  });
+
+  test('[GameState.processAction] ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
+      { id: 'p2', name: 'P2', status: 'DISCONNECTED', chips: 1000 },
+      { id: 'p3', name: 'P3', status: 'ACTIVE', chips: 1000 },
+    ]);
+    let err1;
+    try {
+      gameState.processAction('p1', 'CALL');
+    } catch (e) {
+      err1 = e;
+    }
+    expect(err1).toBeInstanceOf(PlayerStateError);
+
+    let err2;
+    try {
+      gameState.processAction('p2', 'CALL');
+    } catch (e) {
+      err2 = e;
+    }
+    expect(err2).toBeInstanceOf(PlayerStateError);
+
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+  });
+
+  test('[GameState.processAction] SEEN ซ้ำไม่เสียเงิน และแทงรอบถัดไปคิดแบบ Seen', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50 },
+      [
+        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
+        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      ],
+    );
+    const p1 = gameState.activePlayers[0];
+
+    gameState.processAction(p1.id, 'SEEN');
+    expect(p1.isBlind).toBe(false);
+    expect(p1.chips).toBe(1000);
+
+    gameState.processAction(p1.id, 'SEEN');
+    expect(p1.chips).toBe(1000); // เงินต้องไม่ลดลง
+
+    gameState.processAction(p1.id, 'CALL');
+    expect(p1.chips).toBe(900); // 1000 - (50*2) = 900
+  });
 });

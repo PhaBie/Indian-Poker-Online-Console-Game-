@@ -18,6 +18,10 @@ describe('gameState.lifecycle', () => {
     expect(firstPlayer.privateCards.length).toBe(3);
     expect(secondPlayer.privateCards.length).toBe(3);
     expect(firstPlayer.status).toBe('ACTIVE');
+    expect(secondPlayer.status).toBe('ACTIVE');
+    expect(firstPlayer.isBlind).toBe(true);
+    expect(secondPlayer.isBlind).toBe(true);
+    expect(gameState.currentStake).toBe(50);
   });
 
   test('[GameState.nextTurn] 4.2 เปลี่ยนเทิร์น → เปลี่ยนไปยังผู้เล่นคนถัดไป', () => {
@@ -26,10 +30,11 @@ describe('gameState.lifecycle', () => {
     expect(gameState.currentPlayerIndex).toBe(1);
   });
 
-  test('[GameState.nextTurn] 4.3 ผู้เล่นสถานะ FOLDED หรือ DISCONNECTED → ข้ามเทิร์นไปยังคนถัดไปที่เป็น ACTIVE', () => {
+  test('[GameState.nextTurn] 4.3 ผู้เล่นสถานะ FOLDED, DISCONNECTED หรือ WAITING → ข้ามเทิร์นไปยังคนถัดไปที่เป็น ACTIVE', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'activePlayer', name: 'Active Player', status: 'ACTIVE', chips: 1000 },
       { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
+      { id: 'waitingPlayer', name: 'Waiting Player', status: 'WAITING', chips: 1000 },
       {
         id: 'disconnectedPlayer',
         name: 'Disconnected Player',
@@ -44,7 +49,21 @@ describe('gameState.lifecycle', () => {
       },
     ]);
     gameState.nextTurn();
-    expect(gameState.currentPlayerIndex).toBe(3);
+    expect(gameState.currentPlayerIndex).toBe(4);
+  });
+
+  test('[GameState.nextTurn] 4.3.1 หากเหลือ ACTIVE คนเดียว ต้องไม่เปลี่ยนเงินและไพ่', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'activePlayer', name: 'Active Player', status: 'ACTIVE', chips: 1000 },
+      { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
+    ]);
+    const player = gameState.activePlayers[0];
+    const originalChips = player.chips;
+
+    gameState.nextTurn();
+
+    expect(gameState.currentPlayerIndex).toBe(0);
+    expect(player.chips).toBe(originalChips);
   });
 
   test('[GameState.startGame] 4.17 เริ่มเกมกับผู้เล่นสถานะ Blind → ผู้เล่นได้รับ privateCards ครบ 3 ใบและ isBlind ยังเป็น true', () => {
@@ -152,7 +171,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.dealerIndex).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.29 เปลี่ยนสถานะผู้เล่นเป็น DISCONNECTED ไม่คืนเงิน', () => {
+  test('[GameState.handlePlayerDisconnect] 4.29 เปลี่ยนสถานะผู้เล่นเป็น DISCONNECTED ไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
     const gameState = createGameStateFixture({ pot: 500 }, [
       {
         id: 'disconnectingPlayer',
@@ -162,13 +181,14 @@ describe('gameState.lifecycle', () => {
       },
       { id: 'otherPlayer', name: 'Other Player', status: 'ACTIVE', chips: 1000 },
     ]);
-    const [disconnectingPlayer] = gameState.activePlayers;
+    const [disconnectingPlayer, otherPlayer] = gameState.activePlayers;
     disconnectingPlayer.bet = 100;
 
     gameState.handlePlayerDisconnect(disconnectingPlayer.id);
 
     expect(disconnectingPlayer.status).toBe('DISCONNECTED');
     expect(disconnectingPlayer.chips).toBe(900);
+    expect(otherPlayer.chips).toBe(1000);
   });
 
   test('[GameState.nextTurn] 4.43 วนเทิร์นจากท้ายกลับมาคนแรก', () => {
