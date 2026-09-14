@@ -35,5 +35,5 @@ Test/
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง:
 
 ```bash
-bun test ./Test/server/domain/player.test.ts
+bun test ./Test/server/domain/player/player.money.test.ts
 ```
