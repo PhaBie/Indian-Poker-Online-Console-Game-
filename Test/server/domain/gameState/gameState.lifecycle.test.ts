@@ -243,24 +243,41 @@ describe('gameState.lifecycle', () => {
   });
 
   test('[GameState.handlePlayerDisconnect] 4.57 ตัดการเชื่อมต่อซ้ำ (DISCONNECTED อยู่แล้ว) ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
-    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
       { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
 
     gameState.handlePlayerDisconnect('playerOne');
     expect(gameState.activePlayers[0].status).toBe('DISCONNECTED');
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(500);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.autoFoldTimeout] 4.58 บังคับหมอบทันที และไม่เลื่อนตาเอง', () => {
-    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+  test('[GameState.autoFoldTimeout] 4.58 มี ACTIVE 3 คน -> Timeout 1 คน -> เหลือ ACTIVE 2 คน (ไม่จ่าย Pot, ไม่เลื่อนตา)', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
+      { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerThree', name: 'Player Three', status: 'ACTIVE', chips: 1000 },
+    ]);
+
+    gameState.autoFoldTimeout();
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+    expect(gameState.pot).toBe(500); // Not paid yet
+    expect(gameState.currentPlayerIndex).toBe(0); // Not auto skipped
+  });
+
+  test('[GameState.autoFoldTimeout] 4.58.1 มี ACTIVE 2 คน -> Timeout 1 คน -> เหลือ ACTIVE 1 คน (จ่าย Pot ผู้ชนะ)', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
 
     gameState.autoFoldTimeout();
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
+    expect(gameState.activePlayers[1].chips).toBe(1500); // Survivor gets pot
+    expect(gameState.pot).toBe(0);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 });

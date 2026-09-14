@@ -1,4 +1,5 @@
 import { expect, test, describe } from 'bun:test';
+import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.settlement', () => {
@@ -34,6 +35,40 @@ describe('gameState.settlement', () => {
     expect(winner.chips).toBe(1500);
     expect(loser.chips).toBe(1000);
     expect(gameState.pot).toBe(0);
+
+    test('[GameState.evaluateWinner] ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) -> โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
+      const gameState = createGameStateFixture({ pot: 1000 }, [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          cards: [
+            { rank: 14, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+          ],
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: Number.MAX_SAFE_INTEGER - 100,
+          cards: [
+            { rank: 14, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+          ],
+        },
+      ]);
+
+      // Pot 1000 / 2 = 500. Player Two (MAX - 100) + 500 > MAX -> Should throw and NO ONE gets paid.
+      expectGameErrorWithCode(() => gameState.evaluateWinner(), 'INVALID_AMOUNT');
+
+      expect(gameState.activePlayers[0].chips).toBe(1000);
+      expect(gameState.activePlayers[1].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
+      expect(gameState.pot).toBe(1000);
+    });
   });
 
   test('[GameState.endGame] 4.11 คนอื่นหมอบหมดเหลือผู้เล่นคนเดียว → จบเกมและโอนเงิน Pot 1500 ให้ผู้เล่นที่เหลือรอด', () => {
@@ -62,7 +97,7 @@ describe('gameState.settlement', () => {
       },
     ]);
     const survivor = gameState.checkLastManStanding();
-    expect(survivor?.id).toBe('survivor');
+    expect(survivor).toBe(gameState.activePlayers[1]);
   });
 
   test('[GameState.handleTie] 4.27 เสมอ 3 คน → แบ่งกองกลางเท่าๆ กัน และรักษาสมดุลเงินในระบบสมบูรณ์', () => {
@@ -228,7 +263,8 @@ describe('gameState.settlement', () => {
   });
 
   test('[GameState.evaluateWinner] 4.65 ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {
-    const gameState = createGameStateFixture({ pot: 1000 }, [
+    // Game 1: P1 (แพ้) -> P2 (ชนะ)
+    const game1 = createGameStateFixture({ pot: 1000 }, [
       {
         id: 'playerOne',
         name: 'Player One',
@@ -252,9 +288,38 @@ describe('gameState.settlement', () => {
         ],
       },
     ]);
-    gameState.evaluateWinner();
-    expect(gameState.activePlayers[0].chips).toBe(1000);
-    expect(gameState.activePlayers[1].chips).toBe(2000);
+    game1.evaluateWinner();
+    expect(game1.activePlayers.find((p) => p.id === 'playerOne')?.chips).toBe(1000);
+    expect(game1.activePlayers.find((p) => p.id === 'playerTwo')?.chips).toBe(2000);
+
+    // Game 2: P2 (ชนะ) -> P1 (แพ้)
+    const game2 = createGameStateFixture({ pot: 1000 }, [
+      {
+        id: 'playerTwo',
+        name: 'Player Two',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'playerOne',
+        name: 'Player One',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 2, suit: 'SPADES' },
+          { rank: 3, suit: 'SPADES' },
+          { rank: 5, suit: 'HEARTS' },
+        ],
+      },
+    ]);
+    game2.evaluateWinner();
+    expect(game2.activePlayers.find((p) => p.id === 'playerOne')?.chips).toBe(1000);
+    expect(game2.activePlayers.find((p) => p.id === 'playerTwo')?.chips).toBe(2000);
   });
 
   test('[GameState.checkLastManStanding] 4.66 คืน Player ตัวจริง และไม่เปลี่ยน State รวมกรณี Array ว่าง', () => {
@@ -331,27 +396,23 @@ describe('gameState.settlement', () => {
         chips: 1000,
         cards: [
           { rank: 14, suit: 'CLUBS' },
-          { rank: 13, suit: 'SPADES' },
-          { rank: 13, suit: 'HEARTS' },
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
         ],
-      },
+      }, // Not used for evaluateWinner anymore, but just for fixture
     ]);
 
-    gameState.evaluateWinner();
+    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
 
-    // 1. ตรวจสอบสมดุลชิป: ผลรวมชิปของผู้เล่นและ Pot ก่อนและหลังแจกรางวัลต้องเท่ากัน (2101) ป้องกันชิปหายหรืองอกในระบบ
+    // 1. ตรวจสอบสมดุลชิป
     const expectedTotalChips = 2101;
     const actualTotalChips =
       gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
     expect(actualTotalChips).toBe(expectedTotalChips);
 
-    // 2. ตรวจสอบการจัดการเศษทศนิยม: Pot 101 หาร 2 คนจะได้ 50.5
-    // ระบบต้องปัดเศษเป็นจำนวนเต็ม ทำให้คนหนึ่งได้ 51 (1051) และอีกคนได้ 50 (1050)
-    const sortedChips = [
-      gameState.activePlayers[0].chips,
-      gameState.activePlayers[1].chips,
-    ].sort((a, b) => a - b);
-    expect(sortedChips[0]).toBe(1050);
-    expect(sortedChips[1]).toBe(1051);
+    // 2. ตรวจสอบการจัดการเศษทศนิยม: คนแรกควรได้ 51 (1051) คนที่สองได้ 50 (1050)
+    expect(gameState.activePlayers[0].chips).toBe(1051);
+    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameState.pot).toBe(0);
   });
 });

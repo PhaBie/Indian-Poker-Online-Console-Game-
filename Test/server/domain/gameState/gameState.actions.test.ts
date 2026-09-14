@@ -400,7 +400,7 @@ describe('gameState.actions', () => {
     expect(playerOne.chips).toBe(1000);
   });
 
-  test('[GameState.processAction] 4.51 BET ด้วยยอดที่ไม่ใช่ระหว่าง S ถึง 2S สำหรับ Blind -> โยน INVALID_AMOUNT', () => {
+  test('[GameState.processAction] 4.51 BET ด้วยยอดต่ำกว่า S (Blind) -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
@@ -420,24 +420,72 @@ describe('gameState.actions', () => {
         },
       ],
     );
-    const playerOne = gameState.activePlayers[0];
-
     expectGameErrorWithCode(
-      () => gameState.processAction(playerOne.id, 'BET', 49),
+      () => gameState.processAction('playerOne', 'BET', 49),
       'INVALID_AMOUNT',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(100);
+    expect(gameState.currentStake).toBe(50);
+  });
+
+  test('[GameState.processAction] 4.51.1 BET ด้วยยอดสูงกว่า 2S (Blind) -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
     expectGameErrorWithCode(
-      () => gameState.processAction(playerOne.id, 'BET', 101),
+      () => gameState.processAction('playerOne', 'BET', 101),
       'INVALID_AMOUNT',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(100);
+    expect(gameState.currentStake).toBe(50);
+  });
 
-    gameState.processAction(playerOne.id, 'BET', 75);
-    expect(playerOne.chips).toBe(925);
+  test('[GameState.processAction] 4.51.2 BET ด้วยยอดรับได้ S ถึง 2S (Blind) -> ผ่าน', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    gameState.processAction('playerOne', 'BET', 75);
+    expect(gameState.activePlayers[0].chips).toBe(925);
+    expect(gameState.pot).toBe(175);
     expect(gameState.currentStake).toBe(75);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] 4.52 BET ด้วยยอดที่ไม่ใช่ระหว่าง 2S ถึง 4S สำหรับ Seen -> โยน INVALID_AMOUNT', () => {
+  test('[GameState.processAction] 4.52 BET ด้วยยอดต่ำกว่า 2S (Seen) -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
@@ -457,19 +505,96 @@ describe('gameState.actions', () => {
         },
       ],
     );
-    const playerOne = gameState.activePlayers[0];
-
     expectGameErrorWithCode(
-      () => gameState.processAction(playerOne.id, 'BET', 99),
+      () => gameState.processAction('playerOne', 'BET', 98),
       'INVALID_AMOUNT',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(100);
+    expect(gameState.currentStake).toBe(50);
+  });
+
+  test('[GameState.processAction] 4.52.1 BET ด้วยยอดสูงกว่า 4S (Seen) -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
     expectGameErrorWithCode(
-      () => gameState.processAction(playerOne.id, 'BET', 201),
+      () => gameState.processAction('playerOne', 'BET', 202),
       'INVALID_AMOUNT',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(100);
+    expect(gameState.currentStake).toBe(50);
+  });
 
-    gameState.processAction(playerOne.id, 'BET', 150);
-    expect(playerOne.chips).toBe(850);
+  test('[GameState.processAction] 4.52.2 BET ด้วยยอดคี่ทศนิยม (Seen) -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    expectGameErrorWithCode(
+      () => gameState.processAction('playerOne', 'BET', 105),
+      'INVALID_AMOUNT',
+    );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(100);
+    expect(gameState.currentStake).toBe(50);
+  });
+
+  test('[GameState.processAction] 4.52.3 BET ด้วยยอดรับได้ 2S ถึง 4S (Seen) -> ผ่าน', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    gameState.processAction('playerOne', 'BET', 150);
+    expect(gameState.activePlayers[0].chips).toBe(850);
+    expect(gameState.pot).toBe(250);
     expect(gameState.currentStake).toBe(75);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
@@ -502,5 +627,8 @@ describe('gameState.actions', () => {
       'INVALID_AMOUNT',
     );
     expect(playerOne.chips).toBe(100);
+    expect(gameState.pot).toBe(Number.MAX_SAFE_INTEGER - 50);
+    expect(gameState.currentStake).toBe(50);
+    expect(gameState.activePlayers[1].status).toBe('ACTIVE');
   });
 });

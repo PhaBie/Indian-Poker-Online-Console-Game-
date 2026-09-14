@@ -1,5 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
+import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
 
 describe('gameState.flow', () => {
   test('[GameState Flow] 4.30 การเล่นต่อเนื่องหลาย Action โดยไม่ผ่าน Server', () => {
@@ -70,13 +71,11 @@ describe('gameState.flow', () => {
     ]);
     gameState.startGame();
 
-    let expectedError: { code?: string } | undefined;
-    try {
-      gameState.processAction('playerOne', 'RAISE', -50);
-    } catch (caughtError) {
-      expectedError = caughtError as { code?: string };
-    }
-    expect(expectedError?.code).toBe('INVALID_AMOUNT');
+    expectGameErrorWithCode(
+      () => gameState.processAction('playerOne', 'RAISE', -50),
+      'INVALID_AMOUNT',
+    );
+
     expect(gameState.pot).toBe(100);
     expect(gameState.activePlayers[0].chips).toBe(950);
 
