@@ -27,7 +27,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:game-state": "bun test gameState"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js}": [
