@@ -339,11 +339,14 @@ describe('gameState.settlement', () => {
 
     gameState.evaluateWinner();
 
+    // 1. ตรวจสอบสมดุลชิป: ผลรวมชิปของผู้เล่นและ Pot ก่อนและหลังแจกรางวัลต้องเท่ากัน (2101) ป้องกันชิปหายหรืองอกในระบบ
     const expectedTotalChips = 2101;
     const actualTotalChips =
       gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
     expect(actualTotalChips).toBe(expectedTotalChips);
 
+    // 2. ตรวจสอบการจัดการเศษทศนิยม: Pot 101 หาร 2 คนจะได้ 50.5
+    // ระบบต้องปัดเศษเป็นจำนวนเต็ม ทำให้คนหนึ่งได้ 51 (1051) และอีกคนได้ 50 (1050)
     const sortedChips = [
       gameState.activePlayers[0].chips,
       gameState.activePlayers[1].chips,
