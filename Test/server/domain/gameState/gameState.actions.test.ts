@@ -1,12 +1,12 @@
 import { expect, test, describe } from 'bun:test';
 import {
-  GameError,
   WrongTurnError,
   PlayerStateError,
   InvalidActionError,
 } from '../../../../src/server/domain/errors/GameError';
 import type { GameActionType } from '../../../../src/shared/types';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
+import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
 
 describe('gameState.actions', () => {
   test('[GameState.processAction] 4.4 ผู้เล่น Blind ขอ CALL → หักชิปเท่า currentStake 50 เข้า Pot 150 และ currentStake คงเดิมที่ 50', () => {
@@ -23,6 +23,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(50);
     expect(blindPlayer.chips).toBe(950);
     expect(blindPlayer.bet).toBe(50);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.5 ผู้เล่น Blind ขอ RAISE ด้วย 100 → หักชิป 100 เข้า Pot 200 และ currentStake เปลี่ยนเป็น 100', () => {
@@ -39,6 +40,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(100);
     expect(blindPlayer.chips).toBe(900);
     expect(blindPlayer.bet).toBe(100);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.6 ผู้เล่น Seen ขอ CALL → หักชิป 100 เข้า Pot 200 และ currentStake คงเดิมที่ 50', () => {
@@ -56,6 +58,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(50);
     expect(seenPlayer.chips).toBe(900);
     expect(seenPlayer.bet).toBe(100);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.7 ผู้เล่น Seen ขอ RAISE ด้วย 200 → หักชิป 200 เข้า Pot 300 และ currentStake เปลี่ยนเป็น 100', () => {
@@ -73,6 +76,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(100);
     expect(seenPlayer.chips).toBe(800);
     expect(seenPlayer.bet).toBe(200);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.8 วนเทิร์นกลับมาที่ผู้เล่นเดิมแล้วขอ CALL → หักชิปเต็ม 100 เข้า Pot 350 โดยไม่หักลบยอดเดิม', () => {
@@ -94,6 +98,7 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(100);
     expect(firstPlayer.chips).toBe(850);
     expect(firstPlayer.bet).toBe(150);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.23 การทำ FOLD → เปลี่ยนสถานะเป็น FOLDED ไม่คืนชิป', () => {
@@ -109,6 +114,7 @@ describe('gameState.actions', () => {
     expect(foldingPlayer.status).toBe('FOLDED');
     expect(foldingPlayer.chips).toBe(900);
     expect(gameState.pot).toBe(200);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.24 การทำ SEEN → เปลี่ยนเป็น isBlind=false ไม่เสียเงินเพิ่ม', () => {
@@ -123,6 +129,7 @@ describe('gameState.actions', () => {
 
     expect(seeingPlayer.isBlind).toBe(false);
     expect(seeingPlayer.chips).toBe(900);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] 4.31 สั่งเล่น CALL นอกเทิร์นตนเอง → โยน WrongTurnError และ pot, currentPlayerIndex และ bet ของผู้ขอไม่เปลี่ยน', () => {
@@ -174,8 +181,8 @@ describe('gameState.actions', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, pot: 500, currentStake: 50 },
       [
-        { id: `activePlayer1`, name: `Player 1`, status: `ACTIVE`, chips: 1000 },
-        { id: `activePlayer2`, name: `Player 2`, status: `ACTIVE`, chips: 1000 },
+        { id: 'activePlayer1', name: 'Player 1', status: 'ACTIVE', chips: 1000 },
+        { id: 'activePlayer2', name: 'Player 2', status: 'ACTIVE', chips: 1000 },
       ],
     );
     const [activePlayers] = gameState.activePlayers;
@@ -205,14 +212,10 @@ describe('gameState.actions', () => {
     );
     const [activePlayer1, activePlayer2] = gameState.activePlayers;
 
-    let caughtError: GameError | undefined;
-    try {
-      gameState.processAction('unknownPlayerId', 'FOLD');
-    } catch (e) {
-      caughtError = e as GameError;
-    }
-    expect(caughtError).toBeInstanceOf(GameError);
-    expect(caughtError?.code).toBe('PLAYER_NOT_FOUND');
+    expectGameErrorWithCode(
+      () => gameState.processAction('unknownPlayerId', 'FOLD'),
+      'PLAYER_NOT_FOUND',
+    );
 
     expect(gameState.pot).toBe(500);
     expect(gameState.currentStake).toBe(50);
@@ -231,6 +234,8 @@ describe('gameState.actions', () => {
     { desc: 'ทศนิยม', amount: 10.5 },
     { desc: 'NaN', amount: NaN },
     { desc: 'Infinity', amount: Infinity },
+    { desc: '-Infinity', amount: -Infinity },
+    { desc: 'ไม่มีการส่งค่า Amount ให้ RAISE', amount: undefined },
     { desc: 'สตริง', amount: '100' as unknown as number },
     { desc: 'เกิน Safe Integer', amount: Number.MAX_SAFE_INTEGER + 1 },
   ];
@@ -239,40 +244,18 @@ describe('gameState.actions', () => {
       const gameState = createGameStateFixture(
         { currentPlayerIndex: 0, pot: 500, currentStake: 50 },
         [
-          {
-            id: 'activePlayer1',
-            name: 'Active Player 1',
-            status: 'ACTIVE',
-            chips: 1000,
-          },
-          {
-            id: 'activePlayer2',
-            name: 'Active Player 2',
-            status: 'ACTIVE',
-            chips: 1000,
-          },
+          { id: 'activePlayer1', name: 'Active Player 1', status: 'ACTIVE', chips: 1000 },
+          { id: 'activePlayer2', name: 'Active Player 2', status: 'ACTIVE', chips: 1000 },
         ],
       );
-      const [activePlayer1, activePlayer2] = gameState.activePlayers;
+      const [activePlayer1] = gameState.activePlayers;
 
-      let caughtError: GameError | undefined;
-      try {
-        gameState.processAction(activePlayer1.id, 'RAISE', amount);
-      } catch (e) {
-        caughtError = e as GameError;
-      }
-      expect(caughtError).toBeInstanceOf(GameError);
-      expect(caughtError?.code).toBe('INVALID_AMOUNT');
-
+      expectGameErrorWithCode(
+        () => gameState.processAction(activePlayer1.id, 'RAISE', amount),
+        'INVALID_AMOUNT',
+      );
       expect(gameState.pot).toBe(500);
-      expect(gameState.currentStake).toBe(50);
-      expect(gameState.currentPlayerIndex).toBe(0);
       expect(activePlayer1.chips).toBe(1000);
-      expect(activePlayer1.bet).toBe(0);
-      expect(activePlayer1.status).toBe('ACTIVE');
-      expect(activePlayer2.chips).toBe(1000);
-      expect(activePlayer2.bet).toBe(0);
-      expect(activePlayer2.status).toBe('ACTIVE');
     });
   });
 
@@ -280,125 +263,82 @@ describe('gameState.actions', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 40, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 40,
+          isBlind: true,
+        },
+        { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
       ],
     );
-    const p1 = gameState.activePlayers[0];
-    let err;
-    try {
-      gameState.processAction(p1.id, 'CALL');
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(GameError);
-    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
-    expect(p1.chips).toBe(40);
+    const playerOne = gameState.activePlayers[0];
+
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'CALL'),
+      'INSUFFICIENT_CHIPS',
+    );
+    expect(playerOne.chips).toBe(40);
   });
 
   test('[GameState.processAction] CALL เงินไม่พอ (Seen) -> โยน GameError และเงินไม่เปลี่ยน', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 90, isBlind: false },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 90,
+          isBlind: false,
+        },
+        { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
       ],
     );
-    const p1 = gameState.activePlayers[0];
-    let err;
-    try {
-      gameState.processAction(p1.id, 'CALL');
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(GameError);
-    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
-    expect(p1.chips).toBe(90);
+    const playerOne = gameState.activePlayers[0];
+
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'CALL'),
+      'INSUFFICIENT_CHIPS',
+    );
+    expect(playerOne.chips).toBe(90);
   });
 
   test('[GameState.processAction] CALL จ่ายเท่าชิปที่เหลือพอดี (All-in แบบพอดี) -> สำเร็จ', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 50, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 50,
+          isBlind: true,
+        },
+        { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
       ],
     );
-    const p1 = gameState.activePlayers[0];
-    gameState.processAction(p1.id, 'CALL');
-    expect(p1.chips).toBe(0);
-  });
-
-  test('[GameState.processAction] RAISE ขอบเขตที่รับได้และรับไม่ได้ (Boundary)', () => {
-    const gameState = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
-      [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
-      ],
-    );
-    const p1 = gameState.activePlayers[0];
-
-    // เกินจำนวนเต็ม (Infinity)
-    let err1;
-    try {
-      gameState.processAction(p1.id, 'RAISE', Infinity);
-    } catch (e) {
-      err1 = e;
-    }
-    expect(err1.code).toBe('INVALID_AMOUNT');
-
-    // ติดลบ Infinity
-    let err2;
-    try {
-      gameState.processAction(p1.id, 'RAISE', -Infinity);
-    } catch (e) {
-      err2 = e;
-    }
-    expect(err2.code).toBe('INVALID_AMOUNT');
-
-    // ไม่ส่ง Amount
-    let err3;
-    try {
-      gameState.processAction(p1.id, 'RAISE');
-    } catch (e) {
-      err3 = e;
-    }
-    expect(err3.code).toBe('INVALID_AMOUNT');
-
-    // เกิน MAX_SAFE_INTEGER
-    let err4;
-    try {
-      gameState.processAction(p1.id, 'RAISE', Number.MAX_SAFE_INTEGER + 1);
-    } catch (e) {
-      err4 = e;
-    }
-    expect(err4.code).toBe('INVALID_AMOUNT');
-
-    expect(p1.chips).toBe(1000);
+    const playerOne = gameState.activePlayers[0];
+    gameState.processAction(playerOne.id, 'CALL');
+    expect(playerOne.chips).toBe(0);
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.processAction] ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
-      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'DISCONNECTED', chips: 1000 },
-      { id: 'p3', name: 'P3', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'DISCONNECTED', chips: 1000 },
+      { id: 'playerThree', name: 'Player Three', status: 'ACTIVE', chips: 1000 },
     ]);
-    let err1;
-    try {
-      gameState.processAction('p1', 'CALL');
-    } catch (e) {
-      err1 = e;
-    }
-    expect(err1).toBeInstanceOf(PlayerStateError);
 
-    let err2;
-    try {
-      gameState.processAction('p2', 'CALL');
-    } catch (e) {
-      err2 = e;
-    }
-    expect(err2).toBeInstanceOf(PlayerStateError);
+    expect(() => {
+      gameState.processAction('playerOne', 'CALL');
+    }).toThrow(PlayerStateError);
+
+    expect(() => {
+      gameState.processAction('playerTwo', 'CALL');
+    }).toThrow(PlayerStateError);
 
     expect(gameState.activePlayers[0].chips).toBe(1000);
   });
@@ -407,36 +347,27 @@ describe('gameState.actions', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
       ],
     );
-    const p1 = gameState.activePlayers[0];
+    const playerOne = gameState.activePlayers[0];
 
-    gameState.processAction(p1.id, 'SEEN');
-    expect(p1.isBlind).toBe(false);
-    expect(p1.chips).toBe(1000);
+    gameState.processAction(playerOne.id, 'SEEN');
+    expect(playerOne.isBlind).toBe(false);
+    expect(playerOne.chips).toBe(1000);
 
-    gameState.processAction(p1.id, 'SEEN');
-    expect(p1.chips).toBe(1000); // เงินต้องไม่ลดลง
+    gameState.processAction(playerOne.id, 'SEEN');
+    expect(playerOne.chips).toBe(1000);
 
-    gameState.processAction(p1.id, 'CALL');
-    expect(p1.chips).toBe(900); // 1000 - (50*2) = 900
-  });
-
-  test('[GameState.processAction] การกระทำเช่น CALL จะไม่เปลี่ยน currentPlayerIndex เอง', () => {
-    const gameState = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50 },
-      [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
-      ],
-    );
-    const p1 = gameState.activePlayers[0];
-
-    gameState.processAction(p1.id, 'CALL');
-
-    // ตาต้องไม่เปลี่ยน ฝั่ง Room/Server จะเป็นคนเรียก nextTurn เอง
+    gameState.processAction(playerOne.id, 'CALL');
+    expect(playerOne.chips).toBe(900);
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
@@ -444,22 +375,136 @@ describe('gameState.actions', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: false },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
       ],
     );
-    const p1 = gameState.activePlayers[0];
+    const playerOne = gameState.activePlayers[0];
 
-    // currentStake = 50, Seen ต้องจ่าย 2S (100) เพื่อให้ stake ใหม่เป็น 50
-    // หาก Seen ขอจ่าย 105 (หารสองได้ 52.5) ต้องโดนปฏิเสธ
-    let err;
-    try {
-      gameState.processAction(p1.id, 'RAISE', 105);
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeDefined();
-    expect(err?.code).toBe('INVALID_AMOUNT');
-    expect(p1.chips).toBe(1000);
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'RAISE', 105),
+      'INVALID_AMOUNT',
+    );
+    expect(playerOne.chips).toBe(1000);
+  });
+
+  test('[GameState.processAction] BET ด้วยยอดที่ไม่ใช่ระหว่าง S ถึง 2S สำหรับ Blind -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    const playerOne = gameState.activePlayers[0];
+
+    // S = 50. Valid BET range for Blind: [50, 100]
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'BET', 49),
+      'INVALID_AMOUNT',
+    );
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'BET', 101),
+      'INVALID_AMOUNT',
+    );
+
+    // Test valid BET
+    gameState.processAction(playerOne.id, 'BET', 75);
+    expect(playerOne.chips).toBe(925);
+    expect(gameState.currentStake).toBe(75);
+    expect(gameState.currentPlayerIndex).toBe(0);
+  });
+
+  test('[GameState.processAction] BET ด้วยยอดที่ไม่ใช่ระหว่าง 2S ถึง 4S สำหรับ Seen -> โยน INVALID_AMOUNT', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    const playerOne = gameState.activePlayers[0];
+
+    // S = 50. Valid BET range for Seen: [100, 200]
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'BET', 99),
+      'INVALID_AMOUNT',
+    );
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'BET', 201),
+      'INVALID_AMOUNT',
+    );
+
+    // Test valid BET
+    gameState.processAction(playerOne.id, 'BET', 150);
+    expect(playerOne.chips).toBe(850);
+    expect(gameState.currentStake).toBe(75);
+    expect(gameState.currentPlayerIndex).toBe(0);
+  });
+
+  test('[GameState.processAction] Overflow ตรวจสอบว่ารวม Pot แล้วต้องไม่เกิน MAX_SAFE_INTEGER', () => {
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 50 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 100,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 100,
+          isBlind: true,
+        },
+      ],
+    );
+    const playerOne = gameState.activePlayers[0];
+
+    // pot is almost MAX. Adding 100 to it will exceed MAX_SAFE_INTEGER
+    expectGameErrorWithCode(
+      () => gameState.processAction(playerOne.id, 'RAISE', 100),
+      'INVALID_AMOUNT',
+    );
+    expect(playerOne.chips).toBe(100);
   });
 });

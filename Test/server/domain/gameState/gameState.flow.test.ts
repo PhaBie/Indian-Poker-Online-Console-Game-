@@ -48,12 +48,12 @@ describe('gameState.flow', () => {
     gameState.processAction('playerOne', 'FOLD');
     gameState.nextTurn();
 
-    gameState.processAction('playerThree', 'FOLD');
+    gameState.processAction('playerTwo', 'FOLD');
     const winner = gameState.checkLastManStanding();
-    expect(winner?.id).toBe('playerTwo');
+    expect(winner?.id).toBe('playerThree');
 
     gameState.endGame();
-    expect(gameState.activePlayers[1].chips).toBe(1250);
+    expect(gameState.activePlayers[2].chips).toBe(1250);
 
     const totalChipsInSystem =
       gameState.activePlayers.reduce(

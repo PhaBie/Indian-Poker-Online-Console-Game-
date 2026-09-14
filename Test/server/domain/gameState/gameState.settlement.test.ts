@@ -188,33 +188,33 @@ describe('gameState.settlement', () => {
   test('[GameState.evaluateWinner] ผู้เล่น DISCONNECTED หรือ WAITING ไม่ได้รับรางวัล แม้ไพ่ดีที่สุด', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
-        id: 'p1',
-        name: 'P1',
+        id: 'playerOne',
+        name: 'Player One',
         status: 'DISCONNECTED',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 14, suit: 'SPADES' },
           { rank: 14, suit: 'HEARTS' },
           { rank: 14, suit: 'DIAMONDS' },
         ],
       },
       {
-        id: 'p2',
-        name: 'P2',
+        id: 'playerTwo',
+        name: 'Player Two',
         status: 'WAITING',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 14, suit: 'SPADES' },
           { rank: 14, suit: 'HEARTS' },
           { rank: 14, suit: 'DIAMONDS' },
         ],
       },
       {
-        id: 'p3',
-        name: 'P3',
+        id: 'playerThree',
+        name: 'Player Three',
         status: 'ACTIVE',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 2, suit: 'SPADES' },
           { rank: 3, suit: 'SPADES' },
           { rank: 5, suit: 'HEARTS' },
@@ -230,22 +230,22 @@ describe('gameState.settlement', () => {
   test('[GameState.evaluateWinner] ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
-        id: 'p1',
-        name: 'P1',
+        id: 'playerOne',
+        name: 'Player One',
         status: 'ACTIVE',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 2, suit: 'SPADES' },
           { rank: 3, suit: 'SPADES' },
           { rank: 5, suit: 'HEARTS' },
         ],
       },
       {
-        id: 'p2',
-        name: 'P2',
+        id: 'playerTwo',
+        name: 'Player Two',
         status: 'ACTIVE',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 14, suit: 'SPADES' },
           { rank: 14, suit: 'HEARTS' },
           { rank: 14, suit: 'DIAMONDS' },
@@ -259,11 +259,11 @@ describe('gameState.settlement', () => {
 
   test('[GameState.checkLastManStanding] คืน Player ตัวจริง และไม่เปลี่ยน State รวมกรณี Array ว่าง', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
-      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'FOLDED', chips: 1000 },
+      { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'FOLDED', chips: 1000 },
     ]);
     const winner = gameState.checkLastManStanding();
-    expect(winner?.id).toBe('p1');
+    expect(winner?.id).toBe('playerOne');
     expect(gameState.pot).toBe(1000);
 
     const emptyGame = createGameStateFixture({}, []);
@@ -272,7 +272,7 @@ describe('gameState.settlement', () => {
 
   test('[GameState.checkPotLimitReached] Pot Limit ใช้ค่าอื่นที่ไม่ใช่ 10000 และเรียกตรวจแล้ว State ไม่เปลี่ยน', () => {
     const gameState = createGameStateFixture({ pot: 5000 });
-    gameState.potLimit = 5000;
+    gameState.maxPotLimit = 5000;
     const isReached = gameState.checkPotLimitReached();
     expect(isReached).toBe(true);
     expect(gameState.pot).toBe(5000);
@@ -281,22 +281,22 @@ describe('gameState.settlement', () => {
   test('[GameState.evaluateWinner] เรียก evaluateWinner() ซ้ำแล้วไม่จ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
-        id: 'p1',
-        name: 'P1',
+        id: 'playerOne',
+        name: 'Player One',
         status: 'ACTIVE',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 14, suit: 'SPADES' },
           { rank: 14, suit: 'HEARTS' },
           { rank: 14, suit: 'DIAMONDS' },
         ],
       },
       {
-        id: 'p2',
-        name: 'P2',
+        id: 'playerTwo',
+        name: 'Player Two',
         status: 'ACTIVE',
         chips: 1000,
-        privateCards: [
+        cards: [
           { rank: 2, suit: 'SPADES' },
           { rank: 3, suit: 'SPADES' },
           { rank: 5, suit: 'HEARTS' },
@@ -309,5 +309,54 @@ describe('gameState.settlement', () => {
 
     gameState.evaluateWinner();
     expect(gameState.activePlayers[0].chips).toBe(2000);
+  });
+
+  test('[GameState.handleTie] จัดการเศษชิปเมื่อแบ่งไม่ลงตัว (Pot 101 แบ่ง 2 คน)', () => {
+    const gameState = createGameStateFixture({ pot: 101 }, [
+      {
+        id: 'playerOne',
+        name: 'Player One',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'playerTwo',
+        name: 'Player Two',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 14, suit: 'CLUBS' },
+          { rank: 13, suit: 'SPADES' },
+          { rank: 13, suit: 'HEARTS' },
+        ],
+      },
+    ]);
+
+    // Simulate tie by evaluating winner when hands are exactly tied, or calling handleTie
+    // Note: this assumes we can test it through evaluateWinner if cards tie, or call handleTie directly if exposed.
+    // The contract says: แบ่ง pot ตามจำนวน winners และจัดการเศษ
+    // If evaluateWinner handles the tie:
+    gameState.evaluateWinner();
+
+    // Since we want to hardcode Expected without relying on same core function:
+    // Total chips before = 2101. Total chips after must be 2101.
+    const totalBefore = 2101;
+    const totalAfter =
+      gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
+    expect(totalAfter).toBe(totalBefore);
+
+    // According to standard split rules, one gets 51, the other 50.
+    // Hardcode this expectation. Let's just assert one gets 1051 and one 1050 (order depends on policy, but we check values).
+    const chips = [
+      gameState.activePlayers[0].chips,
+      gameState.activePlayers[1].chips,
+    ].sort((a, b) => a - b);
+    expect(chips[0]).toBe(1050);
+    expect(chips[1]).toBe(1051);
   });
 });

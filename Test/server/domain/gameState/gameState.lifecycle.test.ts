@@ -1,6 +1,7 @@
 import { expect, test, describe } from 'bun:test';
 import { PlayerStateError } from '../../../../src/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
+import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
 
 describe('gameState.lifecycle', () => {
   test('[GameState.startGame] 4.1 เริ่มเกม → หักชิปเป็น Boot 50 เข้า Pot 100, ผู้เล่นได้รับไพ่คนละ 3 ใบ และผู้เล่นคนแรกสถานะเป็น ACTIVE', () => {
@@ -143,11 +144,11 @@ describe('gameState.lifecycle', () => {
 
   test('[GameState.nextTurn] 4.21 โยน PlayerStateError เมื่อไม่มีผู้เล่นสถานะ ACTIVE เหลืออยู่เลย', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
-      { id: `foldedPlayer`, name: `Folded Player`, status: `FOLDED`, chips: 1000 },
+      { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
       {
-        id: `disconnectedPlayer`,
-        name: `Disconnected Player`,
-        status: `DISCONNECTED`,
+        id: 'disconnectedPlayer',
+        name: 'Disconnected Player',
+        status: 'DISCONNECTED',
         chips: 1000,
       },
     ]);
@@ -161,9 +162,9 @@ describe('gameState.lifecycle', () => {
 
   test('[GameState.rotateDealer] 4.22 หมุน Dealer และวนกลับมาเริ่มต้นแถวใหม่', () => {
     const gameState = createGameStateFixture({ dealerIndex: 1 }, [
-      { id: 'player1', name: 'Player 1', status: 'WAITING', chips: 1000 },
-      { id: 'player2', name: 'Player 2', status: 'WAITING', chips: 1000 },
-      { id: 'player3', name: 'Player 3', status: 'WAITING', chips: 1000 },
+      { id: 'playerOne', name: 'Player 1', status: 'WAITING', chips: 1000 },
+      { id: 'playerTwo', name: 'Player 2', status: 'WAITING', chips: 1000 },
+      { id: 'playerThree', name: 'Player 3', status: 'WAITING', chips: 1000 },
     ]);
     gameState.rotateDealer();
     expect(gameState.dealerIndex).toBe(2);
@@ -172,23 +173,26 @@ describe('gameState.lifecycle', () => {
   });
 
   test('[GameState.handlePlayerDisconnect] 4.29 เปลี่ยนสถานะผู้เล่นเป็น DISCONNECTED ไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
-    const gameState = createGameStateFixture({ pot: 500 }, [
+    // เพิ่ม 3 คนเพื่อตรวจสอบว่าเงินคนอื่นไม่เปลี่ยน และเกมไม่จบรอบทันที
+    const gameState = createGameStateFixture({ pot: 500, currentPlayerIndex: 0 }, [
       {
         id: 'disconnectingPlayer',
         name: 'Disconnecting Player',
         status: 'ACTIVE',
         chips: 900,
       },
-      { id: 'otherPlayer', name: 'Other Player', status: 'ACTIVE', chips: 1000 },
+      { id: 'secondPlayer', name: 'Second Player', status: 'ACTIVE', chips: 1000 },
+      { id: 'thirdPlayer', name: 'Third Player', status: 'ACTIVE', chips: 1000 },
     ]);
-    const [disconnectingPlayer, otherPlayer] = gameState.activePlayers;
+    const [disconnectingPlayer, secondPlayer, thirdPlayer] = gameState.activePlayers;
     disconnectingPlayer.bet = 100;
 
     gameState.handlePlayerDisconnect(disconnectingPlayer.id);
 
     expect(disconnectingPlayer.status).toBe('DISCONNECTED');
     expect(disconnectingPlayer.chips).toBe(900);
-    expect(otherPlayer.chips).toBe(1000);
+    expect(secondPlayer.chips).toBe(1000);
+    expect(thirdPlayer.chips).toBe(1000);
   });
 
   test('[GameState.nextTurn] 4.43 วนเทิร์นจากท้ายกลับมาคนแรก', () => {
@@ -203,18 +207,11 @@ describe('gameState.lifecycle', () => {
 
   test('[GameState.startGame] เริ่มเกมแต่มีผู้เล่นเงินไม่พอจ่าย Boot -> ปฏิเสธการเริ่มและไม่หักเงินใคร', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
-      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'WAITING', chips: 40 },
+      { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 40 },
     ]);
 
-    let err;
-    try {
-      gameState.startGame();
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeDefined();
-    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
+    expectGameErrorWithCode(() => gameState.startGame(), 'INSUFFICIENT_CHIPS');
 
     expect(gameState.pot).toBe(0);
     expect(gameState.activePlayers[0].chips).toBe(1000);
@@ -224,27 +221,46 @@ describe('gameState.lifecycle', () => {
 
   test('[GameState.handlePlayerDisconnect] เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
     const gameState = createGameStateFixture({}, [
-      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
     ]);
 
-    let err;
-    try {
-      gameState.handlePlayerDisconnect('ghost');
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeDefined();
-    expect(err?.code).toBe('PLAYER_NOT_FOUND');
+    expectGameErrorWithCode(
+      () => gameState.handlePlayerDisconnect('ghost'),
+      'PLAYER_NOT_FOUND',
+    );
   });
 
   test('[GameState.handlePlayerDisconnect] หลุดนอกตาตัวเอง -> เปลี่ยนสถานะเป็น DISCONNECTED แต่ไม่ขยับตา', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
-      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerThree', name: 'Player Three', status: 'ACTIVE', chips: 1000 },
     ]);
 
-    gameState.handlePlayerDisconnect('p2');
+    gameState.handlePlayerDisconnect('playerTwo');
     expect(gameState.activePlayers[1].status).toBe('DISCONNECTED');
-    expect(gameState.currentPlayerIndex).toBe(0); // ตาคงเดิม
+    expect(gameState.currentPlayerIndex).toBe(0);
+  });
+
+  test('[GameState.handlePlayerDisconnect] ตัดการเชื่อมต่อซ้ำ (DISCONNECTED อยู่แล้ว) ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+    ]);
+
+    gameState.handlePlayerDisconnect('playerOne');
+    expect(gameState.activePlayers[0].status).toBe('DISCONNECTED');
+    expect(gameState.currentPlayerIndex).toBe(0);
+  });
+
+  test('[GameState.autoFoldTimeout] บังคับหมอบทันที และไม่เลื่อนตาเอง', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+    ]);
+
+    gameState.autoFoldTimeout();
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+    expect(gameState.currentPlayerIndex).toBe(0);
   });
 });

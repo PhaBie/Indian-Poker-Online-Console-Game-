@@ -1,4 +1,5 @@
 import { expect, test, describe } from 'bun:test';
+import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
 import {
   WrongTurnError,
   InvalidActionError,
@@ -319,22 +320,22 @@ describe('gameState.show', () => {
       { currentPlayerIndex: 0, currentStake: 50 },
       [
         {
-          id: 'p1',
-          name: 'P1',
+          id: 'playerOne',
+          name: 'Player One',
           status: 'ACTIVE',
           chips: 1000,
-          privateCards: [
+          cards: [
             { rank: 2, suit: 'SPADES' },
             { rank: 3, suit: 'SPADES' },
             { rank: 4, suit: 'SPADES' },
           ],
         },
         {
-          id: 'p2',
-          name: 'P2',
+          id: 'playerTwo',
+          name: 'Player Two',
           status: 'ACTIVE',
           chips: 1000,
-          privateCards: [
+          cards: [
             { rank: 14, suit: 'SPADES' },
             { rank: 14, suit: 'HEARTS' },
             { rank: 14, suit: 'DIAMONDS' },
@@ -342,7 +343,7 @@ describe('gameState.show', () => {
         },
       ],
     );
-    gameState.processAction('p1', 'SHOW');
+    gameState.processAction('playerOne', 'SHOW');
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
@@ -350,11 +351,33 @@ describe('gameState.show', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: false },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { rank: 14, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+          ],
+        },
       ],
     );
-    gameState.processAction('p1', 'SHOW');
+    gameState.processAction('playerOne', 'SHOW');
     expect(gameState.activePlayers[0].chips).toBe(950);
   });
 
@@ -362,17 +385,36 @@ describe('gameState.show', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 40, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 40,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
       ],
     );
-    let err;
-    try {
-      gameState.processAction('p1', 'SHOW');
-    } catch (e) {
-      err = e;
-    }
-    expect(err?.code).toBe('INSUFFICIENT_CHIPS');
+    expectGameErrorWithCode(
+      () => gameState.processAction('playerOne', 'SHOW'),
+      'INSUFFICIENT_CHIPS',
+    );
     expect(gameState.activePlayers[0].chips).toBe(40);
   });
 
@@ -380,13 +422,35 @@ describe('gameState.show', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'FOLDED', chips: 1000 },
-        { id: 'p3', name: 'P3', status: 'DISCONNECTED', chips: 1000 },
-        { id: 'p4', name: 'P4', status: 'ACTIVE', chips: 1000, isBlind: true },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        { id: 'playerTwo', name: 'Player Two', status: 'FOLDED', chips: 1000 },
+        { id: 'playerThree', name: 'Player Three', status: 'DISCONNECTED', chips: 1000 },
+        {
+          id: 'playerFour',
+          name: 'Player Four',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
       ],
     );
-    gameState.processAction('p1', 'SHOW');
+    gameState.processAction('playerOne', 'SHOW');
     expect(gameState.activePlayers[0].chips).toBe(950);
   });
 
@@ -394,11 +458,33 @@ describe('gameState.show', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50 },
       [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000, isBlind: true },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000, isBlind: true },
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
       ],
     );
-    gameState.requestShow('p1');
+    gameState.requestShow('playerOne');
     expect(gameState.activePlayers[0].chips).toBe(950);
   });
 });
