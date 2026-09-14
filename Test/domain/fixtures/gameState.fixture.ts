@@ -17,7 +17,8 @@ export function createGameStateFixture(
   playersFixture: PlayerFixture[] = [],
 ): GameState {
   const players = playersFixture.map((pf) => {
-    const p = new Player(pf.id, pf.name, pf.chips);
+    const p = new Player(pf.id, pf.name);
+    p.chips = pf.chips;
     p.status = pf.status;
     if (pf.bet !== undefined) p.bet = pf.bet;
     if (pf.isBlind !== undefined) p.isBlind = pf.isBlind;
