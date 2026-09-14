@@ -23,61 +23,64 @@ describe('gameState.flow', () => {
   });
 
   test('[Continuous Flow Test] เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
-    const gameState = createGameStateFixture({ bootAmount: 50, potLimit: 10000 }, [
-      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'WAITING', chips: 1000 },
-      { id: 'p3', name: 'P3', status: 'WAITING', chips: 1000 },
+    const gameState = createGameStateFixture({ bootAmount: 50, maxPotLimit: 10000 }, [
+      { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },
+      { id: 'playerThree', name: 'Player Three', status: 'WAITING', chips: 1000 },
     ]);
     gameState.startGame();
     expect(gameState.pot).toBe(150);
     expect(gameState.activePlayers[0].chips).toBe(950);
 
-    gameState.processAction('p1', 'CALL');
+    gameState.processAction('playerOne', 'CALL');
     expect(gameState.pot).toBe(200);
     gameState.nextTurn();
 
-    gameState.processAction('p2', 'RAISE', 100);
+    gameState.processAction('playerTwo', 'RAISE', 100);
     expect(gameState.pot).toBe(300);
     expect(gameState.currentStake).toBe(100);
     gameState.nextTurn();
 
-    gameState.processAction('p3', 'CALL');
+    gameState.processAction('playerThree', 'CALL');
     expect(gameState.pot).toBe(400);
     gameState.nextTurn();
 
-    gameState.processAction('p1', 'FOLD');
+    gameState.processAction('playerOne', 'FOLD');
     gameState.nextTurn();
 
-    gameState.processAction('p3', 'FOLD');
+    gameState.processAction('playerThree', 'FOLD');
     const winner = gameState.checkLastManStanding();
-    expect(winner?.id).toBe('p2');
+    expect(winner?.id).toBe('playerTwo');
 
-    gameState.endGame(winner!);
+    gameState.endGame();
     expect(gameState.activePlayers[1].chips).toBe(1250);
 
-    const totalChips =
-      gameState.activePlayers.reduce((sum, p) => sum + p.chips, 0) + gameState.pot;
-    expect(totalChips).toBe(3000);
+    const totalChipsInSystem =
+      gameState.activePlayers.reduce(
+        (accumulatedChips, player) => accumulatedChips + player.chips,
+        0,
+      ) + gameState.pot;
+    expect(totalChipsInSystem).toBe(3000);
   });
 
   test('[Error Injection in Flow] คำสั่งผิดแทรกกลางเกม -> State คงเดิม -> คำสั่งถูกทำงานต่อได้', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
-      { id: 'p1', name: 'P1', status: 'WAITING', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'WAITING', chips: 1000 },
+      { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },
     ]);
     gameState.startGame();
 
-    let err;
+    let expectedError: { code?: string } | undefined;
     try {
-      gameState.processAction('p1', 'RAISE', -50);
-    } catch (e) {
-      err = e;
+      gameState.processAction('playerOne', 'RAISE', -50);
+    } catch (caughtError) {
+      expectedError = caughtError as { code?: string };
     }
-    expect(err?.code).toBe('INVALID_AMOUNT');
+    expect(expectedError?.code).toBe('INVALID_AMOUNT');
     expect(gameState.pot).toBe(100);
     expect(gameState.activePlayers[0].chips).toBe(950);
 
-    gameState.processAction('p1', 'CALL');
+    gameState.processAction('playerOne', 'CALL');
     expect(gameState.pot).toBe(150);
   });
 });
