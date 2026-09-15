@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'bun:test';
 import { PlayerStateError } from '../../../../src/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
-import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
 describe('gameState.lifecycle', () => {
   test('[GameState.startGame] 4.1 เริ่มเกม → หักชิปเป็น Boot 50 เข้า Pot 100, ผู้เล่นได้รับไพ่คนละ 3 ใบ และผู้เล่นคนแรกสถานะเป็น ACTIVE', () => {
@@ -173,7 +173,6 @@ describe('gameState.lifecycle', () => {
   });
 
   test('[GameState.handlePlayerDisconnect] 4.29 เปลี่ยนสถานะผู้เล่นเป็น DISCONNECTED ไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
-    // เพิ่ม 3 คนเพื่อตรวจสอบว่าเงินคนอื่นไม่เปลี่ยน และเกมไม่จบรอบทันที
     const gameState = createGameStateFixture({ pot: 500, currentPlayerIndex: 0 }, [
       {
         id: 'disconnectingPlayer',

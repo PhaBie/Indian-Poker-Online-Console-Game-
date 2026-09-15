@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test';
-import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 import {
   WrongTurnError,
   InvalidActionError,
@@ -461,7 +461,7 @@ describe('gameState.show', () => {
         },
       ],
     );
-    gameState.processAction('playerOne', 'SHOW'); // Blind ขอ SHOW กับ Seen เสียค่าธรรมเนียมเท่ากับ Stake (50) และแพ้เนื่องจากหน้าไพ่ต่ำกว่า
+    gameState.processAction('playerOne', 'SHOW');
     expect(gameState.activePlayers[0].chips).toBe(950);
     expect(gameState.activePlayers[1].chips).toBe(1050);
     expect(gameState.pot).toBe(0);

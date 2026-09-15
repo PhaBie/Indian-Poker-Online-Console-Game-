@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
-import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
 describe('gameState.flow', () => {
   test('[GameState Flow] 4.30 การเล่นต่อเนื่องหลาย Action โดยไม่ผ่าน Server', () => {

@@ -5,7 +5,7 @@ import {
   InsufficientChipsError,
 } from '../../../../src/server/domain/errors/GameError';
 import type { PlayerStatus } from '../../../../src/shared/types';
-import { expectGameErrorWithCode } from './helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
 describe('Player.payBet', () => {
   describe('Happy Paths', () => {

@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test';
-import { expectGameErrorWithCode } from '../player/helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.settlement', () => {
@@ -63,7 +63,6 @@ describe('gameState.settlement', () => {
       },
     ]);
 
-    // ชิปของผู้เล่นรวมกับส่วนแบ่ง Pot จะเกินขีดจำกัด (MAX_SAFE_INTEGER) จึงต้องปฏิเสธและไม่มีการจ่ายชิปให้ใครเลย
     expectGameErrorWithCode(
       () => gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]),
       'INVALID_AMOUNT',
@@ -453,13 +452,11 @@ describe('gameState.settlement', () => {
 
     gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
 
-    // 1. ตรวจสอบสมดุลชิป
     const expectedTotalChips = 2101;
     const actualTotalChips =
       gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
     expect(actualTotalChips).toBe(expectedTotalChips);
 
-    // 2. ตรวจสอบการจัดการเศษทศนิยม: คนแรกควรได้ 51 (1051) คนที่สองได้ 50 (1050)
     expect(gameState.activePlayers[0].chips).toBe(1051);
     expect(gameState.activePlayers[1].chips).toBe(1050);
     expect(gameState.pot).toBe(0);

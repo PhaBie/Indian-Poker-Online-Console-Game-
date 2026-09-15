@@ -1,5 +1,5 @@
 import { expect } from 'bun:test';
-import { GameError } from '../../../../../src/server/domain/errors/GameError';
+import { GameError } from '../../../../src/server/domain/errors/GameError';
 
 /**
  * ฟังก์ชันช่วยเหลือ (Helper) สำหรับดักจับและตรวจสอบ Error ที่คาดหวังใน Game Logic

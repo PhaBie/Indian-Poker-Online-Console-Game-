@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 import { Player } from '../../../../src/server/domain/models/Player';
-import { expectGameErrorWithCode } from './helpers/expectGameErrorWithCode';
+import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
 describe('Player.toJSON', () => {
   describe('Happy Paths', () => {
