@@ -253,6 +253,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.activePlayers[0].chips).toBe(1000);
     expect(gameState.pot).toBe(500);
     expect(gameState.currentPlayerIndex).toBe(0);
+    expect(gameState.activePlayers[1].chips).toBe(1000);
   });
 
   test('[GameState.autoFoldTimeout] 4.58 มี ACTIVE 3 คน -> Timeout 1 คน -> เหลือ ACTIVE 2 คน (ไม่จ่าย Pot, ไม่เลื่อนตา)', () => {
@@ -264,8 +265,10 @@ describe('gameState.lifecycle', () => {
 
     gameState.autoFoldTimeout();
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
-    expect(gameState.pot).toBe(500); // Not paid yet
-    expect(gameState.currentPlayerIndex).toBe(0); // Not auto skipped
+    expect(gameState.pot).toBe(500);
+    expect(gameState.currentPlayerIndex).toBe(0);
+    expect(gameState.activePlayers[1].chips).toBe(1000);
+    expect(gameState.activePlayers[2].chips).toBe(1000);
   });
 
   test('[GameState.autoFoldTimeout] 4.58.1 มี ACTIVE 2 คน -> Timeout 1 คน -> เหลือ ACTIVE 1 คน (จ่าย Pot ผู้ชนะ)', () => {
@@ -276,7 +279,8 @@ describe('gameState.lifecycle', () => {
 
     gameState.autoFoldTimeout();
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
-    expect(gameState.activePlayers[1].chips).toBe(1500); // Survivor gets pot
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.activePlayers[1].chips).toBe(1500);
     expect(gameState.pot).toBe(0);
     expect(gameState.currentPlayerIndex).toBe(0);
   });

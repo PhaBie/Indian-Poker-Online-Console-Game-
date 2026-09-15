@@ -326,21 +326,25 @@ describe('gameState.actions', () => {
   });
 
   test('[GameState.processAction] 4.48 ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
-    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
+    // สถานการณ์ที่ 1: ผู้เล่นสถานะ WAITING อยู่ในเทิร์นของตนเอง
+    const game1 = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
-      { id: 'playerTwo', name: 'Player Two', status: 'DISCONNECTED', chips: 1000 },
-      { id: 'playerThree', name: 'Player Three', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
+    expectGameErrorWithCode(
+      () => game1.processAction('playerOne', 'BET', 100),
+      'INVALID_ACTION',
+    );
 
-    expect(() => {
-      gameState.processAction('playerOne', 'CALL');
-    }).toThrow(PlayerStateError);
-
-    expect(() => {
-      gameState.processAction('playerTwo', 'CALL');
-    }).toThrow(PlayerStateError);
-
-    expect(gameState.activePlayers[0].chips).toBe(1000);
+    // สถานการณ์ที่ 2: ผู้เล่นสถานะ DISCONNECTED อยู่ในเทิร์นของตนเอง
+    const game2 = createGameStateFixture({ currentPlayerIndex: 0 }, [
+      { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+    ]);
+    expectGameErrorWithCode(
+      () => game2.processAction('playerOne', 'BET', 100),
+      'INVALID_ACTION',
+    );
   });
 
   test('[GameState.processAction] 4.49 SEEN ซ้ำไม่เสียเงิน และแทงรอบถัดไปคิดแบบ Seen', () => {
@@ -459,7 +463,8 @@ describe('gameState.actions', () => {
   });
 
   test('[GameState.processAction] 4.51.2 BET ด้วยยอดรับได้ S ถึง 2S (Blind) -> ผ่าน', () => {
-    const gameState = createGameStateFixture(
+    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind BET คือ [50, 100]
+    const gameState1 = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
         {
@@ -478,11 +483,34 @@ describe('gameState.actions', () => {
         },
       ],
     );
-    gameState.processAction('playerOne', 'BET', 75);
-    expect(gameState.activePlayers[0].chips).toBe(925);
-    expect(gameState.pot).toBe(175);
-    expect(gameState.currentStake).toBe(75);
-    expect(gameState.currentPlayerIndex).toBe(0);
+    gameState1.processAction('playerOne', 'BET', 50);
+    expect(gameState1.activePlayers[0].chips).toBe(950);
+    expect(gameState1.pot).toBe(150);
+    expect(gameState1.currentStake).toBe(50);
+
+    const gameState2 = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    gameState2.processAction('playerOne', 'BET', 100);
+    expect(gameState2.activePlayers[0].chips).toBe(900);
+    expect(gameState2.pot).toBe(200);
+    expect(gameState2.currentStake).toBe(100);
   });
 
   test('[GameState.processAction] 4.52 BET ด้วยยอดต่ำกว่า 2S (Seen) -> โยน INVALID_AMOUNT', () => {
@@ -573,7 +601,8 @@ describe('gameState.actions', () => {
   });
 
   test('[GameState.processAction] 4.52.3 BET ด้วยยอดรับได้ 2S ถึง 4S (Seen) -> ผ่าน', () => {
-    const gameState = createGameStateFixture(
+    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen BET คือ [100, 200]
+    const gameState1 = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
       [
         {
@@ -592,11 +621,34 @@ describe('gameState.actions', () => {
         },
       ],
     );
-    gameState.processAction('playerOne', 'BET', 150);
-    expect(gameState.activePlayers[0].chips).toBe(850);
-    expect(gameState.pot).toBe(250);
-    expect(gameState.currentStake).toBe(75);
-    expect(gameState.currentPlayerIndex).toBe(0);
+    gameState1.processAction('playerOne', 'BET', 100);
+    expect(gameState1.activePlayers[0].chips).toBe(900);
+    expect(gameState1.pot).toBe(200);
+    expect(gameState1.currentStake).toBe(50);
+
+    const gameState2 = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+      [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ],
+    );
+    gameState2.processAction('playerOne', 'BET', 200);
+    expect(gameState2.activePlayers[0].chips).toBe(800);
+    expect(gameState2.pot).toBe(300);
+    expect(gameState2.currentStake).toBe(100);
   });
 
   test('[GameState.processAction] 4.53 Overflow ตรวจสอบว่ารวม Pot แล้วต้องไม่เกิน MAX_SAFE_INTEGER', () => {
@@ -630,5 +682,75 @@ describe('gameState.actions', () => {
     expect(gameState.pot).toBe(Number.MAX_SAFE_INTEGER - 50);
     expect(gameState.currentStake).toBe(50);
     expect(gameState.activePlayers[1].status).toBe('ACTIVE');
+  });
+
+  test('[GameState.processAction] 4.75 RAISE ของ Blind', () => {
+    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind RAISE คือ (50, 100]
+    const getFix = () =>
+      createGameStateFixture({ currentPlayerIndex: 0, currentStake: 50, pot: 100 }, [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ]);
+    expectGameErrorWithCode(
+      () => getFix().processAction('playerOne', 'RAISE', 50),
+      'INVALID_AMOUNT',
+    );
+    expectGameErrorWithCode(
+      () => getFix().processAction('playerOne', 'RAISE', 101),
+      'INVALID_AMOUNT',
+    );
+    const g51 = getFix();
+    g51.processAction('playerOne', 'RAISE', 51);
+    expect(g51.currentStake).toBe(51);
+    const g100 = getFix();
+    g100.processAction('playerOne', 'RAISE', 100);
+    expect(g100.currentStake).toBe(100);
+  });
+
+  test('[GameState.processAction] 4.76 RAISE ของ Seen', () => {
+    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen RAISE คือ (100, 200] และต้องเป็นเลขคู่
+    const getFix = () =>
+      createGameStateFixture({ currentPlayerIndex: 0, currentStake: 50, pot: 100 }, [
+        {
+          id: 'playerOne',
+          name: 'Player One',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+        },
+        {
+          id: 'playerTwo',
+          name: 'Player Two',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+        },
+      ]);
+    expectGameErrorWithCode(
+      () => getFix().processAction('playerOne', 'RAISE', 100),
+      'INVALID_AMOUNT',
+    );
+    expectGameErrorWithCode(
+      () => getFix().processAction('playerOne', 'RAISE', 202),
+      'INVALID_AMOUNT',
+    );
+    const g102 = getFix();
+    g102.processAction('playerOne', 'RAISE', 102);
+    expect(g102.currentStake).toBe(51);
+    const g200 = getFix();
+    g200.processAction('playerOne', 'RAISE', 200);
+    expect(g200.currentStake).toBe(100);
   });
 });

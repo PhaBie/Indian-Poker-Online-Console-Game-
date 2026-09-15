@@ -402,11 +402,11 @@ describe('gameState.show', () => {
           name: 'Player Two',
           status: 'ACTIVE',
           chips: 1000,
-          isBlind: true,
+          isBlind: false,
           cards: [
-            { rank: 2, suit: 'SPADES' },
-            { rank: 3, suit: 'SPADES' },
-            { rank: 4, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+            { rank: 14, suit: 'CLUBS' },
           ],
         },
       ],
@@ -416,6 +416,8 @@ describe('gameState.show', () => {
       'INSUFFICIENT_CHIPS',
     );
     expect(gameState.activePlayers[0].chips).toBe(40);
+    expect(gameState.activePlayers[1].chips).toBe(1000);
+    expect(gameState.pot).toBe(0);
   });
 
   test('[GameState.requestShow] 4.62 มีผู้เล่นใน Array มากกว่าสองคน แต่เหลือ ACTIVE สองคน ต้องขอ SHOW ได้', () => {
@@ -434,24 +436,36 @@ describe('gameState.show', () => {
             { rank: 4, suit: 'SPADES' },
           ],
         },
-        { id: 'playerTwo', name: 'Player Two', status: 'FOLDED', chips: 1000 },
-        { id: 'playerThree', name: 'Player Three', status: 'DISCONNECTED', chips: 1000 },
         {
-          id: 'playerFour',
-          name: 'Player Four',
+          id: 'playerTwo',
+          name: 'Player Two',
           status: 'ACTIVE',
           chips: 1000,
-          isBlind: true,
+          isBlind: false,
           cards: [
-            { rank: 2, suit: 'SPADES' },
-            { rank: 3, suit: 'SPADES' },
-            { rank: 4, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+            { rank: 14, suit: 'CLUBS' },
+          ],
+        },
+        {
+          id: 'playerThree',
+          name: 'Player Three',
+          status: 'FOLDED',
+          chips: 1000,
+          cards: [
+            { rank: 5, suit: 'CLUBS' },
+            { rank: 6, suit: 'CLUBS' },
+            { rank: 7, suit: 'CLUBS' },
           ],
         },
       ],
     );
-    gameState.processAction('playerOne', 'SHOW');
+    gameState.processAction('playerOne', 'SHOW'); // Blind ขอ SHOW กับ Seen เสียค่าธรรมเนียมเท่ากับ Stake (50) และแพ้เนื่องจากหน้าไพ่ต่ำกว่า
     expect(gameState.activePlayers[0].chips).toBe(950);
+    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameState.pot).toBe(0);
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
   test('[GameState.requestShow] 4.63 เรียก requestShow() โดยตรง ไม่ผ่าน processAction()', () => {
@@ -475,16 +489,19 @@ describe('gameState.show', () => {
           name: 'Player Two',
           status: 'ACTIVE',
           chips: 1000,
-          isBlind: true,
+          isBlind: false,
           cards: [
-            { rank: 2, suit: 'SPADES' },
-            { rank: 3, suit: 'SPADES' },
-            { rank: 4, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+            { rank: 14, suit: 'CLUBS' },
           ],
         },
       ],
     );
     gameState.requestShow('playerOne');
     expect(gameState.activePlayers[0].chips).toBe(950);
+    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameState.pot).toBe(0);
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 });
