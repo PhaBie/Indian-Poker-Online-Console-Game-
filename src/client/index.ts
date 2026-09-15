@@ -1,85 +1,92 @@
+import os from 'os';
 import { SocketClient } from './network/socketClient';
-import type { Transport } from './network/socketClient';
 import { ClientState } from './state/ClientState';
-import type { GameActionType, ServerEvent } from '../shared/types';
+import type { ServerEvent } from '../shared/types';
 
-export interface ClientApp {
-  serverUrl: string;
-  socketClient: SocketClient;
-  clientState: ClientState;
-  createRoom: (playerName: string, bootAmount: number) => void;
-  joinRoom: (playerName: string, roomId: string, reconnectToken?: string) => void;
-  leaveRoom: () => void;
-  startGame: () => void;
-  playerAction: (action: GameActionType, amount?: number) => void;
-  sendChat: (message: string) => void;
-  stop: () => void;
+/**
+ * ดึง IPv4 ของเครื่องในวง LAN อัตโนมัติ
+ */
+export function getLocalIPv4(): string {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return '127.0.0.1';
 }
 
-export function startClient(
-  customUrl?: string,
-  transport?: Transport,
-): ClientApp {
-  // 1. รับ URL จาก Parameter หรือ argument ตอนรัน (ถ้าไม่ใส่ให้เป็น localhost:8080)
-  const serverUrl = customUrl || process.argv[2] || 'ws://localhost:8080';
+/**
+ * แยกแยะและแปลง Target Connection:
+ * - ถ้าเป็น ngrok domain หรือ wss:// -> โหมด INTERNET
+ * - ถ้าเป็น IPv4 (เช่น 192.168.1.10 หรือ 192.168.1.10:8080) หรือไม่ใส่ -> โหมด LAN
+ */
+export function parseConnectionTarget(target?: string): {
+  url: string;
+  mode: 'LAN' | 'INTERNET';
+  hostIp?: string;
+  port?: number;
+} {
+  const input = target?.trim();
+  const defaultPort = 8080;
 
-  console.log(`[Client] กำลังเชื่อมต่อไปยัง Server: ${serverUrl}`);
+  // 1. กรณีระบุ URL ของ NGROK หรือ WSS / HTTPS
+  if (input && (input.includes('ngrok') || input.startsWith('wss://') || input.startsWith('https://'))) {
+    let url = input;
+    if (url.startsWith('https://')) {
+      url = url.replace('https://', 'wss://');
+    } else if (!url.startsWith('wss://')) {
+      url = `wss://${url}`;
+    }
+    return { url, mode: 'INTERNET' };
+  }
 
-  // 2. สร้างตัวจัดการ Network และ State
+  // 2. กรณีระบุ IPv4 สำหรับเชื่อมต่อใน LAN (เช่น 192.168.1.10 หรือ 192.168.1.10:8080)
+  if (input) {
+    let host = input.replace('ws://', '').replace('http://', '');
+    let port = defaultPort;
+    if (host.includes(':')) {
+      const parts = host.split(':');
+      host = parts[0];
+      port = Number(parts[1]) || defaultPort;
+    }
+    return { url: `ws://${host}:${port}`, mode: 'LAN', hostIp: host, port };
+  }
+
+  // 3. กรณีไม่ได้ระบุ (ค่าเริ่มต้นเป็น IP ของเครื่องในวง LAN)
+  const localIp = getLocalIPv4();
+  return { url: `ws://${localIp}:${defaultPort}`, mode: 'LAN', hostIp: localIp, port: defaultPort };
+}
+
+/**
+ * Core Client Controller — ใช้เชื่อมต่อ WebSocket และอัปเดต State
+ * ฝั่ง UI สามารถ import และเรียกใช้ได้โดยตรง
+ */
+export function startClient(customTarget?: string): {
+  socketClient: SocketClient;
+  clientState: ClientState;
+  connectionTarget: ReturnType<typeof parseConnectionTarget>;
+} {
+  const connectionTarget = parseConnectionTarget(customTarget ?? process.argv[2]);
+
   const socketClient = new SocketClient();
   const clientState = new ClientState();
 
-  // 3. ผูก event จาก socketClient เข้ากับ clientState เพื่ออัปเดตสถานะอัตโนมัติ
+  // ผูก event เมื่อได้รับข้อมูลจาก Server ให้อัปเดตลง ClientState
   const originalOnReceive = socketClient.onReceive.bind(socketClient);
-  socketClient.onReceive = (event: ServerEvent): void => {
+  socketClient.onReceive = (event: ServerEvent) => {
     originalOnReceive(event);
     clientState.updateState(event);
   };
 
-  // 4. สั่งเชื่อมต่อ
-  socketClient.connect(serverUrl, transport);
+  // เริ่มต้นเชื่อมต่อ
+  socketClient.connect(connectionTarget.url);
 
-  return {
-    serverUrl,
-    socketClient,
-    clientState,
-    createRoom: (playerName: string, bootAmount: number): void => {
-      socketClient.send({
-        type: 'CREATE_ROOM',
-        payload: { playerName, bootAmount },
-      });
-    },
-    joinRoom: (playerName: string, roomId: string, reconnectToken?: string): void => {
-      socketClient.send({
-        type: 'JOIN_ROOM',
-        payload: { playerName, roomId, reconnectToken },
-      });
-    },
-    leaveRoom: (): void => {
-      socketClient.send({ type: 'LEAVE_ROOM' });
-    },
-    startGame: (): void => {
-      socketClient.send({ type: 'START_GAME' });
-    },
-    playerAction: (action: GameActionType, amount?: number): void => {
-      socketClient.send({
-        type: 'PLAYER_ACTION',
-        payload: { action, amount },
-      });
-    },
-    sendChat: (message: string): void => {
-      socketClient.send({
-        type: 'SEND_CHAT',
-        payload: { message },
-      });
-    },
-    stop: (): void => {
-      socketClient.disconnect();
-      clientState.clearState();
-    },
-  };
+  return { socketClient, clientState, connectionTarget };
 }
 
-if (process.argv[1]?.includes('client')) {
+if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
   startClient();
 }
