@@ -35,170 +35,92 @@ describe('gameState.settlement', () => {
     expect(winner.chips).toBe(1500);
     expect(loser.chips).toBe(1000);
     expect(gameState.pot).toBe(0);
+  });
 
-    test('[GameState.handleTie] 4.72 ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) -> โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
-      const gameState = createGameStateFixture({ pot: 1000 }, [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          cards: [
-            { rank: 14, suit: 'SPADES' },
-            { rank: 14, suit: 'HEARTS' },
-            { rank: 14, suit: 'DIAMONDS' },
-          ],
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: Number.MAX_SAFE_INTEGER - 100,
-          cards: [
-            { rank: 14, suit: 'CLUBS' },
-            { rank: 13, suit: 'SPADES' },
-            { rank: 13, suit: 'HEARTS' },
-          ],
-        },
-      ]);
+  test('[GameState.handleTie] 4.72 ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) → โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
+    const gameState = createGameStateFixture({ pot: 1000 }, [
+      {
+        id: 'playerOne',
+        name: 'Player One',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'playerTwo',
+        name: 'Player Two',
+        status: 'ACTIVE',
+        chips: Number.MAX_SAFE_INTEGER - 100,
+        cards: [
+          { rank: 14, suit: 'CLUBS' },
+          { rank: 13, suit: 'SPADES' },
+          { rank: 13, suit: 'HEARTS' },
+        ],
+      },
+    ]);
 
-      // ชิปของผู้เล่นรวมกับส่วนแบ่ง Pot จะเกินขีดจำกัด (MAX_SAFE_INTEGER) จึงต้องปฏิเสธและไม่มีการจ่ายชิปให้ใครเลย
-      expectGameErrorWithCode(
-        () =>
-          gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]),
-        'INVALID_AMOUNT',
-      );
+    // ชิปของผู้เล่นรวมกับส่วนแบ่ง Pot จะเกินขีดจำกัด (MAX_SAFE_INTEGER) จึงต้องปฏิเสธและไม่มีการจ่ายชิปให้ใครเลย
+    expectGameErrorWithCode(
+      () => gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]),
+      'INVALID_AMOUNT',
+    );
 
-      expect(gameState.activePlayers[0].chips).toBe(1000);
-      expect(gameState.activePlayers[1].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
-      expect(gameState.pot).toBe(1000);
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.activePlayers[1].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
+    expect(gameState.pot).toBe(1000);
+  });
 
-      test('[GameState.handleTie] 4.72 ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) -> โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
-        const gameState = createGameStateFixture({ pot: 1000 }, [
-          {
-            id: 'playerOne',
-            name: 'Player One',
-            status: 'ACTIVE',
-            chips: 1000,
-            cards: [
-              { rank: 14, suit: 'SPADES' },
-              { rank: 14, suit: 'HEARTS' },
-              { rank: 14, suit: 'DIAMONDS' },
-            ],
-          },
-          {
-            id: 'playerTwo',
-            name: 'Player Two',
-            status: 'ACTIVE',
-            chips: Number.MAX_SAFE_INTEGER - 100,
-            cards: [
-              { rank: 14, suit: 'CLUBS' },
-              { rank: 13, suit: 'SPADES' },
-              { rank: 13, suit: 'HEARTS' },
-            ],
-          },
-        ]);
+  test('[GameState.evaluateWinner] 4.73 ผู้ชนะคนเดียวรับรางวัลแล้ว Chips ล้น → ปฏิเสธโดยข้อมูลคงเดิม', () => {
+    const gameState = createGameStateFixture({ pot: 500 }, [
+      {
+        id: 'winner',
+        name: 'Winner',
+        status: 'ACTIVE',
+        chips: Number.MAX_SAFE_INTEGER - 100,
+        cards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 14, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'loser',
+        name: 'Loser',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { rank: 2, suit: 'SPADES' },
+          { rank: 3, suit: 'HEARTS' },
+          { rank: 4, suit: 'DIAMONDS' },
+        ],
+      },
+    ]);
 
-        // ชิปของผู้เล่นรวมกับส่วนแบ่ง Pot จะเกินขีดจำกัด (MAX_SAFE_INTEGER) จึงต้องปฏิเสธและไม่มีการจ่ายชิปให้ใครเลย
-        expectGameErrorWithCode(
-          () =>
-            gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]),
-          'INVALID_AMOUNT',
-        );
+    expectGameErrorWithCode(() => gameState.evaluateWinner(), 'INVALID_AMOUNT');
+    expect(gameState.activePlayers[0].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
+    expect(gameState.activePlayers[1].chips).toBe(1000);
+    expect(gameState.pot).toBe(500);
+  });
 
-        expect(gameState.activePlayers[0].chips).toBe(1000);
-        expect(gameState.activePlayers[1].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
-        expect(gameState.pot).toBe(1000);
-      });
+  test('[GameState.handleTie] 4.74 เรียก handleTie ซ้ำหลัง Pot เป็นศูนย์แล้ว → ชิปทุกคนต้องไม่เพิ่ม', () => {
+    const gameState = createGameStateFixture({ pot: 100 }, [
+      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
+      { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
+    ]);
 
-      test('[GameState.evaluateWinner] 4.73 ผู้ชนะคนเดียวรับรางวัลแล้ว Chips ล้น ต้องปฏิเสธโดยข้อมูลคงเดิม', () => {
-        const gameState = createGameStateFixture({ pot: 500 }, [
-          {
-            id: 'winner',
-            name: 'Winner',
-            status: 'ACTIVE',
-            chips: Number.MAX_SAFE_INTEGER - 100,
-            cards: [
-              { rank: 14, suit: 'SPADES' },
-              { rank: 14, suit: 'HEARTS' },
-              { rank: 14, suit: 'DIAMONDS' },
-            ],
-          },
-          {
-            id: 'loser',
-            name: 'Loser',
-            status: 'ACTIVE',
-            chips: 1000,
-            cards: [
-              { rank: 2, suit: 'SPADES' },
-              { rank: 3, suit: 'HEARTS' },
-              { rank: 4, suit: 'DIAMONDS' },
-            ],
-          },
-        ]);
+    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
+    expect(gameState.activePlayers[0].chips).toBe(1050);
+    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameState.pot).toBe(0);
 
-        expectGameErrorWithCode(() => gameState.evaluateWinner(), 'INVALID_AMOUNT');
-        expect(gameState.activePlayers[0].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
-        expect(gameState.pot).toBe(500);
-      });
-
-      test('[GameState.handleTie] 4.74 เรียกซ้ำต้องไม่เพิ่มเงิน', () => {
-        const gameState = createGameStateFixture({ pot: 100 }, [
-          { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
-          { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
-        ]);
-
-        gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-        expect(gameState.pot).toBe(0);
-        expect(gameState.activePlayers[0].chips).toBe(1050);
-        gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-        expect(gameState.activePlayers[0].chips).toBe(1050);
-      });
-    });
-
-    test('[GameState.evaluateWinner] 4.73 ผู้ชนะคนเดียวรับรางวัลแล้ว Chips ล้น ต้องปฏิเสธโดยข้อมูลคงเดิม', () => {
-      const gameState = createGameStateFixture({ pot: 500 }, [
-        {
-          id: 'winner',
-          name: 'Winner',
-          status: 'ACTIVE',
-          chips: Number.MAX_SAFE_INTEGER - 100,
-          cards: [
-            { rank: 14, suit: 'SPADES' },
-            { rank: 14, suit: 'HEARTS' },
-            { rank: 14, suit: 'DIAMONDS' },
-          ],
-        },
-        {
-          id: 'loser',
-          name: 'Loser',
-          status: 'ACTIVE',
-          chips: 1000,
-          cards: [
-            { rank: 2, suit: 'SPADES' },
-            { rank: 3, suit: 'HEARTS' },
-            { rank: 4, suit: 'DIAMONDS' },
-          ],
-        },
-      ]);
-
-      expectGameErrorWithCode(() => gameState.evaluateWinner(), 'INVALID_AMOUNT');
-      expect(gameState.activePlayers[0].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
-      expect(gameState.pot).toBe(500);
-    });
-
-    test('[GameState.handleTie] 4.74 เรียกซ้ำต้องไม่เพิ่มเงิน', () => {
-      const gameState = createGameStateFixture({ pot: 100 }, [
-        { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
-        { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
-      ]);
-
-      gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-      expect(gameState.pot).toBe(0);
-      expect(gameState.activePlayers[0].chips).toBe(1050);
-      gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-      expect(gameState.activePlayers[0].chips).toBe(1050);
-    });
+    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
+    expect(gameState.activePlayers[0].chips).toBe(1050);
+    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameState.pot).toBe(0);
   });
 
   test('[GameState.endGame] 4.11 คนอื่นหมอบหมดเหลือผู้เล่นคนเดียว → จบเกมและโอนเงิน Pot 1500 ให้ผู้เล่นที่เหลือรอด', () => {

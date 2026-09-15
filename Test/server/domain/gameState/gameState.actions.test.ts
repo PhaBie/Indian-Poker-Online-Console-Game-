@@ -325,26 +325,30 @@ describe('gameState.actions', () => {
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.processAction] 4.48 ผู้เล่น WAITING หรือ DISCONNECTED ขอทำ Action ไม่ได้', () => {
-    // สถานการณ์ที่ 1: ผู้เล่นสถานะ WAITING อยู่ในเทิร์นของตนเอง
-    const game1 = createGameStateFixture({ currentPlayerIndex: 0 }, [
+  test('[GameState.processAction] 4.48 ผู้เล่นสถานะ WAITING ขอทำ Action ไม่ได้', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
     expectGameErrorWithCode(
-      () => game1.processAction('playerOne', 'BET', 100),
+      () => gameState.processAction('playerOne', 'BET', 100),
       'INVALID_ACTION',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(0);
+  });
 
-    // สถานการณ์ที่ 2: ผู้เล่นสถานะ DISCONNECTED อยู่ในเทิร์นของตนเอง
-    const game2 = createGameStateFixture({ currentPlayerIndex: 0 }, [
+  test('[GameState.processAction] 4.48.1 ผู้เล่นสถานะ DISCONNECTED ขอทำ Action ไม่ได้', () => {
+    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
     expectGameErrorWithCode(
-      () => game2.processAction('playerOne', 'BET', 100),
+      () => gameState.processAction('playerOne', 'BET', 100),
       'INVALID_ACTION',
     );
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(0);
   });
 
   test('[GameState.processAction] 4.49 SEEN ซ้ำไม่เสียเงิน และแทงรอบถัดไปคิดแบบ Seen', () => {
@@ -684,73 +688,145 @@ describe('gameState.actions', () => {
     expect(gameState.activePlayers[1].status).toBe('ACTIVE');
   });
 
-  test('[GameState.processAction] 4.75 RAISE ของ Blind', () => {
-    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind RAISE คือ (50, 100]
-    const getFix = () =>
-      createGameStateFixture({ currentPlayerIndex: 0, currentStake: 50, pot: 100 }, [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ]);
-    expectGameErrorWithCode(
-      () => getFix().processAction('playerOne', 'RAISE', 50),
-      'INVALID_AMOUNT',
-    );
-    expectGameErrorWithCode(
-      () => getFix().processAction('playerOne', 'RAISE', 101),
-      'INVALID_AMOUNT',
-    );
-    const g51 = getFix();
-    g51.processAction('playerOne', 'RAISE', 51);
-    expect(g51.currentStake).toBe(51);
-    const g100 = getFix();
-    g100.processAction('playerOne', 'RAISE', 100);
-    expect(g100.currentStake).toBe(100);
-  });
+  // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind RAISE คือ (S, 2S] = (50, 100]
+  test.each([
+    { amount: 50, desc: 'เท่ากับ S (ขั้นต่ำของ CALL ไม่ใช่ RAISE)' },
+    { amount: 101, desc: 'เกิน 2S' },
+  ])(
+    '[GameState.processAction] 4.75 RAISE Blind ปฏิเสธยอด $amount ($desc)',
+    ({ amount }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      expectGameErrorWithCode(
+        () => gameState.processAction('playerOne', 'RAISE', amount),
+        'INVALID_AMOUNT',
+      );
+      expect(gameState.activePlayers[0].chips).toBe(1000);
+      expect(gameState.activePlayers[0].bet).toBe(0);
+      expect(gameState.pot).toBe(100);
+      expect(gameState.currentStake).toBe(50);
+    },
+  );
 
-  test('[GameState.processAction] 4.76 RAISE ของ Seen', () => {
-    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen RAISE คือ (100, 200] และต้องเป็นเลขคู่
-    const getFix = () =>
-      createGameStateFixture({ currentPlayerIndex: 0, currentStake: 50, pot: 100 }, [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: false,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ]);
-    expectGameErrorWithCode(
-      () => getFix().processAction('playerOne', 'RAISE', 100),
-      'INVALID_AMOUNT',
-    );
-    expectGameErrorWithCode(
-      () => getFix().processAction('playerOne', 'RAISE', 202),
-      'INVALID_AMOUNT',
-    );
-    const g102 = getFix();
-    g102.processAction('playerOne', 'RAISE', 102);
-    expect(g102.currentStake).toBe(51);
-    const g200 = getFix();
-    g200.processAction('playerOne', 'RAISE', 200);
-    expect(g200.currentStake).toBe(100);
-  });
+  test.each([
+    { amount: 51, expectedStake: 51, expectedChips: 949, expectedPot: 151 },
+    { amount: 100, expectedStake: 100, expectedChips: 900, expectedPot: 200 },
+  ])(
+    '[GameState.processAction] 4.75.1 RAISE Blind ยอด $amount → Stake เป็น $expectedStake',
+    ({ amount, expectedStake, expectedChips, expectedPot }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      gameState.processAction('playerOne', 'RAISE', amount);
+      expect(gameState.activePlayers[0].chips).toBe(expectedChips);
+      expect(gameState.activePlayers[0].bet).toBe(amount);
+      expect(gameState.pot).toBe(expectedPot);
+      expect(gameState.currentStake).toBe(expectedStake);
+      expect(gameState.currentPlayerIndex).toBe(0);
+    },
+  );
+
+  // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen RAISE คือ (2S, 4S] = (100, 200] และต้องเป็นเลขคู่
+  test.each([
+    { amount: 100, desc: 'เท่ากับ 2S (ขั้นต่ำของ CALL ไม่ใช่ RAISE)' },
+    { amount: 202, desc: 'เกิน 4S' },
+  ])(
+    '[GameState.processAction] 4.76 RAISE Seen ปฏิเสธยอด $amount ($desc)',
+    ({ amount }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      expectGameErrorWithCode(
+        () => gameState.processAction('playerOne', 'RAISE', amount),
+        'INVALID_AMOUNT',
+      );
+      expect(gameState.activePlayers[0].chips).toBe(1000);
+      expect(gameState.activePlayers[0].bet).toBe(0);
+      expect(gameState.pot).toBe(100);
+      expect(gameState.currentStake).toBe(50);
+    },
+  );
+
+  test.each([
+    { amount: 102, expectedStake: 51, expectedChips: 898, expectedPot: 202 },
+    { amount: 200, expectedStake: 100, expectedChips: 800, expectedPot: 300 },
+  ])(
+    '[GameState.processAction] 4.76.1 RAISE Seen ยอด $amount → Stake เป็น $expectedStake',
+    ({ amount, expectedStake, expectedChips, expectedPot }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      gameState.processAction('playerOne', 'RAISE', amount);
+      expect(gameState.activePlayers[0].chips).toBe(expectedChips);
+      expect(gameState.activePlayers[0].bet).toBe(amount);
+      expect(gameState.pot).toBe(expectedPot);
+      expect(gameState.currentStake).toBe(expectedStake);
+      expect(gameState.currentPlayerIndex).toBe(0);
+    },
+  );
 });
