@@ -5,7 +5,7 @@
 ## 1. โครงสร้าง
 
 <!-- prettier-ignore -->
-\`\`\`bash
+```bash
 Test/
 ├── server/
 │   ├── core/             # กติกาไพ่และ Schema
@@ -18,7 +18,7 @@ Test/
 │   └── utils/            # ฟังก์ชันทั่วไป
 └── client/
     └── network/          # การเชื่อมต่อฝั่ง Client
-\`\`\`
+```
 
 _เทสต์ Room และ RoomManager อยู่ใน `server/domain/` ส่วนเทสต์เริ่มและหยุด Server อยู่ที่ `server/server.test.ts`_
 
@@ -35,9 +35,10 @@ _เทสต์ Room และ RoomManager อยู่ใน `server/domain/` 
 - เฉพาะ Schema: `bun run test:schema`
 
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง เช่น:
-\`\`\`bash
+
+```bash
 bun test ./Test/server/domain/player/player.money.test.ts
-\`\`\`
+```
 
 ## 3. ข้อควรรู้
 
