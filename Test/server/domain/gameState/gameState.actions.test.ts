@@ -466,56 +466,40 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(50);
   });
 
-  test('[GameState.processAction] 4.51.2 BET ด้วยยอดรับได้ S ถึง 2S (Blind) -> ผ่าน', () => {
-    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind BET คือ [50, 100]
-    const gameState1 = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
-      [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ],
-    );
-    gameState1.processAction('playerOne', 'BET', 50);
-    expect(gameState1.activePlayers[0].chips).toBe(950);
-    expect(gameState1.pot).toBe(150);
-    expect(gameState1.currentStake).toBe(50);
-
-    const gameState2 = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
-      [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ],
-    );
-    gameState2.processAction('playerOne', 'BET', 100);
-    expect(gameState2.activePlayers[0].chips).toBe(900);
-    expect(gameState2.pot).toBe(200);
-    expect(gameState2.currentStake).toBe(100);
-  });
+  // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Blind BET คือ [S, 2S] = [50, 100]
+  test.each([
+    { amount: 50, expectedChips: 950, expectedPot: 150, expectedStake: 50 },
+    { amount: 100, expectedChips: 900, expectedPot: 200, expectedStake: 100 },
+  ])(
+    '[GameState.processAction] 4.51.2 BET Blind ยอด $amount → ผ่าน',
+    ({ amount, expectedChips, expectedPot, expectedStake }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      gameState.processAction('playerOne', 'BET', amount);
+      expect(gameState.activePlayers[0].chips).toBe(expectedChips);
+      expect(gameState.activePlayers[0].bet).toBe(amount);
+      expect(gameState.pot).toBe(expectedPot);
+      expect(gameState.currentStake).toBe(expectedStake);
+      expect(gameState.currentPlayerIndex).toBe(0);
+    },
+  );
 
   test('[GameState.processAction] 4.52 BET ด้วยยอดต่ำกว่า 2S (Seen) -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
@@ -604,56 +588,40 @@ describe('gameState.actions', () => {
     expect(gameState.currentStake).toBe(50);
   });
 
-  test('[GameState.processAction] 4.52.3 BET ด้วยยอดรับได้ 2S ถึง 4S (Seen) -> ผ่าน', () => {
-    // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen BET คือ [100, 200]
-    const gameState1 = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
-      [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: false,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ],
-    );
-    gameState1.processAction('playerOne', 'BET', 100);
-    expect(gameState1.activePlayers[0].chips).toBe(900);
-    expect(gameState1.pot).toBe(200);
-    expect(gameState1.currentStake).toBe(50);
-
-    const gameState2 = createGameStateFixture(
-      { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
-      [
-        {
-          id: 'playerOne',
-          name: 'Player One',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: false,
-        },
-        {
-          id: 'playerTwo',
-          name: 'Player Two',
-          status: 'ACTIVE',
-          chips: 1000,
-          isBlind: true,
-        },
-      ],
-    );
-    gameState2.processAction('playerOne', 'BET', 200);
-    expect(gameState2.activePlayers[0].chips).toBe(800);
-    expect(gameState2.pot).toBe(300);
-    expect(gameState2.currentStake).toBe(100);
-  });
+  // Stake (S) = 50 ดังนั้นขอบเขตที่รับได้สำหรับ Seen BET คือ [2S, 4S] = [100, 200]
+  test.each([
+    { amount: 100, expectedChips: 900, expectedPot: 200, expectedStake: 50 },
+    { amount: 200, expectedChips: 800, expectedPot: 300, expectedStake: 100 },
+  ])(
+    '[GameState.processAction] 4.52.3 BET Seen ยอด $amount → ผ่าน',
+    ({ amount, expectedChips, expectedPot, expectedStake }) => {
+      const gameState = createGameStateFixture(
+        { currentPlayerIndex: 0, currentStake: 50, pot: 100 },
+        [
+          {
+            id: 'playerOne',
+            name: 'Player One',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerTwo',
+            name: 'Player Two',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+        ],
+      );
+      gameState.processAction('playerOne', 'BET', amount);
+      expect(gameState.activePlayers[0].chips).toBe(expectedChips);
+      expect(gameState.activePlayers[0].bet).toBe(amount);
+      expect(gameState.pot).toBe(expectedPot);
+      expect(gameState.currentStake).toBe(expectedStake);
+      expect(gameState.currentPlayerIndex).toBe(0);
+    },
+  );
 
   test('[GameState.processAction] 4.53 Overflow ตรวจสอบว่ารวม Pot แล้วต้องไม่เกิน MAX_SAFE_INTEGER', () => {
     const gameState = createGameStateFixture(
@@ -722,6 +690,7 @@ describe('gameState.actions', () => {
       expect(gameState.activePlayers[0].bet).toBe(0);
       expect(gameState.pot).toBe(100);
       expect(gameState.currentStake).toBe(50);
+      expect(gameState.currentPlayerIndex).toBe(0);
     },
   );
 
@@ -793,6 +762,7 @@ describe('gameState.actions', () => {
       expect(gameState.activePlayers[0].bet).toBe(0);
       expect(gameState.pot).toBe(100);
       expect(gameState.currentStake).toBe(50);
+      expect(gameState.currentPlayerIndex).toBe(0);
     },
   );
 
