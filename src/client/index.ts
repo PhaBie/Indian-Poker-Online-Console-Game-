@@ -1,7 +1,10 @@
 import os from 'os';
+import React from 'react';
+import { render } from 'ink';
 import { SocketClient } from './network/socketClient';
 import { ClientState } from './state/ClientState';
 import type { ServerEvent } from '../shared/types';
+import { App } from './ui/App';
 
 /**
  * ดึง IPv4 ของเครื่องในวง LAN อัตโนมัติ
@@ -33,7 +36,12 @@ export function parseConnectionTarget(target?: string): {
   const defaultPort = 8080;
 
   // 1. กรณีระบุ URL ของ NGROK หรือ WSS / HTTPS
-  if (input && (input.includes('ngrok') || input.startsWith('wss://') || input.startsWith('https://'))) {
+  if (
+    input &&
+    (input.includes('ngrok') ||
+      input.startsWith('wss://') ||
+      input.startsWith('https://'))
+  ) {
     let url = input;
     if (url.startsWith('https://')) {
       url = url.replace('https://', 'wss://');
@@ -57,7 +65,12 @@ export function parseConnectionTarget(target?: string): {
 
   // 3. กรณีไม่ได้ระบุ (ค่าเริ่มต้นเป็น IP ของเครื่องในวง LAN)
   const localIp = getLocalIPv4();
-  return { url: `ws://${localIp}:${defaultPort}`, mode: 'LAN', hostIp: localIp, port: defaultPort };
+  return {
+    url: `ws://${localIp}:${defaultPort}`,
+    mode: 'LAN',
+    hostIp: localIp,
+    port: defaultPort,
+  };
 }
 
 /**
@@ -88,5 +101,7 @@ export function startClient(customTarget?: string): {
 }
 
 if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
-  startClient();
+  const { clientState, connectionTarget } = startClient();
+  // วาดหน้าจอ UI ของ Ink (ใช้ React.createElement เนื่องจากไฟล์นี้เป็น .ts ไม่ใช่ .tsx)
+  render(React.createElement(App, { clientState, serverUrl: connectionTarget.url }));
 }

@@ -2,6 +2,7 @@
   "dependencies": {
     "@ngrok/ngrok": "^1.7.0",
     "ink": "^7.1.1",
+    "ink-text-input": "^6.0.0",
     "react": "^19.2.8",
     "ws": "^8.21.3",
     "zod": "^4.5.4"

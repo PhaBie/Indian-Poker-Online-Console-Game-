@@ -6,31 +6,18 @@ import {
   calculateSplitPotInputSchema,
   shuffleDeckInputSchema,
   dealCardsInputSchema,
-  rngValueSchema, // สำหรับตัวแปร rng ในฟังก์ชัน shuffleDeck
+  rngValueSchema,
 } from './gameSchema';
+
+// ============================================================================
+// 🟢 PURE FUNCTIONS (Core Logic - No Side Effects, No Console.log)
+// ฟังก์ชันกลุ่มนี้จะรับ Input เข้ามาและคืนค่า Output ออกไปอย่างเดียว โดยไม่แก้ไข State ภายนอก
+// ============================================================================
 
 export function createDeck(): Card[] {
   const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
   const ranks: Card['rank'][] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
   return suits.flatMap((suit) => ranks.map((rank) => ({ suit, rank })));
-}
-
-export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
-  const validDeck = shuffleDeckInputSchema.parse(deck);
-  const shuffledDeck = [...validDeck];
-
-  for (let index = shuffledDeck.length - 1; index > 0; index--) {
-    const rawRngValue = rng();
-    const validRngValue = rngValueSchema.parse(rawRngValue);
-    const swapIndex = Math.floor(validRngValue * (index + 1));
-
-    [shuffledDeck[index], shuffledDeck[swapIndex]] = [
-      shuffledDeck[swapIndex],
-      shuffledDeck[index],
-    ];
-  }
-
-  return shuffledDeck;
 }
 
 export function dealCards(
@@ -54,6 +41,7 @@ export function dealCards(
     hands[i % validArgs.playerCount].push(validArgs.deck[i]);
   }
   const remainingDeck = validArgs.deck.slice(totalCardsNeeded);
+
   return { hands, remainingDeck };
 }
 
@@ -83,18 +71,14 @@ export function evaluateHand(cardsInput: Card[]): {
   if (cards[0].rank === cards[1].rank && cards[1].rank === cards[2].rank) {
     return { rank: 'TRAIL', rankValue: cards[0].rank, kickers: [] };
   }
-
   // 2. PURE_SEQUENCE (สเตรทฟลัช)
   if (isStraight && isFlush) {
-    // ให้ A-2-3 มี rankValue เป็น 15 เพื่อให้ชนะ A-K-Q (14)
     return { rank: 'PURE_SEQUENCE', rankValue: isA23 ? 15 : cards[0].rank, kickers: [] };
   }
-
   // 3. SEQUENCE (สเตรท)
   if (isStraight) {
     return { rank: 'SEQUENCE', rankValue: isA23 ? 15 : cards[0].rank, kickers: [] };
   }
-
   // 4. COLOR (ฟลัช)
   if (isFlush) {
     return {
@@ -103,16 +87,13 @@ export function evaluateHand(cardsInput: Card[]): {
       kickers: [cards[1].rank, cards[2].rank],
     };
   }
-
   // 5. PAIR (ไพ่คู่)
   if (cards[0].rank === cards[1].rank) {
-    // คู่ซ้าย (เช่น 9-9-4)
     return { rank: 'PAIR', rankValue: cards[0].rank, kickers: [cards[2].rank] };
-  } else if (cards[1].rank === cards[2].rank) {
-    // คู่ขวา (เช่น 11-9-9)
+  }
+  if (cards[1].rank === cards[2].rank) {
     return { rank: 'PAIR', rankValue: cards[1].rank, kickers: [cards[0].rank] };
   }
-
   // 6. HIGH_CARD (ไพ่สูง)
   return {
     rank: 'HIGH_CARD',
@@ -122,7 +103,7 @@ export function evaluateHand(cardsInput: Card[]): {
 }
 
 // 1. สร้างตารางคะแนน (Rank Weight) เพื่อให้เปรียบเทียบง่าย
-const RANK_WEIGHT: Record<HandRank, number> = {
+export const RANK_WEIGHT: Record<HandRank, number> = {
   TRAIL: 6,
   PURE_SEQUENCE: 5,
   SEQUENCE: 4,
@@ -201,4 +182,130 @@ export function calculateSplitPot(
       share + (index < remainder ? 1 : 0),
     ]),
   );
+}
+
+// ============================================================================
+// 🟡 IMPURE FUNCTIONS (Randomness / Side Effects)
+// ฟังก์ชันกลุ่มนี้มีการพึ่งพาความน่าจะเป็น หรือ State ภายนอก (เช่น Math.random)
+// ============================================================================
+
+export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
+  const validDeck = shuffleDeckInputSchema.parse(deck);
+  const shuffledDeck = [...validDeck];
+
+  for (let index = shuffledDeck.length - 1; index > 0; index--) {
+    const rawRngValue = rng();
+    const validRngValue = rngValueSchema.parse(rawRngValue);
+    const swapIndex = Math.floor(validRngValue * (index + 1));
+
+    [shuffledDeck[index], shuffledDeck[swapIndex]] = [
+      shuffledDeck[swapIndex],
+      shuffledDeck[index],
+    ];
+  }
+
+  return shuffledDeck;
+}
+
+// ============================================================================
+// 🔴 IMPURE FUNCTIONS (Side Effects / Logging / Simulation)
+// ฟังก์ชันกลุ่มนี้มีหน้าที่แสดงผล (console.log) ติดต่อภายนอก หรือจำลองการเล่น
+// ============================================================================
+
+export function simulateGameAndLog() {
+  console.log('====================================================');
+  console.log('🚀 เริ่มการจำลองเกม (Indian Poker) 🚀');
+  console.log('====================================================\n');
+
+  console.log('🃏 [GameLogic] เริ่มสร้างสำรับไพ่ใหม่...');
+  const deck = createDeck();
+  console.log(`✅ [GameLogic] สร้างไพ่เสร็จสิ้น จำนวน ${deck.length} ใบ`);
+  console.log('📦 ข้อมูลในสำรับไพ่ (Deck): ดู simulation.json เพื่อตรวจสอบ', '\n');
+
+  console.log(`🔀 [GameLogic] กำลังสับไพ่...`);
+  const shuffledDeck = shuffleDeck(deck);
+  console.log(`✅ [GameLogic] สับไพ่เสร็จสิ้น`);
+  console.log(
+    '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู simulation.json เพื่อตรวจสอบ',
+    '\n',
+  );
+
+  const PLAYERS = ['Player_1', 'Player_2', 'Player_3', 'Player_4'];
+  const CARDS_PER_PLAYER = 3;
+
+  console.log(
+    `🎴 [GameLogic] กำลังแจกไพ่ให้ผู้เล่น ${PLAYERS.length} คน คนละ ${CARDS_PER_PLAYER} ใบ...`,
+  );
+  const { hands, remainingDeck } = dealCards(
+    shuffledDeck,
+    PLAYERS.length,
+    CARDS_PER_PLAYER,
+  );
+  console.log(`✅ [GameLogic] แจกไพ่สำเร็จ (ไพ่เหลือในกอง ${remainingDeck.length} ใบ)\n`);
+
+  const suitSymbols: Record<string, string> = {
+    SPADES: '♠',
+    HEARTS: '♥',
+    DIAMONDS: '♦',
+    CLUBS: '♣',
+  };
+
+  const playerHands = PLAYERS.map((id, index) => {
+    const cards = hands[index];
+    const evaluated = evaluateHand(cards);
+    const cardStr = cards.map((c) => `${c.rank}${suitSymbols[c.suit]}`).join('-');
+
+    console.log(`👤 [${id}] ได้รับไพ่:`);
+    console.log(
+      `🔍 ไพ่ ${cardStr} -> ได้ [${evaluated.rank}] (RankValue: ${evaluated.rankValue})\n`,
+    );
+
+    return { id, cards };
+  });
+
+  console.log('====================================================');
+  console.log(`🏆 [GameLogic] ค้นหาผู้ชนะจากผู้เล่น ${PLAYERS.length} คน...`);
+  const winners = getWinners(playerHands);
+  console.log(`🏅 [GameLogic] ผู้ชนะได้แก่: [${winners.join(', ')}]\n`);
+
+  const POT_AMOUNT = 1000;
+  console.log(
+    `💰 [GameLogic] แบ่งกองกลาง ${POT_AMOUNT} ชิป ให้ผู้ชนะ ${winners.length} คน...`,
+  );
+  const splitResult = calculateSplitPot(POT_AMOUNT, winners);
+  console.log(`💵 [GameLogic] ผลลัพธ์การโอนชิป:`, JSON.stringify(splitResult), '\n');
+
+  // Export JSON
+  const simulationData = {
+    deck,
+    shuffledDeck,
+    remainingDeck,
+    playerHands: playerHands.map((p) => ({
+      id: p.id,
+      cards: p.cards,
+      evaluated: evaluateHand(p.cards),
+    })),
+    winners,
+    splitResult,
+  };
+
+  try {
+    const fs = require('fs');
+    fs.writeFileSync('simulation.json', JSON.stringify(simulationData, null, 2));
+    console.log(
+      '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ simulation.json เรียบร้อยแล้ว\n',
+    );
+  } catch (err) {
+    console.error('ไม่สามารถบันทึกไฟล์ JSON ได้:', err);
+  }
+
+  console.log('====================================================');
+  console.log('🎉 จบการจำลองเกม 🎉');
+  console.log('====================================================\n');
+}
+
+// ทำงานเฉพาะเมื่อสั่งรันไฟล์นี้โดยตรงผ่าน bun run src/server/core/gameLogic.ts
+// @ts-ignore
+if (import.meta.main) {
+  simulateGameAndLog();
 }
