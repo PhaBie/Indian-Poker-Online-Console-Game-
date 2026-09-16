@@ -217,7 +217,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.activePlayers[1].chips).toBe(40);
     expect(gameState.activePlayers[0].privateCards.length).toBe(0);
   });
-  test('[GameState.startGame] 4.54.1 [Atomic Update] หากผู้เล่นคนหลังจ่าย Boot แล้วล้นขีดจำกัด (Overflow) ต้องคืนเงินคนก่อนหน้า', () => {
+  test('[GameState.startGame] 4.54.1 [Atomic Update] หากผู้เล่นคนหลังจ่าย Boot แล้วล้นขีดจำกัด (Overflow) ข้อมูลต้องคงเดิมเมื่อปฏิเสธรายการ', () => {
     // ผู้เล่นคนที่สองมีชิปพอ แต่ยอดเดิมพันรวม Boot จะเกิน MAX_SAFE_INTEGER
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'player1', name: 'Player 1', status: 'WAITING', chips: 1000, bet: 0 },
@@ -234,7 +234,7 @@ describe('gameState.lifecycle', () => {
     // เก็บค่าก่อนทำงาน
     const originalPot = gameState.pot;
     const originalCurrentStake = gameState.currentStake;
-    const originalDeck = [...gameState.deck];
+    const originalDeck = structuredClone(gameState.deck);
     const originalPlayer1Chips = player1.chips;
     const originalPlayer1Bet = player1.bet;
     const originalPlayer2Chips = player2.chips;
@@ -243,8 +243,8 @@ describe('gameState.lifecycle', () => {
     const originalPlayer2Status = player2.status;
     const isOriginalPlayer1Blind = player1.isBlind;
     const isOriginalPlayer2Blind = player2.isBlind;
-    const originalPlayer1Cards = [...player1.privateCards];
-    const originalPlayer2Cards = [...player2.privateCards];
+    const originalPlayer1Cards = structuredClone(player1.privateCards);
+    const originalPlayer2Cards = structuredClone(player2.privateCards);
 
     // ตรวจสอบว่ามีการโยนข้อผิดพลาดเรื่องจำนวนเงิน (INVALID_AMOUNT)
     expectGameErrorWithCode(() => gameState.startGame(), 'INVALID_AMOUNT');

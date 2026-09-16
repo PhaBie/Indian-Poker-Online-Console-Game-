@@ -505,7 +505,7 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
-  test('[GameState.requestShow] 4.75 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ต้องคืนเงินค่า SHOW และสถานะคงเดิม', () => {
+  test('[GameState.requestShow] 4.90 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ข้อมูลต้องคงเดิมเมื่อปฏิเสธรายการ', () => {
     // Pot รวมค่าธรรมเนียมยังไม่เกินขีดจำกัด แต่เมื่อจ่ายให้ผู้ชนะ ยอดชิปจะเกิน MAX_SAFE_INTEGER
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 100 },
@@ -548,12 +548,12 @@ describe('gameState.show', () => {
     const originalLoserBet = loser.bet;
     const originalLoserStatus = loser.status;
     const isOriginalLoserBlind = loser.isBlind;
-    const originalLoserCards = [...loser.privateCards];
+    const originalLoserCards = structuredClone(loser.privateCards);
     const originalWinnerChips = winner.chips;
     const originalWinnerBet = winner.bet;
     const originalWinnerStatus = winner.status;
     const isOriginalWinnerBlind = winner.isBlind;
-    const originalWinnerCards = [...winner.privateCards];
+    const originalWinnerCards = structuredClone(winner.privateCards);
 
     // การแจกรางวัลให้ผู้ชนะทำให้เกินขีดจำกัด จึงโยนข้อผิดพลาดเรื่องจำนวนเงิน (INVALID_AMOUNT)
     expectGameErrorWithCode(() => gameState.requestShow('loser'), 'INVALID_AMOUNT');
