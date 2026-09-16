@@ -219,23 +219,17 @@ describe('gameState.lifecycle', () => {
   });
 
   test('[GameState.startGame] 4.54.1 [Atomic Update] หากผู้เล่นคนหลังจ่าย Boot ไม่สำเร็จ คนก่อนหน้าต้องไม่ถูกหักเงินไปฟรีๆ (Rollback)', () => {
-    // จำลองปัญหา: คนแรกมีเงินจ่าย (โดนหักไปก่อน) แต่คนที่สองเงินไม่พอ (ระบบล่มตรงนี้)
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'player1', name: 'Player 1', status: 'WAITING', chips: 1000 },
       { id: 'player2', name: 'Player 2', status: 'WAITING', chips: 10 },
     ]);
 
-    // ระบบโยน Error ถูกต้อง
     expect(() => {
       gameState.startGame();
     }).toThrow();
 
-    // แต่ต้องไม่แอบหักเงิน player1 ไปแล้ว 50 ชิป! ข้อมูลต้องคงเดิมเหมือนก่อนเรียก startGame
-    expect(gameState.activePlayers[0].chips).toBe(
-      1000,
-      'ผู้เล่นคนแรกต้องได้เงินคืน (Rollback) เพราะเกมเริ่มไม่สำเร็จ',
-    );
-    expect(gameState.pot).toBe(0, 'Pot ต้องไม่เพิ่มขึ้น');
+    expect(gameState.activePlayers[0].chips).toBe(1000);
+    expect(gameState.pot).toBe(0);
   });
 
   test('[GameState.handlePlayerDisconnect] 4.55 เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
