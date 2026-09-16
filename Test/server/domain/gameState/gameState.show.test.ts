@@ -505,8 +505,8 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
-  test('[GameState.requestShow] 4.65 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ต้องคืนเงินค่า SHOW และสถานะคงเดิม', () => {
-    // จำลองปัญหา: ขอ SHOW มีเงินจ่าย 50 ชิป แต่ Pot มีเงินมหาศาลบวกเข้าไปแล้วล้น ทำให้เกิด InvalidAmountError ตอนแจกชิปให้ผู้ชนะ
+  test('[GameState.requestShow] 4.75 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ต้องคืนเงินค่า SHOW และสถานะคงเดิม', () => {
+    // Pot รวมค่าธรรมเนียมยังไม่เกินขีดจำกัด แต่เมื่อจ่ายให้ผู้ชนะ ยอดชิปจะเกิน MAX_SAFE_INTEGER
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 100 },
       [
@@ -547,21 +547,29 @@ describe('gameState.show', () => {
     const originalLoserChips = loser.chips;
     const originalLoserBet = loser.bet;
     const originalLoserStatus = loser.status;
+    const isOriginalLoserBlind = loser.isBlind;
+    const originalLoserCards = [...loser.privateCards];
     const originalWinnerChips = winner.chips;
     const originalWinnerBet = winner.bet;
     const originalWinnerStatus = winner.status;
+    const isOriginalWinnerBlind = winner.isBlind;
+    const originalWinnerCards = [...winner.privateCards];
 
     // การแจกรางวัลให้ผู้ชนะทำให้เกินขีดจำกัด จึงโยนข้อผิดพลาดเรื่องจำนวนเงิน (INVALID_AMOUNT)
     expectGameErrorWithCode(() => gameState.requestShow('loser'), 'INVALID_AMOUNT');
 
-    // ข้อมูลทุกอย่างต้องกลับไปเหมือนก่อนเรียก requestShow (Atomic Update: All or Nothing)
+    // ข้อมูลต้องคงเดิมเมื่อปฏิเสธรายการ
     expect(loser.chips).toBe(originalLoserChips);
     expect(loser.bet).toBe(originalLoserBet);
     expect(loser.status).toBe(originalLoserStatus);
+    expect(loser.isBlind).toBe(isOriginalLoserBlind);
+    expect(loser.privateCards).toEqual(originalLoserCards);
 
     expect(winner.chips).toBe(originalWinnerChips);
     expect(winner.bet).toBe(originalWinnerBet);
     expect(winner.status).toBe(originalWinnerStatus);
+    expect(winner.isBlind).toBe(isOriginalWinnerBlind);
+    expect(winner.privateCards).toEqual(originalWinnerCards);
 
     expect(gameState.pot).toBe(originalPot);
     expect(gameState.currentStake).toBe(originalCurrentStake);
