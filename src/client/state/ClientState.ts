@@ -14,20 +14,48 @@ export class ClientState {
     this.lastError = null;
   }
 
-  public updateState(_event: ServerEvent): void {
-    // รอคนเลือก
+  public updateState(event: ServerEvent): void {
+    switch (event.type) {
+      case 'SESSION_CREATED': {
+        this.myPlayerId = event.payload.playerId;
+        break;
+      }
+      case 'ROOM_CREATED': {
+        this.currentRoomId = event.payload.roomId;
+        break;
+      }
+      case 'GAME_STATE_UPDATE': {
+        this.latestGameState = event.payload;
+        this.currentRoomId = event.payload.roomId;
+        break;
+      }
+      case 'GAME_SAVED':
+      case 'GAME_LOADED': {
+        this.currentRoomId = event.payload.roomId;
+        break;
+      }
+      case 'ERROR': {
+        this.lastError = event.message;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
   }
 
   public clearState(): void {
-    // รอคนเลือก
+    this.myPlayerId = null;
+    this.currentRoomId = null;
+    this.latestGameState = null;
+    this.lastError = null;
   }
 
-  public setPlayerId(_playerId: string): void {
-    // รอคนเลือก
+  public setPlayerId(playerId: string): void {
+    this.myPlayerId = playerId;
   }
 
   public getMyCards(): Card[] {
-    // รอคนเลือก
-    return [];
+    return this.latestGameState?.myCards ?? [];
   }
 }
