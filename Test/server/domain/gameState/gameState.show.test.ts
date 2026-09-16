@@ -504,4 +504,52 @@ describe('gameState.show', () => {
     expect(gameState.pot).toBe(0);
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
+
+  test('[GameState.requestShow] 4.64 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ระบบต้องโยน Error แต่ต้องไม่หักค่าธรรมเนียมและเปลี่ยนสถานะผู้แพ้ไปก่อน', () => {
+    // จำลองปัญหา: ขอ SHOW มีเงินจ่าย 50 ชิป แต่ Pot มีเงินมหาศาลบวกเข้าไปแล้วล้น ทำให้เกิด InvalidAmountError ตอนแอดชิปให้ผู้ชนะ
+    const gameState = createGameStateFixture(
+      { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 100 },
+      [
+        {
+          id: 'loser',
+          name: 'Loser Requester',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: true,
+          cards: [
+            { rank: 2, suit: 'SPADES' },
+            { rank: 3, suit: 'SPADES' },
+            { rank: 4, suit: 'SPADES' },
+          ],
+        },
+        {
+          id: 'winner',
+          name: 'Winner Target',
+          status: 'ACTIVE',
+          chips: 500,
+          isBlind: false,
+          cards: [
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+            { rank: 14, suit: 'CLUBS' },
+          ],
+        },
+      ],
+    );
+    const [loser, winner] = gameState.activePlayers;
+
+    // การเอา Number.MAX_SAFE_INTEGER - 100 + 50 (ค่า Show) + 500 (เงินเดิม) = ทะลุ MAX_SAFE_INTEGER
+    expect(() => {
+      gameState.requestShow('loser');
+    }).toThrow();
+
+    // ข้อมูลทุกอย่างต้องเหมือนก่อนเรียก requestShow (Atomic Update: All or Nothing)
+    expect(loser.chips).toBe(
+      1000,
+      'ต้องไม่ถูกหักค่า SHOW 50 ไปฟรีๆ ถ้าจบกระบวนการไม่สำเร็จ',
+    );
+    expect(loser.status).toBe('ACTIVE', 'ต้องไม่ถูกบังคับ FOLD ไปก่อนหน้า');
+    expect(winner.chips).toBe(500, 'เงินผู้ชนะต้องเท่าเดิม');
+    expect(gameState.pot).toBe(Number.MAX_SAFE_INTEGER - 100, 'Pot ต้องเท่าเดิม');
+  });
 });
