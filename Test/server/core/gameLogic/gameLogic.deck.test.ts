@@ -1,8 +1,12 @@
 import { expect, test, describe } from 'bun:test';
 
-import { createDeck, shuffleDeck, dealCards } from '../../src/server/core/gameLogic';
+import {
+  createDeck,
+  shuffleDeck,
+  dealCards,
+} from '../../../../src/server/core/gameLogic';
 
-import type { Card } from '../../src/shared/types';
+import type { Card } from '../../../../src/shared/types';
 import { ZodError } from 'zod';
 
 describe('3. ระบบจัดการสำรับไพ่และการแจกไพ่', () => {

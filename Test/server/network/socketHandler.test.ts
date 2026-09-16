@@ -1,12 +1,12 @@
 import { expect, test, describe, beforeEach } from 'bun:test';
-import type { NetworkContext } from '../../src/server/network/socketHandler';
+import type { NetworkContext } from '../../../src/server/network/socketHandler';
 import {
   handleClientMessage,
   broadcastGameStateUpdate,
-} from '../../src/server/network/socketHandler';
-import type { ClientEvent, ServerEvent } from '../../src/shared/types';
-import { RoomManager } from '../../src/server/domain/models/RoomManager';
-import { Player } from '../../src/server/domain/models/Player';
+} from '../../../src/server/network/socketHandler';
+import type { ClientEvent, ServerEvent } from '../../../src/shared/types';
+import { RoomManager } from '../../../src/server/domain/models/RoomManager';
+import { Player } from '../../../src/server/domain/models/Player';
 import type { WebSocket as WSWebSocket } from 'ws';
 
 describe('6. ระบบจัดการเครือข่าย (WebSocket Handler)', () => {

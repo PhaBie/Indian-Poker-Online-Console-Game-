@@ -10,8 +10,8 @@ import {
   calculateSplitPotInputSchema,
   positiveSafeIntSchema,
   nonNegativeSafeIntSchema,
-} from '../../src/server/core/gameSchema';
-import type { Card } from '../../src/shared/types';
+} from '../../../src/server/core/gameSchema';
+import type { Card } from '../../../src/shared/types';
 
 describe('การทดสอบ Validation ของ gameSchema', () => {
   describe('1. ข้อมูลพื้นฐาน (Base Types)', () => {
