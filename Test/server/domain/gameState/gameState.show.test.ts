@@ -505,7 +505,8 @@ describe('gameState.show', () => {
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
   });
 
-  test('[GameState.requestShow] 4.64 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ระบบต้องโยน Error แต่ต้องไม่หักค่าธรรมเนียมและเปลี่ยนสถานะผู้แพ้ไปก่อน', () => {
+  test('[GameState.requestShow] 4.65 [Atomic Update] หากผู้ชนะรับเงินแล้วเกินขีดจำกัด (Overflow) ต้องคืนเงินค่า SHOW และสถานะคงเดิม', () => {
+    // จำลองปัญหา: ขอ SHOW มีเงินจ่าย 50 ชิป แต่ Pot มีเงินมหาศาลบวกเข้าไปแล้วล้น ทำให้เกิด InvalidAmountError ตอนแจกชิปให้ผู้ชนะ
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: Number.MAX_SAFE_INTEGER - 100 },
       [
@@ -514,6 +515,7 @@ describe('gameState.show', () => {
           name: 'Loser Requester',
           status: 'ACTIVE',
           chips: 1000,
+          bet: 200,
           isBlind: true,
           cards: [
             { rank: 2, suit: 'SPADES' },
@@ -526,6 +528,7 @@ describe('gameState.show', () => {
           name: 'Winner Target',
           status: 'ACTIVE',
           chips: 500,
+          bet: 200,
           isBlind: false,
           cards: [
             { rank: 14, suit: 'HEARTS' },
@@ -537,13 +540,31 @@ describe('gameState.show', () => {
     );
     const [loser, winner] = gameState.activePlayers;
 
-    expect(() => {
-      gameState.requestShow('loser');
-    }).toThrow();
+    // เก็บค่าก่อนทำงาน
+    const originalPot = gameState.pot;
+    const originalCurrentStake = gameState.currentStake;
+    const originalCurrentPlayerIndex = gameState.currentPlayerIndex;
+    const originalLoserChips = loser.chips;
+    const originalLoserBet = loser.bet;
+    const originalLoserStatus = loser.status;
+    const originalWinnerChips = winner.chips;
+    const originalWinnerBet = winner.bet;
+    const originalWinnerStatus = winner.status;
 
-    expect(loser.chips).toBe(1000);
-    expect(loser.status).toBe('ACTIVE');
-    expect(winner.chips).toBe(500);
-    expect(gameState.pot).toBe(Number.MAX_SAFE_INTEGER - 100);
+    // การแจกรางวัลให้ผู้ชนะทำให้เกินขีดจำกัด จึงโยนข้อผิดพลาดเรื่องจำนวนเงิน (INVALID_AMOUNT)
+    expectGameErrorWithCode(() => gameState.requestShow('loser'), 'INVALID_AMOUNT');
+
+    // ข้อมูลทุกอย่างต้องกลับไปเหมือนก่อนเรียก requestShow (Atomic Update: All or Nothing)
+    expect(loser.chips).toBe(originalLoserChips);
+    expect(loser.bet).toBe(originalLoserBet);
+    expect(loser.status).toBe(originalLoserStatus);
+
+    expect(winner.chips).toBe(originalWinnerChips);
+    expect(winner.bet).toBe(originalWinnerBet);
+    expect(winner.status).toBe(originalWinnerStatus);
+
+    expect(gameState.pot).toBe(originalPot);
+    expect(gameState.currentStake).toBe(originalCurrentStake);
+    expect(gameState.currentPlayerIndex).toBe(originalCurrentPlayerIndex);
   });
 });
