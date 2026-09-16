@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'bun:test';
 
-import { compareHands } from '../../src/server/core/gameLogic';
+import { compareHands } from '../../../../src/server/core/gameLogic';
 
-import type { Card } from '../../src/shared/types';
+import type { Card } from '../../../../src/shared/types';
 import { ZodError } from 'zod';
 
 describe('[gameLogic.compareHands] 2. ระบบเปรียบเทียบเพื่อหาผู้ชนะ', () => {

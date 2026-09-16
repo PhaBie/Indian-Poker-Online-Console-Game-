@@ -173,7 +173,7 @@ export function shuffleDeck(
 
 1. **รัน Schema Tests** (ยืนยันโครงสร้าง Schema)
    ```bash
-   bun test Test/core/gameSchema.test.ts
+   bun run test:schema
    ```
 2. **รัน Core Logic Tests** (ยืนยันว่าโค้ดหลักทำงานถูกต้องและดักจับ Error ได้)
    ```bash

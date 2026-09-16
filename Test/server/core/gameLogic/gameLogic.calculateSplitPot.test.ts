@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 
-import { calculateSplitPot } from '../../src/server/core/gameLogic';
+import { calculateSplitPot } from '../../../../src/server/core/gameLogic';
 
 import { ZodError } from 'zod';
 

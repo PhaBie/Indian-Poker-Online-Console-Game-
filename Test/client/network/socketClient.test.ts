@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'bun:test';
-import { SocketClient } from '../../src/client/network/socketClient';
-import type { ServerEvent, ClientEvent } from '../../src/shared/types';
+import { SocketClient } from '../../../src/client/network/socketClient';
+import type { ServerEvent, ClientEvent } from '../../../src/shared/types';
 
 describe('10. ระบบเครือข่ายฝั่งผู้เล่น (Client Socket)', () => {
   describe('Happy Paths', () => {

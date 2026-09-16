@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'bun:test';
-import { RoomManager } from '../../src/server/domain/models/RoomManager';
-import { Player } from '../../src/server/domain/models/Player';
-import { GameError } from '../../src/server/domain/errors/GameError';
+import { RoomManager } from '../../../src/server/domain/models/RoomManager';
+import { Player } from '../../../src/server/domain/models/Player';
+import { GameError } from '../../../src/server/domain/errors/GameError';
 
 describe('8. ระบบจัดการล็อบบี้ส่วนกลาง (Room Manager)', () => {
   describe('Happy Paths', () => {
