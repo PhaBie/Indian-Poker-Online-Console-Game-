@@ -1,6 +1,6 @@
 import type { ServerPlayer, PlayerStatus, Card } from '../../../shared/types';
 import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/GameError';
-import { playerSaveSchema } from './playerSchema';
+import { playerSaveSchema } from '../schemas/playerSchema';
 
 export abstract class BaseUser {
   public id: string;

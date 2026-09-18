@@ -1,5 +1,6 @@
 import { Player } from './Player';
-import type { RoomPhase, PublicPlayerDTO } from '../../../shared/types';
+import type { RoomPhase, PublicPlayerDTO, Card } from '../../../shared/types';
+import { roomSaveSchema, type GameStateSerializedData } from '../schemas/roomSchema';
 import { GameState } from './GameState';
 import { RoomFullError, NotHostError, GameError } from '../errors/GameError';
 
@@ -45,7 +46,7 @@ export class Room {
 
   /**
    * รองรับผู้เล่นที่หลุดไป (DISCONNECTED) เชื่อมต่อกลับเข้ามาในห้องใหม่ (Reconnect)
-   * 
+   *
    * การทำงาน:
    * 1. ค้นหาผู้เล่นในห้องจาก playerId
    * 2. หากพบผู้เล่น ให้เปลี่ยนสถานะกลับมาเป็น 'WAITING' (พร้อมเล่นต่อ)
@@ -64,7 +65,7 @@ export class Room {
 
   /**
    * นำผู้เล่นออกจากห้อง (Leave Room)
-   * 
+   *
    * การทำงาน:
    * 1. ลบผู้เล่นออกจาก Map players
    * 2. หากคนที่ออกเป็น Host ของห้อง:
@@ -85,7 +86,7 @@ export class Room {
 
   /**
    * เริ่มเกม (Start Game)
-   * 
+   *
    * การทำงาน:
    * 1. ตรวจสอบว่าคนที่สั่งเริ่มเกมคือ Host หรือไม่ หากไม่ใช่จะโยน NotHostError
    * 2. ตรวจสอบจำนวนผู้เล่น ต้องมีอย่างน้อย 2 คนขึ้นไป หากไม่พอจะโยน GameError
@@ -117,7 +118,7 @@ export class Room {
 
   /**
    * สิ้นสุดเกมในรอบปัจจุบัน (End Game)
-   * 
+   *
    * การทำงาน:
    * 1. สั่งให้ gameState ทำการจบรอบ (เคลียร์เงินกองกลาง Pot จ่ายให้ผู้ชนะ) หากมี gameState กำลังทำงานอยู่
    * 2. เปลี่ยนสถานะของห้อง (phase) จาก PLAYING เป็น 'ENDED' เพื่อรอผลสรุปหรือเตรียมรีเซ็ตกลับ LOBBY
@@ -134,7 +135,7 @@ export class Room {
 
   /**
    * รีเซ็ตห้องกลับสู่สถานะล็อบบี้ (Reset to Lobby)
-   * 
+   *
    * การทำงาน:
    * 1. ปรับสถานะห้อง (phase) กลับเป็น 'LOBBY'
    * 2. ล้างอ็อบเจกต์ gameState ให้เป็น null (เคลียร์กระดานเกมเดิมทิ้ง)
@@ -165,12 +166,12 @@ export class Room {
 
   /**
    * ดึงข้อมูลผู้เล่นทุกคนในห้องในรูปแบบ Public State (DTO)
-   * 
+   *
    * การทำงาน:
    * 1. ดึงผู้เล่นทุกคนในห้องจาก Map players
    * 2. แปลงข้อมูลผู้เล่นแต่ละคนให้อยู่ในรูป PublicPlayerDTO (id, name, chips, bet, status, isBlind)
    * 3. ป้องกันการโกง (Anti-Cheat) โดยกรองข้อมูลละเอียดอ่อนอย่าง privateCards (ไพ่ในมือ) ทิ้ง เพื่อส่งต่อไปแสดงผลที่ Client ได้อย่างปลอดภัย
-   * 
+   *
    * @returns รายการข้อมูลผู้เล่น PublicPlayerDTO[] สำหรับแสดงผล
    */
   public getPublicState(): PublicPlayerDTO[] {
@@ -186,12 +187,12 @@ export class Room {
 
   /**
    * แปลงข้อมูลของ Room เป็น JSON Object สำหรับการบันทึกสถานะห้อง (Save Game / Persistence)
-   * 
+   *
    * การทำงาน:
    * 1. บันทึกข้อมูลพื้นฐานของห้อง: roomId, phase, hostId, bootAmount
    * 2. แปลง Map players เป็น Array เพื่อบันทึกข้อมูลผู้เล่นครบถ้วน (รวม privateCards เพื่อให้โหลดเกมกลับมาเล่นต่อได้)
    * 3. หากมี gameState (โต๊ะเกมที่กำลังเล่นอยู่) จะบันทึก pot, currentStake, ลำดับการเล่น, กองไพ่ และ activePlayers ทั้งหมด
-   * 
+   *
    * @returns object ข้อมูลสถานะของห้องที่พร้อมนำไปแปลงเป็น JSON string ลงไฟล์
    */
   public toJSON(): object {
@@ -211,89 +212,171 @@ export class Room {
       })),
       gameState: this.gameState
         ? {
-          pot: this.gameState.pot,
-          currentStake: this.gameState.currentStake,
-          currentPlayerIndex: this.gameState.currentPlayerIndex,
-          deck: this.gameState.deck,
-          activePlayers: this.gameState.activePlayers.map((player) => ({
-            id: player.id,
-            name: player.name,
-            chips: player.chips,
-            bet: player.bet,
-            status: player.status,
-            privateCards: player.privateCards,
-            isBlind: player.isBlind,
-          })),
-          bootAmount: this.gameState.bootAmount,
-          maxPotLimit: this.gameState.maxPotLimit,
-          dealerIndex: this.gameState.dealerIndex,
-        }
+            pot: this.gameState.pot,
+            currentStake: this.gameState.currentStake,
+            currentPlayerIndex: this.gameState.currentPlayerIndex,
+            deck: this.gameState.deck,
+            activePlayers: this.gameState.activePlayers.map((player) => ({
+              id: player.id,
+              name: player.name,
+              chips: player.chips,
+              bet: player.bet,
+              status: player.status,
+              privateCards: player.privateCards,
+              isBlind: player.isBlind,
+            })),
+            bootAmount: this.gameState.bootAmount,
+            maxPotLimit: this.gameState.maxPotLimit,
+            dealerIndex: this.gameState.dealerIndex,
+          }
         : null,
     };
   }
 
   /**
    * กู้คืนอ็อบเจกต์ Room จากข้อมูล JSON (Load Game / Reconstruct Room)
-   * 
+   *
    * การทำงาน:
-   * 1. ตรวจสอบความถูกต้องของข้อมูล JSON เบื้องต้น หากข้อมูลไม่ถูกต้องจะโยน GameError
+   * 1. ตรวจสอบความถูกต้องของโครงสร้าง JSON ผ่าน Zod Schema (roomSaveSchema) อย่างเข้มงวดและปลอดภัย (Runtime Type Safety)
    * 2. สร้างอินสแตนซ์ Room ใหม่ตาม roomId และ bootAmount
    * 3. กำหนดค่า phase และ hostId กลับคืน
    * 4. กู้คืนผู้เล่นทุกคนในห้องผ่าน Player.fromJSON() แล้วเก็บลงใน Map players
    * 5. หากในไฟล์เซฟมี gameState ให้กู้คืนโต๊ะเกม (pot, currentStake, deck, activePlayers) กลับมาใช้งานต่อได้ทันที
-   * 
+   *
    * @param json - ข้อมูลห้องในรูปแบบ JSON หรือ object ที่โหลดมาจากไฟล์
    * @returns อินสแตนซ์ของ Room ที่พร้อมใช้งาน
    */
   public static fromJSON(json: unknown): Room {
-    if (!json || typeof json !== 'object') {
+    // 1. ตรวจสอบโครงสร้างข้อมูลด้วย Zod Schema (roomSaveSchema) ป้องกัน Type ขัดข้องขณะทำงานจริง
+    const parseResult = roomSaveSchema.safeParse(json);
+    if (!parseResult.success) {
+      const hasRoomIdIssue = parseResult.error.issues.some(
+        (issue) => issue.path[0] === 'roomId',
+      );
+      if (hasRoomIdIssue) {
+        throw new GameError('Invalid roomId in room data', 'INVALID_ROOM_DATA');
+      }
       throw new GameError('Invalid room data', 'INVALID_ROOM_DATA');
     }
 
-    const data = json as Record<string, any>;
-    if (typeof data.roomId !== 'string' || !data.roomId) {
-      throw new GameError('Invalid roomId in room data', 'INVALID_ROOM_DATA');
+    const validatedRoomData = parseResult.data;
+
+    // 2. สร้างห้องขึ้นมาใหม่โดยใช้รหัสห้องและค่า Boot เดิม
+    const restoredRoom = new Room(validatedRoomData.roomId, validatedRoomData.bootAmount);
+    restoredRoom.phase = validatedRoomData.phase;
+    restoredRoom.hostId = validatedRoomData.hostId;
+
+    // 3. กู้คืนผู้เล่นทุกคนที่อยู่ในห้องกลับคืนมา
+    this.restorePlayersFromData(validatedRoomData.players, restoredRoom);
+
+    // 4. หากตอนเซฟมีเกมที่กำลังเล่นค้างอยู่ ให้กู้คืนโต๊ะเกม (GameState) กลับมาเล่นต่อได้ทันที
+    this.restoreGameStateFromData(
+      validatedRoomData.gameState,
+      restoredRoom,
+      validatedRoomData.bootAmount,
+    );
+
+    return restoredRoom;
+  }
+
+  /**
+   * กู้คืนข้อมูลผู้เล่นทั้งหมดจาก Array แล้วนำกลับเข้าใส่ Map players ของห้อง
+   *
+   * การทำงาน:
+   * - วนลูปนำข้อมูลผู้เล่นแต่ละคนส่งต่อให้ Player.fromJSON() ทำการกู้คืนเป็นอินสแตนซ์ Player ที่สมบูรณ์
+   * - บันทึกลงใน Map players โดยใช้ player.id เป็น Key เพื่อให้ค้นหาได้รวดเร็วระดับ O(1)
+   *
+   * @param rawPlayers - รายชื่อผู้เล่นที่อ่านได้จากข้อมูลเซฟ
+   * @param targetRoom - อินสแตนซ์ห้องที่จะนำผู้เล่นใส่เข้าไป
+   */
+  private static restorePlayersFromData(rawPlayers: unknown[], targetRoom: Room): void {
+    for (const rawPlayerData of rawPlayers) {
+      // ใช้ Player.fromJSON เพื่อกู้คืนข้อมูลผู้เล่นแต่ละคนแบบสมบูรณ์พร้อมเมธอด
+      const restoredPlayer = Player.fromJSON(rawPlayerData);
+      targetRoom.players.set(restoredPlayer.id, restoredPlayer);
+    }
+  }
+
+  /**
+   * กู้คืนสถานะโต๊ะเกม (GameState) เช่น กองไพ่ กองกลาง (Pot) และผู้เล่นที่กำลังเล่นอยู่
+   *
+   * การทำงาน:
+   * 1. ตรวจสอบว่ามีข้อมูล gameState หรือไม่ หากไม่มีให้ข้าม (เป็นห้องที่ยังอยู่ในช่วง Lobby)
+   * 2. ดึงรายชื่อผู้เล่นที่กำลังเล่นอยู่ในโต๊ะผ่าน extractActivePlayers()
+   * 3. สร้างอินสแตนซ์ GameState ใหม่ พร้อมคืนค่าสถานะเดิมทั้งหมด (pot, currentStake, deck, dealerIndex)
+   *
+   * @param gameStateData - ข้อมูลสถานะโต๊ะเกมที่อ่านได้จากไฟล์
+   * @param targetRoom - ห้องเป้าหมายที่จะนำ GameState ไปผูกไว้
+   * @param defaultBootAmount - ค่า Boot เริ่มต้นของห้องสำหรับใช้เป็นค่าสำรอง
+   */
+  private static restoreGameStateFromData(
+    gameStateData: GameStateSerializedData | null | undefined,
+    targetRoom: Room,
+    defaultBootAmount: number,
+  ): void {
+    if (!gameStateData) {
+      return;
     }
 
-    const bootAmount = typeof data.bootAmount === 'number' ? data.bootAmount : 50;
-    const room = new Room(data.roomId, bootAmount);
+    // ดึงรายชื่อผู้เล่นที่กำลังเล่นอยู่ในโต๊ะเกมกลับมา
+    const restoredActivePlayers = this.extractActivePlayers(
+      gameStateData.activePlayers,
+      targetRoom,
+    );
 
-    room.phase = data.phase ?? 'LOBBY';
-    room.hostId = data.hostId ?? null;
+    // สร้างอินสแตนซ์ GameState ใหม่ด้วยรายชื่อผู้เล่นและค่า Boot
+    const restoredGameState = new GameState(
+      restoredActivePlayers,
+      gameStateData.bootAmount ?? defaultBootAmount,
+      gameStateData.maxPotLimit,
+    );
 
-    // กู้คืนผู้เล่นทุกคนในห้อง
-    if (Array.isArray(data.players)) {
-      for (const playerData of data.players) {
-        const player = Player.fromJSON(playerData);
-        room.players.set(player.id, player);
-      }
+    // กำหนดค่าสถานะเดิมของโต๊ะเกม: กองกลาง, เงินเดิมพันปัจจุบัน, ลำดับผู้เล่น, กองไพ่ และตำแหน่งคนแจกไพ่
+    restoredGameState.pot = gameStateData.pot;
+    restoredGameState.currentStake = gameStateData.currentStake ?? defaultBootAmount;
+    restoredGameState.currentPlayerIndex = gameStateData.currentPlayerIndex;
+    restoredGameState.deck = (gameStateData.deck ?? []) as Card[];
+    restoredGameState.dealerIndex = gameStateData.dealerIndex;
+
+    targetRoom.gameState = restoredGameState;
+  }
+
+  /**
+   * ดึงอ็อบเจกต์ Player ของผู้เล่นที่กำลังเล่นอยู่ โดยจับคู่กับผู้เล่นในห้องผ่าน Map แบบ O(1)
+   *
+   * หลักการทำงานและเหตุผลที่ใช้ Map (Data Structure & Algorithm):
+   * 1. รักษา Object Reference: ผู้เล่นบนโต๊ะเกม (activePlayers) ต้องเป็นอินสแตนซ์เดียวกับผู้เล่นในห้อง (targetRoom.players) ใน Memory
+   * 2. ความเร็วในการค้นหา: การใช้ targetRoom.players.get(id) มีประสิทธิภาพ Time Complexity ระดับ O(1) (Hash Map Lookup)
+   * 3. Fallback: หากไม่พบผู้เล่นเดิมใน Map จึงจะเรียก Player.fromJSON() สร้างขึ้นมาใหม่
+   *
+   * @param rawActivePlayers - รายชื่อผู้เล่นบนโต๊ะเกมจากไฟล์เซฟ
+   * @param targetRoom - ห้องเป้าหมายที่มี Map ของผู้เล่นทั้งหมดอยู่แล้ว
+   * @returns รายการอ็อบเจกต์ Player[] ที่พร้อมใช้งาน
+   */
+  private static extractActivePlayers(
+    rawActivePlayers: unknown[] | undefined,
+    targetRoom: Room,
+  ): Player[] {
+    if (!Array.isArray(rawActivePlayers)) {
+      return Array.from(targetRoom.players.values());
     }
 
-    // กู้คืนโต๊ะเกม (GameState) หากตอนเซฟเกมกำลังเล่นอยู่
-    if (data.gameState && typeof data.gameState === 'object') {
-      const gsData = data.gameState;
-      const activePlayers = Array.isArray(gsData.activePlayers)
-        ? gsData.activePlayers.map((p: any) => {
-            const existing = p && typeof p === 'object' && p.id ? room.players.get(p.id) : undefined;
-            return existing ?? Player.fromJSON(p);
-          })
-        : Array.from(room.players.values());
+    return rawActivePlayers.map((rawPlayerItem: unknown) => {
+      const candidatePlayerObject =
+        rawPlayerItem && typeof rawPlayerItem === 'object'
+          ? (rawPlayerItem as Record<string, unknown>)
+          : undefined;
+      const candidatePlayerId =
+        typeof candidatePlayerObject?.id === 'string'
+          ? candidatePlayerObject.id
+          : undefined;
 
-      const gameState = new GameState(
-        activePlayers,
-        gsData.bootAmount ?? bootAmount,
-        gsData.maxPotLimit ?? 10000,
-      );
+      // ค้นหาจาก Map ของห้องก่อนด้วย O(1) ถ้ามีอยู่แล้วให้ใช้อินสแตนซ์เดิมเพื่อรักษา Memory Reference
+      const existingPlayer = candidatePlayerId
+        ? targetRoom.players.get(candidatePlayerId)
+        : undefined;
 
-      gameState.pot = typeof gsData.pot === 'number' ? gsData.pot : 0;
-      gameState.currentStake = typeof gsData.currentStake === 'number' ? gsData.currentStake : bootAmount;
-      gameState.currentPlayerIndex = typeof gsData.currentPlayerIndex === 'number' ? gsData.currentPlayerIndex : 0;
-      gameState.deck = Array.isArray(gsData.deck) ? gsData.deck : [];
-      gameState.dealerIndex = typeof gsData.dealerIndex === 'number' ? gsData.dealerIndex : 0;
-
-      room.gameState = gameState;
-    }
-
-    return room;
+      return existingPlayer ?? Player.fromJSON(rawPlayerItem);
+    });
   }
 }
