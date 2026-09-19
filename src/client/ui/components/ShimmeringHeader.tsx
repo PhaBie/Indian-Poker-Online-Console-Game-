@@ -169,13 +169,19 @@ function useHeaderPhase(): HeaderPhase {
 }
 
 const SHIMMER_INTERVAL_MS = 55;
-const SHIMMER_SWEEP_STEPS = 27;
-const SHIMMER_REST_STEPS = 27;
-const TOTAL_CYCLE_STEPS = SHIMMER_SWEEP_STEPS + SHIMMER_REST_STEPS;
+const SHIMMER_REST_STEPS = 20;
 const IDLE_WAVE_POSITION = -999;
 
-function useShimmerWave(isReady: boolean): number {
+export function getMaxLetterIndex(characters: readonly HeaderCharacterItem[]): number {
+  return characters.reduce((highestIndex, item) => {
+    return item.letterIndex > highestIndex ? item.letterIndex : highestIndex;
+  }, 0);
+}
+
+function useShimmerWave(isReady: boolean, maxLetterIndex: number): number {
   const isAnimationActive = isAnimationEnabled();
+  const sweepSteps = Math.max(15, maxLetterIndex + 7);
+  const totalCycleSteps = sweepSteps + SHIMMER_REST_STEPS;
   const [stepIndex, setStepIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -184,15 +190,15 @@ function useShimmerWave(isReady: boolean): number {
     }
 
     const intervalTimer = setInterval(() => {
-      setStepIndex((previousStep) => (previousStep + 1) % TOTAL_CYCLE_STEPS);
+      setStepIndex((previousStep) => (previousStep + 1) % totalCycleSteps);
     }, SHIMMER_INTERVAL_MS);
 
     return () => {
       clearInterval(intervalTimer);
     };
-  }, [isAnimationActive, isReady]);
+  }, [isAnimationActive, isReady, totalCycleSteps]);
 
-  if (!isAnimationActive || !isReady || stepIndex >= SHIMMER_SWEEP_STEPS) {
+  if (!isAnimationActive || !isReady || stepIndex >= sweepSteps) {
     return IDLE_WAVE_POSITION;
   }
 
@@ -261,12 +267,16 @@ export function ShimmeringHeader({
   pageTitle = 'MAIN MENU',
 }: ShimmeringHeaderProps = {}) {
   const phase = useHeaderPhase();
-  const wavePosition = useShimmerWave(phase === 'page');
   const titleCharacters = useMemo(
     () =>
       pageTitle === 'MAIN MENU' ? TITLE_CHARACTERS : buildBrandTitleCharacters(pageTitle),
     [pageTitle],
   );
+  const maxLetterIndex = useMemo(
+    () => getMaxLetterIndex(titleCharacters),
+    [titleCharacters],
+  );
+  const wavePosition = useShimmerWave(phase === 'page', maxLetterIndex);
 
   return (
     <Box

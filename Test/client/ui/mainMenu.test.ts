@@ -8,6 +8,7 @@ import { UI_COLORS } from '../../../src/client/ui/theme/colors';
 import {
   calculateShimmerColor,
   buildBrandTitleCharacters,
+  getMaxLetterIndex,
   CASINO_SUIT_SYMBOLS,
   isAnimationEnabled,
   APP_VERSION,
@@ -274,6 +275,22 @@ describe('11. Main Menu UI', () => {
       expect(isValidSize).toBe(true);
       expect(isTooSmallSizeValid).toBe(false);
       expect(isTooLargeSizeValid).toBe(false);
+    });
+
+    test('[getMaxLetterIndex] 11.29 computes maximum letter index dynamically and returns 0 for empty array', () => {
+      const mainMenuCharacters = buildBrandTitleCharacters('MAIN MENU');
+      const registrationCharacters = buildBrandTitleCharacters('PLAYER REGISTRATION');
+      const createRoomCharacters = buildBrandTitleCharacters('CREATE ROOM');
+
+      const mainMenuMaxIndex = getMaxLetterIndex(mainMenuCharacters);
+      const registrationMaxIndex = getMaxLetterIndex(registrationCharacters);
+      const createRoomMaxIndex = getMaxLetterIndex(createRoomCharacters);
+      const emptyListMaxIndex = getMaxLetterIndex([]);
+
+      expect(mainMenuMaxIndex).toBe(17);
+      expect(registrationMaxIndex).toBe(27);
+      expect(createRoomMaxIndex).toBe(19);
+      expect(emptyListMaxIndex).toBe(0);
     });
   });
 });

@@ -39,8 +39,7 @@ export function EnterUsernameScreen({ onSubmit, onBack }: EnterUsernameScreenPro
   }
 
   const containerWidth = getGameContainerWidth(columns);
-  const isWideMode = containerWidth >= 88;
-  const paddingX = isWideMode ? 5 : 3;
+  const paddingX = containerWidth >= 88 ? 5 : 3;
 
   return (
     <Box
