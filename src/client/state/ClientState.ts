@@ -103,6 +103,11 @@ export class ClientState {
     this.notifyListeners();
   }
 
+  public clearError(): void {
+    this.lastError = null;
+    this.notifyListeners();
+  }
+
   public getMyCards(): Card[] {
     return this.latestGameState?.myCards ?? [];
   }

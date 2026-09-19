@@ -1,63 +1,88 @@
 import { Box, Text } from 'ink';
 import type { RoomSummaryDTO } from './types';
 import { UI_COLORS } from '../../theme/colors';
+import { RoomBrowserTableHeader, ROOM_BROWSER_CONTENT_WIDTH, buildGridBorder } from './RoomBrowserTableHeader';
 import { RoomBrowserRow } from './RoomBrowserRow';
+import { RoomBrowserEmptyState } from './RoomBrowserEmptyState';
 
 interface RoomBrowserTableProps {
   readonly rooms: RoomSummaryDTO[];
   readonly selectedIndex: number;
+  readonly maxVisibleRows: number;
 }
 
-export function RoomBrowserTable({ rooms, selectedIndex }: RoomBrowserTableProps) {
-  return (
-    <Box flexDirection="column" width="100%" marginY={1}>
-      <Box flexDirection="row" width="100%" marginBottom={1}>
-        <Box width="6%">
-          <Text color={UI_COLORS.mutedText}> </Text>
-        </Box>
-        <Box width="20%">
-          <Text bold color={UI_COLORS.inactiveTitle}>
-            TABLE ID
-          </Text>
-        </Box>
-        <Box width="26%">
-          <Text bold color={UI_COLORS.inactiveTitle}>
-            HOST
-          </Text>
-        </Box>
-        <Box width="16%">
-          <Text bold color={UI_COLORS.inactiveTitle}>
-            PLAYERS
-          </Text>
-        </Box>
-        <Box width="18%">
-          <Text bold color={UI_COLORS.inactiveTitle}>
-            BOOT
-          </Text>
-        </Box>
-        <Box width="14%">
-          <Text bold color={UI_COLORS.inactiveTitle}>
-            STATUS
-          </Text>
-        </Box>
-      </Box>
+export function getVisibleRoomWindow(
+  totalRooms: number,
+  selectedIndex: number,
+  maxVisibleRows: number,
+): { start: number; end: number } {
+  if (totalRooms === 0) {
+    return { start: 0, end: 0 };
+  }
 
-      {rooms.length === 0 ? (
-        <Box flexDirection="column" alignItems="center" paddingY={2}>
-          <Text color={UI_COLORS.mutedText}>No active tables on this server.</Text>
-          <Text color={UI_COLORS.goldHighlight} bold>
-            Press [ C ] to create and host the first table!
-          </Text>
-        </Box>
-      ) : (
-        rooms.map((room, index) => (
-          <RoomBrowserRow
-            key={room.roomId}
-            room={room}
-            isSelected={index === selectedIndex}
-          />
-        ))
+  const visibleRows = Math.max(1, Math.min(maxVisibleRows, totalRooms));
+  const maxStart = Math.max(0, totalRooms - visibleRows);
+  const centeredStart = selectedIndex - Math.floor(visibleRows / 2);
+  const start = Math.max(0, Math.min(centeredStart, maxStart));
+
+  return { start, end: start + visibleRows };
+}
+
+export function RoomBrowserTable({
+  rooms,
+  selectedIndex,
+  maxVisibleRows,
+}: RoomBrowserTableProps) {
+  if (rooms.length === 0) {
+    return <RoomBrowserEmptyState />;
+  }
+
+  const { start, end } = getVisibleRoomWindow(
+    rooms.length,
+    selectedIndex,
+    maxVisibleRows,
+  );
+  const visibleRooms = rooms.slice(start, end);
+  const hasRoomsAbove = start > 0;
+  const hasRoomsBelow = end < rooms.length;
+
+  return (
+    <Box
+      flexDirection="column"
+      width={ROOM_BROWSER_CONTENT_WIDTH}
+      alignSelf="center"
+      marginTop={1}
+    >
+      {hasRoomsAbove && (
+        <Text color={UI_COLORS.dimText}>
+          {' '.repeat(ROOM_BROWSER_CONTENT_WIDTH - 2)}▲ {start} more rooms
+        </Text>
       )}
+      <Text color={UI_COLORS.mutedText}>{buildGridBorder('┌', '┬', '┐')}</Text>
+      <RoomBrowserTableHeader />
+      <Text color={UI_COLORS.mutedText}>{buildGridBorder('├', '┼', '┤')}</Text>
+      {visibleRooms.map((room, index) => (
+        <Box key={room.roomId} flexDirection="column">
+          <RoomBrowserRow
+            room={room}
+            isSelected={start + index === selectedIndex}
+          />
+          {index < visibleRooms.length - 1 && (
+            <Text color={UI_COLORS.mutedText}>{buildGridBorder('├', '┼', '┤')}</Text>
+          )}
+        </Box>
+      ))}
+      <Text color={UI_COLORS.mutedText}>{buildGridBorder('└', '┴', '┘')}</Text>
+      {hasRoomsBelow && (
+        <Text color={UI_COLORS.dimText}>
+          {' '.repeat(ROOM_BROWSER_CONTENT_WIDTH - 2)}▼ {rooms.length - end} more rooms
+        </Text>
+      )}
+      <Box marginTop={1}>
+        <Text color={UI_COLORS.mutedText}>
+          Showing {start + 1}-{end} of {rooms.length}
+        </Text>
+      </Box>
     </Box>
   );
 }

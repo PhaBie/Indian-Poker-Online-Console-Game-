@@ -5,7 +5,7 @@ describe('7. ระบบเซิร์ฟเวอร์หลัก (Server E
   test('[PokerServer.start] 7.1 เรียกใช้ start และ stop → เปลี่ยนสถานะ isRunning เป็น true และ false ตามลำดับ', () => {
     const server = new PokerServer();
 
-    server.start(8080);
+    server.start(0);
     expect(server.isRunning).toBe(true);
 
     server.stop();

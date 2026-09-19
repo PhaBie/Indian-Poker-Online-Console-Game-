@@ -232,6 +232,35 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
   });
 
   describe('Unhappy Paths', () => {
+    test('[socketHandler.handleClientMessage] 6.6.1 ส่ง JOIN_ROOM ด้วยชื่อที่ซ้ำในห้อง → คืนค่า NAME_TAKEN และไม่เพิ่มผู้เล่น', () => {
+      const host = new Player('player_1', 'Thanathon');
+      const room = mockContext.roomManager.createRoom('room_duplicate_name', host);
+      const sentMessages: ServerEvent[] = [];
+      const mockWsClient = {
+        send: (data: string) => {
+          sentMessages.push(JSON.parse(data));
+        },
+      } as unknown as WSWebSocket;
+
+      const mockMessage: ClientEvent = {
+        type: 'JOIN_ROOM',
+        payload: {
+          playerName: 'thanathon',
+          roomId: 'room_duplicate_name',
+        },
+      };
+
+      handleClientMessage(mockWsClient, mockMessage, mockContext);
+
+      const errorEvent = sentMessages.find(
+        (message) => message.type === 'ERROR',
+      ) as Extract<ServerEvent, { type: 'ERROR' }>;
+      expect(errorEvent).toBeDefined();
+      expect(errorEvent.code).toBe('NAME_TAKEN');
+      expect(room.getPlayerCount()).toBe(1);
+      expect(mockContext.connectedClients.has(mockWsClient)).toBe(false);
+    });
+
     test('[socketHandler.handleClientMessage] 6.6 ส่ง JOIN_ROOM รหัสห้องไม่มีอยู่จริง → คืนค่า ERROR', () => {
       const sentMessages: ServerEvent[] = [];
       const mockWsClient = {

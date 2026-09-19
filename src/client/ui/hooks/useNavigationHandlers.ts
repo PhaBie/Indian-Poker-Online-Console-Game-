@@ -59,5 +59,18 @@ export function useNavigationHandlers({
     [intent, networkMode, pendingTarget, socketClient, setPlayerName, setScreen],
   );
 
-  return { handleConnectServer, handleConnectedSuccess, handleUsernameSubmit };
+  const handleInitialUsernameSubmit = useCallback(
+    (name: string) => {
+      setPlayerName(name);
+      setScreen('mainMenu');
+    },
+    [setPlayerName, setScreen],
+  );
+
+  return {
+    handleConnectServer,
+    handleConnectedSuccess,
+    handleUsernameSubmit,
+    handleInitialUsernameSubmit,
+  };
 }

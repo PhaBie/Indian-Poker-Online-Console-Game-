@@ -57,6 +57,16 @@ export class RoomFullError extends GameError {
 }
 
 /**
+ * ข้อผิดพลาดเมื่อมีผู้เล่นใช้ชื่อซ้ำกับผู้เล่นที่อยู่ในห้องเดียวกัน
+ * รหัสข้อผิดพลาด (Code): 'NAME_TAKEN'
+ */
+export class DuplicatePlayerNameError extends GameError {
+  constructor(playerName: string) {
+    super(`Player name "${playerName}" is already in use in this room`, 'NAME_TAKEN');
+  }
+}
+
+/**
  * ข้อผิดพลาดเมื่อผู้เล่นพยายามส่งคำสั่งเล่นในขณะที่ยังไม่ถึงตา (Turn) ของตนเอง
  * รหัสข้อผิดพลาด (Code): 'WRONG_TURN'
  */

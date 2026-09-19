@@ -2,7 +2,12 @@ import { Player } from './Player';
 import type { RoomPhase, PublicPlayerDTO, Card, HandRank } from '../../../shared/types';
 import { roomSaveSchema, type GameStateSerializedData } from '../schemas/roomSchema';
 import { GameState } from './GameState';
-import { RoomFullError, NotHostError, GameError } from '../errors/GameError';
+import {
+  RoomFullError,
+  NotHostError,
+  GameError,
+  DuplicatePlayerNameError,
+} from '../errors/GameError';
 
 export class Room {
   public roomId: string;
@@ -31,6 +36,17 @@ export class Room {
    * - บันทึกผู้เล่นลงใน players Map
    */
   public join(player: Player): void {
+    // ชื่อซ้ำได้ในคนละห้อง แต่ห้ามซ้ำภายในห้องเดียวกัน โดยไม่สนตัวพิมพ์เล็ก/ใหญ่
+    const normalizedPlayerName = player.name.trim().toLocaleLowerCase();
+    const hasDuplicateName = Array.from(this.players.values()).some(
+      (existingPlayer) =>
+        existingPlayer.name.trim().toLocaleLowerCase() === normalizedPlayerName,
+    );
+
+    if (hasDuplicateName) {
+      throw new DuplicatePlayerNameError(player.name);
+    }
+
     // 1. ตรวจสอบว่าห้องเต็มแล้วหรือไม่ (สูงสุด 4 คนตาม MAX_PLAYERS)
     if (this.players.size >= this.MAX_PLAYERS) {
       throw new RoomFullError(this.roomId);

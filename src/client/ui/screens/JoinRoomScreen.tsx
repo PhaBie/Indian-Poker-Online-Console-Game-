@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
+import { ShimmeringHeader } from '../components/ShimmeringHeader';
+import { useTerminalSize } from '../hooks/useTerminalSize';
+import { getGameContainerWidth } from './MainMenuScreen';
+import {
+  getTerminalSizeStatus,
+  TerminalOutOfRangeScreen,
+} from '../components/ScreenSizeGuard';
+import { UI_COLORS } from '../theme/colors';
 
 export interface JoinRoomScreenProps {
   onBack: () => void;
@@ -8,214 +16,302 @@ export interface JoinRoomScreenProps {
   serverError?: string | null;
 }
 
-export function JoinRoomScreen({
-  onBack,
-  onJoinSubmit,
+type JoinMethod = 'LAN' | 'INTERNET';
+
+interface JoinMethodOptionProps {
+  readonly number: string;
+  readonly title: string;
+  readonly detail: string;
+  readonly color: string;
+  readonly isSelected: boolean;
+}
+
+function JoinMethodOption({
+  number,
+  title,
+  detail,
+  color,
+  isSelected,
+}: JoinMethodOptionProps) {
+  return (
+    <Box flexDirection="row" alignItems="center">
+      <Box width={4}>
+        <Text bold={isSelected} color={isSelected ? color : UI_COLORS.mutedText}>
+          {isSelected ? '❯' : ' '}
+        </Text>
+      </Box>
+      <Box width={18}>
+        <Text bold={isSelected} color={isSelected ? color : UI_COLORS.inactiveTitle}>
+          [{number}] {title}
+        </Text>
+      </Box>
+      <Text color={isSelected ? UI_COLORS.primaryText : UI_COLORS.inactiveDesc}>
+        {detail}
+      </Text>
+    </Box>
+  );
+}
+
+function JoinMethodStep({ selectedNetwork }: { readonly selectedNetwork: 1 | 2 }) {
+  return (
+    <Box flexDirection="column" alignItems="center">
+      <Box flexDirection="column" width={46} alignItems="center">
+        <Text color={UI_COLORS.mutedText}>Select connection mode to join a room</Text>
+        <Box flexDirection="column" marginTop={2} marginBottom={1} width={46}>
+          <JoinMethodOption
+            number="1"
+            title="LAN Mode"
+            detail="Local WiFi (Host IPv4)"
+            color={UI_COLORS.activeGreen}
+            isSelected={selectedNetwork === 1}
+          />
+          <Box marginTop={1}>
+            <JoinMethodOption
+              number="2"
+              title="Online Mode"
+              detail="Internet (Room Code)"
+              color={UI_COLORS.activeBlue}
+              isSelected={selectedNetwork === 2}
+            />
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+function selectJoinMethod(
+  selected: 1 | 2,
+  setSelectedNetwork: (value: 1 | 2) => void,
+  setMethod: (value: JoinMethod) => void,
+  setStep: (value: 1 | 2) => void,
+  setInput: (value: string) => void,
+  setError: (value: string) => void,
+  onJoinSubmit: (method: JoinMethod, target: string) => void,
+) {
+  const selectedMethod: JoinMethod = selected === 1 ? 'LAN' : 'INTERNET';
+  setSelectedNetwork(selected);
+  setMethod(selectedMethod);
+  setError('');
+
+  if (selectedMethod === 'LAN') {
+    onJoinSubmit('LAN', '');
+    return;
+  }
+
+  setStep(2);
+  setInput('join ');
+}
+
+function JoinInputStep({
+  method,
+  input,
+  error,
   serverError,
-}: JoinRoomScreenProps) {
-  const [step, setStep] = useState(1);
-  const [method, setMethod] = useState<'LAN' | 'INTERNET' | null>(null);
-  const [input, setInput] = useState('');
+  onChange,
+  onSubmit,
+}: {
+  readonly method: JoinMethod;
+  readonly input: string;
+  readonly error: string;
+  readonly serverError?: string | null;
+  readonly onChange: (value: string) => void;
+  readonly onSubmit: (value: string) => void;
+}) {
+  const isLan = method === 'LAN';
+  const errorMessage = error || serverError;
+
+  return (
+    <Box flexDirection="column" alignItems="center">
+      <Box width={54} flexDirection="column">
+        <Box flexDirection="row" alignItems="center" marginBottom={1}>
+          <Text bold color={isLan ? UI_COLORS.activeGreen : UI_COLORS.activeBlue}>
+            {isLan ? '[ LAN MODE ]' : '[ ONLINE MODE ]'}
+          </Text>
+          <Text color={UI_COLORS.dimText}>  •  </Text>
+          <Text color={UI_COLORS.primaryText}>
+            {isLan ? 'Connect to a host' : 'Enter a room code'}
+          </Text>
+        </Box>
+
+        <Text color={UI_COLORS.mutedText}>
+          {isLan
+            ? 'Enter the host IPv4 address and port below.'
+            : 'Enter the 6-character code shared by the host.'}
+        </Text>
+
+        <Box marginTop={2} flexDirection="column">
+          <Text color={UI_COLORS.dimText}>
+            Format:{' '}
+            <Text color={UI_COLORS.goldHighlight}>
+              {isLan ? 'connect <ip>:<port>' : 'join <code>'}
+            </Text>
+          </Text>
+          <Text color={UI_COLORS.inactiveDesc}>
+            Example: {isLan ? 'connect 192.168.1.10:8080' : 'join A1B2C9'}
+          </Text>
+        </Box>
+
+        {errorMessage ? (
+          <Box marginTop={2}>
+            <Text bold color={UI_COLORS.errorRed}>✕ {errorMessage}</Text>
+          </Box>
+        ) : null}
+      </Box>
+
+      <Box
+        width={54}
+        borderStyle="round"
+        borderColor={isLan ? UI_COLORS.activeGreen : UI_COLORS.activeBlue}
+        paddingX={2}
+        marginTop={2}
+      >
+        <Text bold color={UI_COLORS.goldHighlight}>$ </Text>
+        <TextInput value={input} onChange={onChange} onSubmit={onSubmit} />
+      </Box>
+    </Box>
+  );
+}
+
+function JoinRoomHelpFooter({ isInputStep }: { readonly isInputStep: boolean }) {
+  return (
+    <Box justifyContent="center" marginTop={1} gap={1}>
+      {!isInputStep && (
+        <>
+          <Text color={UI_COLORS.mutedText}>
+            <Text bold color={UI_COLORS.goldBorder}>UP/DOWN</Text> Navigate
+          </Text>
+          <Text color={UI_COLORS.mutedText}>•</Text>
+          <Text color={UI_COLORS.mutedText}>
+            <Text bold color={UI_COLORS.goldBorder}>ENTER</Text> Select
+          </Text>
+        </>
+      )}
+      {isInputStep && (
+        <Text color={UI_COLORS.mutedText}>
+          <Text bold color={UI_COLORS.goldBorder}>ENTER</Text> Join
+        </Text>
+      )}
+      <Text color={UI_COLORS.mutedText}>•</Text>
+      <Text color={UI_COLORS.mutedText}>
+        <Text bold color={UI_COLORS.goldBorder}>ESC</Text> Back
+      </Text>
+    </Box>
+  );
+}
+
+export function JoinRoomScreen({ onBack, onJoinSubmit, serverError }: JoinRoomScreenProps) {
+  const { columns, rows } = useTerminalSize();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [method, setMethod] = useState<JoinMethod>('LAN');
+  const [input, setInput] = useState('connect ');
   const [error, setError] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState<1 | 2>(1);
 
   useInput((inputKey, key) => {
-    // Only handle global keys in step 1. In step 2, TextInput handles typing.
-    // Wait, if TextInput is active, useInput still receives keys but TextInput also does.
-    // To prevent double handling, we should only use useInput for step 1.
-    if (step === 1) {
-      if (key.escape || inputKey === '0') {
-        onBack();
-        return;
-      }
-      if (key.upArrow || key.downArrow) {
-        setSelectedNetwork((prev) => (prev === 1 ? 2 : 1));
-      } else if (key.return) {
-        if (selectedNetwork === 1) {
-          setMethod('LAN');
-          setStep(2);
-          setInput('connect ');
-        } else {
-          setMethod('INTERNET');
-          setStep(2);
-          setInput('join ');
-        }
-      } else if (inputKey === '1') {
-        setSelectedNetwork(1);
-        setMethod('LAN');
-        setStep(2);
-        setInput('connect ');
-      } else if (inputKey === '2') {
-        setSelectedNetwork(2);
-        setMethod('INTERNET');
-        setStep(2);
-        setInput('join ');
-      }
-    } else if (step === 2 && (key.escape || inputKey === '0')) {
-      // If in step 2 and user types 0, but they might be typing an IP with a 0.
-      // So only escape key should go back, or 0 if it's the exact string '0' maybe?
-      // Better to only rely on escape key for step 2.
-      if (key.escape) {
+    if (key.escape) {
+      if (step === 2) {
         setStep(1);
-        setMethod(null);
-        setInput('');
         setError('');
+      } else {
+        onBack();
       }
+      return;
+    }
+
+    if (step !== 1) return;
+
+    if (key.upArrow || key.downArrow) {
+      setSelectedNetwork((previous) => (previous === 1 ? 2 : 1));
+    } else if (key.return || inputKey === '1' || inputKey === '2') {
+      const selected = inputKey === '2' ? 2 : inputKey === '1' ? 1 : selectedNetwork;
+      selectJoinMethod(
+        selected,
+        setSelectedNetwork,
+        setMethod,
+        setStep,
+        setInput,
+        setError,
+        onJoinSubmit,
+      );
     }
   });
 
   const handleSubmit = (value: string) => {
-    if (step !== 2) return;
-
     const trimmed = value.trim();
-    if (method === 'LAN') {
-      if (!trimmed.toLowerCase().startsWith('connect ')) {
-        setError('Invalid command. Use: connect <ip>:<port>');
-        return;
-      }
-      const target = trimmed.substring(8).trim();
-      if (!target) {
-        setError('IP and Port are required');
-        return;
-      }
-      onJoinSubmit('LAN', target);
-    } else {
-      if (!trimmed.toLowerCase().startsWith('join ')) {
-        setError('Invalid command. Use: join <code>');
-        return;
-      }
-      const target = trimmed.substring(5).trim();
-      if (!target || target.length !== 6) {
-        setError('Room code must be 6 characters');
-        return;
-      }
-      onJoinSubmit('INTERNET', target.toUpperCase());
+    const command = method === 'LAN' ? 'connect ' : 'join ';
+
+    if (!trimmed.toLowerCase().startsWith(command)) {
+      setError(
+        `Invalid command. Use: ${command}<${method === 'LAN' ? 'ip>:<port' : 'code'}>`,
+      );
+      return;
     }
+
+    const target = trimmed.substring(command.length).trim();
+    if (!target) {
+      setError(method === 'LAN' ? 'Host IP and port are required.' : 'Room code is required.');
+      return;
+    }
+    if (method === 'INTERNET' && target.length !== 6) {
+      setError('Room code must be exactly 6 characters.');
+      return;
+    }
+
+    onJoinSubmit(method, method === 'INTERNET' ? target.toUpperCase() : target);
   };
 
-  const getTitle = () => {
-    if (step === 2 && method === 'LAN') {
-      return (
-        <Box borderStyle="round" borderColor="yellow" justifyContent="center">
-          <Text color="red">JOIN </Text>
-          <Text color="yellowBright">VIA </Text>
-          <Text color="greenBright">IPv4 </Text>
-          <Text color="magentaBright">(LAN)</Text>
-        </Box>
-      );
-    }
-    if (step === 2 && method === 'INTERNET') {
-      return (
-        <Box borderStyle="round" borderColor="yellow" justifyContent="center">
-          <Text color="red">JOIN </Text>
-          <Text color="yellowBright">VIA </Text>
-          <Text color="cyanBright">ROOM CODE </Text>
-          <Text color="magentaBright">(Internet)</Text>
-        </Box>
-      );
-    }
+  const sizeStatus = getTerminalSizeStatus(columns, rows);
+  if (sizeStatus !== 'OPTIMAL') {
     return (
-      <Box borderStyle="round" borderColor="yellow" justifyContent="center">
-        <Text color="red">JOIN </Text>
-        <Text color="cyanBright">ROOM</Text>
-      </Box>
+      <TerminalOutOfRangeScreen
+        currentColumns={columns}
+        currentRows={rows}
+        status={sizeStatus}
+        onExit={onBack}
+      />
     );
-  };
+  }
 
-  const renderStep1 = () => (
-    <Box flexDirection="column">
-      <Text color="magentaBright">เลือกวิธีเข้าร่วมห้อง (Choose method):</Text>
-      <Box flexDirection="column" paddingX={6} marginTop={4}>
-        <Box marginBottom={1}>
-          <Box width={26}>
-            <Text color={selectedNetwork === 1 ? 'greenBright' : 'gray'}>
-              {selectedNetwork === 1 ? '> ' : '  '}[1] Join via IPv4
-            </Text>
-          </Box>
-          <Text color="gray">(เล่นใน LAN)</Text>
-        </Box>
-        <Box>
-          <Box width={26}>
-            <Text color={selectedNetwork === 2 ? 'cyanBright' : 'gray'}>
-              {selectedNetwork === 2 ? '> ' : '  '}[2] Join via Room Code
-            </Text>
-          </Box>
-          <Text color="gray">(เล่นผ่าน Net)</Text>
-        </Box>
-      </Box>
-      <Box marginTop={2} paddingX={4}>
-        <Text color="gray">Use Up/Down Arrow keys to select, then press Enter</Text>
-      </Box>
-    </Box>
-  );
-
-  const renderStep2 = () => (
-    <Box flexDirection="column">
-      <Text color="blueBright">
-        {method === 'LAN'
-          ? 'กรอก IP Address และ Port ของห้อง'
-          : 'กรอกรหัสห้อง 6 หลักที่ได้รับจากเพื่อน'}
-      </Text>
-
-      <Box flexDirection="column" alignItems="center" marginTop={4}>
-        {method === 'LAN' ? (
-          <>
-            <Text color="greenBright">Command: connect &lt;ip&gt;:&lt;port&gt;</Text>
-            <Text color="gray">ตัวอย่าง: connect 192.168.1.10:5000</Text>
-          </>
-        ) : (
-          <>
-            <Text color="greenBright">Command: join &lt;code&gt;</Text>
-            <Text color="gray">ตัวอย่าง: join A1B2C9</Text>
-          </>
-        )}
-        {error || serverError ? (
-          <Box marginTop={2}>
-            <Text color="red">{error || serverError}</Text>
-          </Box>
-        ) : null}
-      </Box>
-    </Box>
-  );
+  const containerWidth = getGameContainerWidth(columns);
 
   return (
-    <Box flexDirection="column" width={60}>
-      {getTitle()}
-
-      <Box
-        borderStyle="round"
-        borderColor="yellow"
-        flexDirection="column"
-        paddingY={1}
-        paddingX={2}
-        minHeight={15}
-      >
-        <Box flexGrow={1} flexDirection="column">
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
+    <Box
+      flexDirection="column"
+      width="100%"
+      height={rows}
+      alignItems="center"
+      justifyContent="center"
+    >
+      <Box width={containerWidth} flexDirection="column">
+        <ShimmeringHeader containerWidth={containerWidth} pageTitle="JOIN ROOM" />
+        <Box
+          width="100%"
+          borderStyle="round"
+          borderColor={UI_COLORS.goldBorder}
+          flexDirection="column"
+          justifyContent="center"
+          paddingX={3}
+          paddingY={1}
+        >
+          {step === 1 ? (
+            <JoinMethodStep selectedNetwork={selectedNetwork} />
+          ) : (
+            <JoinInputStep
+              method={method}
+              input={input}
+              error={error}
+              serverError={serverError}
+              onChange={(value) => {
+                setInput(value);
+                setError('');
+              }}
+              onSubmit={handleSubmit}
+            />
+          )}
         </Box>
-        <Box alignSelf="center" marginTop={1}>
-          <Text color="gray">Press 0 or Esc to go back</Text>
-        </Box>
+        <JoinRoomHelpFooter isInputStep={step === 2} />
       </Box>
-
-      {step === 2 ? (
-        <Box borderStyle="round" borderColor="yellow" paddingX={1}>
-          <Text>&gt; </Text>
-          <TextInput
-            value={input}
-            onChange={(val) => {
-              setInput(val);
-              setError('');
-            }}
-            onSubmit={handleSubmit}
-          />
-        </Box>
-      ) : (
-        <Box borderStyle="round" borderColor="yellow" paddingX={1}>
-          <Text>&gt; _</Text>
-        </Box>
-      )}
     </Box>
   );
 }

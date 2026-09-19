@@ -6,6 +6,7 @@ import {
   RoomFullError,
   NotHostError,
   GameError,
+  DuplicatePlayerNameError,
 } from '../../../src/server/domain/errors/GameError';
 
 describe('1. ระบบการจัดการห้องเล่น (Room Management)', () => {
@@ -149,6 +150,17 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
   });
 
   describe('Unhappy Paths', () => {
+    test('[Room.join] 1.10 ชื่อซ้ำในห้องเดียวกันแบบไม่สนตัวพิมพ์เล็ก/ใหญ่ → โยน DuplicatePlayerNameError', () => {
+      const room = new Room('room_duplicate_name');
+      room.join(new Player('id_first', 'Thanathon'));
+
+      expect(() => {
+        room.join(new Player('id_second', 'thanathon'));
+      }).toThrow(DuplicatePlayerNameError);
+
+      expect(room.getPlayerCount()).toBe(1);
+    });
+
     test('[Room.join] 1.11 เข้าห้องที่ผู้เล่นเต็ม 4 คนแล้ว → โยน RoomFullError', () => {
       const room = new Room('room_full');
       room.join(new Player('id_first', 'First'));

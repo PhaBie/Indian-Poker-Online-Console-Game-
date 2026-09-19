@@ -5,7 +5,9 @@ import type { RoomBrowserScreenProps } from './types';
 export function useRoomBrowserController({
   rooms,
   onJoinRoom,
-  onCreateRoom,
+  isEnteringCode = false,
+  onChangeName,
+  onEnterRoomCode = () => undefined,
   onRefresh,
   onBack,
 }: RoomBrowserScreenProps) {
@@ -22,6 +24,8 @@ export function useRoomBrowserController({
   }, [rooms.length, selectedIndex]);
 
   useInput((input, key) => {
+    if (isEnteringCode) return;
+
     if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
@@ -30,10 +34,10 @@ export function useRoomBrowserController({
       if (rooms.length > 0 && rooms[selectedIndex]) {
         onJoinRoom(rooms[selectedIndex].roomId);
       }
+    } else if (input.toLowerCase() === 'n') {
+      onChangeName();
     } else if (input.toLowerCase() === 'c') {
-      onCreateRoom();
-    } else if (input.toLowerCase() === 'r') {
-      onRefresh();
+      onEnterRoomCode();
     } else if (key.escape) {
       onBack();
     }

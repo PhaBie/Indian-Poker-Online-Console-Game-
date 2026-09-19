@@ -7,6 +7,15 @@ export function UsernameCardHeader({
   intent = 'create',
 }: UsernameCardHeaderProps = {}) {
   const isLan = networkMode === 'LAN';
+  if (intent === null) {
+    return (
+      <Box flexDirection="column" alignItems="center" marginBottom={1}>
+        <Text bold color={UI_COLORS.goldHighlight}>PLAYER PROFILE</Text>
+        <Text color={UI_COLORS.mutedText}>Set your player name</Text>
+      </Box>
+    );
+  }
+
   const badgeColor = isLan ? UI_COLORS.activeGreen : UI_COLORS.activeBlue;
   const badgeLabel = isLan ? '[LAN MODE]' : '[ONLINE MODE]';
   const actionText =

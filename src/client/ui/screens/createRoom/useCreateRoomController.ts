@@ -6,6 +6,7 @@ import type { NetworkConnectionMode } from './types';
 interface UseCreateRoomControllerParams {
   readonly socketClient: SocketClient;
   readonly playerName?: string;
+  readonly initialMode?: NetworkConnectionMode;
   readonly onBack: () => void;
   readonly onModeSelect?: (mode: NetworkConnectionMode) => void;
 }
@@ -13,10 +14,11 @@ interface UseCreateRoomControllerParams {
 export function useCreateRoomController({
   socketClient,
   playerName = 'Host',
+  initialMode = 'LAN',
   onBack,
   onModeSelect,
 }: UseCreateRoomControllerParams) {
-  const [selectedMode, setSelectedMode] = useState<NetworkConnectionMode>('LAN');
+  const [selectedMode, setSelectedMode] = useState<NetworkConnectionMode>(initialMode);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const submitRoomCreation = useCallback(

@@ -15,6 +15,8 @@ export interface EnterUsernameScreenProps {
   readonly onBack?: () => void;
   readonly networkMode?: 'LAN' | 'INTERNET';
   readonly intent?: 'create' | 'join' | null;
+  readonly isSessionSetup?: boolean;
+  readonly initialValue?: string;
   readonly serverError?: string | null;
 }
 
@@ -23,10 +25,12 @@ export function EnterUsernameScreen({
   onBack,
   networkMode,
   intent,
+  isSessionSetup = false,
+  initialValue = '',
   serverError,
 }: EnterUsernameScreenProps) {
   const { columns, rows } = useTerminalSize();
-  const inputState = useUsernameInput({ onSubmit, onBack });
+  const inputState = useUsernameInput({ onSubmit, onBack, initialValue });
   const displayedErrorMessage = inputState.errorMessage ?? serverError ?? null;
 
   const sizeStatus = getTerminalSizeStatus(columns, rows);
@@ -55,7 +59,7 @@ export function EnterUsernameScreen({
       <Box width={containerWidth} flexDirection="column">
         <ShimmeringHeader
           containerWidth={containerWidth}
-          pageTitle="PLAYER REGISTRATION"
+          pageTitle={isSessionSetup ? 'PLAYER SETUP' : 'PLAYER REGISTRATION'}
         />
         <UsernameCard
           paddingX={paddingX}

@@ -1,7 +1,7 @@
 import { Box } from 'ink';
+import { useEffect, useState } from 'react';
 import { ShimmeringHeader } from '../components/ShimmeringHeader';
 import { useTerminalSize } from '../hooks/useTerminalSize';
-import { getGameContainerWidth } from './MainMenuScreen';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
@@ -12,10 +12,37 @@ import { useRoomBrowserController } from './roomBrowser/useRoomBrowserController
 import { RoomBrowserHeader } from './roomBrowser/RoomBrowserHeader';
 import { RoomBrowserTable } from './roomBrowser/RoomBrowserTable';
 import { RoomBrowserHelpFooter } from './roomBrowser/RoomBrowserHelpFooter';
+import { RoomCodePrompt } from './roomBrowser/RoomCodePrompt';
+
+function getLobbyContainerWidth(terminalColumns: number): number {
+  if (terminalColumns <= 90) return 78;
+  if (terminalColumns <= 140) return Math.round(78 + (terminalColumns - 90) * 0.3);
+  return Math.min(98, Math.round(93 + (terminalColumns - 140) * 0.1));
+}
+
+function getMaxVisibleRoomRows(terminalRows: number): number {
+  return Math.max(3, Math.min(6, Math.floor((terminalRows - 15) / 3)));
+}
 
 export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
+  const [isEnteringCode, setIsEnteringCode] = useState(props.initialEnteringCode ?? false);
+  const [roomCode, setRoomCode] = useState('');
   const { columns, rows } = useTerminalSize();
-  const { selectedIndex } = useRoomBrowserController(props);
+
+  useEffect(() => {
+    if (props.initialEnteringCode) {
+      setIsEnteringCode(true);
+      props.onRoomCodeOpened?.();
+    }
+  }, [props.initialEnteringCode, props.onRoomCodeOpened]);
+  const { selectedIndex } = useRoomBrowserController({
+    ...props,
+    isEnteringCode,
+    onEnterRoomCode: () => {
+      setRoomCode('');
+      setIsEnteringCode(true);
+    },
+  });
 
   const sizeStatus = getTerminalSizeStatus(columns, rows);
   if (sizeStatus !== 'OPTIMAL') {
@@ -29,8 +56,7 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
     );
   }
 
-  const containerWidth = getGameContainerWidth(columns);
-  const paddingX = containerWidth >= 88 ? 4 : 2;
+  const containerWidth = getLobbyContainerWidth(columns);
 
   return (
     <Box
@@ -41,13 +67,14 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
       justifyContent="center"
     >
       <Box width={containerWidth} flexDirection="column">
-        <ShimmeringHeader containerWidth={containerWidth} pageTitle="TABLE LOUNGE" />
+        <ShimmeringHeader containerWidth={containerWidth} pageTitle="ROOM LOBBY" />
         <Box
           flexDirection="column"
           borderStyle="round"
           borderColor={UI_COLORS.goldBorder}
-          paddingX={paddingX}
-          paddingY={1}
+          paddingX={3}
+          paddingY={2}
+          minHeight={18}
           width="100%"
         >
           <RoomBrowserHeader
@@ -55,9 +82,26 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
             playerName={props.playerName}
             lastError={props.lastError}
           />
-          <RoomBrowserTable rooms={props.rooms} selectedIndex={selectedIndex} />
+          {isEnteringCode ? (
+            <RoomCodePrompt
+              value={roomCode}
+              onChange={setRoomCode}
+              onSubmit={(value) => {
+                const normalizedRoomId = value.trim().replace(/^#/, '');
+                if (normalizedRoomId) props.onJoinRoomByCode(normalizedRoomId);
+              }}
+              onBack={() => setIsEnteringCode(false)}
+              onChangeName={() => props.onChangeName('code')}
+            />
+          ) : (
+            <RoomBrowserTable
+              rooms={props.rooms}
+              selectedIndex={selectedIndex}
+              maxVisibleRows={getMaxVisibleRoomRows(rows)}
+            />
+          )}
         </Box>
-        <RoomBrowserHelpFooter />
+        <RoomBrowserHelpFooter isEnteringCode={isEnteringCode} />
       </Box>
     </Box>
   );

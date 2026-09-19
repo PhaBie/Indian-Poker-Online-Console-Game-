@@ -90,7 +90,7 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
   const { screen } = navigation;
 
   if (screen === 'intro') {
-    return <GameIntroSplash onFinish={() => navigation.setScreen('mainMenu')} />;
+    return <GameIntroSplash onFinish={navigation.handleIntroFinish} />;
   }
   if (screen === 'mainMenu') {
     return (
@@ -119,7 +119,10 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
         playerName={navigation.playerName}
         serverUrl={navigation.currentServerUrl || serverUrl}
         onJoinRoom={navigation.handleJoinTableFromLounge}
-        onCreateRoom={navigation.handleCreateTableFromLounge}
+        onJoinRoomByCode={navigation.handleJoinTableByCode}
+        onChangeName={navigation.handleChangeName}
+        initialEnteringCode={navigation.resumeRoomCode}
+        onRoomCodeOpened={navigation.clearResumeRoomCode}
         onRefresh={navigation.handleRefreshRooms}
         onBack={() => navigation.setScreen('mainMenu')}
         lastError={state.lastError}
@@ -136,10 +139,16 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
   if (screen === 'enterName') {
     return (
       <EnterUsernameScreen
-        onSubmit={navigation.handleUsernameSubmit}
+        onSubmit={
+          navigation.intent === null
+            ? navigation.handleInitialUsernameSubmit
+            : navigation.handleUsernameSubmit
+        }
         onBack={navigation.handleBackFromUsername}
         networkMode={navigation.networkMode}
         intent={navigation.intent}
+        isSessionSetup={navigation.intent === null}
+        initialValue={navigation.playerName}
         serverError={state.lastError}
       />
     );
@@ -152,6 +161,7 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
         roomId={state.currentRoomId}
         serverUrl={serverUrl}
         playerName={navigation.playerName}
+        initialMode={navigation.networkMode}
         onModeSelect={navigation.handleCreateRoomModeSelect}
       />
     );
@@ -183,6 +193,7 @@ export function App({ clientState, serverUrl, socketClient }: AppProps) {
     socketClient,
     initialServerUrl: serverUrl,
     onClearState: () => clientState.clearState(),
+    onClearError: () => clientState.clearError(),
   });
 
   useEffect(() => {

@@ -77,6 +77,12 @@ export function createTableLoungeActions(socketClient: SocketClient, playerName:
         payload: { playerName: playerName || 'Player', roomId },
       });
     },
+    handleJoinTableByCode: (roomId: string) => {
+      socketClient.send({
+        type: 'JOIN_ROOM',
+        payload: { playerName: playerName || 'Player', roomId },
+      });
+    },
     handleCreateTableFromLounge: () => {
       socketClient.send({
         type: 'CREATE_ROOM',
@@ -95,6 +101,7 @@ export function createGameFlowActions(
   socketClient: SocketClient,
   onClearState: () => void,
   setScreen: (screen: ActiveScreen) => void,
+  intent: 'create' | 'join' | null,
 ) {
   return {
     handleStartGame: () => socketClient.send({ type: 'START_GAME' }),
@@ -102,9 +109,15 @@ export function createGameFlowActions(
     handleLeaveRoom: () => {
       socketClient.send({ type: 'LEAVE_ROOM' });
       onClearState();
-      setScreen('tableLounge');
+      setScreen(resolveLeaveRoomScreen(intent));
     },
   };
+}
+
+export function resolveLeaveRoomScreen(
+  intent: 'create' | 'join' | null,
+): ActiveScreen {
+  return intent === 'create' ? 'mainMenu' : 'tableLounge';
 }
 
 export function createMenuNavigationActions(

@@ -16,12 +16,14 @@ export function CreateRoomScreen({
   socketClient,
   onBack,
   playerName = 'Host',
+  initialMode = 'LAN',
   onModeSelect,
 }: CreateRoomScreenProps) {
   const { columns, rows } = useTerminalSize();
   const { selectedMode, isSubmitting } = useCreateRoomController({
     socketClient,
     playerName,
+    initialMode,
     onBack,
     onModeSelect,
   });

@@ -8,6 +8,7 @@ export interface CreateRoomScreenProps {
   readonly roomId: string | null;
   readonly serverUrl: string;
   readonly playerName?: string;
+  readonly initialMode?: NetworkConnectionMode;
   readonly onModeSelect?: (mode: NetworkConnectionMode) => void;
 }
 

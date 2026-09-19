@@ -57,6 +57,7 @@ export function validateUsernameLength(username: string): ValidationResult {
 export interface UseUsernameInputParams {
   readonly onSubmit: (username: string) => void;
   readonly onBack?: () => void;
+  readonly initialValue?: string;
 }
 
 function resolveSubmitError(submitError: unknown): string {
@@ -66,8 +67,8 @@ function resolveSubmitError(submitError: unknown): string {
   return 'Failed to connect to server';
 }
 
-export function useUsernameInput({ onSubmit, onBack }: UseUsernameInputParams) {
-  const [rawInput, setRawInput] = useState<string>('');
+export function useUsernameInput({ onSubmit, onBack, initialValue = '' }: UseUsernameInputParams) {
+  const [rawInput, setRawInput] = useState<string>(initialValue);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const sanitizedName = sanitizeUsernameInput(rawInput);
