@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { SocketClient } from '../../network/socketClient';
 import type { ClientStateSnapshot } from '../../state/ClientState';
+import { resolveBackScreenFromIntent, executeUserSubmission } from './navigationActions';
 
 export type ActiveScreen =
   | 'intro'
@@ -41,33 +42,6 @@ function useGameStatePhaseSync(
   }, [latestGameState, screen, setScreen]);
 }
 
-function sendJoinRoomMessage(
-  socketClient: SocketClient,
-  method: 'LAN' | 'INTERNET',
-  target: string,
-  playerName: string,
-): void {
-  if (method === 'LAN') {
-    const isFullWsUrl = target.startsWith('ws://') || target.startsWith('wss://');
-    const wsUrl = isFullWsUrl ? target : `ws://${target}`;
-
-    socketClient.disconnect();
-    socketClient.connect(wsUrl);
-
-    setTimeout(() => {
-      socketClient.send({
-        type: 'JOIN_ROOM',
-        payload: { playerName, roomId: '' },
-      });
-    }, 500);
-  } else {
-    socketClient.send({
-      type: 'JOIN_ROOM',
-      payload: { playerName, roomId: target },
-    });
-  }
-}
-
 export function useAppNavigation({
   state,
   socketClient,
@@ -77,24 +51,9 @@ export function useAppNavigation({
   const [playerName, setPlayerName] = useState<string>('');
   const [intent, setIntent] = useState<'create' | 'join' | null>(null);
   const [networkMode, setNetworkMode] = useState<'LAN' | 'INTERNET'>('LAN');
+  const [pendingTarget, setPendingTarget] = useState<string>('');
 
   useGameStatePhaseSync(state.latestGameState, screen, setScreen);
-
-  const handleUsernameSubmit = (name: string) => {
-    setPlayerName(name);
-    setScreen(intent === 'create' ? 'createRoom' : 'joinRoom');
-  };
-
-  const handleJoinSubmit = (method: 'LAN' | 'INTERNET', target: string) => {
-    setNetworkMode(method);
-    sendJoinRoomMessage(socketClient, method, target, playerName);
-  };
-
-  const handleLeaveRoom = () => {
-    socketClient.send({ type: 'LEAVE_ROOM' });
-    onClearState();
-    setScreen('mainMenu');
-  };
 
   return {
     screen,
@@ -102,18 +61,34 @@ export function useAppNavigation({
     playerName,
     networkMode,
     setNetworkMode,
-    handleUsernameSubmit,
-    handleJoinSubmit,
+    handleUsernameSubmit: (name: string) => {
+      setPlayerName(name);
+      executeUserSubmission(intent, name, networkMode, pendingTarget, socketClient);
+    },
+    handleJoinSubmit: (method: 'LAN' | 'INTERNET', target: string) => {
+      setNetworkMode(method);
+      setPendingTarget(target);
+      setScreen('enterName');
+    },
+    handleBackFromUsername: () => setScreen(resolveBackScreenFromIntent(intent)),
+    handleCreateRoomModeSelect: (mode: 'LAN' | 'INTERNET') => {
+      setNetworkMode(mode);
+      setScreen('enterName');
+    },
     handleStartGame: () => socketClient.send({ type: 'START_GAME' }),
     handleToggleReady: () => socketClient.send({ type: 'TOGGLE_READY' }),
-    handleLeaveRoom,
+    handleLeaveRoom: () => {
+      socketClient.send({ type: 'LEAVE_ROOM' });
+      onClearState();
+      setScreen('mainMenu');
+    },
     handleStartCreateRoomFlow: () => {
       setIntent('create');
-      setScreen('enterName');
+      setScreen('createRoom');
     },
     handleStartJoinRoomFlow: () => {
       setIntent('join');
-      setScreen('enterName');
+      setScreen('joinRoom');
     },
   };
 }

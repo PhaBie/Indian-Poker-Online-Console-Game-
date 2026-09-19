@@ -103,7 +103,7 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
     return (
       <EnterUsernameScreen
         onSubmit={navigation.handleUsernameSubmit}
-        onBack={() => navigation.setScreen('mainMenu')}
+        onBack={navigation.handleBackFromUsername}
       />
     );
   }
@@ -115,7 +115,7 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
         roomId={state.currentRoomId}
         serverUrl={serverUrl}
         playerName={navigation.playerName}
-        onModeSelect={(mode) => navigation.setNetworkMode(mode)}
+        onModeSelect={navigation.handleCreateRoomModeSelect}
       />
     );
   }

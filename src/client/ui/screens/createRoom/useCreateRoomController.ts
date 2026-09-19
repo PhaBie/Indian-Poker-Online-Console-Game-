@@ -22,8 +22,11 @@ export function useCreateRoomController({
   const submitRoomCreation = useCallback(
     (mode: NetworkConnectionMode) => {
       if (isSubmitting) return;
+      if (onModeSelect) {
+        onModeSelect(mode);
+        return;
+      }
       setIsSubmitting(true);
-      onModeSelect?.(mode);
       socketClient.send({
         type: 'CREATE_ROOM',
         payload: { playerName, bootAmount: 50, maxPlayers: 4 },
