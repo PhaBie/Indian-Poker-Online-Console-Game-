@@ -1,5 +1,5 @@
 import { Player } from './Player';
-import type { RoomPhase, PublicPlayerDTO, Card } from '../../../shared/types';
+import type { RoomPhase, PublicPlayerDTO, Card, HandRank } from '../../../shared/types';
 import { roomSaveSchema, type GameStateSerializedData } from '../schemas/roomSchema';
 import { GameState } from './GameState';
 import { RoomFullError, NotHostError, GameError } from '../errors/GameError';
@@ -11,15 +11,16 @@ export class Room {
   public players: Map<string, Player>;
   public bootAmount: number;
   public gameState: GameState | null;
-  private readonly MAX_PLAYERS = 4;
+  public readonly MAX_PLAYERS: number;
 
-  constructor(roomId: string, bootAmount: number = 50) {
+  constructor(roomId: string, bootAmount: number = 50, maxPlayers: number = 4) {
     this.roomId = roomId;
     this.phase = 'LOBBY';
     this.hostId = null;
     this.players = new Map();
     this.bootAmount = bootAmount;
     this.gameState = null;
+    this.MAX_PLAYERS = maxPlayers;
   }
 
   /**
@@ -123,14 +124,25 @@ export class Room {
    * 1. สั่งให้ gameState ทำการจบรอบ (เคลียร์เงินกองกลาง Pot จ่ายให้ผู้ชนะ) หากมี gameState กำลังทำงานอยู่
    * 2. เปลี่ยนสถานะของห้อง (phase) จาก PLAYING เป็น 'ENDED' เพื่อรอผลสรุปหรือเตรียมรีเซ็ตกลับ LOBBY
    */
-  public endGame(): void {
+  public endGame(
+    forceShowdown: boolean = false,
+  ): {
+    winnerIds: string[];
+    winningHand: HandRank;
+    payouts: Record<string, number>;
+    exposedCards: Record<string, Card[]>;
+  } | null {
+    let result = null;
     // 1. สั่งให้ GameState ทำการจบรอบเกมและสรุปผล (ถ้ามีโต๊ะเกมอยู่)
     if (this.gameState) {
-      this.gameState.endGame();
+      result = this.gameState.endGame(forceShowdown);
     }
 
-    // 2. ปรับสถานะห้องเป็น ENDED (จบเกมแล้ว)
-    this.phase = 'ENDED';
+    // 2. ปรับสถานะห้องเป็น ENDED (จบเกมแล้ว) เฉพาะเมื่อมีการจบรอบจริงๆ
+    if (result) {
+      this.phase = 'ENDED';
+    }
+    return result;
   }
 
   /**

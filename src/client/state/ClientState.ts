@@ -4,6 +4,7 @@ export interface ClientStateSnapshot {
   myPlayerId: string | null;
   currentRoomId: string | null;
   latestGameState: Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>['payload'] | null;
+  latestGameResult: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   lastError: string | null;
   myCards: Card[];
 }
@@ -13,6 +14,8 @@ export class ClientState {
   public currentRoomId: string | null;
   public latestGameState:
     Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>['payload'] | null;
+  public latestGameResult:
+    Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   public lastError: string | null;
   private listeners: Set<() => void>;
   private cachedSnapshot: ClientStateSnapshot;
@@ -21,6 +24,7 @@ export class ClientState {
     this.myPlayerId = null;
     this.currentRoomId = null;
     this.latestGameState = null;
+    this.latestGameResult = null;
     this.lastError = null;
     this.listeners = new Set();
     this.cachedSnapshot = this.createSnapshot();
@@ -31,6 +35,7 @@ export class ClientState {
       myPlayerId: this.myPlayerId,
       currentRoomId: this.currentRoomId,
       latestGameState: this.latestGameState,
+      latestGameResult: this.latestGameResult,
       lastError: this.lastError,
       myCards: this.getMyCards(),
     };
@@ -55,6 +60,10 @@ export class ClientState {
         this.currentRoomId = event.payload.roomId;
         break;
       }
+      case 'GAME_RESULT': {
+        this.latestGameResult = event.payload;
+        break;
+      }
       case 'GAME_SAVED':
       case 'GAME_LOADED': {
         this.currentRoomId = event.payload.roomId;
@@ -75,6 +84,7 @@ export class ClientState {
     this.myPlayerId = null;
     this.currentRoomId = null;
     this.latestGameState = null;
+    this.latestGameResult = null;
     this.lastError = null;
     this.notifyListeners();
   }

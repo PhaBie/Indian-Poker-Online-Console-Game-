@@ -42,7 +42,7 @@ export const playerSaveSchema = z.object({
   bet: z.number().int().nonnegative().safe(),
 
   // สถานะต้องตรงกับสถานะผู้เล่นที่ระบบกำหนด
-  status: z.enum(['WAITING', 'ACTIVE', 'FOLDED', 'DISCONNECTED']),
+  status: z.enum(['WAITING', 'READY', 'ACTIVE', 'FOLDED', 'DISCONNECTED']),
 
   // ตรวจรูปแบบไพ่ทุกใบ แต่ไม่บังคับจำนวน 3 ใบหรือห้ามไพ่ซ้ำในส่วนนี้
   privateCards: z.array(savedCardSchema),

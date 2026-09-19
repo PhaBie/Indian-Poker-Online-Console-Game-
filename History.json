@@ -1,0 +1,120 @@
+[
+  {
+    "timestamp": "2026-09-19T13:29:02.594Z",
+    "roomId": "A7F85F",
+    "pot": 100,
+    "winners": ["b4f1f348-8d19-4a30-b6f5-4ae4252fa31c"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "PhaBieHost",
+        "chips": 800,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 14
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 8
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "playerName": "BOT1",
+        "chips": 1300,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 7
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 11
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "BOT2",
+        "chips": 900,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-19T13:31:06.047Z",
+    "roomId": "AF8950",
+    "pot": 100,
+    "winners": ["3da75e6f-0ca4-44a8-a05d-77331b388e6a"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "fafasf",
+        "chips": 950,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 9
+          },
+          {
+            "suit": "SPADES",
+            "rank": 13
+          },
+          {
+            "suit": "SPADES",
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "playerName": "fafaf",
+        "chips": 1050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 9
+          }
+        ]
+      }
+    ]
+  }
+]

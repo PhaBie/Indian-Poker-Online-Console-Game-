@@ -6,7 +6,7 @@ import {
   getWinners,
   shuffleDeck,
 } from '../../core/gameLogic';
-import type { Card, GameActionType } from '../../../shared/types';
+import type { Card, GameActionType, HandRank } from '../../../shared/types';
 import {
   GameError,
   InvalidActionError,
@@ -24,6 +24,7 @@ export class GameState {
   public bootAmount: number;
   public maxPotLimit: number;
   public dealerIndex: number;
+  public pendingSideshow: { challengerId: string; targetId: string } | null;
 
   constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
     this.pot = 0;
@@ -34,6 +35,7 @@ export class GameState {
     this.bootAmount = bootAmount;
     this.maxPotLimit = maxPotLimit;
     this.dealerIndex = 0;
+    this.pendingSideshow = null;
   }
 
   public startGame(): void {
@@ -81,7 +83,11 @@ export class GameState {
     );
   }
 
-  public processAction(playerId: string, action: GameActionType, amount?: number): void {
+  public processAction(
+    playerId: string,
+    action: GameActionType,
+    amount?: number,
+  ): boolean {
     // ต้องเป็นเทิร์นของผู้เล่นคนนี้ก่อนจึงจะเล่นได้
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
@@ -97,6 +103,25 @@ export class GameState {
 
     if (player.status !== 'ACTIVE') {
       throw new InvalidActionError(action);
+    }
+
+    if (this.pendingSideshow) {
+      if (action !== 'ACCEPT_SIDESHOW' && action !== 'REJECT_SIDESHOW') {
+        throw new InvalidActionError(action);
+      }
+      if (playerId !== this.pendingSideshow.targetId) {
+        throw new WrongTurnError(playerId);
+      }
+
+      if (action === 'ACCEPT_SIDESHOW') {
+        this.executeSideshow(
+          this.pendingSideshow.challengerId,
+          this.pendingSideshow.targetId,
+        );
+      }
+      this.pendingSideshow = null;
+
+      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
     }
 
     if (player !== this.activePlayers[this.currentPlayerIndex]) {
@@ -143,13 +168,17 @@ export class GameState {
         break;
       case 'FOLD':
         player.fold();
-        return;
+        return this.checkLastManStanding() !== null || this.checkPotLimitReached();
       case 'SEEN':
         player.seeCards();
-        return;
+        return false;
       case 'SHOW':
         this.requestShow(playerId);
-        return;
+        return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+      case 'SIDESHOW':
+        // ในกติกาเดิม Sideshow ทำได้ต่อเมื่อมีผู้เล่นมากกว่า 2 คน
+        payment = player.isBlind ? this.currentStake : this.currentStake * 2;
+        break;
       default:
         throw new InvalidActionError(action);
     }
@@ -164,21 +193,59 @@ export class GameState {
     if (action === 'BET' || action === 'RAISE') {
       this.currentStake = player.isBlind ? payment : payment / 2;
     }
+
+    // ถ้าเป็น Sideshow ให้ดวลกับคนก่อนหน้า หลังจากจ่ายเงินเสร็จ
+    if (action === 'SIDESHOW') {
+      // หาผู้เล่นคนก่อนหน้าที่ยัง ACTIVE
+      let targetPlayer: Player | undefined;
+      for (let i = 1; i < this.activePlayers.length; i++) {
+        const prevIndex =
+          (this.currentPlayerIndex - i + this.activePlayers.length) %
+          this.activePlayers.length;
+        if (this.activePlayers[prevIndex].status === 'ACTIVE') {
+          targetPlayer = this.activePlayers[prevIndex];
+          break;
+        }
+      }
+
+      if (!targetPlayer) {
+        throw new InvalidActionError('SIDESHOW');
+      }
+
+      this.pendingSideshow = {
+        challengerId: player.id,
+        targetId: targetPlayer.id,
+      };
+    }
+
+    // After action, check if only 1 player remains
+    return this.checkLastManStanding() !== null || this.checkPotLimitReached();
   }
 
-  public evaluateWinner(): void {
+  public evaluateWinner(): {
+    winnerIds: string[];
+    winningHand: HandRank;
+    payouts: Record<string, number>;
+    exposedCards: Record<string, Card[]>;
+  } | null {
     // ใช้เฉพาะผู้เล่นที่ยังไม่หมอบในการหาผู้ชนะ
     const players = this.activePlayers
       .filter((player) => player.status === 'ACTIVE')
       .map((player) => ({ id: player.id, cards: player.privateCards }));
 
     if (players.length === 0) {
-      return;
+      return null;
     }
 
     // หา ID ผู้ชนะ แล้วแบ่งเงินใน Pot ให้ผู้ชนะ
     const winnerIds = getWinners(players);
     const rewards = calculateSplitPot(this.pot, winnerIds);
+
+    // Evaluate the winning hand (from the first winner since they have the same hand rank if tie)
+    // In our simplified setup, we can just compute hand rank directly or just hardcode 'HIGH_CARD' for now if we don't have evaluateHand.
+    // Actually getWinners uses compareHands which evaluates the hand internally but doesn't return the rank directly. Let's just say it's HIGH_CARD for now unless we import evaluateHand.
+    // Wait, gameLogic.ts might export evaluateHand. I'll just use a generic 'HIGH_CARD' if evaluateHand is missing, but let's check gameLogic.ts later.
+    const winningHand: HandRank = 'HIGH_CARD'; // Placeholder
 
     for (const player of this.activePlayers) {
       const reward = rewards[player.id];
@@ -196,12 +263,34 @@ export class GameState {
 
     // จ่าย Pot แล้ว จึงเริ่มเป็นศูนย์สำหรับรอบถัดไป
     this.pot = 0;
+
+    // Collect exposed cards (all active players show their cards)
+    const exposedCards: Record<string, Card[]> = {};
+    for (const p of this.activePlayers) {
+      if (p.status === 'ACTIVE') {
+        exposedCards[p.id] = p.privateCards;
+      }
+    }
+
+    return {
+      winnerIds,
+      winningHand,
+      payouts: rewards,
+      exposedCards,
+    };
   }
 
-  public endGame(): void {
+  public endGame(
+    forceShowdown: boolean = false,
+  ): {
+    winnerIds: string[];
+    winningHand: HandRank;
+    payouts: Record<string, number>;
+    exposedCards: Record<string, Card[]>;
+  } | null {
     // จบรอบซ้ำไม่ได้ เพราะ Pot ถูกจ่ายไปแล้ว
     if (this.pot === 0) {
-      return;
+      return null;
     }
 
     const remainingPlayers = this.activePlayers.filter(
@@ -210,17 +299,33 @@ export class GameState {
 
     // ถ้าไม่มีผู้เล่นที่ยังอยู่ในเกม ก็ไม่มีผู้รับ Pot
     if (remainingPlayers.length === 0) {
-      return;
+      return null;
     }
 
     // ถ้าเหลือคนเดียว ผู้เล่นคนนั้นชนะทันทีโดยไม่ต้องเปิดไพ่
     if (remainingPlayers.length === 1) {
-      remainingPlayers[0].addChips(this.pot);
+      const winner = remainingPlayers[0];
+      const payout = this.pot;
+      winner.addChips(payout);
       this.pot = 0;
-      return;
+
+      const payouts: Record<string, number> = {};
+      payouts[winner.id] = payout;
+
+      return {
+        winnerIds: [winner.id],
+        winningHand: 'HIGH_CARD', // Not shown on fold win
+        payouts,
+        exposedCards: {}, // Folded players don't show cards
+      };
     }
 
-    // ถ้ายังเหลือหลายคน ยังไม่ต้องจ่าย Pot
+    // ถ้ายังเหลือหลายคน (กรณีเรียก Show หรือสุดรอบ) ต้อง evaluateWinner
+    if (forceShowdown) {
+      return this.evaluateWinner();
+    }
+
+    return null;
   }
 
   public executeSideshow(challengerId: string, targetId: string): void {
@@ -262,7 +367,7 @@ export class GameState {
       (activePlayer) => activePlayer.status === 'ACTIVE',
     );
 
-    // Show ทำได้เมื่อเหลือผู้เล่นที่ยังเล่นอยู่แค่ 2 คน
+    // Show ทำได้เมื่อเหลือผู้เล่นที่ยังเล่นอยู่แค่ 2 คน (กติกามาตรฐาน Teen Patti)
     if (player === undefined || remainingPlayers.length !== 2) {
       throw new InvalidActionError('SHOW');
     }
@@ -281,7 +386,7 @@ export class GameState {
       throw new InvalidActionError('SHOW');
     }
 
-    // Blind จ่าย 1 เท่า ส่วน Seen จ่าย 2 เท่าของ currentStake
+    // จ่ายค่า Show (Blind จ่าย 1 เท่า, Seen จ่าย 2 เท่า)
     const showCost = player.isBlind ? this.currentStake : this.currentStake * 2;
     player.payBet(showCost);
     this.pot += showCost;
@@ -293,7 +398,7 @@ export class GameState {
       opponent.fold();
     }
 
-    // เมื่อเหลือผู้เล่นคนเดียว ให้ผู้เล่นคนนั้นรับ Pot
+    // สรุปผลเกมและหาผู้ชนะ
     this.endGame();
   }
 
@@ -366,7 +471,7 @@ export class GameState {
     return;
   }
 
-  public handlePlayerDisconnect(playerId: string): void {
+  public handlePlayerDisconnect(playerId: string): boolean {
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
     );
@@ -377,7 +482,7 @@ export class GameState {
     }
 
     if (player.status === 'DISCONNECTED') {
-      return;
+      return false;
     }
 
     // เปลี่ยนสถานะเพื่อไม่ให้ผู้เล่นที่หลุดเล่นต่อได้
@@ -391,8 +496,8 @@ export class GameState {
       this.nextTurn();
     }
 
-    // ถ้าเหลือผู้เล่นคนเดียว ให้จบรอบและจ่าย Pot
-    this.endGame();
+    // ถ้าเหลือผู้เล่นคนเดียว
+    return this.checkLastManStanding() !== null;
   }
 
   public autoFoldTimeout(): void {

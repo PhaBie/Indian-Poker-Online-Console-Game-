@@ -18,9 +18,17 @@ export type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 export type HandRank =
   'TRAIL' | 'PURE_SEQUENCE' | 'SEQUENCE' | 'COLOR' | 'PAIR' | 'HIGH_CARD';
 
-export type PlayerStatus = 'WAITING' | 'ACTIVE' | 'FOLDED' | 'DISCONNECTED';
+export type PlayerStatus = 'WAITING' | 'READY' | 'ACTIVE' | 'FOLDED' | 'DISCONNECTED';
 export type GameActionType =
-  'BET' | 'CALL' | 'RAISE' | 'FOLD' | 'SHOW' | 'SIDESHOW' | 'SEEN';
+  | 'BET'
+  | 'CALL'
+  | 'RAISE'
+  | 'FOLD'
+  | 'SHOW'
+  | 'SIDESHOW'
+  | 'SEEN'
+  | 'ACCEPT_SIDESHOW'
+  | 'REJECT_SIDESHOW';
 
 /** สถานะของห้อง เพื่อให้ Client สลับหน้าจอระหว่าง Lobby กับโต๊ะเกมได้ถูก */
 export type RoomPhase = 'LOBBY' | 'PLAYING' | 'ENDED';
@@ -77,13 +85,18 @@ export interface RoomSaveData {
  * โครงสร้างข้อมูลขาเข้า (Client -> Server)
  */
 export type ClientEvent =
-  | { type: 'CREATE_ROOM'; payload: { playerName: string; bootAmount: number } }
+  | {
+      type: 'CREATE_ROOM';
+      payload: { playerName: string; bootAmount: number; maxPlayers?: number };
+    }
   | {
       type: 'JOIN_ROOM';
       payload: { playerName: string; roomId: string; reconnectToken?: string };
     }
   | { type: 'LEAVE_ROOM' }
   | { type: 'START_GAME' }
+  | { type: 'TOGGLE_READY' }
+  | { type: 'RESET_LOBBY' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: { roomId: string } }
   | { type: 'SEND_CHAT'; payload: { message: string } }
@@ -103,6 +116,7 @@ export type ServerEvent =
   | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
   | { type: 'ROOM_CREATED'; payload: { roomId: string } }
   | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
+  | { type: 'GAME_LOG_MESSAGE'; payload: { message: string } }
   | { type: 'GAME_SAVED'; payload: { roomId: string } }
   | { type: 'GAME_LOADED'; payload: { roomId: string } }
   | {
@@ -115,6 +129,8 @@ export type ServerEvent =
         currentTurnPlayerId: string | null;
         turnEndTime: number | null;
         players: PublicPlayerDTO[];
+        /** ข้อมูลคำขอท้า Sideshow (ถ้ามี) */
+        pendingSideshow?: { challengerId: string; targetId: string } | null;
         /** ไพ่ส่วนตัว จะถูกส่งให้ตรงกับ session ของ Client เท่านั้น (ถ้าอยู่ใน Lobby จะเป็น array ว่าง) */
         myCards: Card[];
       };

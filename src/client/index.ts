@@ -101,7 +101,13 @@ export function startClient(customTarget?: string): {
 }
 
 if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
-  const { clientState, connectionTarget } = startClient();
+  const { clientState, connectionTarget, socketClient } = startClient();
   // วาดหน้าจอ UI ของ Ink (ใช้ React.createElement เนื่องจากไฟล์นี้เป็น .ts ไม่ใช่ .tsx)
-  render(React.createElement(App, { clientState, serverUrl: connectionTarget.url }));
+  render(
+    React.createElement(App, {
+      clientState,
+      serverUrl: connectionTarget.url,
+      socketClient,
+    }),
+  );
 }

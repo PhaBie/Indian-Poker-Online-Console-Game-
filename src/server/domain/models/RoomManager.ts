@@ -6,11 +6,11 @@ export class RoomManager {
   private checkRoomId: Map<string, Room> = new Map();
   //อันนี้เป็นฟังก์ชันสำหรับสร้างห้องใหม่จะตรวจสอบว่าห้องมันมี ID เดียวกันมีอยู่แล้วไหม ถ้ามีจะโยน error ถ้าไม่มีจะสร้างห้องใหม่
   // และเพิ่มผู้เล่นที่เป็นเจ้าของห้องเข้าไปในห้องนั้นและก็newroom.join(host) จะเป็นการเพิ่มผู้เล่นเจ้าของห้องเข้าไปในห้องนั้น
-  public createRoom(roomId: string, host: Player): Room {
+  public createRoom(roomId: string, host: Player, maxPlayers?: number): Room {
     if (this.checkRoomId.has(roomId)) {
       throw new GameError(`Room with ID ${roomId} already exists.`);
     }
-    const newRoom = new Room(roomId);
+    const newRoom = new Room(roomId, 50, maxPlayers);
     this.checkRoomId.set(roomId, newRoom);
     newRoom.join(host);
     return newRoom;

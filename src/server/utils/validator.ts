@@ -12,6 +12,8 @@ const gameActionTypeSchema = z.enum([
   'SHOW',
   'SIDESHOW',
   'SEEN',
+  'ACCEPT_SIDESHOW',
+  'REJECT_SIDESHOW',
 ]);
 
 /**
@@ -22,6 +24,7 @@ export const createRoomEventSchema = z.object({
   payload: z.object({
     playerName: z.string().trim().min(1),
     bootAmount: z.number().int().positive(),
+    maxPlayers: z.number().int().positive().optional(),
   }),
 });
 
@@ -32,7 +35,7 @@ export const joinRoomEventSchema = z.object({
   type: z.literal('JOIN_ROOM'),
   payload: z.object({
     playerName: z.string().trim().min(1),
-    roomId: z.string().trim().min(1),
+    roomId: z.string().trim(),
     reconnectToken: z.string().trim().min(1).optional(),
   }),
 });
@@ -90,6 +93,17 @@ export const playerActionEventSchema = z.object({
 });
 
 /**
+ * Schema สำหรับ Event: TOGGLE_READY
+ */
+export const toggleReadyEventSchema = z.object({
+  type: z.literal('TOGGLE_READY'),
+});
+
+export const resetLobbyEventSchema = z.object({
+  type: z.literal('RESET_LOBBY'),
+});
+
+/**
  * รวม Schema ของ ClientEvent ทั้งหมดโดยใช้ type เป็นตัวจำแนก (Discriminated Union)
  */
 export const clientEventSchema = z.discriminatedUnion('type', [
@@ -97,6 +111,8 @@ export const clientEventSchema = z.discriminatedUnion('type', [
   joinRoomEventSchema,
   leaveRoomEventSchema,
   startGameEventSchema,
+  toggleReadyEventSchema,
+  resetLobbyEventSchema,
   saveGameEventSchema,
   loadGameEventSchema,
   sendChatEventSchema,
