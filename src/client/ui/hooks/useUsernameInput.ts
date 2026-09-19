@@ -59,6 +59,13 @@ export interface UseUsernameInputParams {
   readonly onBack?: () => void;
 }
 
+function resolveSubmitError(submitError: unknown): string {
+  if (submitError instanceof Error) {
+    return submitError.message;
+  }
+  return 'Failed to connect to server';
+}
+
 export function useUsernameInput({ onSubmit, onBack }: UseUsernameInputParams) {
   const [rawInput, setRawInput] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,8 +97,12 @@ export function useUsernameInput({ onSubmit, onBack }: UseUsernameInputParams) {
         return;
       }
 
-      setErrorMessage(null);
-      onSubmit(finalName);
+      try {
+        setErrorMessage(null);
+        onSubmit(finalName);
+      } catch (submitError: unknown) {
+        setErrorMessage(resolveSubmitError(submitError));
+      }
     },
     [rawInput, onSubmit],
   );

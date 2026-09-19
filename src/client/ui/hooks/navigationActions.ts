@@ -5,6 +5,11 @@ export function sendCreateRoomMessage(
   socketClient: SocketClient,
   playerName: string,
 ): void {
+  if (!socketClient.isConnected) {
+    throw new Error(
+      'Server is not running. Please run "bun run server" in another terminal',
+    );
+  }
   socketClient.send({
     type: 'CREATE_ROOM',
     payload: { playerName, bootAmount: 50, maxPlayers: 4 },

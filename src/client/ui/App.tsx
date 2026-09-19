@@ -106,6 +106,7 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
         onBack={navigation.handleBackFromUsername}
         networkMode={navigation.networkMode}
         intent={navigation.intent}
+        serverError={state.lastError}
       />
     );
   }

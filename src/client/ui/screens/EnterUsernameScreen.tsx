@@ -15,6 +15,7 @@ export interface EnterUsernameScreenProps {
   readonly onBack?: () => void;
   readonly networkMode?: 'LAN' | 'INTERNET';
   readonly intent?: 'create' | 'join' | null;
+  readonly serverError?: string | null;
 }
 
 export function EnterUsernameScreen({
@@ -22,9 +23,11 @@ export function EnterUsernameScreen({
   onBack,
   networkMode,
   intent,
+  serverError,
 }: EnterUsernameScreenProps) {
   const { columns, rows } = useTerminalSize();
   const inputState = useUsernameInput({ onSubmit, onBack });
+  const displayedErrorMessage = inputState.errorMessage ?? serverError ?? null;
 
   const sizeStatus = getTerminalSizeStatus(columns, rows);
   if (sizeStatus !== 'OPTIMAL') {
@@ -59,7 +62,7 @@ export function EnterUsernameScreen({
           rawInput={inputState.rawInput}
           characterCount={inputState.characterCount}
           isLengthValid={inputState.isLengthValid}
-          errorMessage={inputState.errorMessage}
+          errorMessage={displayedErrorMessage}
           onInputChange={inputState.handleInputChange}
           onInputSubmit={inputState.handleInputSubmit}
           networkMode={networkMode}
