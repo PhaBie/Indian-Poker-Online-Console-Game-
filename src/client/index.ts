@@ -94,14 +94,20 @@ export function startClient(customTarget?: string): {
     clientState.updateState(event);
   };
 
-  // เริ่มต้นเชื่อมต่อ
-  socketClient.connect(connectionTarget.url);
-
+  // Do not connect WebSocket during Main Menu; connect on entering game rooms
   return { socketClient, clientState, connectionTarget };
 }
 
 if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
-  const { clientState, connectionTarget } = startClient();
-  // วาดหน้าจอ UI ของ Ink (ใช้ React.createElement เนื่องจากไฟล์นี้เป็น .ts ไม่ใช่ .tsx)
-  render(React.createElement(App, { clientState, serverUrl: connectionTarget.url }));
+  const { socketClient, clientState, connectionTarget } = startClient();
+  render(
+    React.createElement(App, {
+      clientState,
+      socketClient,
+      serverUrl: connectionTarget.url,
+    }),
+    {
+      alternateScreen: true,
+    },
+  );
 }

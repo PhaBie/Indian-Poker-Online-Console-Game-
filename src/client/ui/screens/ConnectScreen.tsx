@@ -1,9 +1,8 @@
-import React from 'react';
 import { Box, Text } from 'ink';
 
 export interface ConnectScreenProps {
-  playerId: string | null;
-  serverUrl: string;
+  readonly playerId: string | null;
+  readonly serverUrl: string;
 }
 
 export function ConnectScreen({ playerId, serverUrl }: ConnectScreenProps) {

@@ -2,6 +2,11 @@
   "dependencies": {
     "@ngrok/ngrok": "^1.7.0",
     "ink": "^7.1.1",
+    "ink-big-text": "^2.0.0",
+    "ink-gradient": "^4.0.1",
+    "ink-select-input": "^6.2.0",
+    "ink-spinner": "^5.0.0",
+    "ink-table": "^3.1.0",
     "ink-text-input": "^6.0.0",
     "react": "^19.2.8",
     "ws": "^8.21.3",
@@ -24,6 +29,7 @@
     "typescript": "~5.6.0"
   },
   "scripts": {
+    "dev": "bun run src/client/index.ts",
     "test": "bun test ./Test",
     "test:server": "bun test ./Test/server",
     "test:client": "bun test ./Test/client",
