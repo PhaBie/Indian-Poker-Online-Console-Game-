@@ -1,6 +1,7 @@
 import { Box, Text } from 'ink';
 import { UI_COLORS } from '../../theme/colors';
 import type { CreateRoomCardProps } from './types';
+import { useArrowMotion } from './useArrowMotion';
 
 function CreateRoomCardHeader() {
   return (
@@ -15,15 +16,70 @@ function CreateRoomCardHeader() {
   );
 }
 
+interface NetworkOptionRowProps {
+  readonly numericChoice: string;
+  readonly title: string;
+  readonly description: string;
+  readonly isSelected: boolean;
+  readonly isSubmitting: boolean;
+  readonly arrowGlyph: string;
+  readonly isGliding: boolean;
+  readonly activeColor: string;
+}
+
+function NetworkOptionRow({
+  numericChoice,
+  title,
+  description,
+  isSelected,
+  isSubmitting,
+  arrowGlyph,
+  isGliding,
+  activeColor,
+}: NetworkOptionRowProps) {
+  const displayedArrow = isSelected ? arrowGlyph.padEnd(4, ' ') : '    ';
+  const arrowColor = isGliding ? UI_COLORS.goldHighlight : activeColor;
+  const titleColor = isSelected ? activeColor : UI_COLORS.inactiveTitle;
+  const descriptionColor = isSelected ? UI_COLORS.primaryText : UI_COLORS.inactiveDesc;
+
+  return (
+    <Box flexDirection="row" alignItems="center" marginY={0}>
+      <Box width={4}>
+        <Text bold={isSelected} color={arrowColor}>
+          {displayedArrow}
+        </Text>
+      </Box>
+      <Box width={18}>
+        <Text bold={isSelected} color={titleColor}>
+          [{numericChoice}] {title}
+        </Text>
+      </Box>
+      <Box>
+        <Text color={descriptionColor}>
+          {isSelected && isSubmitting ? '● Connecting...' : description}
+        </Text>
+      </Box>
+    </Box>
+  );
+}
+
 export function CreateRoomHelpFooter() {
   return (
     <Box justifyContent="center" marginTop={1} flexDirection="row">
       <Box marginRight={4}>
         <Text>
           <Text bold color={UI_COLORS.goldBorder}>
+            UP/DOWN
+          </Text>
+          <Text color={UI_COLORS.mutedText}> Navigate</Text>
+        </Text>
+      </Box>
+      <Box marginRight={4}>
+        <Text>
+          <Text bold color={UI_COLORS.goldBorder}>
             ENTER
           </Text>
-          <Text color={UI_COLORS.mutedText}> Confirm</Text>
+          <Text color={UI_COLORS.mutedText}> Select</Text>
         </Text>
       </Box>
       <Box>
@@ -31,7 +87,7 @@ export function CreateRoomHelpFooter() {
           <Text bold color={UI_COLORS.goldBorder}>
             ESC
           </Text>
-          <Text color={UI_COLORS.mutedText}> Back to Menu</Text>
+          <Text color={UI_COLORS.mutedText}> Back</Text>
         </Text>
       </Box>
     </Box>
@@ -43,7 +99,8 @@ export function CreateRoomCard({
   isSubmitting,
   paddingX,
 }: CreateRoomCardProps) {
-  const isLanSelected = selectedMode === 'LAN';
+  const focusedIndex = selectedMode === 'LAN' ? 0 : 1;
+  const { glyph, isGliding } = useArrowMotion(focusedIndex);
 
   return (
     <Box
@@ -51,30 +108,35 @@ export function CreateRoomCard({
       borderStyle="round"
       borderColor={UI_COLORS.menuBorder}
       flexDirection="column"
+      alignItems="center"
       paddingX={paddingX}
       paddingY={1}
     >
       <CreateRoomCardHeader />
-      <Box flexDirection="column" marginY={1} paddingX={2}>
-        <Box marginY={0}>
-          <Text bold color={isLanSelected ? UI_COLORS.goldHighlight : UI_COLORS.dimText}>
-            {isLanSelected ? '> ' : '  '}[1] LAN Mode
-          </Text>
-          <Text color={UI_COLORS.mutedText}> (Local WiFi)</Text>
+
+      <Box flexDirection="column" marginY={1} width={46}>
+        <NetworkOptionRow
+          numericChoice="1"
+          title="LAN Mode"
+          description="Local WiFi (Host IPv4)"
+          isSelected={selectedMode === 'LAN'}
+          isSubmitting={isSubmitting}
+          arrowGlyph={glyph}
+          isGliding={isGliding}
+          activeColor={UI_COLORS.activeGreen}
+        />
+        <Box marginTop={1}>
+          <NetworkOptionRow
+            numericChoice="2"
+            title="Online Mode"
+            description="Internet (Ngrok Relay)"
+            isSelected={selectedMode === 'INTERNET'}
+            isSubmitting={isSubmitting}
+            arrowGlyph={glyph}
+            isGliding={isGliding}
+            activeColor={UI_COLORS.activeBlue}
+          />
         </Box>
-        <Box marginY={0} marginTop={1}>
-          <Text bold color={!isLanSelected ? UI_COLORS.goldHighlight : UI_COLORS.dimText}>
-            {!isLanSelected ? '> ' : '  '}[2] Online Mode
-          </Text>
-          <Text color={UI_COLORS.mutedText}> (Internet / Ngrok)</Text>
-        </Box>
-      </Box>
-      <Box justifyContent="center" marginTop={1}>
-        <Text color={isSubmitting ? UI_COLORS.activeGreen : UI_COLORS.mutedText}>
-          {isSubmitting
-            ? '● Creating room on server...'
-            : 'Press 1 or 2, or use arrows + ENTER'}
-        </Text>
       </Box>
     </Box>
   );
