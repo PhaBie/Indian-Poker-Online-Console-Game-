@@ -173,6 +173,8 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       const secondPlayer = new Player('player_2', 'P2');
       const room = mockContext.roomManager.createRoom('room_123', host);
       room.join(secondPlayer);
+      host.status = 'READY';
+      secondPlayer.status = 'READY';
 
       mockContext.connectedClients.set(mockWsClient, {
         playerId: 'host_id',
