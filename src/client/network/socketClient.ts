@@ -43,7 +43,10 @@ export class SocketClient {
         const event: ServerEvent = JSON.parse(data.toString());
         this.onReceive(event);
       } catch (error) {
-        console.error('[SocketClient] ข้อมูลที่ได้รับไม่ใช่รูปแบบ ServerEvent ที่ถูกต้อง:', error);
+        console.error(
+          '[SocketClient] ข้อมูลที่ได้รับไม่ใช่รูปแบบ ServerEvent ที่ถูกต้อง:',
+          error,
+        );
       }
     });
 

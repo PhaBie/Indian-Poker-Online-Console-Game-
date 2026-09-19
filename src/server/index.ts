@@ -1,19 +1,46 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import { RoomManager } from './domain/models/RoomManager';
 import { StorageManager } from './infrastructure/StorageManager';
-import type { ClientEvent, ServerEvent } from '../shared/types';
+import { Validator } from './utils/validator';
+import {
+  handleClientMessage,
+  handleClientDisconnect,
+  type SocketSession,
+  type NetworkContext,
+} from './network/socketHandler';
 
 export class PokerServer {
   public roomManager: RoomManager;
   public storageManager: StorageManager;
   public isRunning: boolean;
   public wss: WebSocketServer | null;
+  public validator: Validator;
+  private tokenMap: Map<string, string>; // token -> playerId
+  public connectedClients: Map<WebSocket, SocketSession>;
 
   constructor() {
     this.roomManager = new RoomManager();
     this.storageManager = new StorageManager();
+    this.validator = new Validator();
+    this.tokenMap = new Map();
+    this.connectedClients = new Map();
     this.isRunning = false;
     this.wss = null;
+  }
+
+  private get networkContext(): NetworkContext {
+    return {
+      roomManager: this.roomManager,
+      sessionStore: {
+        createSession: (playerId: string) => {
+          const token = `token_${playerId}_${Date.now()}`;
+          this.tokenMap.set(token, playerId);
+          return token;
+        },
+        getPlayerId: (token: string) => this.tokenMap.get(token) || null,
+      },
+      connectedClients: this.connectedClients,
+    };
   }
 
   public start(port: number): void {
@@ -26,27 +53,19 @@ export class PokerServer {
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('[Server] มี Client เชื่อมต่อเข้ามาสำเร็จ!');
 
-      // ส่ง Event ยืนยันไปยัง Client ทันทีที่เชื่อมต่อติด
-      const sessionEvent: ServerEvent = {
-        type: 'SESSION_CREATED',
-        payload: {
-          playerId: `player_${Date.now()}`,
-          reconnectToken: `token_${Date.now()}`,
-        },
-      };
-      ws.send(JSON.stringify(sessionEvent));
-
       ws.on('message', (data) => {
-        try {
-          const clientEvent: ClientEvent = JSON.parse(data.toString());
-          console.log(`[Server] ได้รับ Event จาก Client: ${clientEvent.type}`);
-        } catch {
-          console.log(`[Server] ได้รับข้อความ: ${data.toString()}`);
+        const clientEvent = this.validator.validateClientEvent(data);
+        if (!clientEvent) {
+          console.warn('[Server] ได้รับข้อมูลที่ไม่ถูกต้องตาม Schema');
+          return;
         }
+        console.log(`[Server] ได้รับ Event จาก Client: ${clientEvent.type}`);
+        handleClientMessage(ws, clientEvent, this.networkContext);
       });
 
       ws.on('close', () => {
         console.log('[Server] Client ตัดการเชื่อมต่อ');
+        handleClientDisconnect(ws, this.networkContext);
       });
 
       ws.on('error', (error) => {
