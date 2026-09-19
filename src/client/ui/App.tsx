@@ -100,7 +100,12 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
     );
   }
   if (screen === 'enterName') {
-    return <EnterUsernameScreen onSubmit={navigation.handleUsernameSubmit} />;
+    return (
+      <EnterUsernameScreen
+        onSubmit={navigation.handleUsernameSubmit}
+        onBack={() => navigation.setScreen('mainMenu')}
+      />
+    );
   }
   if (screen === 'createRoom') {
     return (
