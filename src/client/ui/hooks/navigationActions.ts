@@ -68,3 +68,57 @@ export function executeUserSubmission(
     sendJoinRoomMessage(socketClient, networkMode, pendingTarget, name);
   }
 }
+
+export function createTableLoungeActions(socketClient: SocketClient, playerName: string) {
+  return {
+    handleJoinTableFromLounge: (roomId: string) => {
+      socketClient.send({
+        type: 'JOIN_ROOM',
+        payload: { playerName: playerName || 'Player', roomId },
+      });
+    },
+    handleCreateTableFromLounge: () => {
+      socketClient.send({
+        type: 'CREATE_ROOM',
+        payload: { playerName: playerName || 'Host', bootAmount: 50, maxPlayers: 4 },
+      });
+    },
+    handleRefreshRooms: () => {
+      if (socketClient.isConnected) {
+        socketClient.send({ type: 'GET_ROOMS' });
+      }
+    },
+  };
+}
+
+export function createGameFlowActions(
+  socketClient: SocketClient,
+  onClearState: () => void,
+  setScreen: (screen: ActiveScreen) => void,
+) {
+  return {
+    handleStartGame: () => socketClient.send({ type: 'START_GAME' }),
+    handleToggleReady: () => socketClient.send({ type: 'TOGGLE_READY' }),
+    handleLeaveRoom: () => {
+      socketClient.send({ type: 'LEAVE_ROOM' });
+      onClearState();
+      setScreen('tableLounge');
+    },
+  };
+}
+
+export function createMenuNavigationActions(
+  setIntent: (intent: 'create' | 'join' | null) => void,
+  setScreen: (screen: ActiveScreen) => void,
+) {
+  return {
+    handleStartCreateRoomFlow: () => {
+      setIntent('create');
+      setScreen('createRoom');
+    },
+    handleStartJoinRoomFlow: () => {
+      setIntent('join');
+      setScreen('joinRoom');
+    },
+  };
+}

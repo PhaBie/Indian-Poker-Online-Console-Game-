@@ -77,6 +77,15 @@ export interface RoomSaveData {
   history: unknown[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
 }
 
+export interface RoomSummaryDTO {
+  readonly roomId: string;
+  readonly hostName: string;
+  readonly playerCount: number;
+  readonly maxPlayers: number;
+  readonly phase: RoomPhase;
+  readonly bootAmount: number;
+}
+
 // ==========================================
 // 3. Network Contracts (WebSocket Payload)
 // ==========================================
@@ -93,6 +102,7 @@ export type ClientEvent =
       type: 'JOIN_ROOM';
       payload: { playerName: string; roomId: string; reconnectToken?: string };
     }
+  | { type: 'GET_ROOMS' }
   | { type: 'LEAVE_ROOM' }
   | { type: 'START_GAME' }
   | { type: 'TOGGLE_READY' }
@@ -115,6 +125,7 @@ export type ServerEvent =
   | { type: 'ERROR'; message: string; code?: string }
   | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
   | { type: 'ROOM_CREATED'; payload: { roomId: string } }
+  | { type: 'ROOM_LIST'; payload: { rooms: RoomSummaryDTO[] } }
   | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
   | { type: 'GAME_LOG_MESSAGE'; payload: { message: string } }
   | { type: 'GAME_SAVED'; payload: { roomId: string } }

@@ -52,6 +52,7 @@ export class PokerServer {
 
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('[Server] มี Client เชื่อมต่อเข้ามาสำเร็จ!');
+      this.connectedClients.set(ws, { playerId: '', roomId: null });
 
       ws.on('message', (data) => {
         const clientEvent = this.validator.validateClientEvent(data);

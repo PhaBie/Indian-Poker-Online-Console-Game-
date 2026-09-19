@@ -7,6 +7,7 @@ import type {
   HandRank,
   Card,
   GameActionType,
+  RoomSummaryDTO,
 } from '../../shared/types';
 import type { RoomManager } from '../domain/models/RoomManager';
 import type { Room } from '../domain/models/Room';
@@ -28,6 +29,42 @@ export interface NetworkContext {
   connectedClients: Map<WebSocket, SocketSession>;
 }
 
+export function getRoomSummaryList(roomManager: RoomManager): RoomSummaryDTO[] {
+  const rooms = roomManager.getAllRooms();
+  return rooms.map((room) => {
+    const hostPlayer = room.hostId ? room.getPlayer(room.hostId) : undefined;
+    return {
+      roomId: room.roomId,
+      hostName: hostPlayer?.name ?? 'Unknown',
+      playerCount: room.players.size,
+      maxPlayers: room.MAX_PLAYERS,
+      phase: room.phase,
+      bootAmount: room.bootAmount,
+    };
+  });
+}
+
+function handleGetRooms(wsClient: WebSocket, context: NetworkContext): void {
+  const rooms = getRoomSummaryList(context.roomManager);
+  sendEvent(wsClient, {
+    type: 'ROOM_LIST',
+    payload: { rooms },
+  });
+}
+
+export function broadcastRoomList(context: NetworkContext): void {
+  const rooms = getRoomSummaryList(context.roomManager);
+  const event: ServerEvent = {
+    type: 'ROOM_LIST',
+    payload: { rooms },
+  };
+  for (const [client, session] of context.connectedClients.entries()) {
+    if (session.roomId === null && client.readyState === 1) {
+      sendEvent(client, event);
+    }
+  }
+}
+
 export function handleClientMessage(
   wsClient: WebSocket,
   message: ClientEvent,
@@ -35,6 +72,9 @@ export function handleClientMessage(
 ): void {
   try {
     switch (message.type) {
+      case 'GET_ROOMS':
+        handleGetRooms(wsClient, context);
+        break;
       case 'CREATE_ROOM':
         handleCreateRoom(wsClient, message.payload, context);
         break;
@@ -80,6 +120,7 @@ function handleResetLobby(wsClient: WebSocket, context: NetworkContext) {
     }
     room.resetToLobby();
     broadcastGameStateUpdate(session.roomId, context);
+    broadcastRoomList(context);
   }
 }
 
@@ -103,6 +144,62 @@ function handleCreateRoom(
   sendEvent(wsClient, { type: 'ROOM_CREATED', payload: { roomId } });
 
   broadcastGameStateUpdate(roomId, context);
+  broadcastRoomList(context);
+}
+
+function handleReconnectJoin(
+  wsClient: WebSocket,
+  room: Room,
+  reconnectToken: string,
+  context: NetworkContext,
+): void {
+  const existingPlayerId = context.sessionStore.getPlayerId(reconnectToken);
+  if (!existingPlayerId) {
+    sendError(wsClient, 'Invalid token', 'INVALID_TOKEN');
+    return;
+  }
+  const player = room.getPlayer(existingPlayerId);
+  if (!player) {
+    sendError(wsClient, 'Player not in room', 'NOT_IN_ROOM');
+    return;
+  }
+  room.reconnect(existingPlayerId);
+  context.connectedClients.set(wsClient, {
+    playerId: existingPlayerId,
+    roomId: room.roomId,
+  });
+  broadcastGameStateUpdate(room.roomId, context);
+  broadcastRoomList(context);
+}
+
+function handleNewJoin(
+  wsClient: WebSocket,
+  room: Room,
+  playerName: string,
+  context: NetworkContext,
+): void {
+  if (room.phase === 'PLAYING') {
+    sendError(wsClient, 'Game already in progress', 'GAME_IN_PROGRESS');
+    return;
+  }
+  if (room.players.size >= room.MAX_PLAYERS) {
+    sendError(wsClient, 'Room is full', 'ROOM_FULL');
+    return;
+  }
+
+  const playerId = generatePlayerId();
+  const player = new Player(playerId, playerName);
+  room.join(player);
+
+  const newToken = context.sessionStore.createSession(playerId);
+  context.connectedClients.set(wsClient, { playerId, roomId: room.roomId });
+
+  sendEvent(wsClient, {
+    type: 'SESSION_CREATED',
+    payload: { playerId, reconnectToken: newToken },
+  });
+  broadcastGameStateUpdate(room.roomId, context);
+  broadcastRoomList(context);
 }
 
 function handleJoinRoom(
@@ -111,53 +208,19 @@ function handleJoinRoom(
   context: NetworkContext,
 ) {
   const { playerName, roomId, reconnectToken } = payload;
-  let room = context.roomManager.getRoom(roomId);
+  const targetRoom =
+    context.roomManager.getRoom(roomId) ??
+    (roomId === '' ? context.roomManager.getAllRooms()[0] : undefined);
 
-  if (!room && roomId === '') {
-    const allRooms = context.roomManager.getAllRooms();
-    if (allRooms.length > 0) {
-      room = allRooms[0];
-    }
-  }
-
-  if (!room) {
+  if (!targetRoom) {
     sendError(wsClient, 'Room not found', 'ROOM_NOT_FOUND');
     return;
   }
 
-  // Update the payload's roomId if we found a room when roomId was empty
-  const actualRoomId = room.roomId;
-
   if (reconnectToken) {
-    const existingPlayerId = context.sessionStore.getPlayerId(reconnectToken);
-    if (!existingPlayerId) {
-      sendError(wsClient, 'Invalid token', 'INVALID_TOKEN');
-      return;
-    }
-    const player = room.getPlayer(existingPlayerId);
-    if (!player) {
-      sendError(wsClient, 'Player not in room', 'NOT_IN_ROOM');
-      return;
-    }
-    room.reconnect(existingPlayerId);
-    context.connectedClients.set(wsClient, {
-      playerId: existingPlayerId,
-      roomId: actualRoomId,
-    });
-    broadcastGameStateUpdate(actualRoomId, context);
+    handleReconnectJoin(wsClient, targetRoom, reconnectToken, context);
   } else {
-    const playerId = generatePlayerId();
-    const player = new Player(playerId, playerName);
-    room.join(player);
-
-    const newToken = context.sessionStore.createSession(playerId);
-    context.connectedClients.set(wsClient, { playerId, roomId: actualRoomId });
-
-    sendEvent(wsClient, {
-      type: 'SESSION_CREATED',
-      payload: { playerId, reconnectToken: newToken },
-    });
-    broadcastGameStateUpdate(actualRoomId, context);
+    handleNewJoin(wsClient, targetRoom, playerName, context);
   }
 }
 
@@ -180,6 +243,7 @@ function handleStartGame(wsClient: WebSocket, context: NetworkContext) {
     }
     room.startGame(session.playerId);
     broadcastGameStateUpdate(session.roomId, context);
+    broadcastRoomList(context);
   }
 }
 
@@ -253,6 +317,7 @@ function handleLeaveRoom(wsClient: WebSocket, context: NetworkContext) {
   }
 
   context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
+  broadcastRoomList(context);
 }
 
 export function handleClientDisconnect(
@@ -303,6 +368,7 @@ export function handleClientDisconnect(
   }
 
   context.connectedClients.delete(wsClient);
+  broadcastRoomList(context);
 }
 
 export function broadcastGameStateUpdate(roomId: string, context: NetworkContext): void {
@@ -361,6 +427,7 @@ export function broadcastGameResult(
       });
     }
   }
+  broadcastRoomList(context);
 }
 
 // Utility function เพื่อให้โค้ดส่วนหลักอ่านง่ายและสะอาด

@@ -1,4 +1,4 @@
-import type { ServerEvent, Card } from '../../shared/types';
+import type { ServerEvent, Card, RoomSummaryDTO } from '../../shared/types';
 
 export interface ClientStateSnapshot {
   myPlayerId: string | null;
@@ -7,6 +7,7 @@ export interface ClientStateSnapshot {
   latestGameResult: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   lastError: string | null;
   myCards: Card[];
+  availableRooms: RoomSummaryDTO[];
 }
 
 export class ClientState {
@@ -17,6 +18,7 @@ export class ClientState {
   public latestGameResult:
     Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   public lastError: string | null;
+  public availableRooms: RoomSummaryDTO[];
   private listeners: Set<() => void>;
   private cachedSnapshot: ClientStateSnapshot;
 
@@ -26,6 +28,7 @@ export class ClientState {
     this.latestGameState = null;
     this.latestGameResult = null;
     this.lastError = null;
+    this.availableRooms = [];
     this.listeners = new Set();
     this.cachedSnapshot = this.createSnapshot();
   }
@@ -38,6 +41,7 @@ export class ClientState {
       latestGameResult: this.latestGameResult,
       lastError: this.lastError,
       myCards: this.getMyCards(),
+      availableRooms: this.availableRooms,
     };
   }
 
@@ -53,6 +57,10 @@ export class ClientState {
       }
       case 'ROOM_CREATED': {
         this.currentRoomId = event.payload.roomId;
+        break;
+      }
+      case 'ROOM_LIST': {
+        this.availableRooms = event.payload.rooms;
         break;
       }
       case 'GAME_STATE_UPDATE': {
@@ -86,6 +94,7 @@ export class ClientState {
     this.latestGameState = null;
     this.latestGameResult = null;
     this.lastError = null;
+    this.availableRooms = [];
     this.notifyListeners();
   }
 

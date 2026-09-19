@@ -8,6 +8,8 @@ import { MainMenuScreen } from './screens/MainMenuScreen';
 import { CreateRoomScreen } from './screens/CreateRoomScreen';
 import { JoinRoomScreen } from './screens/JoinRoomScreen';
 import { EnterUsernameScreen } from './screens/EnterUsernameScreen';
+import { ServerConnectionScreen } from './screens/ServerConnectionScreen';
+import { RoomBrowserScreen } from './screens/RoomBrowserScreen';
 import { WaitingRoomScreen } from './screens/WaitingRoomScreen';
 import { GameScreen } from './screens/GameScreen';
 import { RoundResultScreen } from './screens/RoundResultScreen';
@@ -83,7 +85,7 @@ function renderGameplayScreens({
   return null;
 }
 
-function ActiveScreenRouter(props: ActiveScreenRouterProps) {
+function renderLobbyScreens(props: ActiveScreenRouterProps) {
   const { navigation, state, socketClient, serverUrl, onExit } = props;
   const { screen } = navigation;
 
@@ -99,6 +101,38 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
       />
     );
   }
+  if (screen === 'serverConnection') {
+    return (
+      <ServerConnectionScreen
+        serverUrl={navigation.currentServerUrl || serverUrl}
+        isConnected={socketClient.isConnected}
+        onConnect={navigation.handleConnectServer}
+        onConnectedSuccess={navigation.handleConnectedSuccess}
+        onBack={() => navigation.setScreen('mainMenu')}
+      />
+    );
+  }
+  if (screen === 'tableLounge') {
+    return (
+      <RoomBrowserScreen
+        rooms={state.availableRooms}
+        playerName={navigation.playerName}
+        serverUrl={navigation.currentServerUrl || serverUrl}
+        onJoinRoom={navigation.handleJoinTableFromLounge}
+        onCreateRoom={navigation.handleCreateTableFromLounge}
+        onRefresh={navigation.handleRefreshRooms}
+        onBack={() => navigation.setScreen('mainMenu')}
+        lastError={state.lastError}
+      />
+    );
+  }
+  return null;
+}
+
+function renderSetupScreens(props: ActiveScreenRouterProps) {
+  const { navigation, state, socketClient, serverUrl } = props;
+  const { screen } = navigation;
+
   if (screen === 'enterName') {
     return (
       <EnterUsernameScreen
@@ -131,8 +165,13 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
       />
     );
   }
+  return null;
+}
 
-  return renderGameplayScreens(props);
+function ActiveScreenRouter(props: ActiveScreenRouterProps) {
+  return (
+    renderLobbyScreens(props) ?? renderSetupScreens(props) ?? renderGameplayScreens(props)
+  );
 }
 
 export function App({ clientState, serverUrl, socketClient }: AppProps) {
@@ -142,6 +181,7 @@ export function App({ clientState, serverUrl, socketClient }: AppProps) {
   const navigation = useAppNavigation({
     state,
     socketClient,
+    initialServerUrl: serverUrl,
     onClearState: () => clientState.clearState(),
   });
 

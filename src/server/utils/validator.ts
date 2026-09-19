@@ -103,12 +103,17 @@ export const resetLobbyEventSchema = z.object({
   type: z.literal('RESET_LOBBY'),
 });
 
+export const getRoomsEventSchema = z.object({
+  type: z.literal('GET_ROOMS'),
+});
+
 /**
  * รวม Schema ของ ClientEvent ทั้งหมดโดยใช้ type เป็นตัวจำแนก (Discriminated Union)
  */
 export const clientEventSchema = z.discriminatedUnion('type', [
   createRoomEventSchema,
   joinRoomEventSchema,
+  getRoomsEventSchema,
   leaveRoomEventSchema,
   startGameEventSchema,
   toggleReadyEventSchema,

@@ -1,79 +1,127 @@
 import WebSocket from 'ws';
 import type { ClientEvent, ServerEvent } from '../../shared/types';
 
-// Interface บอกรูปร่างของ transport object ที่รับเข้ามา
 export interface Transport {
   onOpen: (() => void) | null;
-  send?: (data: string) => void; // method สำหรับส่งข้อมูลจริงๆ ผ่าน WebSocket
+  send?: (data: string) => void;
   close?: () => void;
 }
 
 export class SocketClient {
   public isConnected: boolean;
   public lastReceivedEvent: ServerEvent | null;
-  private transport: Transport | null; // เก็บ transport ไว้ใช้ใน send()
+  public onConnectionChange: ((connected: boolean) => void) | null;
+  private transport: Transport | null;
   private wsInstance: WebSocket | null;
+  private connectionEpoch: number;
 
   constructor() {
     this.isConnected = false;
     this.lastReceivedEvent = null;
+    this.onConnectionChange = null;
     this.transport = null;
     this.wsInstance = null;
+    this.connectionEpoch = 0;
   }
 
   public connect(url: string, transport?: Transport): void {
+    this.disconnect();
+    const currentEpoch = ++this.connectionEpoch;
+
     if (transport) {
-      this.transport = transport; // เก็บ transport ไว้ใช้ใน send()
+      this.transport = transport;
       transport.onOpen = () => {
-        this.isConnected = true;
+        if (this.connectionEpoch !== currentEpoch) return;
+        this.setConnected(true);
       };
       return;
     }
 
-    // กรณีรันใช้งานจริง (ไม่มี transport ส่งเข้ามา) ให้ต่อ WebSocket ของจริง
-    const ws = new WebSocket(url);
-    this.wsInstance = ws;
+    try {
+      const ws = new WebSocket(url);
+      this.wsInstance = ws;
 
-    ws.on('open', () => {
-      this.isConnected = true;
-    });
+      ws.on('open', () => {
+        if (this.connectionEpoch !== currentEpoch) return;
+        this.setConnected(true);
+      });
 
-    ws.on('message', (data) => {
-      try {
-        const event: ServerEvent = JSON.parse(data.toString());
-        this.onReceive(event);
-      } catch (error) {
-        console.error(
-          '[SocketClient] ข้อมูลที่ได้รับไม่ใช่รูปแบบ ServerEvent ที่ถูกต้อง:',
-          error,
-        );
+      ws.on('message', (data) => {
+        if (this.connectionEpoch !== currentEpoch) return;
+        try {
+          const event: ServerEvent = JSON.parse(data.toString());
+          this.onReceive(event);
+        } catch {
+          // Ignore invalid payloads
+        }
+      });
+
+      ws.on('close', () => {
+        if (this.connectionEpoch !== currentEpoch) return;
+        this.setConnected(false);
+      });
+
+      ws.on('error', () => {
+        if (this.connectionEpoch !== currentEpoch) return;
+        this.setConnected(false);
+      });
+
+      this.transport = {
+        onOpen: null,
+        send: (data: string) => {
+          ws.send(data);
+        },
+        close: () => {
+          ws.close();
+        },
+      };
+    } catch {
+      this.setConnected(false);
+    }
+  }
+
+  public connectWithTimeout(url: string, timeoutMs: number = 3000): Promise<boolean> {
+    return new Promise((resolve) => {
+      let isResolved = false;
+      const timeoutTimer = setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          this.disconnect();
+          resolve(false);
+        }
+      }, timeoutMs);
+
+      this.connect(url);
+      if (this.isConnected) {
+        isResolved = true;
+        clearTimeout(timeoutTimer);
+        resolve(true);
+        return;
       }
-    });
 
-    ws.on('close', () => {
-      this.isConnected = false;
+      const previousConnectionChange = this.onConnectionChange;
+      this.onConnectionChange = (connected) => {
+        previousConnectionChange?.(connected);
+        if (connected && !isResolved) {
+          isResolved = true;
+          clearTimeout(timeoutTimer);
+          resolve(true);
+        }
+      };
     });
+  }
 
-    ws.on('error', () => {
-      this.isConnected = false;
-    });
-
-    this.transport = {
-      onOpen: null,
-      send: (data: string) => {
-        ws.send(data);
-      },
-      close: () => {
-        ws.close();
-      },
-    };
+  private setConnected(connected: boolean): void {
+    if (this.isConnected !== connected) {
+      this.isConnected = connected;
+      this.onConnectionChange?.(connected);
+    }
   }
 
   public send(event: ClientEvent): void {
     if (!this.isConnected) {
       throw new Error('Client is not connected');
     }
-    // serialize Object → JSON String แล้วส่งผ่าน transport
     const jsonString = JSON.stringify(event);
     this.transport?.send?.(jsonString);
   }
@@ -83,9 +131,13 @@ export class SocketClient {
   }
 
   public disconnect(): void {
-    this.isConnected = false;
+    this.connectionEpoch++;
+    this.setConnected(false);
     this.transport?.close?.();
-    this.wsInstance?.close();
+    if (this.wsInstance) {
+      this.wsInstance.removeAllListeners?.();
+      this.wsInstance.close();
+    }
     this.transport = null;
     this.wsInstance = null;
   }
