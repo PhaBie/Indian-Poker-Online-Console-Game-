@@ -15,33 +15,24 @@ function CreateRoomCardHeader() {
   );
 }
 
-function CreateRoomCardFooter({ isSubmitting }: { readonly isSubmitting: boolean }) {
+export function CreateRoomHelpFooter() {
   return (
-    <Box flexDirection="column" alignItems="center" marginTop={1}>
-      <Box justifyContent="center" marginBottom={1}>
-        <Text color={isSubmitting ? UI_COLORS.activeGreen : UI_COLORS.mutedText}>
-          {isSubmitting
-            ? '● Creating room on server...'
-            : 'Press 1 or 2, or use arrows + ENTER'}
+    <Box justifyContent="center" marginTop={1} flexDirection="row">
+      <Box marginRight={4}>
+        <Text>
+          <Text bold color={UI_COLORS.goldBorder}>
+            ENTER
+          </Text>
+          <Text color={UI_COLORS.mutedText}> Confirm</Text>
         </Text>
       </Box>
-      <Box justifyContent="center" flexDirection="row">
-        <Box marginRight={4}>
-          <Text>
-            <Text bold color={UI_COLORS.goldBorder}>
-              ENTER
-            </Text>
-            <Text color={UI_COLORS.mutedText}> Confirm</Text>
+      <Box>
+        <Text>
+          <Text bold color={UI_COLORS.goldBorder}>
+            ESC
           </Text>
-        </Box>
-        <Box>
-          <Text>
-            <Text bold color={UI_COLORS.goldBorder}>
-              ESC
-            </Text>
-            <Text color={UI_COLORS.mutedText}> Back to Menu</Text>
-          </Text>
-        </Box>
+          <Text color={UI_COLORS.mutedText}> Back to Menu</Text>
+        </Text>
       </Box>
     </Box>
   );
@@ -78,7 +69,13 @@ export function CreateRoomCard({
           <Text color={UI_COLORS.mutedText}> (Internet / Ngrok)</Text>
         </Box>
       </Box>
-      <CreateRoomCardFooter isSubmitting={isSubmitting} />
+      <Box justifyContent="center" marginTop={1}>
+        <Text color={isSubmitting ? UI_COLORS.activeGreen : UI_COLORS.mutedText}>
+          {isSubmitting
+            ? '● Creating room on server...'
+            : 'Press 1 or 2, or use arrows + ENTER'}
+        </Text>
+      </Box>
     </Box>
   );
 }

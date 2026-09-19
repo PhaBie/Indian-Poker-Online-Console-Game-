@@ -8,6 +8,7 @@ import {
 } from '../components/ScreenSizeGuard';
 import { useUsernameInput } from '../hooks/useUsernameInput';
 import { UsernameCard } from './username/UsernameCard';
+import { UsernameHelpFooter } from './username/UsernameHelpFooter';
 
 export interface EnterUsernameScreenProps {
   readonly onSubmit: (username: string) => void;
@@ -60,6 +61,7 @@ export function EnterUsernameScreen({ onSubmit, onBack }: EnterUsernameScreenPro
           onInputChange={handleInputChange}
           onInputSubmit={handleInputSubmit}
         />
+        <UsernameHelpFooter />
       </Box>
     </Box>
   );

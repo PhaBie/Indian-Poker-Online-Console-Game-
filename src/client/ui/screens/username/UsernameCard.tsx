@@ -4,7 +4,6 @@ import type { UsernameCardProps } from './types';
 import { UsernameCardHeader } from './UsernameCardHeader';
 import { UsernameInputField } from './UsernameInputField';
 import { UsernameStatusMessage } from './UsernameStatusMessage';
-import { UsernameHelpFooter } from './UsernameHelpFooter';
 
 export function UsernameCard({
   paddingX,
@@ -41,7 +40,6 @@ export function UsernameCard({
         isLengthValid={isLengthValid}
         characterCount={characterCount}
       />
-      <UsernameHelpFooter />
     </Box>
   );
 }

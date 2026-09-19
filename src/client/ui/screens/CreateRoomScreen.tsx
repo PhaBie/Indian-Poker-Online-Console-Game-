@@ -8,7 +8,7 @@ import {
 } from '../components/ScreenSizeGuard';
 import type { CreateRoomScreenProps } from './createRoom/types';
 import { useCreateRoomController } from './createRoom/useCreateRoomController';
-import { CreateRoomCard } from './createRoom/CreateRoomCard';
+import { CreateRoomCard, CreateRoomHelpFooter } from './createRoom/CreateRoomCard';
 
 export type { CreateRoomScreenProps } from './createRoom/types';
 
@@ -57,6 +57,7 @@ export function CreateRoomScreen({
           isSubmitting={isSubmitting}
           paddingX={paddingX}
         />
+        <CreateRoomHelpFooter />
       </Box>
     </Box>
   );
