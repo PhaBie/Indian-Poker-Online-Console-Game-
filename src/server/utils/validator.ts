@@ -130,7 +130,7 @@ export class Validator {
       event instanceof Uint8Array
     ) {
       try {
-        parsedEvent = JSON.parse(event.toString());
+        parsedEvent = JSON.parse(new TextDecoder().decode(event));
       } catch {
         return null;
       }
