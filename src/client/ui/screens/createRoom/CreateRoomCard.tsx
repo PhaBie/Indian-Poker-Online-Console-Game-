@@ -6,12 +6,7 @@ import { useArrowMotion } from './useArrowMotion';
 function CreateRoomCardHeader() {
   return (
     <Box flexDirection="column" alignItems="center" marginBottom={1}>
-      <Text bold color={UI_COLORS.goldBorder}>
-        ♠ ♥ ♦ ♣ CREATE ROOM ♣ ♦ ♥ ♠
-      </Text>
-      <Box marginTop={1}>
-        <Text color={UI_COLORS.mutedText}>Select connection mode to host your table</Text>
-      </Box>
+      <Text color={UI_COLORS.mutedText}>Select connection mode to host your table</Text>
     </Box>
   );
 }

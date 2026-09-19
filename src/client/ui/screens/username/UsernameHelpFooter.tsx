@@ -3,7 +3,7 @@ import { UI_COLORS } from '../../theme/colors';
 
 export function UsernameHelpFooter() {
   return (
-    <Box justifyContent="center" marginTop={2} flexDirection="row">
+    <Box justifyContent="center" marginTop={1} flexDirection="row">
       <Box marginRight={4}>
         <Text>
           <Text bold color={UI_COLORS.goldBorder}>

@@ -51,7 +51,7 @@ export function CreateRoomScreen({
       justifyContent="center"
     >
       <Box width={containerWidth} flexDirection="column">
-        <ShimmeringHeader containerWidth={containerWidth} />
+        <ShimmeringHeader containerWidth={containerWidth} pageTitle="CREATE ROOM" />
         <CreateRoomCard
           selectedMode={selectedMode}
           isSubmitting={isSubmitting}

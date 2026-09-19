@@ -51,7 +51,10 @@ export function EnterUsernameScreen({ onSubmit, onBack }: EnterUsernameScreenPro
       justifyContent="center"
     >
       <Box width={containerWidth} flexDirection="column">
-        <ShimmeringHeader containerWidth={containerWidth} />
+        <ShimmeringHeader
+          containerWidth={containerWidth}
+          pageTitle="PLAYER REGISTRATION"
+        />
         <UsernameCard
           paddingX={paddingX}
           rawInput={rawInput}

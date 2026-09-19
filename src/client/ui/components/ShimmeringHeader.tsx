@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { UI_COLORS } from '../theme/colors';
 
@@ -36,10 +36,24 @@ interface CharacterAccumulator {
   readonly visibleCounter: number;
 }
 
-export function buildBrandTitleCharacters(): readonly HeaderCharacterItem[] {
+export function buildBrandTitleCharacters(
+  pageTitle?: string,
+): readonly HeaderCharacterItem[] {
   const initialAccumulator: CharacterAccumulator = { items: [], visibleCounter: 0 };
+  const wordsToBuild =
+    !pageTitle || pageTitle === 'MAIN MENU'
+      ? BRAND_WORDS
+      : [
+          { text: 'TEEN', color: UI_COLORS.logoTeen },
+          { text: ' ', color: '#FFFFFF' },
+          { text: 'PATTI', color: UI_COLORS.logoPatti },
+          { text: ' ', color: '#FFFFFF' },
+          { text: '-', color: UI_COLORS.logoDash },
+          { text: ' ', color: '#FFFFFF' },
+          { text: pageTitle, color: UI_COLORS.logoMain },
+        ];
 
-  const finalAccumulator = BRAND_WORDS.reduce((accumulator, word) => {
+  const finalAccumulator = wordsToBuild.reduce((accumulator, word) => {
     return Array.from(word.text).reduce((innerAccumulator, character) => {
       const isSpace = character === ' ';
       const letterIndex = isSpace ? -1 : innerAccumulator.visibleCounter;
@@ -185,8 +199,11 @@ function useShimmerWave(isReady: boolean): number {
   return stepIndex - 3;
 }
 
-function renderShimmeringCharacters(wavePosition: number) {
-  return TITLE_CHARACTERS.map((item, index) => {
+function renderShimmeringCharacters(
+  wavePosition: number,
+  titleCharacters: readonly HeaderCharacterItem[],
+) {
+  return titleCharacters.map((item, index) => {
     if (item.char === ' ' || item.letterIndex < 0) {
       return <Text key={`space-${index}`}> </Text>;
     }
@@ -203,14 +220,19 @@ function renderShimmeringCharacters(wavePosition: number) {
   });
 }
 
-function renderTitleContent(phase: HeaderPhase, wavePosition: number) {
+function renderTitleContent(
+  phase: HeaderPhase,
+  wavePosition: number,
+  pageTitle: string,
+  titleCharacters: readonly HeaderCharacterItem[],
+) {
   if (phase === 'brand') {
     return (
       <>
         <Text color={UI_COLORS.logoTeen}>TEEN</Text>
         <Text> </Text>
         <Text color={UI_COLORS.logoPatti}>PATTI</Text>
-        <Text>{' '.repeat(12)}</Text>
+        <Text>{' '.repeat(Math.max(1, pageTitle.length + 3))}</Text>
       </>
     );
   }
@@ -222,21 +244,29 @@ function renderTitleContent(phase: HeaderPhase, wavePosition: number) {
         <Text> </Text>
         <Text color={UI_COLORS.logoPatti}>PATTI</Text>
         <Text color={UI_COLORS.logoDash}> - </Text>
-        <Text>{' '.repeat(9)}</Text>
+        <Text>{' '.repeat(Math.max(1, pageTitle.length))}</Text>
       </>
     );
   }
 
-  return renderShimmeringCharacters(wavePosition);
+  return renderShimmeringCharacters(wavePosition, titleCharacters);
 }
 
 export interface ShimmeringHeaderProps {
   readonly containerWidth?: number;
+  readonly pageTitle?: string;
 }
 
-export function ShimmeringHeader(_props: ShimmeringHeaderProps = {}) {
+export function ShimmeringHeader({
+  pageTitle = 'MAIN MENU',
+}: ShimmeringHeaderProps = {}) {
   const phase = useHeaderPhase();
   const wavePosition = useShimmerWave(phase === 'page');
+  const titleCharacters = useMemo(
+    () =>
+      pageTitle === 'MAIN MENU' ? TITLE_CHARACTERS : buildBrandTitleCharacters(pageTitle),
+    [pageTitle],
+  );
 
   return (
     <Box
@@ -250,7 +280,9 @@ export function ShimmeringHeader(_props: ShimmeringHeaderProps = {}) {
       <Box paddingX={1} width="100%" flexDirection="row" alignItems="center">
         <Box width={8} />
         <Box flexGrow={1} justifyContent="center">
-          <Text bold>{renderTitleContent(phase, wavePosition)}</Text>
+          <Text bold>
+            {renderTitleContent(phase, wavePosition, pageTitle, titleCharacters)}
+          </Text>
         </Box>
         <Box width={8} justifyContent="flex-end">
           <Text color={UI_COLORS.mutedText}>{APP_VERSION}</Text>
