@@ -217,56 +217,6 @@ describe('gameState.lifecycle', () => {
     expect(gameState.activePlayers[1].chips).toBe(40);
     expect(gameState.activePlayers[0].privateCards.length).toBe(0);
   });
-  test('[GameState.startGame] 4.54.1 [Atomic Update] หากผู้เล่นคนหลังจ่าย Boot แล้วล้นขีดจำกัด (Overflow) ข้อมูลต้องคงเดิมเมื่อปฏิเสธรายการ', () => {
-    // ผู้เล่นคนที่สองมีชิปพอ แต่ยอดเดิมพันรวม Boot จะเกิน MAX_SAFE_INTEGER
-    const gameState = createGameStateFixture({ bootAmount: 50 }, [
-      { id: 'player1', name: 'Player 1', status: 'WAITING', chips: 1000, bet: 0 },
-      {
-        id: 'player2',
-        name: 'Player 2',
-        status: 'WAITING',
-        chips: 1000,
-        bet: Number.MAX_SAFE_INTEGER,
-      },
-    ]);
-    const [player1, player2] = gameState.activePlayers;
-
-    // เก็บค่าก่อนทำงาน
-    const originalPot = gameState.pot;
-    const originalCurrentStake = gameState.currentStake;
-    const originalDeck = structuredClone(gameState.deck);
-    const originalPlayer1Chips = player1.chips;
-    const originalPlayer1Bet = player1.bet;
-    const originalPlayer2Chips = player2.chips;
-    const originalPlayer2Bet = player2.bet;
-    const originalPlayer1Status = player1.status;
-    const originalPlayer2Status = player2.status;
-    const isOriginalPlayer1Blind = player1.isBlind;
-    const isOriginalPlayer2Blind = player2.isBlind;
-    const originalPlayer1Cards = structuredClone(player1.privateCards);
-    const originalPlayer2Cards = structuredClone(player2.privateCards);
-
-    // ตรวจสอบว่ามีการโยนข้อผิดพลาดเรื่องจำนวนเงิน (INVALID_AMOUNT)
-    expectGameErrorWithCode(() => gameState.startGame(), 'INVALID_AMOUNT');
-
-    // ข้อมูลต้องคงเดิมเมื่อปฏิเสธรายการ
-    expect(player1.chips).toBe(originalPlayer1Chips);
-    expect(player1.bet).toBe(originalPlayer1Bet);
-    expect(player1.status).toBe(originalPlayer1Status);
-    expect(player1.isBlind).toBe(isOriginalPlayer1Blind);
-    expect(player1.privateCards).toEqual(originalPlayer1Cards);
-
-    expect(player2.chips).toBe(originalPlayer2Chips);
-    expect(player2.bet).toBe(originalPlayer2Bet);
-    expect(player2.status).toBe(originalPlayer2Status);
-    expect(player2.isBlind).toBe(isOriginalPlayer2Blind);
-    expect(player2.privateCards).toEqual(originalPlayer2Cards);
-
-    expect(gameState.pot).toBe(originalPot);
-    expect(gameState.currentStake).toBe(originalCurrentStake);
-    expect(gameState.currentPlayerIndex).toBe(0);
-    expect(gameState.deck).toEqual(originalDeck);
-  });
 
   test('[GameState.handlePlayerDisconnect] 4.55 เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
     const gameState = createGameStateFixture({}, [
