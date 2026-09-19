@@ -13,18 +13,18 @@ import { UsernameHelpFooter } from './username/UsernameHelpFooter';
 export interface EnterUsernameScreenProps {
   readonly onSubmit: (username: string) => void;
   readonly onBack?: () => void;
+  readonly networkMode?: 'LAN' | 'INTERNET';
+  readonly intent?: 'create' | 'join' | null;
 }
 
-export function EnterUsernameScreen({ onSubmit, onBack }: EnterUsernameScreenProps) {
+export function EnterUsernameScreen({
+  onSubmit,
+  onBack,
+  networkMode,
+  intent,
+}: EnterUsernameScreenProps) {
   const { columns, rows } = useTerminalSize();
-  const {
-    rawInput,
-    characterCount,
-    isLengthValid,
-    errorMessage,
-    handleInputChange,
-    handleInputSubmit,
-  } = useUsernameInput({ onSubmit, onBack });
+  const inputState = useUsernameInput({ onSubmit, onBack });
 
   const sizeStatus = getTerminalSizeStatus(columns, rows);
   if (sizeStatus !== 'OPTIMAL') {
@@ -56,12 +56,14 @@ export function EnterUsernameScreen({ onSubmit, onBack }: EnterUsernameScreenPro
         />
         <UsernameCard
           paddingX={paddingX}
-          rawInput={rawInput}
-          characterCount={characterCount}
-          isLengthValid={isLengthValid}
-          errorMessage={errorMessage}
-          onInputChange={handleInputChange}
-          onInputSubmit={handleInputSubmit}
+          rawInput={inputState.rawInput}
+          characterCount={inputState.characterCount}
+          isLengthValid={inputState.isLengthValid}
+          errorMessage={inputState.errorMessage}
+          onInputChange={inputState.handleInputChange}
+          onInputSubmit={inputState.handleInputSubmit}
+          networkMode={networkMode}
+          intent={intent}
         />
         <UsernameHelpFooter />
       </Box>

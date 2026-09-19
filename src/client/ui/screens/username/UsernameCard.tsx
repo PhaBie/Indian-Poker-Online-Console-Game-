@@ -13,6 +13,8 @@ export function UsernameCard({
   errorMessage,
   onInputChange,
   onInputSubmit,
+  networkMode,
+  intent,
 }: UsernameCardProps) {
   const hasError = Boolean(errorMessage);
 
@@ -26,7 +28,7 @@ export function UsernameCard({
       paddingY={1}
       marginY={0}
     >
-      <UsernameCardHeader />
+      <UsernameCardHeader networkMode={networkMode} intent={intent} />
       <UsernameInputField
         rawInput={rawInput}
         characterCount={characterCount}

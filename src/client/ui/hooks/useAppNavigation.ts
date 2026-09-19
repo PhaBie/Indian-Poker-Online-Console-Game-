@@ -59,6 +59,7 @@ export function useAppNavigation({
     screen,
     setScreen,
     playerName,
+    intent,
     networkMode,
     setNetworkMode,
     handleUsernameSubmit: (name: string) => {

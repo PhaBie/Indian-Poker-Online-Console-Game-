@@ -13,6 +13,11 @@ export interface UsernameStatusMessageProps {
   readonly characterCount: number;
 }
 
+export interface UsernameCardHeaderProps {
+  readonly networkMode?: 'LAN' | 'INTERNET';
+  readonly intent?: 'create' | 'join' | null;
+}
+
 export interface UsernameCardProps {
   readonly paddingX: number;
   readonly rawInput: string;
@@ -21,4 +26,6 @@ export interface UsernameCardProps {
   readonly errorMessage: string | null;
   readonly onInputChange: (value: string) => void;
   readonly onInputSubmit: (value: string) => void;
+  readonly networkMode?: 'LAN' | 'INTERNET';
+  readonly intent?: 'create' | 'join' | null;
 }

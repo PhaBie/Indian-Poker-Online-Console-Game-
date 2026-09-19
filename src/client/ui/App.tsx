@@ -104,6 +104,8 @@ function ActiveScreenRouter(props: ActiveScreenRouterProps) {
       <EnterUsernameScreen
         onSubmit={navigation.handleUsernameSubmit}
         onBack={navigation.handleBackFromUsername}
+        networkMode={navigation.networkMode}
+        intent={navigation.intent}
       />
     );
   }
