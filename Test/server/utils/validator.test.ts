@@ -18,10 +18,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       expect(result).not.toBeNull();
       expect(result?.type).toBe('CREATE_ROOM');
-      if (result && result.type === 'CREATE_ROOM') {
-        expect(result.payload.playerName).toBe('Thanathon');
-        expect(result.payload.bootAmount).toBe(100);
-      }
+      expect(result?.payload).toEqual({
+        playerName: 'Thanathon',
+        bootAmount: 100,
+      });
     });
 
     test('[Validator.validateClientEvent] 5.6 JOIN_ROOM ข้อมูลถูกต้องทั้งแบบมีและไม่มี reconnectToken → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -48,9 +48,11 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
       expect(resultWithoutToken?.type).toBe('JOIN_ROOM');
       expect(resultWithToken).not.toBeNull();
       expect(resultWithToken?.type).toBe('JOIN_ROOM');
-      if (resultWithToken && resultWithToken.type === 'JOIN_ROOM') {
-        expect(resultWithToken.payload.reconnectToken).toBe('reconnect_token_123');
-      }
+      expect(resultWithToken?.payload).toEqual({
+        playerName: 'PlayerTwo',
+        roomId: 'ROOM_001',
+        reconnectToken: 'reconnect_token_123',
+      });
     });
 
     test('[Validator.validateClientEvent] 5.7 LEAVE_ROOM ข้อมูลถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -90,9 +92,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       expect(result).not.toBeNull();
       expect(result?.type).toBe('LOAD_GAME');
-      if (result && result.type === 'LOAD_GAME') {
-        expect(result.payload.roomId).toBe('ROOM_999');
-      }
+      expect(result?.payload).toEqual({ roomId: 'ROOM_999' });
     });
 
     test('[Validator.validateClientEvent] 5.11 SEND_CHAT ข้อความแชทถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -105,9 +105,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       expect(result).not.toBeNull();
       expect(result?.type).toBe('SEND_CHAT');
-      if (result && result.type === 'SEND_CHAT') {
-        expect(result.payload.message).toBe('Good luck everyone!');
-      }
+      expect(result?.payload).toEqual({ message: 'Good luck everyone!' });
     });
 
     test('[Validator.validateClientEvent] 5.12 PLAYER_ACTION ครอบคลุมการกระทำทุกประเภท → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -124,19 +122,19 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
         { action: 'SEEN' },
       ] as const;
 
-      for (const item of actionsWithAmount) {
+      for (const actionWithAmount of actionsWithAmount) {
         const result = validator.validateClientEvent({
           type: 'PLAYER_ACTION',
-          payload: item,
+          payload: actionWithAmount,
         });
         expect(result).not.toBeNull();
         expect(result?.type).toBe('PLAYER_ACTION');
       }
 
-      for (const item of actionsWithoutAmount) {
+      for (const actionWithoutAmount of actionsWithoutAmount) {
         const result = validator.validateClientEvent({
           type: 'PLAYER_ACTION',
-          payload: item,
+          payload: actionWithoutAmount,
         });
         expect(result).not.toBeNull();
         expect(result?.type).toBe('PLAYER_ACTION');
@@ -153,10 +151,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       expect(result).not.toBeNull();
       expect(result?.type).toBe('CREATE_ROOM');
-      if (result && result.type === 'CREATE_ROOM') {
-        expect(result.payload.playerName).toBe('JsonPlayer');
-        expect(result.payload.bootAmount).toBe(200);
-      }
+      expect(result?.payload).toEqual({
+        playerName: 'JsonPlayer',
+        bootAmount: 200,
+      });
     });
 
     test('[Validator.validateClientEvent] 5.14 รองรับ Input ในรูปแบบ Buffer → แปลงและคืนค่า ClientEvent ถูกต้อง', () => {
