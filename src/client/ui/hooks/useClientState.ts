@@ -1,5 +1,7 @@
 import { useSyncExternalStore, useMemo } from 'react';
-import type { ClientState } from '../../state/ClientState';
+import type { ClientState, ClientStateSnapshot } from '../../state/ClientState';
+
+export type { ClientStateSnapshot };
 
 export function useClientState(clientState: ClientState) {
   // useSyncExternalStore needs a stable subscribe function

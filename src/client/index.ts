@@ -5,6 +5,7 @@ import { SocketClient } from './network/socketClient';
 import { ClientState } from './state/ClientState';
 import type { ServerEvent } from '../shared/types';
 import { App } from './ui/App';
+import { clearTerminalScreen, hideTerminalCursor } from './ui/hooks/useTerminalSize';
 
 /**
  * ดึง IPv4 ของเครื่องในวง LAN อัตโนมัติ
@@ -101,13 +102,28 @@ export function startClient(customTarget?: string): {
 }
 
 if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
+  clearTerminalScreen({ shouldRestoreCursor: false });
+  hideTerminalCursor();
+
+  process.on('exit', () => {
+    clearTerminalScreen({ shouldRestoreCursor: true });
+  });
+
+  process.on('SIGINT', () => {
+    clearTerminalScreen({ shouldRestoreCursor: true });
+    process.exit(0);
+  });
+
   const { clientState, connectionTarget, socketClient } = startClient();
-  // วาดหน้าจอ UI ของ Ink (ใช้ React.createElement เนื่องจากไฟล์นี้เป็น .ts ไม่ใช่ .tsx)
-  render(
+  const appInstance = render(
     React.createElement(App, {
       clientState,
       serverUrl: connectionTarget.url,
       socketClient,
     }),
   );
+
+  appInstance.waitUntilExit().then(() => {
+    clearTerminalScreen({ shouldRestoreCursor: true });
+  });
 }

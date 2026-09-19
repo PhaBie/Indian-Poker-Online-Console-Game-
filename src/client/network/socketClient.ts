@@ -54,8 +54,8 @@ export class SocketClient {
       this.isConnected = false;
     });
 
-    ws.on('error', (error) => {
-      console.error('[SocketClient] เกิดข้อผิดพลาดในการเชื่อมต่อ WebSocket:', error);
+    ws.on('error', () => {
+      this.isConnected = false;
     });
 
     this.transport = {
