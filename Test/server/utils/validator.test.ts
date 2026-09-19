@@ -16,11 +16,12 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(payload);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('CREATE_ROOM');
-      expect(result?.payload).toEqual({
-        playerName: 'Thanathon',
-        bootAmount: 100,
+      expect(result).toEqual({
+        type: 'CREATE_ROOM',
+        payload: {
+          playerName: 'Thanathon',
+          bootAmount: 100,
+        },
       });
     });
 
@@ -44,14 +45,20 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
       const resultWithoutToken = validator.validateClientEvent(eventWithoutToken);
       const resultWithToken = validator.validateClientEvent(eventWithToken);
 
-      expect(resultWithoutToken).not.toBeNull();
-      expect(resultWithoutToken?.type).toBe('JOIN_ROOM');
-      expect(resultWithToken).not.toBeNull();
-      expect(resultWithToken?.type).toBe('JOIN_ROOM');
-      expect(resultWithToken?.payload).toEqual({
-        playerName: 'PlayerTwo',
-        roomId: 'ROOM_001',
-        reconnectToken: 'reconnect_token_123',
+      expect(resultWithoutToken).toEqual({
+        type: 'JOIN_ROOM',
+        payload: {
+          playerName: 'PlayerTwo',
+          roomId: 'ROOM_001',
+        },
+      });
+      expect(resultWithToken).toEqual({
+        type: 'JOIN_ROOM',
+        payload: {
+          playerName: 'PlayerTwo',
+          roomId: 'ROOM_001',
+          reconnectToken: 'reconnect_token_123',
+        },
       });
     });
 
@@ -60,8 +67,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(event);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('LEAVE_ROOM');
+      expect(result).toEqual({ type: 'LEAVE_ROOM' });
     });
 
     test('[Validator.validateClientEvent] 5.8 START_GAME ข้อมูลถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -69,8 +75,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(event);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('START_GAME');
+      expect(result).toEqual({ type: 'START_GAME' });
     });
 
     test('[Validator.validateClientEvent] 5.9 SAVE_GAME ข้อมูลถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -78,8 +83,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(event);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('SAVE_GAME');
+      expect(result).toEqual({ type: 'SAVE_GAME' });
     });
 
     test('[Validator.validateClientEvent] 5.10 LOAD_GAME ข้อมูล roomId ถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -90,9 +94,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(event);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('LOAD_GAME');
-      expect(result?.payload).toEqual({ roomId: 'ROOM_999' });
+      expect(result).toEqual({
+        type: 'LOAD_GAME',
+        payload: { roomId: 'ROOM_999' },
+      });
     });
 
     test('[Validator.validateClientEvent] 5.11 SEND_CHAT ข้อความแชทถูกต้อง → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -103,9 +108,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(event);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('SEND_CHAT');
-      expect(result?.payload).toEqual({ message: 'Good luck everyone!' });
+      expect(result).toEqual({
+        type: 'SEND_CHAT',
+        payload: { message: 'Good luck everyone!' },
+      });
     });
 
     test('[Validator.validateClientEvent] 5.12 PLAYER_ACTION ครอบคลุมการกระทำทุกประเภท → คืนค่า ClientEvent ถูกต้อง', () => {
@@ -127,8 +133,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
           type: 'PLAYER_ACTION',
           payload: actionWithAmount,
         });
-        expect(result).not.toBeNull();
-        expect(result?.type).toBe('PLAYER_ACTION');
+        expect(result).toEqual({
+          type: 'PLAYER_ACTION',
+          payload: actionWithAmount,
+        });
       }
 
       for (const actionWithoutAmount of actionsWithoutAmount) {
@@ -136,8 +144,10 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
           type: 'PLAYER_ACTION',
           payload: actionWithoutAmount,
         });
-        expect(result).not.toBeNull();
-        expect(result?.type).toBe('PLAYER_ACTION');
+        expect(result).toEqual({
+          type: 'PLAYER_ACTION',
+          payload: actionWithoutAmount,
+        });
       }
     });
 
@@ -149,11 +159,12 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(jsonString);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('CREATE_ROOM');
-      expect(result?.payload).toEqual({
-        playerName: 'JsonPlayer',
-        bootAmount: 200,
+      expect(result).toEqual({
+        type: 'CREATE_ROOM',
+        payload: {
+          playerName: 'JsonPlayer',
+          bootAmount: 200,
+        },
       });
     });
 
@@ -166,8 +177,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(bufferData);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('START_GAME');
+      expect(result).toEqual({ type: 'START_GAME' });
     });
 
     test('[Validator.validateClientEvent] 5.15 รองรับ Input ในรูปแบบ Uint8Array → แปลงและคืนค่า ClientEvent ถูกต้อง', () => {
@@ -180,8 +190,7 @@ describe('5. ระบบตรวจสอบและคัดกรองข�
 
       const result = validator.validateClientEvent(uint8ArrayData);
 
-      expect(result).not.toBeNull();
-      expect(result?.type).toBe('LEAVE_ROOM');
+      expect(result).toEqual({ type: 'LEAVE_ROOM' });
     });
   });
 
