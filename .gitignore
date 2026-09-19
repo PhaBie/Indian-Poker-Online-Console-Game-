@@ -21,3 +21,8 @@ Thumbs.db
 # Project specifics
 bun.lockb
 Coverage/
+
+# Agent & Skills (Personal)
+.agent/
+.agents/
+skills/

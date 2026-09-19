@@ -1,7 +1,7 @@
+import { randomUUID, randomBytes } from 'crypto';
 import type { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
 
 export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
-  // รอคนเลือก
   return {
     id: player.id,
     name: player.name,
@@ -13,11 +13,11 @@ export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
 }
 
 export function generateRoomId(): string {
-  // รอคนเลือก
-  return '';
+  // Use randomBytes(3) which generates 6 hex characters (alphanumeric)
+  return randomBytes(3).toString('hex').toUpperCase();
 }
 
 export function generatePlayerId(): string {
-  // รอคนเลือก
-  return '';
+  // UUID is the standard for fast, unique player IDs
+  return randomUUID();
 }

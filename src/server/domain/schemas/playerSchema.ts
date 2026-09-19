@@ -18,7 +18,7 @@ const savedRankSchema = z.union([
 ]);
 
 // กำหนดรูปแบบไพ่แต่ละใบสำหรับข้อมูลที่โหลดกลับมา
-const savedCardSchema = z.object({
+export const savedCardSchema = z.object({
   // ดอกไพ่ต้องเป็นหนึ่งในสี่ค่านี้เท่านั้น
   suit: z.enum(['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS']),
 
