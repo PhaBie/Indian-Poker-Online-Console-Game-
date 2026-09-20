@@ -17,24 +17,37 @@ interface ActionButtonProps {
   readonly label: string;
 }
 
+const ACTION_COLORS: Readonly<Record<string, string>> = {
+  CALL: 'cyanBright',
+  BET: 'yellow',
+  SEE: 'magentaBright',
+  FOLD: 'redBright',
+  DUEL: 'greenBright',
+  SHOW: 'yellowBright',
+  ACCEPT: 'greenBright',
+  DECLINE: 'redBright',
+};
+
 function ActionButton({ isSelected, label }: ActionButtonProps) {
   const [action, amount] = label.split('|');
+  const actionColor = ACTION_COLORS[action] ?? 'white';
+  const hint = amount || undefined;
 
   return (
     <Box
       borderStyle="round"
-      borderColor={isSelected ? 'cyanBright' : 'gray'}
+      borderColor={isSelected ? actionColor : 'gray'}
       width={41}
       height={3}
       paddingX={1}
       justifyContent="space-between"
       alignItems="center"
     >
-      <Text color={isSelected ? 'cyanBright' : 'white'} bold={isSelected}>
+      <Text color={isSelected ? actionColor : 'white'} bold={isSelected}>
         {isSelected ? '● ' : '  '}
         {action}
       </Text>
-      <Text color={isSelected ? 'yellow' : 'gray'}>{amount}</Text>
+      {hint && <Text color={isSelected ? actionColor : 'gray'}>{hint}</Text>}
     </Box>
   );
 }
@@ -95,7 +108,7 @@ export function GameActionsPanel({
   }, [canChooseAction]);
 
   const menuItems = actionItems.map((item) => ({
-    label: `${item.label}|${item.hint ?? 'READY'}`,
+    label: item.hint ? `${item.label}|${item.hint}` : item.label,
     value: item.value,
   }));
 

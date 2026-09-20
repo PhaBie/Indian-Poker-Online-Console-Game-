@@ -1,4 +1,5 @@
 import { Box, Text } from 'ink';
+import { useEffect, useState } from 'react';
 import type { Card } from '../../../../shared/types';
 import type { PlayerSeatNodeProps, GamePlayerItem } from './types';
 import { CardView } from './CardView';
@@ -9,8 +10,53 @@ interface PlayerSeatHeaderProps {
   readonly isMe: boolean;
 }
 
+interface HandModeIndicatorProps {
+  readonly isBlind: boolean;
+}
+
+function HandModeIndicator({ isBlind }: HandModeIndicatorProps) {
+  const handMode = isBlind ? 'BLIND' : 'SEEN';
+  const displayText = `[${handMode}]`;
+  const [lightPosition, setLightPosition] = useState<number | null>(0);
+  const baseColor = isBlind ? 'yellow' : 'cyan';
+  const trailColor = isBlind ? 'yellowBright' : 'blueBright';
+  const lightColor = isBlind ? 'white' : 'cyanBright';
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => {
+        if (lightPosition === null) {
+          setLightPosition(0);
+          return;
+        }
+        setLightPosition(
+          lightPosition === displayText.length - 1 ? null : lightPosition + 1,
+        );
+      },
+      lightPosition === null ? 8_000 : 130,
+    );
+    return () => clearTimeout(timer);
+  }, [displayText.length, lightPosition]);
+
+  return (
+    <Text>
+      {Array.from(displayText).map((character, index) => {
+        const isLight = index === lightPosition;
+        const isTrail =
+          lightPosition !== null &&
+          index === (lightPosition - 1 + displayText.length) % displayText.length;
+        const color = isLight ? lightColor : isTrail ? trailColor : baseColor;
+        return (
+          <Text key={`${character}-${index}`} color={color} bold={isLight}>
+            {character}
+          </Text>
+        );
+      })}
+    </Text>
+  );
+}
+
 function PlayerSeatHeader({ player, isMe }: PlayerSeatHeaderProps) {
-  const handMode = player.isBlind ? 'BLIND' : 'SEEN';
   const displayName = isMe ? 'YOU' : player.name;
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
@@ -19,7 +65,7 @@ function PlayerSeatHeader({ player, isMe }: PlayerSeatHeaderProps) {
           {displayName}
         </Text>
         <Text color="gray"> </Text>
-        <Text color={player.isBlind ? 'yellow' : 'greenBright'}>[{handMode}]</Text>
+        <HandModeIndicator isBlind={player.isBlind} />
       </Text>
       <Text color="gray">
         STACK <Text color={isMe ? 'cyanBright' : 'white'}>${player.chips}</Text>
@@ -81,12 +127,10 @@ function PlayerCardsPanel({
 }
 
 function MySeatDetails({ player }: Pick<PlayerCardsPanelProps, 'player'>) {
-  const handMode = player.isBlind ? 'BLIND' : 'SEEN';
-
   return (
     <Box flexDirection="column" width={14}>
       <Text color="cyanBright" bold>
-        YOU <Text color={player.isBlind ? 'yellow' : 'greenBright'}>[{handMode}]</Text>
+        YOU <HandModeIndicator isBlind={player.isBlind} />
       </Text>
       <Text color="gray">
         STACK <Text color="cyanBright">${player.chips}</Text>
