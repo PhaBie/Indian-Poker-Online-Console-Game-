@@ -1,7 +1,10 @@
 import { WebSocketServer, type WebSocket } from 'ws';
+import type { IncomingMessage } from 'http';
 import { RoomManager } from './domain/models/RoomManager';
 import { StorageManager } from './infrastructure/StorageManager';
 import { Validator } from './utils/validator';
+import { acceptsConnection, getLanBindAddress } from './network/accessPolicy';
+import { isPrivateIPv4, type NetworkMode } from '../shared/networkMode';
 import {
   handleClientMessage,
   handleClientDisconnect,
@@ -18,7 +21,7 @@ export class PokerServer {
   private tokenMap: Map<string, string>; // token -> playerId
   public connectedClients: Map<WebSocket, SocketSession>;
 
-  constructor() {
+  constructor(public readonly networkMode: NetworkMode = 'LAN') {
     this.roomManager = new RoomManager();
     this.storageManager = new StorageManager();
     this.validator = new Validator();
@@ -43,10 +46,25 @@ export class PokerServer {
     };
   }
 
-  public start(port: number): void {
+  public start(
+    port: number,
+    host = this.networkMode === 'LAN' ? getLanBindAddress() : '127.0.0.1',
+  ): void {
     if (this.isRunning) return;
-
-    this.wss = new WebSocketServer({ port });
+    if (
+      !isPrivateIPv4(host) ||
+      (this.networkMode === 'INTERNET' && host !== '127.0.0.1')
+    ) {
+      throw new Error(
+        'Bind LAN to a local IPv4 address; Online must use loopback behind its tunnel.',
+      );
+    }
+    this.wss = new WebSocketServer({
+      port,
+      host,
+      verifyClient: ({ req }: { req: IncomingMessage }) =>
+        acceptsConnection(req, this.networkMode),
+    });
     this.isRunning = true;
     console.log(`[Server] WebSocket Server กำลังทำงานที่ Port ${port}`);
 
@@ -94,10 +112,10 @@ export class PokerServer {
   }
 }
 
-if (process.argv[1]?.includes('server') && !process.argv[1]?.includes('test')) {
+if (import.meta.main) {
   const port = Number(process.env.PORT) || 8080;
   const server = new PokerServer();
-  server.start(port);
-  console.log(`[Server] พร้อมรับการเชื่อมต่อ WS: ws://localhost:${port}`);
-  console.log(`[Server] หากต้องการทดสอบผ่าน NGROK ให้รัน: ngrok http ${port}`);
+  const host = process.env.LAN_HOST || getLanBindAddress();
+  server.start(port, host);
+  console.log(`[LAN] ws://${host}:${port} (local network only)`);
 }

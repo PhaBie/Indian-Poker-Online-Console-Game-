@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { SocketClient } from '../../network/socketClient';
 import type { ActiveScreen } from './useAppNavigation';
 import { executeUserSubmission } from './navigationActions';
+import { prepareConnectionUrl } from '../../../shared/networkMode';
 
 interface UseNavigationHandlersParams {
   readonly socketClient: SocketClient;
@@ -28,9 +29,14 @@ export function useNavigationHandlers({
 }: UseNavigationHandlersParams) {
   const handleConnectServer = useCallback(
     async (newUrl: string): Promise<boolean> => {
-      onClearState();
-      setCurrentServerUrl(newUrl);
-      return socketClient.connectWithTimeout(newUrl, 3000);
+      try {
+        const url = prepareConnectionUrl(newUrl, 'LAN');
+        onClearState();
+        setCurrentServerUrl(url);
+        return await socketClient.connectWithTimeout(url, 3000);
+      } catch {
+        return false;
+      }
     },
     [onClearState, setCurrentServerUrl, socketClient],
   );
@@ -49,7 +55,7 @@ export function useNavigationHandlers({
   const handleUsernameSubmit = useCallback(
     (name: string) => {
       setPlayerName(name);
-      if (intent === 'join' && networkMode === 'LAN') {
+      if (intent === 'join') {
         setScreen('tableLounge');
         socketClient.send({ type: 'GET_ROOMS' });
       } else {

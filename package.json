@@ -33,6 +33,8 @@
   "scripts": {
     "dev": "bun src/client/index.ts",
     "server": "bun src/server/index.ts",
+    "server:lan": "bun src/server/index.ts",
+    "server:online": "bun src/server/online.ts",
     "test": "bun test ./Test",
     "test:server": "bun test ./Test/server",
     "test:client": "bun test ./Test/client",

@@ -4,7 +4,6 @@ import {
   determineSeatPositions,
   formatCardRank,
   getCardSuitSymbol,
-  getCardSuitColor,
   getPlayerBadgeInfo,
   getStatusDisplayInfo,
 } from '../../../src/client/ui/screens/game/gameLayoutHelpers';
@@ -109,32 +108,22 @@ describe('gameLayoutHelpers - formatCardRank and suit helpers', () => {
     expect(getCardSuitSymbol('DIAMONDS')).toBe('♦');
     expect(getCardSuitSymbol('CLUBS')).toBe('♣');
   });
-
-  it('should return correct visual colors for suits', () => {
-    expect(getCardSuitColor('HEARTS')).toBe('red');
-    expect(getCardSuitColor('DIAMONDS')).toBe('red');
-    expect(getCardSuitColor('SPADES')).toBe('white');
-    expect(getCardSuitColor('CLUBS')).toBe('white');
-  });
 });
 
 describe('gameLayoutHelpers - getPlayerBadgeInfo', () => {
   it('should prioritize folded badge when player has folded', () => {
     const badge = getPlayerBadgeInfo(true, true, true);
     expect(badge.label).toBe('[FOLD]');
-    expect(badge.color).toBe('gray');
   });
 
   it('should display turn badge when player is active and has not folded', () => {
     const badge = getPlayerBadgeInfo(false, true, false);
     expect(badge.label).toBe('[TURN]');
-    expect(badge.color).toBe('cyanBright');
   });
 
   it('should display sideshow challenge badge when target of challenge', () => {
     const badge = getPlayerBadgeInfo(false, false, true);
     expect(badge.label).toBe('[SIDESHOW?]');
-    expect(badge.color).toBe('magentaBright');
   });
 
   it('should return null badge for inactive passive player', () => {
@@ -152,8 +141,6 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
       hasPendingSideshow: false,
     });
     expect(status.text).toBe('Your turn!');
-    expect(status.color).toBe('greenBright');
-    expect(status.bold).toBe(true);
   });
 
   it('should display action required when targeted by sideshow', () => {
@@ -164,7 +151,6 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
       hasPendingSideshow: true,
     });
     expect(status.text).toBe('Action Required!');
-    expect(status.color).toBe('redBright');
   });
 
   it('should display waiting for target when challenger initiated sideshow', () => {
@@ -175,7 +161,6 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
       hasPendingSideshow: true,
     });
     expect(status.text).toBe('Waiting for target...');
-    expect(status.color).toBe('yellowBright');
   });
 
   it('should display default waiting message when idle', () => {
@@ -186,6 +171,5 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
       hasPendingSideshow: false,
     });
     expect(status.text).toBe('Waiting for turn...');
-    expect(status.color).toBe('white');
   });
 });

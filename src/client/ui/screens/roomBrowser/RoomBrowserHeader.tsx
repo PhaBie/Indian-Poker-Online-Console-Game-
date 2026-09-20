@@ -5,34 +5,39 @@ import { ROOM_BROWSER_CONTENT_WIDTH } from './RoomBrowserTableHeader';
 interface RoomBrowserHeaderProps {
   readonly serverUrl: string;
   readonly playerName: string;
+  readonly networkMode?: 'LAN' | 'INTERNET';
   readonly lastError?: string | null;
 }
 
 export function RoomBrowserHeader({
   serverUrl,
   playerName,
+  networkMode = 'LAN',
   lastError,
 }: RoomBrowserHeaderProps) {
+  const isLan = networkMode === 'LAN';
+  const serverLabel = serverUrl.replace(/^wss?:\/\//, '').split(/[/?]/)[0];
   return (
     <Box flexDirection="column" width={ROOM_BROWSER_CONTENT_WIDTH} alignSelf="center">
-      <Box flexDirection="row" width="100%" justifyContent="space-between" marginBottom={2}>
-        <Box flexDirection="row" gap={2} alignItems="center">
-          <Text bold color={UI_COLORS.activeGreen}>[ LAN MODE ]</Text>
-          <Text color={UI_COLORS.dimText}>SERVER</Text>
-          <Text bold color={UI_COLORS.activeBlue}>{serverUrl}</Text>
-        </Box>
-        <Box marginX={2}>
-          <Text color={UI_COLORS.mutedText}>│</Text>
-        </Box>
-        <Box flexDirection="row" gap={1} alignItems="center">
-          <Text color={UI_COLORS.dimText}>PLAYER</Text>
-          <Text bold color={UI_COLORS.goldHighlight}>{playerName || 'Anonymous'}</Text>
-        </Box>
+      <Box justifyContent="space-between">
+        <Text bold color={isLan ? UI_COLORS.activeGreen : UI_COLORS.activeBlue}>
+          {isLan ? 'LAN LOBBY' : 'ONLINE LOBBY'}
+        </Text>
+        <Text color={UI_COLORS.dimText}>
+          PLAYER{' '}
+          <Text bold color={UI_COLORS.goldHighlight}>
+            {playerName || 'Anonymous'}
+          </Text>
+        </Text>
       </Box>
-
+      <Text color={UI_COLORS.mutedText}>
+        {isLan ? `Server  ${serverLabel}` : 'Browse available rooms'}
+      </Text>
       {lastError && (
-        <Box justifyContent="center" marginBottom={1}>
-          <Text color={UI_COLORS.errorRed} bold>✕ {lastError}</Text>
+        <Box marginTop={1}>
+          <Text color={UI_COLORS.errorRed} wrap="truncate-end">
+            {lastError}
+          </Text>
         </Box>
       )}
     </Box>

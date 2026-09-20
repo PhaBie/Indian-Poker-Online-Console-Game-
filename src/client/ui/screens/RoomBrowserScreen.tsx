@@ -20,12 +20,18 @@ function getLobbyContainerWidth(terminalColumns: number): number {
   return Math.min(98, Math.round(93 + (terminalColumns - 140) * 0.1));
 }
 
-function getMaxVisibleRoomRows(terminalRows: number): number {
-  return Math.max(3, Math.min(6, Math.floor((terminalRows - 15) / 3)));
+function getMaxVisibleRoomRows(terminalRows: number, hasError: boolean): number {
+  // Reserve header, footer and both scroll hints before allocating two lines per room.
+  return Math.max(
+    1,
+    Math.min(6, Math.floor((terminalRows - 19 - (hasError ? 2 : 0)) / 2)),
+  );
 }
 
 export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
-  const [isEnteringCode, setIsEnteringCode] = useState(props.initialEnteringCode ?? false);
+  const [isEnteringCode, setIsEnteringCode] = useState(
+    props.initialEnteringCode ?? false,
+  );
   const [roomCode, setRoomCode] = useState('');
   const { columns, rows } = useTerminalSize();
 
@@ -66,18 +72,19 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
       alignItems="center"
       justifyContent="center"
     >
-      <Box width={containerWidth} flexDirection="column">
+      <Box width={containerWidth} flexDirection="column" flexShrink={0}>
         <ShimmeringHeader containerWidth={containerWidth} pageTitle="ROOM LOBBY" />
         <Box
           flexDirection="column"
           borderStyle="round"
           borderColor={UI_COLORS.goldBorder}
           paddingX={3}
-          paddingY={2}
+          paddingY={1}
           minHeight={18}
           width="100%"
         >
           <RoomBrowserHeader
+            networkMode={props.networkMode}
             serverUrl={props.serverUrl}
             playerName={props.playerName}
             lastError={props.lastError}
@@ -97,7 +104,7 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
             <RoomBrowserTable
               rooms={props.rooms}
               selectedIndex={selectedIndex}
-              maxVisibleRows={getMaxVisibleRoomRows(rows)}
+              maxVisibleRows={getMaxVisibleRoomRows(rows, Boolean(props.lastError))}
             />
           )}
         </Box>

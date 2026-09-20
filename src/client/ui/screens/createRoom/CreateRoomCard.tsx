@@ -124,7 +124,7 @@ export function CreateRoomCard({
           <NetworkOptionRow
             numericChoice="2"
             title="Online Mode"
-            description="Internet (Ngrok Relay)"
+            description="Shared online server"
             isSelected={selectedMode === 'INTERNET'}
             isSubmitting={isSubmitting}
             arrowGlyph={glyph}

@@ -3,6 +3,7 @@ import type { RoomSummaryDTO } from '../../../../shared/types';
 export type { RoomSummaryDTO };
 
 export interface RoomBrowserScreenProps {
+  readonly networkMode?: 'LAN' | 'INTERNET';
   readonly rooms: RoomSummaryDTO[];
   readonly playerName: string;
   readonly serverUrl: string;

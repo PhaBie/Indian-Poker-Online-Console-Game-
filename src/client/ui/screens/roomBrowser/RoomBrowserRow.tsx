@@ -1,7 +1,11 @@
 import { Box, Text } from 'ink';
 import type { RoomSummaryDTO } from './types';
 import { UI_COLORS } from '../../theme/colors';
-import { COLUMN_WIDTHS, formatGridCell, ROOM_BROWSER_CONTENT_WIDTH } from './RoomBrowserTableHeader';
+import {
+  COLUMN_WIDTHS,
+  formatGridCell,
+  ROOM_BROWSER_CONTENT_WIDTH,
+} from './RoomBrowserTableHeader';
 
 interface RoomBrowserRowProps {
   readonly room: RoomSummaryDTO;
@@ -26,10 +30,13 @@ export function RoomBrowserRow({ room, isSelected }: RoomBrowserRowProps) {
   const textColor = isSelected ? UI_COLORS.goldHighlight : UI_COLORS.primaryText;
 
   return (
-    <Box flexDirection="row" width={ROOM_BROWSER_CONTENT_WIDTH} paddingY={1}>
+    <Box flexDirection="row" width={ROOM_BROWSER_CONTENT_WIDTH}>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text bold={isSelected} color={textColor}>
-        {formatGridCell(`${isSelected ? '❯' : ' '} #${room.roomId}`, COLUMN_WIDTHS.roomId)}
+        {formatGridCell(
+          `${isSelected ? '❯' : ' '} #${room.roomId}`,
+          COLUMN_WIDTHS.roomId,
+        )}
       </Text>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text bold={isSelected} color={textColor}>
@@ -37,7 +44,11 @@ export function RoomBrowserRow({ room, isSelected }: RoomBrowserRowProps) {
       </Text>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text bold={isSelected} color={textColor}>
-        {formatGridCell(`${room.playerCount} / ${room.maxPlayers}`, COLUMN_WIDTHS.players, 'center')}
+        {formatGridCell(
+          `${room.playerCount} / ${room.maxPlayers}`,
+          COLUMN_WIDTHS.players,
+          'center',
+        )}
       </Text>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text color={textColor}>

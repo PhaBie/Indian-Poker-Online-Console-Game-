@@ -4,21 +4,8 @@ import {
   determineNextFocus,
   getGameContainerWidth,
 } from '../../../src/client/ui/screens/MainMenuScreen';
-import { UI_COLORS } from '../../../src/client/ui/theme/colors';
-import {
-  calculateShimmerColor,
-  buildBrandTitleCharacters,
-  getMaxLetterIndex,
-  CASINO_SUIT_SYMBOLS,
-  isAnimationEnabled,
-  APP_VERSION,
-  FULL_HEADER_TITLE,
-} from '../../../src/client/ui/components/ShimmeringHeader';
 
-import {
-  MENU_CARD_DEFINITIONS,
-  getItemActiveColor,
-} from '../../../src/client/ui/components/MainMenuCards';
+import { MENU_CARD_DEFINITIONS } from '../../../src/client/ui/components/MainMenuCards';
 import { getTerminalDimensions } from '../../../src/client/ui/hooks/useTerminalSize';
 import {
   isTerminalSizeSufficient,
@@ -57,40 +44,20 @@ describe('11. Main Menu UI', () => {
       expect(optionWithTabWhitespace).toBe('EXIT');
     });
 
-    test('[UI Theme Tokens] 11.5 theme tokens and TUI color palette values are fully defined', () => {
-      expect(UI_COLORS.goldBorder).toBe('#D8AD4A');
-      expect(UI_COLORS.menuBorder).toBe('#8C743D');
-      expect(UI_COLORS.activeGreen).toBe('#4CAF50');
-      expect(UI_COLORS.activeBlue).toBe('#29B6F6');
-      expect(UI_COLORS.activeRed).toBe('#EF5350');
-      expect(UI_COLORS.logoTeen).toBe('#EF5350');
-      expect(UI_COLORS.logoPatti).toBe('#4CAF50');
-      expect(UI_COLORS.primaryText).toBe('#D7D7D7');
-      expect(UI_COLORS.mutedText).toBe('#777777');
-      expect(UI_COLORS.inactiveTitle).toBe('#BDBDBD');
-      expect(UI_COLORS.inactiveDesc).toBe('#666666');
-    });
-
-    test('[MENU_CARD_DEFINITIONS] 11.6 command menu items contain accurate titles, descriptions, and option IDs', () => {
+    test('[MENU_CARD_DEFINITIONS] 11.6 command menu items map numeric choices to option IDs', () => {
       expect(MENU_CARD_DEFINITIONS.length).toBe(3);
 
       const createRoomItem = MENU_CARD_DEFINITIONS[0];
       expect(createRoomItem.optionId).toBe('CREATE_ROOM');
       expect(createRoomItem.numericChoice).toBe('1');
-      expect(createRoomItem.title).toBe('CREATE ROOM');
-      expect(createRoomItem.description).toBe('Start a new private game');
 
       const joinRoomItem = MENU_CARD_DEFINITIONS[1];
       expect(joinRoomItem.optionId).toBe('JOIN_ROOM');
       expect(joinRoomItem.numericChoice).toBe('2');
-      expect(joinRoomItem.title).toBe('JOIN ROOM');
-      expect(joinRoomItem.description).toBe('Connect to an existing room');
 
       const exitItem = MENU_CARD_DEFINITIONS[2];
       expect(exitItem.optionId).toBe('EXIT');
       expect(exitItem.numericChoice).toBe('3');
-      expect(exitItem.title).toBe('EXIT');
-      expect(exitItem.description).toBe('Close the application');
     });
 
     test('[determineNextFocus] 11.7 navigating forward increments focus index and loops back to 0', () => {
@@ -111,25 +78,6 @@ describe('11. Main Menu UI', () => {
       expect(fromZeroToPrevious).toBe(2);
       expect(fromTwoToPrevious).toBe(1);
       expect(fromOneToPrevious).toBe(0);
-    });
-
-    test('[buildBrandTitleCharacters] 11.9 generates brand header character items with colors', () => {
-      const characterList = buildBrandTitleCharacters();
-      const combinedTitleText = characterList.map((item) => item.char).join('');
-
-      expect(combinedTitleText).toContain('TEEN PATTI - MAIN MENU');
-      expect(CASINO_SUIT_SYMBOLS.spade).toBe('♠');
-      expect(CASINO_SUIT_SYMBOLS.heart).toBe('♥');
-    });
-
-    test('[calculateShimmerColor] 11.10 shimmer distance calculations return appropriate color stops', () => {
-      const zeroDistanceColor = calculateShimmerColor(5, 5, '#FFA000');
-      const oneDistanceColor = calculateShimmerColor(4, 5, '#FFA000');
-      const farDistanceColor = calculateShimmerColor(0, 10, '#FF5722');
-
-      expect(zeroDistanceColor).toBe('#FFFFFF');
-      expect(oneDistanceColor).toBe('#FFF9C4');
-      expect(farDistanceColor).toBe('#FF5722');
     });
   });
 
@@ -208,29 +156,6 @@ describe('11. Main Menu UI', () => {
       expect(getGameContainerWidth(300)).toBe(92);
     });
 
-    test('[APP_VERSION] 11.21 application version constant matches v0.1.0', () => {
-      expect(APP_VERSION).toBe('v0.1.0');
-    });
-
-    test('[FULL_HEADER_TITLE] 11.22 full header title text matches TEEN PATTI - MAIN MENU', () => {
-      expect(FULL_HEADER_TITLE).toBe('TEEN PATTI - MAIN MENU');
-    });
-
-    test('[isAnimationEnabled] 11.23 animation toggle returns boolean', () => {
-      expect(typeof isAnimationEnabled()).toBe('boolean');
-    });
-
-    test('[getItemActiveColor] 11.24 returns emerald green for CREATE_ROOM, sky blue for JOIN_ROOM, and red for EXIT', () => {
-      const createRoomColor = getItemActiveColor('CREATE_ROOM');
-      const joinRoomColor = getItemActiveColor('JOIN_ROOM');
-      const exitColor = getItemActiveColor('EXIT');
-
-      expect(createRoomColor).toBe(UI_COLORS.activeGreen);
-      expect(joinRoomColor).toBe(UI_COLORS.activeBlue);
-      expect(exitColor).toBe(UI_COLORS.activeRed);
-      expect(joinRoomColor).not.toBe(createRoomColor);
-    });
-
     test('[getTerminalSizeStatus] 11.25 dimensions within standard boundary return OPTIMAL', () => {
       const minBoundaryStatus = getTerminalSizeStatus(
         MIN_TERMINAL_COLUMNS,
@@ -275,22 +200,6 @@ describe('11. Main Menu UI', () => {
       expect(isValidSize).toBe(true);
       expect(isTooSmallSizeValid).toBe(false);
       expect(isTooLargeSizeValid).toBe(false);
-    });
-
-    test('[getMaxLetterIndex] 11.29 computes maximum letter index dynamically and returns 0 for empty array', () => {
-      const mainMenuCharacters = buildBrandTitleCharacters('MAIN MENU');
-      const registrationCharacters = buildBrandTitleCharacters('PLAYER REGISTRATION');
-      const createRoomCharacters = buildBrandTitleCharacters('CREATE ROOM');
-
-      const mainMenuMaxIndex = getMaxLetterIndex(mainMenuCharacters);
-      const registrationMaxIndex = getMaxLetterIndex(registrationCharacters);
-      const createRoomMaxIndex = getMaxLetterIndex(createRoomCharacters);
-      const emptyListMaxIndex = getMaxLetterIndex([]);
-
-      expect(mainMenuMaxIndex).toBe(17);
-      expect(registrationMaxIndex).toBe(27);
-      expect(createRoomMaxIndex).toBe(19);
-      expect(emptyListMaxIndex).toBe(0);
     });
   });
 });

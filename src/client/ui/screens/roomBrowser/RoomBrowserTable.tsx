@@ -1,7 +1,11 @@
 import { Box, Text } from 'ink';
 import type { RoomSummaryDTO } from './types';
 import { UI_COLORS } from '../../theme/colors';
-import { RoomBrowserTableHeader, ROOM_BROWSER_CONTENT_WIDTH, buildGridBorder } from './RoomBrowserTableHeader';
+import {
+  RoomBrowserTableHeader,
+  ROOM_BROWSER_CONTENT_WIDTH,
+  buildGridBorder,
+} from './RoomBrowserTableHeader';
 import { RoomBrowserRow } from './RoomBrowserRow';
 import { RoomBrowserEmptyState } from './RoomBrowserEmptyState';
 
@@ -54,19 +58,16 @@ export function RoomBrowserTable({
       marginTop={1}
     >
       {hasRoomsAbove && (
-        <Text color={UI_COLORS.dimText}>
-          {' '.repeat(ROOM_BROWSER_CONTENT_WIDTH - 2)}▲ {start} more rooms
-        </Text>
+        <Box justifyContent="flex-end">
+          <Text color={UI_COLORS.dimText}>▲ {start} more rooms</Text>
+        </Box>
       )}
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('┌', '┬', '┐')}</Text>
       <RoomBrowserTableHeader />
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('├', '┼', '┤')}</Text>
       {visibleRooms.map((room, index) => (
         <Box key={room.roomId} flexDirection="column">
-          <RoomBrowserRow
-            room={room}
-            isSelected={start + index === selectedIndex}
-          />
+          <RoomBrowserRow room={room} isSelected={start + index === selectedIndex} />
           {index < visibleRooms.length - 1 && (
             <Text color={UI_COLORS.mutedText}>{buildGridBorder('├', '┼', '┤')}</Text>
           )}
@@ -74,9 +75,9 @@ export function RoomBrowserTable({
       ))}
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('└', '┴', '┘')}</Text>
       {hasRoomsBelow && (
-        <Text color={UI_COLORS.dimText}>
-          {' '.repeat(ROOM_BROWSER_CONTENT_WIDTH - 2)}▼ {rooms.length - end} more rooms
-        </Text>
+        <Box justifyContent="flex-end">
+          <Text color={UI_COLORS.dimText}>▼ {rooms.length - end} more rooms</Text>
+        </Box>
       )}
       <Box marginTop={1}>
         <Text color={UI_COLORS.mutedText}>

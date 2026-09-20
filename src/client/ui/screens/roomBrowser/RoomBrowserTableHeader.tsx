@@ -11,16 +11,12 @@ const COLUMN_WIDTHS = {
 
 export { COLUMN_WIDTHS };
 
-export const ROOM_BROWSER_CONTENT_WIDTH = Object.values(COLUMN_WIDTHS).reduce(
-  (total, width) => total + width,
-  0,
-) + Object.keys(COLUMN_WIDTHS).length + 1;
+export const ROOM_BROWSER_CONTENT_WIDTH =
+  Object.values(COLUMN_WIDTHS).reduce((total, width) => total + width, 0) +
+  Object.keys(COLUMN_WIDTHS).length +
+  1;
 
-export function buildGridBorder(
-  left: string,
-  junction: string,
-  right: string,
-): string {
+export function buildGridBorder(left: string, junction: string, right: string): string {
   const segments = Object.values(COLUMN_WIDTHS).map((width) => '─'.repeat(width));
   return `${left}${segments.join(junction)}${right}`;
 }
@@ -31,8 +27,15 @@ export function formatGridCell(
   alignment: 'left' | 'center' = 'left',
 ): string {
   const availableWidth = Math.max(0, width - 2);
-  const truncated = value.slice(0, availableWidth);
-  const remaining = availableWidth - truncated.length;
+  let truncated = '';
+  const segments = new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(
+    value,
+  );
+  for (const { segment } of segments) {
+    if (Bun.stringWidth(truncated + segment) > availableWidth) break;
+    truncated += segment;
+  }
+  const remaining = availableWidth - Bun.stringWidth(truncated);
 
   if (alignment === 'center') {
     const leftPadding = Math.floor(remaining / 2);

@@ -7,44 +7,12 @@ export function RoomBrowserHelpFooter({
   readonly isEnteringCode?: boolean;
 }) {
   return (
-    <Box flexDirection="row" justifyContent="center" marginTop={1} gap={1}>
-      {isEnteringCode ? (
-        <>
-          <Text color={UI_COLORS.mutedText}>
-            <Text color={UI_COLORS.white}>[ ENTER ]</Text> Join
-          </Text>
-          <Text color={UI_COLORS.mutedText}>•</Text>
-          <Text color={UI_COLORS.mutedText}>
-            <Text color={UI_COLORS.white}>[ N ]</Text> Change Name
-          </Text>
-          <Text color={UI_COLORS.mutedText}>•</Text>
-          <Text color={UI_COLORS.mutedText}>
-            <Text color={UI_COLORS.white}>[ ESC ]</Text> Back
-          </Text>
-        </>
-      ) : (
-        <>
+    <Box justifyContent="center" marginTop={1}>
       <Text color={UI_COLORS.mutedText}>
-        <Text color={UI_COLORS.white}>[ ↑/↓ ]</Text> Select
+        {isEnteringCode
+          ? 'ENTER Join  •  N Name  •  ESC Back'
+          : '↑/↓ Select  •  ENTER Join  •  N Name  •  C Code  •  ESC Back'}
       </Text>
-      <Text color={UI_COLORS.mutedText}>•</Text>
-      <Text color={UI_COLORS.mutedText}>
-        <Text color={UI_COLORS.white}>[ ENTER ]</Text> Join
-      </Text>
-      <Text color={UI_COLORS.mutedText}>•</Text>
-      <Text color={UI_COLORS.mutedText}>
-        <Text color={UI_COLORS.white}>[ N ]</Text> Change Name
-      </Text>
-      <Text color={UI_COLORS.mutedText}>•</Text>
-      <Text color={UI_COLORS.mutedText}>
-        <Text color={UI_COLORS.white}>[ C ]</Text> Code
-      </Text>
-      <Text color={UI_COLORS.mutedText}>•</Text>
-      <Text color={UI_COLORS.mutedText}>
-        <Text color={UI_COLORS.white}>[ ESC ]</Text> Back
-      </Text>
-        </>
-      )}
     </Box>
   );
 }

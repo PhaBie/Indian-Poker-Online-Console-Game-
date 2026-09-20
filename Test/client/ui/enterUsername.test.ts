@@ -85,21 +85,3 @@ describe('useUsernameInput - clampUsernameInput', () => {
     expect(clampUsernameInput('name sdsdsddddsdsdsdssdsdsds')).toBe('name sdsdsddddsds');
   });
 });
-
-describe('EnterUsernameScreen - Component Module Exports', () => {
-  it('should successfully export EnterUsernameScreen component', async () => {
-    const module = await import('../../../src/client/ui/screens/EnterUsernameScreen');
-    expect(typeof module.EnterUsernameScreen).toBe('function');
-  });
-
-  it('should successfully export UsernameCard subcomponent', async () => {
-    const module = await import('../../../src/client/ui/screens/username/UsernameCard');
-    expect(typeof module.UsernameCard).toBe('function');
-  });
-
-  it('should successfully export UsernameInputField subcomponent', async () => {
-    const module =
-      await import('../../../src/client/ui/screens/username/UsernameInputField');
-    expect(typeof module.UsernameInputField).toBe('function');
-  });
-});

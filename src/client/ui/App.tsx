@@ -9,6 +9,7 @@ import { CreateRoomScreen } from './screens/CreateRoomScreen';
 import { JoinRoomScreen } from './screens/JoinRoomScreen';
 import { EnterUsernameScreen } from './screens/EnterUsernameScreen';
 import { ServerConnectionScreen } from './screens/ServerConnectionScreen';
+import { OnlineConnectionScreen } from './screens/OnlineConnectionScreen';
 import { RoomBrowserScreen } from './screens/RoomBrowserScreen';
 import { WaitingRoomScreen } from './screens/WaitingRoomScreen';
 import { GameScreen } from './screens/GameScreen';
@@ -112,9 +113,21 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
       />
     );
   }
+  if (screen === 'onlineConnection') {
+    return (
+      <OnlineConnectionScreen
+        error={navigation.onlineError}
+        onRetry={navigation.retryOnline}
+        onBack={() =>
+          navigation.setScreen(navigation.intent === 'create' ? 'createRoom' : 'joinRoom')
+        }
+      />
+    );
+  }
   if (screen === 'tableLounge') {
     return (
       <RoomBrowserScreen
+        networkMode={navigation.networkMode}
         rooms={state.availableRooms}
         playerName={navigation.playerName}
         serverUrl={navigation.currentServerUrl || serverUrl}

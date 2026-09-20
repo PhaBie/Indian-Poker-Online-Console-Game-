@@ -14,6 +14,7 @@ export class SocketClient {
   private transport: Transport | null;
   private wsInstance: WebSocket | null;
   private connectionEpoch: number;
+  private cancelPendingConnection: (() => void) | null = null;
 
   constructor() {
     this.isConnected = false;
@@ -81,33 +82,31 @@ export class SocketClient {
   }
 
   public connectWithTimeout(url: string, timeoutMs: number = 3000): Promise<boolean> {
+    this.connect(url);
+    if (this.isConnected) return Promise.resolve(true);
     return new Promise((resolve) => {
       let isResolved = false;
-      const timeoutTimer = setTimeout(() => {
-        if (!isResolved) {
-          isResolved = true;
-          this.disconnect();
-          resolve(false);
-        }
-      }, timeoutMs);
-
-      this.connect(url);
-      if (this.isConnected) {
+      const previousConnectionChange = this.onConnectionChange;
+      const finish = (isSuccess: boolean) => {
+        if (isResolved) return;
         isResolved = true;
         clearTimeout(timeoutTimer);
-        resolve(true);
-        return;
-      }
-
-      const previousConnectionChange = this.onConnectionChange;
-      this.onConnectionChange = (connected) => {
-        previousConnectionChange?.(connected);
-        if (connected && !isResolved) {
-          isResolved = true;
-          clearTimeout(timeoutTimer);
-          resolve(true);
+        if (this.onConnectionChange === handleConnectionChange) {
+          this.onConnectionChange = previousConnectionChange;
         }
+        this.cancelPendingConnection = null;
+        resolve(isSuccess);
       };
+      const handleConnectionChange = (connected: boolean) => {
+        previousConnectionChange?.(connected);
+        if (connected) finish(true);
+      };
+      const timeoutTimer = setTimeout(() => {
+        finish(false);
+        this.disconnect();
+      }, timeoutMs);
+      this.cancelPendingConnection = () => finish(false);
+      this.onConnectionChange = handleConnectionChange;
     });
   }
 
@@ -131,12 +130,17 @@ export class SocketClient {
   }
 
   public disconnect(): void {
+    this.cancelPendingConnection?.();
     this.connectionEpoch++;
     this.setConnected(false);
-    this.transport?.close?.();
     if (this.wsInstance) {
       this.wsInstance.removeAllListeners?.();
-      this.wsInstance.close();
+      this.wsInstance.on('error', () => undefined);
+      if (this.wsInstance.readyState === WebSocket.CONNECTING)
+        this.wsInstance.terminate();
+      else this.wsInstance.close();
+    } else {
+      this.transport?.close?.();
     }
     this.transport = null;
     this.wsInstance = null;

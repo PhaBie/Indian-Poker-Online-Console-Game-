@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { SocketClient } from '../../network/socketClient';
 import type { ClientStateSnapshot } from '../../state/ClientState';
 import {
@@ -8,11 +8,14 @@ import {
   createMenuNavigationActions,
 } from './navigationActions';
 import { useNavigationHandlers } from './useNavigationHandlers';
+import { useOnlineConnection } from './useOnlineConnection';
+import { getOnlineServerUrl } from '../../config';
 
 export type ActiveScreen =
   | 'intro'
   | 'mainMenu'
   | 'serverConnection'
+  | 'onlineConnection'
   | 'tableLounge'
   | 'enterName'
   | 'createRoom'
@@ -32,6 +35,7 @@ export interface UseAppNavigationParams {
   readonly state: ClientStateSnapshot;
   readonly socketClient: SocketClient;
   readonly initialServerUrl?: string;
+  readonly onlineServerUrl?: string;
   readonly onClearState: () => void;
   readonly onClearError: () => void;
 }
@@ -68,6 +72,7 @@ export function useAppNavigation({
   state,
   socketClient,
   initialServerUrl = 'ws://127.0.0.1:8080',
+  onlineServerUrl = getOnlineServerUrl(),
   onClearState,
   onClearError,
 }: UseAppNavigationParams) {
@@ -78,8 +83,49 @@ export function useAppNavigation({
   const [pendingTarget, setPendingTarget] = useState<string>('');
   const [currentServerUrl, setCurrentServerUrl] = useState<string>(initialServerUrl);
   const [isChangingName, setIsChangingName] = useState(false);
-  const [resumeRoomCode, setResumeRoomCode] = useState(false);
+  const [shouldResumeRoomCode, setResumeRoomCode] = useState(false);
   const [nameChangeReturn, setNameChangeReturn] = useState<'lobby' | 'code'>('lobby');
+  const tableActions = useMemo(
+    () => createTableLoungeActions(socketClient, playerName),
+    [socketClient, playerName],
+  );
+  const online = useOnlineConnection({
+    screen,
+    intent,
+    playerName,
+    serverUrl: onlineServerUrl,
+    socketClient,
+    setScreen,
+    setCurrentServerUrl,
+  });
+
+  const selectNetwork = (mode: 'LAN' | 'INTERNET', nextIntent: 'create' | 'join') => {
+    onClearError();
+    setIntent(nextIntent);
+    setPendingTarget('');
+    setResumeRoomCode(false);
+    setNetworkMode(mode);
+    if (mode === 'INTERNET') {
+      socketClient.disconnect();
+      onClearState();
+      setScreen('onlineConnection');
+    } else if (networkMode !== 'LAN' || !socketClient.isConnected) {
+      socketClient.disconnect();
+      onClearState();
+      setCurrentServerUrl(initialServerUrl);
+      setScreen('serverConnection');
+    } else if (!playerName) {
+      setScreen('enterName');
+    } else if (nextIntent === 'create') {
+      socketClient.send({
+        type: 'CREATE_ROOM',
+        payload: { playerName, bootAmount: 50, maxPlayers: 4 },
+      });
+    } else {
+      setScreen('tableLounge');
+      socketClient.send({ type: 'GET_ROOMS' });
+    }
+  };
 
   const handleIntroFinish = () => {
     setScreen(playerName ? 'mainMenu' : 'enterName');
@@ -107,13 +153,25 @@ export function useAppNavigation({
   };
 
   const handleInitialUsernameSubmit = (name: string) => {
-    handlers.handleInitialUsernameSubmit(name);
     if (isChangingName) {
+      setPlayerName(name);
       setResumeRoomCode(nameChangeReturn === 'code');
       setIsChangingName(false);
       setScreen('tableLounge');
       socketClient.send({ type: 'GET_ROOMS' });
+      return;
     }
+    handlers.handleInitialUsernameSubmit(name);
+  };
+
+  const handleBackFromUsername = () => {
+    if (isChangingName) {
+      setResumeRoomCode(nameChangeReturn === 'code');
+      setIsChangingName(false);
+      setScreen('tableLounge');
+      return;
+    }
+    setScreen(resolveBackScreenFromIntent(intent));
   };
 
   return {
@@ -125,50 +183,19 @@ export function useAppNavigation({
     setNetworkMode,
     currentServerUrl,
     ...handlers,
-    ...createTableLoungeActions(socketClient, playerName),
+    ...online,
+    ...tableActions,
     ...createGameFlowActions(socketClient, onClearState, setScreen, intent),
     ...createMenuNavigationActions(setIntent, setScreen),
     handleIntroFinish,
     handleChangeName,
     handleInitialUsernameSubmit,
-    resumeRoomCode,
+    resumeRoomCode: shouldResumeRoomCode,
     clearResumeRoomCode: () => setResumeRoomCode(false),
-    handleJoinSubmit: (method: 'LAN' | 'INTERNET', target: string) => {
-      setNetworkMode(method);
-      setPendingTarget(target);
-      if (method === 'LAN' && !socketClient.isConnected) {
-        setScreen('serverConnection');
-      } else if (playerName) {
-        if (method === 'LAN') {
-          setScreen('tableLounge');
-          socketClient.send({ type: 'GET_ROOMS' });
-        } else {
-          socketClient.send({
-            type: 'JOIN_ROOM',
-            payload: { playerName, roomId: target },
-          });
-        }
-      } else {
-        setScreen('enterName');
-      }
-    },
-    handleBackFromUsername: () => setScreen(resolveBackScreenFromIntent(intent)),
-    handleCreateRoomModeSelect: (mode: 'LAN' | 'INTERNET') => {
-      setNetworkMode(mode);
-      if (playerName) {
-        if (mode === 'LAN' && !socketClient.isConnected) {
-          setScreen('serverConnection');
-        } else {
-          socketClient.send({
-            type: 'CREATE_ROOM',
-            payload: { playerName, bootAmount: 50, maxPlayers: 4 },
-          });
-        }
-        return;
-      }
-      setScreen(
-        mode === 'LAN' && !socketClient.isConnected ? 'serverConnection' : 'enterName',
-      );
-    },
+    handleJoinSubmit: (method: 'LAN' | 'INTERNET', _target: string) =>
+      selectNetwork(method, 'join'),
+    handleBackFromUsername,
+    handleCreateRoomModeSelect: (mode: 'LAN' | 'INTERNET') =>
+      selectNetwork(mode, 'create'),
   };
 }

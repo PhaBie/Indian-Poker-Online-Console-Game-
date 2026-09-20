@@ -6,6 +6,7 @@ import { ClientState } from './state/ClientState';
 import type { ServerEvent } from '../shared/types';
 import { App } from './ui/App';
 import { clearTerminalScreen, hideTerminalCursor } from './ui/hooks/useTerminalSize';
+import { isPrivateIPv4, prepareConnectionUrl } from '../shared/networkMode';
 
 /**
  * ดึง IPv4 ของเครื่องในวง LAN อัตโนมัติ
@@ -14,7 +15,7 @@ export function getLocalIPv4(): string {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const net of interfaces[name] || []) {
-      if (net.family === 'IPv4' && !net.internal) {
+      if (net.family === 'IPv4' && !net.internal && isPrivateIPv4(net.address)) {
         return net.address;
       }
     }
@@ -96,7 +97,11 @@ export function startClient(customTarget?: string): {
   };
 
   // เริ่มต้นเชื่อมต่อ
-  socketClient.connect(connectionTarget.url);
+  if (connectionTarget.mode === 'LAN') {
+    socketClient.connect(prepareConnectionUrl(connectionTarget.url, 'LAN'));
+  } else {
+    process.env.POKER_ONLINE_URL = connectionTarget.url;
+  }
 
   return { socketClient, clientState, connectionTarget };
 }
@@ -118,7 +123,10 @@ if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
   const appInstance = render(
     React.createElement(App, {
       clientState,
-      serverUrl: connectionTarget.url,
+      serverUrl:
+        connectionTarget.mode === 'LAN'
+          ? connectionTarget.url
+          : `ws://${getLocalIPv4()}:8080`,
       socketClient,
     }),
   );
