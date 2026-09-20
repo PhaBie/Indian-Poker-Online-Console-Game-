@@ -3,6 +3,7 @@ import type { SocketClient } from '../../network/socketClient';
 import type { ActiveScreen } from './useAppNavigation';
 import { executeUserSubmission } from './navigationActions';
 import { prepareConnectionUrl } from '../../../shared/networkMode';
+import type { RoomMaxPlayers } from '../screens/createRoom/types';
 
 interface UseNavigationHandlersParams {
   readonly socketClient: SocketClient;
@@ -10,6 +11,7 @@ interface UseNavigationHandlersParams {
   readonly intent: 'create' | 'join' | null;
   readonly networkMode: 'LAN' | 'INTERNET';
   readonly pendingTarget: string;
+  readonly pendingMaxPlayers: RoomMaxPlayers;
   readonly setPlayerName: (name: string) => void;
   readonly setScreen: (screen: ActiveScreen) => void;
   readonly setCurrentServerUrl: (url: string) => void;
@@ -22,6 +24,7 @@ export function useNavigationHandlers({
   intent,
   networkMode,
   pendingTarget,
+  pendingMaxPlayers,
   setPlayerName,
   setScreen,
   setCurrentServerUrl,
@@ -45,12 +48,19 @@ export function useNavigationHandlers({
     if (!playerName) {
       setScreen('enterName');
     } else if (intent === 'create') {
-      executeUserSubmission('create', playerName, 'LAN', '', socketClient);
+      executeUserSubmission(
+        'create',
+        playerName,
+        'LAN',
+        '',
+        socketClient,
+        pendingMaxPlayers,
+      );
     } else {
       setScreen('tableLounge');
       socketClient.send({ type: 'GET_ROOMS' });
     }
-  }, [playerName, intent, socketClient, setScreen]);
+  }, [pendingMaxPlayers, playerName, intent, socketClient, setScreen]);
 
   const handleUsernameSubmit = useCallback(
     (name: string) => {
@@ -59,10 +69,25 @@ export function useNavigationHandlers({
         setScreen('tableLounge');
         socketClient.send({ type: 'GET_ROOMS' });
       } else {
-        executeUserSubmission(intent, name, networkMode, pendingTarget, socketClient);
+        executeUserSubmission(
+          intent,
+          name,
+          networkMode,
+          pendingTarget,
+          socketClient,
+          pendingMaxPlayers,
+        );
       }
     },
-    [intent, networkMode, pendingTarget, socketClient, setPlayerName, setScreen],
+    [
+      intent,
+      networkMode,
+      pendingMaxPlayers,
+      pendingTarget,
+      socketClient,
+      setPlayerName,
+      setScreen,
+    ],
   );
 
   const handleInitialUsernameSubmit = useCallback(

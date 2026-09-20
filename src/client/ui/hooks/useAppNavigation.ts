@@ -10,6 +10,7 @@ import {
 import { useNavigationHandlers } from './useNavigationHandlers';
 import { useOnlineConnection } from './useOnlineConnection';
 import { getOnlineServerUrl } from '../../config';
+import type { RoomMaxPlayers } from '../screens/createRoom/types';
 
 export type ActiveScreen =
   | 'intro'
@@ -81,6 +82,7 @@ export function useAppNavigation({
   const [intent, setIntent] = useState<'create' | 'join' | null>(null);
   const [networkMode, setNetworkMode] = useState<'LAN' | 'INTERNET'>('LAN');
   const [pendingTarget, setPendingTarget] = useState<string>('');
+  const [pendingMaxPlayers, setPendingMaxPlayers] = useState<RoomMaxPlayers>(4);
   const [currentServerUrl, setCurrentServerUrl] = useState<string>(initialServerUrl);
   const [isChangingName, setIsChangingName] = useState(false);
   const [shouldResumeRoomCode, setResumeRoomCode] = useState(false);
@@ -97,12 +99,18 @@ export function useAppNavigation({
     socketClient,
     setScreen,
     setCurrentServerUrl,
+    maxPlayers: pendingMaxPlayers,
   });
 
-  const selectNetwork = (mode: 'LAN' | 'INTERNET', nextIntent: 'create' | 'join') => {
+  const selectNetwork = (
+    mode: 'LAN' | 'INTERNET',
+    nextIntent: 'create' | 'join',
+    maxPlayers: RoomMaxPlayers = pendingMaxPlayers,
+  ) => {
     onClearError();
     setIntent(nextIntent);
     setPendingTarget('');
+    if (nextIntent === 'create') setPendingMaxPlayers(maxPlayers);
     setResumeRoomCode(false);
     setNetworkMode(mode);
     if (mode === 'INTERNET') {
@@ -119,7 +127,7 @@ export function useAppNavigation({
     } else if (nextIntent === 'create') {
       socketClient.send({
         type: 'CREATE_ROOM',
-        payload: { playerName, bootAmount: 50, maxPlayers: 4 },
+        payload: { playerName, bootAmount: 50, maxPlayers },
       });
     } else {
       setScreen('tableLounge');
@@ -138,6 +146,7 @@ export function useAppNavigation({
     intent,
     networkMode,
     pendingTarget,
+    pendingMaxPlayers,
     setPlayerName,
     setScreen,
     setCurrentServerUrl,
@@ -195,7 +204,9 @@ export function useAppNavigation({
     handleJoinSubmit: (method: 'LAN' | 'INTERNET', _target: string) =>
       selectNetwork(method, 'join'),
     handleBackFromUsername,
-    handleCreateRoomModeSelect: (mode: 'LAN' | 'INTERNET') =>
-      selectNetwork(mode, 'create'),
+    handleCreateRoomModeSelect: (
+      mode: 'LAN' | 'INTERNET',
+      maxPlayers: RoomMaxPlayers = 4,
+    ) => selectNetwork(mode, 'create', maxPlayers),
   };
 }

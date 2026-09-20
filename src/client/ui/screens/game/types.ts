@@ -13,6 +13,7 @@ export interface GameScreenProps {
   readonly myPlayerId: string | null;
   readonly socketClient: SocketClient;
   readonly serverError?: string | null;
+  readonly onLeave: () => void;
 }
 
 export interface TableSeatPositions<T> {
@@ -43,18 +44,19 @@ export interface PlayerSeatNodeProps {
 export interface ActionMenuItem {
   readonly label: string;
   readonly value: string;
+  readonly hint?: string;
 }
 
 export interface GameActionsPanelProps {
   readonly isMyTurn: boolean;
   readonly inputMode: 'menu' | 'input_bet';
   readonly betAmount: string;
-  readonly isPendingSideshowTarget: boolean;
   readonly actionItems: readonly ActionMenuItem[];
-  readonly sideshowItems: readonly ActionMenuItem[];
   readonly onActionSelect: (item: { label: string; value: string }) => void;
   readonly onBetChange: (amount: string) => void;
   readonly onBetSubmit: (amount: string) => void;
+  readonly statusContext: StatusStateContext;
+  readonly isInputDisabled?: boolean;
 }
 
 export interface StatusStateContext {
@@ -71,8 +73,8 @@ export interface GameStatusPanelProps {
 }
 
 export interface GameTableLayoutProps {
-  readonly roomId: string;
   readonly pot: number;
+  readonly currentStake: number;
   readonly seatPositions: TableSeatPositions<GamePlayerItem>;
   readonly currentTurnPlayerId: string | null;
   readonly myPlayerId: string | null;

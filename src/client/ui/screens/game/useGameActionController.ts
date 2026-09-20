@@ -1,21 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { GameActionType } from '../../../../shared/types';
 import type { SocketClient } from '../../../network/socketClient';
-import type { ActionMenuItem } from './types';
-
-export const ACTION_MENU_ITEMS: readonly ActionMenuItem[] = [
-  { label: 'Bet/Raise', value: 'BET' },
-  { label: 'Call', value: 'CALL' },
-  { label: 'Fold', value: 'FOLD' },
-  { label: 'Seen (ดูไพ่)', value: 'SEEN' },
-  { label: 'Sideshow (ดวล)', value: 'SIDESHOW' },
-  { label: 'Show Hand', value: 'SHOW' },
-];
-
-export const SIDESHOW_ACTION_ITEMS: readonly ActionMenuItem[] = [
-  { label: 'Accept Sideshow', value: 'ACCEPT_SIDESHOW' },
-  { label: 'Reject Sideshow', value: 'REJECT_SIDESHOW' },
-];
 
 export function useGameActionController(socketClient: SocketClient) {
   const [localError, setLocalError] = useState<string | null>(null);

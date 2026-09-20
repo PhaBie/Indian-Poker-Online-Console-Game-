@@ -11,6 +11,7 @@ interface OnlineConnectionParams {
   socketClient: SocketClient;
   setScreen: (screen: ActiveScreen) => void;
   setCurrentServerUrl: (url: string) => void;
+  maxPlayers: 2 | 3 | 4;
 }
 
 export function useOnlineConnection({
@@ -21,9 +22,9 @@ export function useOnlineConnection({
   socketClient,
   setScreen,
   setCurrentServerUrl,
+  maxPlayers,
 }: OnlineConnectionParams) {
   const [error, setError] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (screen !== 'onlineConnection') return;
     let isCancelled = false;
@@ -41,7 +42,7 @@ export function useOnlineConnection({
         } else if (intent === 'create') {
           socketClient.send({
             type: 'CREATE_ROOM',
-            payload: { playerName, bootAmount: 50, maxPlayers: 4 },
+            payload: { playerName, bootAmount: 50, maxPlayers },
           });
           setScreen('tableLounge');
         } else {
@@ -71,7 +72,7 @@ export function useOnlineConnection({
     socketClient,
     setScreen,
     setCurrentServerUrl,
-    attempt,
+    maxPlayers,
   ]);
-  return { onlineError: error, retryOnline: () => setAttempt((value) => value + 1) };
+  return { onlineError: error };
 }

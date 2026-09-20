@@ -1,23 +1,71 @@
 import { Box, Text } from 'ink';
+import { useEffect, useState } from 'react';
 import SelectInput from 'ink-select-input';
 import TextInput from 'ink-text-input';
 import type { GameActionsPanelProps } from './types';
+import { getStatusDisplayInfo } from './gameLayoutHelpers';
 
 interface BetInputFormProps {
   readonly betAmount: string;
   readonly onBetChange: (value: string) => void;
   readonly onBetSubmit: (value: string) => void;
+  readonly isInputDisabled: boolean;
 }
 
-function BetInputForm({ betAmount, onBetChange, onBetSubmit }: BetInputFormProps) {
+interface ActionButtonProps {
+  readonly isSelected?: boolean;
+  readonly label: string;
+}
+
+function ActionButton({ isSelected, label }: ActionButtonProps) {
+  const [action, amount] = label.split('|');
+
+  return (
+    <Box
+      borderStyle="round"
+      borderColor={isSelected ? 'cyanBright' : 'gray'}
+      width={41}
+      height={3}
+      paddingX={1}
+      justifyContent="space-between"
+      alignItems="center"
+    >
+      <Text color={isSelected ? 'cyanBright' : 'white'} bold={isSelected}>
+        {isSelected ? '● ' : '  '}
+        {action}
+      </Text>
+      <Text color={isSelected ? 'yellow' : 'gray'}>{amount}</Text>
+    </Box>
+  );
+}
+
+function EmptyIndicator() {
+  return <Text />;
+}
+
+function BetInputForm({
+  betAmount,
+  onBetChange,
+  onBetSubmit,
+  isInputDisabled,
+}: BetInputFormProps) {
   return (
     <Box flexDirection="column">
-      <Text color="cyanBright">Enter Bet Amount:</Text>
+      <Text color="yellow" bold>
+        BET AMOUNT
+      </Text>
       <Box flexDirection="row">
-        <Text color="white">&gt; </Text>
-        <TextInput value={betAmount} onChange={onBetChange} onSubmit={onBetSubmit} />
+        <Text color="cyanBright">$ </Text>
+        <TextInput
+          value={betAmount}
+          onChange={onBetChange}
+          onSubmit={onBetSubmit}
+          focus={!isInputDisabled}
+        />
       </Box>
-      <Text color="gray">(Press Enter to confirm)</Text>
+      <Box marginTop={1}>
+        <Text color="gray">ENTER CONFIRM</Text>
+      </Box>
     </Box>
   );
 }
@@ -26,51 +74,98 @@ export function GameActionsPanel({
   isMyTurn,
   inputMode,
   betAmount,
-  isPendingSideshowTarget,
   actionItems,
-  sideshowItems,
   onActionSelect,
   onBetChange,
   onBetSubmit,
+  statusContext,
+  isInputDisabled = false,
 }: GameActionsPanelProps) {
+  const [isPulseOn, setIsPulseOn] = useState(false);
+  const status = getStatusDisplayInfo(statusContext);
+  const canChooseAction = isMyTurn || statusContext.isPendingSideshowTarget;
+  const panelTitle = statusContext.isPendingSideshowTarget
+    ? 'SIDESHOW REQUEST'
+    : 'YOUR MOVE';
+
+  useEffect(() => {
+    if (!canChooseAction) return;
+    const timer = setInterval(() => setIsPulseOn((value) => !value), 450);
+    return () => clearInterval(timer);
+  }, [canChooseAction]);
+
+  const menuItems = actionItems.map((item) => ({
+    label: `${item.label}|${item.hint ?? 'READY'}`,
+    value: item.value,
+  }));
+
   return (
     <Box
       borderStyle="round"
-      borderColor="magentaBright"
+      borderColor={canChooseAction ? 'yellow' : 'gray'}
       flexDirection="column"
       paddingX={1}
-      height={14}
+      width={45}
+      height={38}
+      marginLeft={1}
     >
-      <Box justifyContent="center" marginBottom={1}>
-        <Text color="magentaBright" bold>
-          ACTIONS
+      <Box justifyContent="space-between" marginBottom={1}>
+        <Text color={canChooseAction ? 'yellow' : 'gray'} bold>
+          {canChooseAction ? `${isPulseOn ? '●' : '○'} ${panelTitle}` : 'TABLE STATUS'}
+        </Text>
+        <Text color={status.color} bold={status.bold}>
+          ●
         </Text>
       </Box>
 
-      {isMyTurn && inputMode === 'menu' && (
-        <SelectInput items={[...actionItems]} onSelect={onActionSelect} />
+      {canChooseAction && inputMode === 'menu' && (
+        <SelectInput
+          items={menuItems}
+          onSelect={onActionSelect}
+          isFocused={!isInputDisabled}
+          indicatorComponent={EmptyIndicator}
+          itemComponent={ActionButton}
+        />
       )}
 
-      {isMyTurn && inputMode === 'input_bet' && (
+      {canChooseAction && inputMode === 'input_bet' && (
         <BetInputForm
           betAmount={betAmount}
           onBetChange={onBetChange}
           onBetSubmit={onBetSubmit}
+          isInputDisabled={isInputDisabled}
         />
       )}
 
-      {isPendingSideshowTarget && (
-        <Box flexDirection="column">
-          <Text color="redBright">Sideshow Requested!</Text>
-          <SelectInput items={[...sideshowItems]} onSelect={onActionSelect} />
+      {!canChooseAction && inputMode === 'menu' && (
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Text color={status.color} bold={status.bold}>
+            {status.text}
+          </Text>
+          <Box marginTop={2}>
+            <Text color="gray">WATCH THE TABLE</Text>
+          </Box>
         </Box>
       )}
 
-      {!isMyTurn && !isPendingSideshowTarget && (
-        <Box alignItems="center" justifyContent="center" flexGrow={1}>
-          <Text color="gray">Waiting...</Text>
-        </Box>
-      )}
+      <Box flexGrow={1} />
+      <Box
+        borderStyle="single"
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderColor="gray"
+        paddingTop={1}
+        flexDirection="column"
+      >
+        <Text color="gray">KEYBOARD CONTROLS</Text>
+        <Text color="gray">↑↓ Navigate · Enter select</Text>
+      </Box>
     </Box>
   );
 }

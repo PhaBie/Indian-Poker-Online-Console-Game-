@@ -35,6 +35,8 @@ export interface TerminalOutOfRangeProps {
   readonly currentColumns: number;
   readonly currentRows: number;
   readonly status: 'TOO_SMALL' | 'TOO_LARGE';
+  readonly minimumColumns?: number;
+  readonly minimumRows?: number;
   readonly onExit?: () => void;
 }
 
@@ -42,12 +44,16 @@ interface OutOfRangeContentProps {
   readonly currentColumns: number;
   readonly currentRows: number;
   readonly status: 'TOO_SMALL' | 'TOO_LARGE';
+  readonly minimumColumns: number;
+  readonly minimumRows: number;
 }
 
 function TerminalOutOfRangeContent({
   currentColumns,
   currentRows,
   status,
+  minimumColumns,
+  minimumRows,
 }: OutOfRangeContentProps) {
   const isTooSmall = status === 'TOO_SMALL';
   const headerText = isTooSmall
@@ -57,7 +63,7 @@ function TerminalOutOfRangeContent({
     ? 'Please zoom out (Ctrl -) or expand your terminal window.'
     : 'Please zoom in (Ctrl +) or reduce your terminal window size.';
   const limitText = isTooSmall
-    ? `Minimum required: ${MIN_TERMINAL_COLUMNS} x ${MIN_TERMINAL_ROWS} (Columns x Rows)`
+    ? `Minimum required: ${minimumColumns} x ${minimumRows} (Columns x Rows)`
     : `Maximum recommended: ${MAX_TERMINAL_COLUMNS} x ${MAX_TERMINAL_ROWS} (Columns x Rows)`;
 
   return (
@@ -92,6 +98,8 @@ export function TerminalOutOfRangeScreen({
   currentRows,
   status,
   onExit,
+  minimumColumns = MIN_TERMINAL_COLUMNS,
+  minimumRows = MIN_TERMINAL_ROWS,
 }: TerminalOutOfRangeProps) {
   useInput((_, key) => {
     if (key.escape && onExit) {
@@ -111,6 +119,8 @@ export function TerminalOutOfRangeScreen({
         currentColumns={currentColumns}
         currentRows={currentRows}
         status={status}
+        minimumColumns={minimumColumns}
+        minimumRows={minimumRows}
       />
     </Box>
   );

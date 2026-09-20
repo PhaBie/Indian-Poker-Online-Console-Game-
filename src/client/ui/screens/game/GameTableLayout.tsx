@@ -1,6 +1,7 @@
-import { Box, Text } from 'ink';
+import { Box } from 'ink';
 import type { GameTableLayoutProps, GamePlayerItem } from './types';
 import { PlayerSeatNode } from './PlayerSeatNode';
+import { PotDisplayBox } from './PotDisplayBox';
 
 interface PlayerSlotProps {
   readonly player: GamePlayerItem | undefined;
@@ -34,38 +35,32 @@ function PlayerSlot({
   );
 }
 
-function PotDisplayBox({ pot }: { readonly pot: number }) {
-  return (
-    <Box
-      borderStyle="round"
-      borderColor="gray"
-      paddingX={3}
-      paddingY={1}
-      flexDirection="column"
-      alignItems="center"
-    >
-      <Text color="white">TOTAL POT</Text>
-      <Text color="greenBright" bold>
-        ${pot}
-      </Text>
-    </Box>
-  );
+interface TableCenterRowProps {
+  readonly leftSlot: React.ReactNode;
+  readonly rightSlot: React.ReactNode;
+  readonly pot: number;
+  readonly currentStake: number;
 }
 
-function TableHeaderBar({ roomId }: { readonly roomId: string }) {
+function TableCenterRow({ leftSlot, rightSlot, pot, currentStake }: TableCenterRowProps) {
   return (
-    <Box justifyContent="space-between" paddingX={1}>
-      <Text color="white">ROOM: #{roomId.substring(0, 6)}</Text>
-      <Text color="greenBright" bold>
-        PLAYING
-      </Text>
+    <Box flexDirection="row" alignItems="center" width="100%">
+      <Box width={36} justifyContent="center" alignItems="center">
+        {leftSlot}
+      </Box>
+      <Box width={30} flexDirection="row" justifyContent="center">
+        <PotDisplayBox pot={pot} currentStake={currentStake} />
+      </Box>
+      <Box width={36} justifyContent="center" alignItems="center">
+        {rightSlot}
+      </Box>
     </Box>
   );
 }
 
 export function GameTableLayout({
-  roomId,
   pot,
+  currentStake,
   seatPositions,
   currentTurnPlayerId,
   myPlayerId,
@@ -85,36 +80,31 @@ export function GameTableLayout({
   return (
     <Box
       borderStyle="round"
-      borderColor="cyan"
-      width={70}
+      borderColor="cyanBright"
+      width={104}
+      height={38}
       flexDirection="column"
       position="relative"
     >
-      <TableHeaderBar roomId={roomId} />
-
       <Box
         flexGrow={1}
         flexDirection="column"
         justifyContent="space-between"
-        paddingY={1}
+        paddingTop={1}
       >
         <Box justifyContent="center" width="100%">
-          <Box marginLeft={18}>{renderSlot(seatPositions.topPlayer)}</Box>
+          {renderSlot(seatPositions.topPlayer)}
         </Box>
 
-        <Box
-          flexDirection="row"
-          justifyContent="space-between"
-          alignItems="center"
-          paddingX={2}
-        >
-          {renderSlot(seatPositions.leftPlayer)}
-          <PotDisplayBox pot={pot} />
-          {renderSlot(seatPositions.rightPlayer)}
-        </Box>
+        <TableCenterRow
+          leftSlot={renderSlot(seatPositions.leftPlayer)}
+          rightSlot={renderSlot(seatPositions.rightPlayer)}
+          pot={pot}
+          currentStake={currentStake}
+        />
 
         <Box justifyContent="center" width="100%">
-          <Box marginLeft={18}>{renderSlot(seatPositions.bottomPlayer)}</Box>
+          {renderSlot(seatPositions.bottomPlayer)}
         </Box>
       </Box>
     </Box>

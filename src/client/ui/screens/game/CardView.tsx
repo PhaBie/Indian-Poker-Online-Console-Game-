@@ -2,19 +2,21 @@ import { Box, Text } from 'ink';
 import type { CardViewProps } from './types';
 import { formatCardRank, getCardSuitSymbol, getCardSuitColor } from './gameLayoutHelpers';
 
+export const CARD_WIDTH = 7;
+export const CARD_HEIGHT = 3;
+
 function HiddenCardBox() {
   return (
     <Box
       borderStyle="single"
-      borderColor="gray"
+      borderColor="magenta"
       paddingX={1}
-      marginX={0.5}
-      width={5}
-      height={3}
+      width={CARD_WIDTH}
+      height={CARD_HEIGHT}
       justifyContent="center"
       alignItems="center"
     >
-      <Text color="gray">?</Text>
+      <Text color="magenta">♠</Text>
     </Box>
   );
 }
@@ -30,9 +32,8 @@ export function CardView({ card, isHidden = false }: CardViewProps) {
         borderStyle="single"
         borderColor="gray"
         paddingX={1}
-        marginX={0.5}
-        width={5}
-        height={3}
+        width={CARD_WIDTH}
+        height={CARD_HEIGHT}
       />
     );
   }
@@ -46,9 +47,8 @@ export function CardView({ card, isHidden = false }: CardViewProps) {
       borderStyle="single"
       borderColor={cardColor}
       paddingX={0}
-      marginX={0.5}
-      width={5}
-      height={3}
+      width={CARD_WIDTH}
+      height={CARD_HEIGHT}
       flexDirection="column"
       alignItems="center"
       justifyContent="center"

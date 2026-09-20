@@ -54,6 +54,7 @@ function renderGameplayScreens({
         roomId={state.currentRoomId}
         players={state.latestGameState.players}
         hostId={state.latestGameState.hostId}
+        maxPlayers={state.latestGameState.maxPlayers}
         myPlayerId={state.myPlayerId}
         onStart={navigation.handleStartGame}
         onToggleReady={navigation.handleToggleReady}
@@ -70,6 +71,7 @@ function renderGameplayScreens({
         myPlayerId={state.myPlayerId}
         socketClient={socketClient}
         serverError={state.lastError}
+        onLeave={navigation.handleLeaveRoom}
       />
     );
   }
@@ -117,7 +119,6 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
     return (
       <OnlineConnectionScreen
         error={navigation.onlineError}
-        onRetry={navigation.retryOnline}
         onBack={() =>
           navigation.setScreen(navigation.intent === 'create' ? 'createRoom' : 'joinRoom')
         }
@@ -162,7 +163,6 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
         intent={navigation.intent}
         isSessionSetup={navigation.intent === null}
         initialValue={navigation.playerName}
-        serverError={state.lastError}
       />
     );
   }
@@ -184,7 +184,6 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
       <JoinRoomScreen
         onBack={() => navigation.setScreen('mainMenu')}
         onJoinSubmit={navigation.handleJoinSubmit}
-        serverError={state.lastError}
       />
     );
   }
@@ -208,6 +207,16 @@ export function App({ clientState, serverUrl, socketClient }: AppProps) {
     onClearState: () => clientState.clearState(),
     onClearError: () => clientState.clearError(),
   });
+
+  useEffect(() => {
+    if (navigation.screen !== 'tableLounge' || !state.lastError) return;
+
+    const dismissTimer = setTimeout(() => {
+      clientState.clearError();
+    }, 2500);
+
+    return () => clearTimeout(dismissTimer);
+  }, [clientState, navigation.screen, state.lastError]);
 
   useEffect(() => {
     hideTerminalCursor();

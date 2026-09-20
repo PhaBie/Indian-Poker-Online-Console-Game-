@@ -4,6 +4,7 @@ import type { ActiveScreen } from './useAppNavigation';
 export function sendCreateRoomMessage(
   socketClient: SocketClient,
   playerName: string,
+  maxPlayers: 2 | 3 | 4 = 4,
 ): void {
   if (!socketClient.isConnected) {
     throw new Error(
@@ -12,7 +13,7 @@ export function sendCreateRoomMessage(
   }
   socketClient.send({
     type: 'CREATE_ROOM',
-    payload: { playerName, bootAmount: 50, maxPlayers: 4 },
+    payload: { playerName, bootAmount: 50, maxPlayers },
   });
 }
 
@@ -61,9 +62,10 @@ export function executeUserSubmission(
   networkMode: 'LAN' | 'INTERNET',
   pendingTarget: string,
   socketClient: SocketClient,
+  maxPlayers: 2 | 3 | 4 = 4,
 ): void {
   if (intent === 'create') {
-    sendCreateRoomMessage(socketClient, name);
+    sendCreateRoomMessage(socketClient, name, maxPlayers);
   } else if (intent === 'join') {
     sendJoinRoomMessage(socketClient, networkMode, pendingTarget, name);
   }
@@ -114,9 +116,7 @@ export function createGameFlowActions(
   };
 }
 
-export function resolveLeaveRoomScreen(
-  intent: 'create' | 'join' | null,
-): ActiveScreen {
+export function resolveLeaveRoomScreen(intent: 'create' | 'join' | null): ActiveScreen {
   return intent === 'create' ? 'mainMenu' : 'tableLounge';
 }
 
