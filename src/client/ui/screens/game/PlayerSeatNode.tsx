@@ -79,6 +79,7 @@ interface PlayerCardsRowProps {
   readonly isBlind: boolean;
   readonly hasFolded: boolean;
   readonly myCards: readonly Card[];
+  readonly cardBorderGlowColors: readonly string[];
 }
 
 interface PlayerCardsPanelProps {
@@ -88,6 +89,7 @@ interface PlayerCardsPanelProps {
   readonly badge: ReturnType<typeof getPlayerBadgeInfo>;
   readonly borderColor: string;
   readonly myCards: readonly Card[];
+  readonly cardBorderGlowColors: readonly string[];
 }
 
 function PlayerCardsPanel({
@@ -97,13 +99,14 @@ function PlayerCardsPanel({
   badge,
   borderColor,
   myCards,
+  cardBorderGlowColors,
 }: PlayerCardsPanelProps) {
   return (
     <Box
       borderStyle="round"
       borderColor={borderColor}
       width={26}
-      height={7}
+      height={8}
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
@@ -113,8 +116,9 @@ function PlayerCardsPanel({
         isBlind={player.isBlind}
         hasFolded={hasFolded}
         myCards={myCards}
+        cardBorderGlowColors={cardBorderGlowColors}
       />
-      <Box justifyContent="space-between" width={22}>
+      <Box justifyContent="space-between" width={22} marginTop={1}>
         <Text color="gray">BET ${player.bet}</Text>
         {badge.label ? (
           <Text color={badge.color}>{badge.label}</Text>
@@ -139,9 +143,14 @@ function MySeatDetails({ player }: Pick<PlayerCardsPanelProps, 'player'>) {
   );
 }
 
-function PlayerCardsRow({ isMe, isBlind, hasFolded, myCards }: PlayerCardsRowProps) {
+function PlayerCardsRow({
+  isMe,
+  isBlind,
+  hasFolded,
+  myCards,
+  cardBorderGlowColors,
+}: PlayerCardsRowProps) {
   const shouldHideCards = !isMe || (isBlind && !hasFolded);
-
   return (
     <Box flexDirection="row" justifyContent="center">
       {[0, 1, 2].map((cardIndex) => (
@@ -149,6 +158,9 @@ function PlayerCardsRow({ isMe, isBlind, hasFolded, myCards }: PlayerCardsRowPro
           key={`card-slot-${cardIndex}`}
           card={shouldHideCards ? undefined : myCards[cardIndex]}
           isHidden={shouldHideCards}
+          hiddenBorderColor={
+            shouldHideCards ? cardBorderGlowColors[cardIndex] : undefined
+          }
         />
       ))}
     </Box>
@@ -161,6 +173,7 @@ export function PlayerSeatNode({
   isThisPlayerTurn,
   isPendingSideshowTargetNode,
   myCards,
+  cardBorderGlowColors,
 }: PlayerSeatNodeProps) {
   if (!player) {
     return <Box width={26} height={8} />;
@@ -185,6 +198,7 @@ export function PlayerSeatNode({
           badge={badge}
           borderColor={borderColor}
           myCards={myCards}
+          cardBorderGlowColors={cardBorderGlowColors}
         />
         <Box marginLeft={2}>
           <MySeatDetails player={player} />
@@ -203,6 +217,7 @@ export function PlayerSeatNode({
         badge={badge}
         borderColor={borderColor}
         myCards={myCards}
+        cardBorderGlowColors={cardBorderGlowColors}
       />
     </Box>
   );

@@ -140,9 +140,7 @@ export class Room {
    * 1. สั่งให้ gameState ทำการจบรอบ (เคลียร์เงินกองกลาง Pot จ่ายให้ผู้ชนะ) หากมี gameState กำลังทำงานอยู่
    * 2. เปลี่ยนสถานะของห้อง (phase) จาก PLAYING เป็น 'ENDED' เพื่อรอผลสรุปหรือเตรียมรีเซ็ตกลับ LOBBY
    */
-  public endGame(
-    forceShowdown: boolean = false,
-  ): {
+  public endGame(forceShowdown: boolean = false): {
     winnerIds: string[];
     winningHand: HandRank;
     payouts: Record<string, number>;
@@ -229,6 +227,7 @@ export class Room {
       phase: this.phase,
       hostId: this.hostId,
       bootAmount: this.bootAmount,
+      maxPlayers: this.MAX_PLAYERS,
       players: Array.from(this.players.values()).map((player) => ({
         id: player.id,
         name: player.name,
@@ -290,7 +289,11 @@ export class Room {
     const validatedRoomData = parseResult.data;
 
     // 2. สร้างห้องขึ้นมาใหม่โดยใช้รหัสห้องและค่า Boot เดิม
-    const restoredRoom = new Room(validatedRoomData.roomId, validatedRoomData.bootAmount);
+    const restoredRoom = new Room(
+      validatedRoomData.roomId,
+      validatedRoomData.bootAmount,
+      validatedRoomData.maxPlayers,
+    );
     restoredRoom.phase = validatedRoomData.phase;
     restoredRoom.hostId = validatedRoomData.hostId;
 

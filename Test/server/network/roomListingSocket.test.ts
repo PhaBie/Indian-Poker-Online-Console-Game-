@@ -132,6 +132,34 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(errorEvent.code).toBe('ROOM_FULL');
   });
 
+  test('prioritizes ROOM_FULL over duplicate name when a full room is joined', () => {
+    const hostPlayer = new Player('host_priority', 'Dave');
+    const fullRoom = mockContext.roomManager.createRoom('full_priority', hostPlayer, 2);
+    fullRoom.join(new Player('p2_priority', 'Eve'));
+
+    const sentEvents: ServerEvent[] = [];
+    const socket = {
+      readyState: 1,
+      send: (rawPayload: string) => sentEvents.push(JSON.parse(rawPayload)),
+    } as unknown as WSWebSocket;
+
+    handleClientMessage(
+      socket,
+      {
+        type: 'JOIN_ROOM',
+        payload: { playerName: 'dave', roomId: 'full_priority' },
+      },
+      mockContext,
+    );
+
+    const errorEvent = sentEvents.find((event) => event.type === 'ERROR') as Extract<
+      ServerEvent,
+      { type: 'ERROR' }
+    >;
+    expect(errorEvent.code).toBe('ROOM_FULL');
+    expect(errorEvent.message).toContain('full');
+  });
+
   test('rejects new player joining in-progress room with GAME_IN_PROGRESS error', () => {
     const hostPlayer = new Player('host_4', 'Grace');
     const secondPlayer = new Player('p2', 'Heidi');

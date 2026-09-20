@@ -32,6 +32,10 @@
   },
   "scripts": {
     "dev": "bun src/client/index.ts",
+    "dev:game": "bun src/client/previewGame.tsx",
+    "dev:game:2": "bun src/client/previewGame.tsx 2",
+    "dev:game:3": "bun src/client/previewGame.tsx 3",
+    "dev:game:4": "bun src/client/previewGame.tsx 4",
     "server": "bun src/server/index.ts",
     "server:lan": "bun src/server/index.ts",
     "server:online": "bun src/server/online.ts",

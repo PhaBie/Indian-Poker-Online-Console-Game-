@@ -56,6 +56,9 @@ export const roomSaveSchema = z.object({
   // ค่าชิปตั้งต้นสำหรับเข้าร่วมห้อง (Boot Amount) ต้องเป็นจำนวนเต็มบวก (ค่าเริ่มต้น 50)
   bootAmount: z.number().int().positive().default(50),
 
+  // จำนวนผู้เล่นสูงสุดของห้อง รองรับเฉพาะโต๊ะ 2–4 คน
+  maxPlayers: z.number().int().min(2).max(4).default(4),
+
   // รายชื่อผู้เล่นทุกคนในห้อง ตรวจสอบความถูกต้องผ่าน playerSaveSchema
   players: z.array(playerSaveSchema).default([]),
 

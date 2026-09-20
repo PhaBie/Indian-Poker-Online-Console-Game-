@@ -136,7 +136,9 @@ export type ServerEvent =
         roomId: string;
         phase: RoomPhase;
         hostId: string; // ใช้บอกว่าใครคือเจ้าของห้อง
+        maxPlayers: number;
         pot: number;
+        currentStake: number;
         currentTurnPlayerId: string | null;
         turnEndTime: number | null;
         players: PublicPlayerDTO[];

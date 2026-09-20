@@ -12,7 +12,6 @@ import { UI_COLORS } from '../theme/colors';
 export interface JoinRoomScreenProps {
   onBack: () => void;
   onJoinSubmit: (method: 'LAN' | 'INTERNET', target: string) => void;
-  serverError?: string | null;
 }
 
 interface JoinMethodOptionProps {
@@ -77,11 +76,7 @@ function JoinMethodStep({ selectedNetwork }: { readonly selectedNetwork: 1 | 2 }
   );
 }
 
-export function JoinRoomScreen({
-  onBack,
-  onJoinSubmit,
-  serverError,
-}: JoinRoomScreenProps) {
+export function JoinRoomScreen({ onBack, onJoinSubmit }: JoinRoomScreenProps) {
   const { columns, rows } = useTerminalSize();
   const [selectedNetwork, setSelectedNetwork] = useState<1 | 2>(1);
   useInput((inputKey, key) => {
@@ -129,7 +124,6 @@ export function JoinRoomScreen({
           paddingY={1}
         >
           <JoinMethodStep selectedNetwork={selectedNetwork} />
-          {serverError && <Text color={UI_COLORS.errorRed}>{serverError}</Text>}
         </Box>
         <Box justifyContent="center" marginTop={1}>
           <Text color={UI_COLORS.mutedText}>

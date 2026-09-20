@@ -5,12 +5,13 @@ import { formatCardRank, getCardSuitSymbol, getCardSuitColor } from './gameLayou
 export const CARD_WIDTH = 7;
 export const CARD_HEIGHT = 3;
 
-function HiddenCardBox() {
+function HiddenCardBox({
+  hiddenBorderColor = 'magenta',
+}: Pick<CardViewProps, 'hiddenBorderColor'>) {
   return (
     <Box
       borderStyle="single"
-      borderColor="magenta"
-      paddingX={1}
+      borderColor={hiddenBorderColor}
       width={CARD_WIDTH}
       height={CARD_HEIGHT}
       justifyContent="center"
@@ -21,9 +22,9 @@ function HiddenCardBox() {
   );
 }
 
-export function CardView({ card, isHidden = false }: CardViewProps) {
+export function CardView({ card, isHidden = false, hiddenBorderColor }: CardViewProps) {
   if (isHidden) {
-    return <HiddenCardBox />;
+    return <HiddenCardBox hiddenBorderColor={hiddenBorderColor} />;
   }
 
   if (!card) {

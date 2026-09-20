@@ -61,11 +61,15 @@ export class ClientState {
       }
       case 'ROOM_LIST': {
         this.availableRooms = event.payload.rooms;
+        // ROOM_LIST is a fresh lobby snapshot. Any previous join/create error
+        // belongs to the older request and must not remain on the lobby screen.
+        this.lastError = null;
         break;
       }
       case 'GAME_STATE_UPDATE': {
         this.latestGameState = event.payload;
         this.currentRoomId = event.payload.roomId;
+        this.lastError = null;
         break;
       }
       case 'GAME_RESULT': {

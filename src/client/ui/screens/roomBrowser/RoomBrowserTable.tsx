@@ -13,6 +13,8 @@ interface RoomBrowserTableProps {
   readonly rooms: RoomSummaryDTO[];
   readonly selectedIndex: number;
   readonly maxVisibleRows: number;
+  readonly networkMode?: 'LAN' | 'INTERNET';
+  readonly serverUrl: string;
 }
 
 export function getVisibleRoomWindow(
@@ -36,9 +38,37 @@ export function RoomBrowserTable({
   rooms,
   selectedIndex,
   maxVisibleRows,
+  networkMode = 'LAN',
+  serverUrl,
 }: RoomBrowserTableProps) {
+  const serverLabel = serverUrl.replace(/^wss?:\/\//, '').split(/[/?]/)[0];
+
   if (rooms.length === 0) {
-    return <RoomBrowserEmptyState />;
+    return (
+      <Box
+        flexDirection="column"
+        width={ROOM_BROWSER_CONTENT_WIDTH}
+        height={11}
+        alignSelf="center"
+        paddingBottom={2}
+      >
+        <Box
+          flexGrow={1}
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <RoomBrowserEmptyState />
+          <Box marginTop={1} justifyContent="center">
+            <Text color={UI_COLORS.mutedText}>
+              {networkMode === 'LAN'
+                ? `CONNECTED TO  ${serverLabel}`
+                : 'READY TO BROWSE AVAILABLE ROOMS'}
+            </Text>
+          </Box>
+        </Box>
+      </Box>
+    );
   }
 
   const { start, end } = getVisibleRoomWindow(
@@ -47,8 +77,6 @@ export function RoomBrowserTable({
     maxVisibleRows,
   );
   const visibleRooms = rooms.slice(start, end);
-  const hasRoomsAbove = start > 0;
-  const hasRoomsBelow = end < rooms.length;
 
   return (
     <Box
@@ -57,11 +85,6 @@ export function RoomBrowserTable({
       alignSelf="center"
       marginTop={1}
     >
-      {hasRoomsAbove && (
-        <Box justifyContent="flex-end">
-          <Text color={UI_COLORS.dimText}>▲ {start} more rooms</Text>
-        </Box>
-      )}
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('┌', '┬', '┐')}</Text>
       <RoomBrowserTableHeader />
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('├', '┼', '┤')}</Text>
@@ -74,14 +97,12 @@ export function RoomBrowserTable({
         </Box>
       ))}
       <Text color={UI_COLORS.mutedText}>{buildGridBorder('└', '┴', '┘')}</Text>
-      {hasRoomsBelow && (
-        <Box justifyContent="flex-end">
-          <Text color={UI_COLORS.dimText}>▼ {rooms.length - end} more rooms</Text>
-        </Box>
-      )}
-      <Box marginTop={1}>
+      <Box marginTop={1} width="100%" justifyContent="space-between">
         <Text color={UI_COLORS.mutedText}>
           Showing {start + 1}-{end} of {rooms.length}
+        </Text>
+        <Text color={UI_COLORS.mutedText}>
+          {networkMode === 'LAN' ? `Server  ${serverLabel}` : 'Browse available rooms'}
         </Text>
       </Box>
     </Box>

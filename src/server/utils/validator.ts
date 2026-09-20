@@ -24,7 +24,7 @@ export const createRoomEventSchema = z.object({
   payload: z.object({
     playerName: z.string().trim().min(1),
     bootAmount: z.number().int().positive(),
-    maxPlayers: z.number().int().positive().optional(),
+    maxPlayers: z.number().int().min(2).max(4).optional(),
   }),
 });
 

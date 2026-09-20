@@ -7,20 +7,14 @@ import { UI_COLORS } from '../theme/colors';
 
 interface OnlineConnectionScreenProps {
   error: string | null;
-  onRetry: () => void;
   onBack: () => void;
 }
 
-export function OnlineConnectionScreen({
-  error,
-  onRetry,
-  onBack,
-}: OnlineConnectionScreenProps) {
+export function OnlineConnectionScreen({ error, onBack }: OnlineConnectionScreenProps) {
   const { columns, rows } = useTerminalSize();
   const width = getGameContainerWidth(columns);
-  useInput((input, key) => {
+  useInput((_, key) => {
     if (key.escape) onBack();
-    else if (error && (key.return || input.toLowerCase() === 'r')) onRetry();
   });
   return (
     <Box
@@ -47,9 +41,7 @@ export function OnlineConnectionScreen({
           </Text>
         </Box>
         <Box marginTop={1} justifyContent="center">
-          <Text color={UI_COLORS.mutedText}>
-            {error ? 'ENTER Retry  •  ESC Back' : 'ESC Back'}
-          </Text>
+          <Text color={UI_COLORS.mutedText}>ESC Back</Text>
         </Box>
       </Box>
     </Box>

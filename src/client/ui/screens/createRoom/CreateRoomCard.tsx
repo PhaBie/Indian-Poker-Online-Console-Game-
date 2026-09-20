@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
 import { UI_COLORS } from '../../theme/colors';
-import type { CreateRoomCardProps } from './types';
+import type { CreateRoomCardProps, RoomMaxPlayers } from './types';
 import { useArrowMotion } from './useArrowMotion';
 
 function CreateRoomCardHeader() {
@@ -89,12 +89,58 @@ export function CreateRoomHelpFooter() {
   );
 }
 
+function RoomSettingsCardContent({
+  maxPlayers,
+  arrowGlyph,
+  isGliding,
+}: {
+  readonly maxPlayers: RoomMaxPlayers;
+  readonly arrowGlyph: string;
+  readonly isGliding: boolean;
+}) {
+  const getTableSizeColor = (count: number): string => {
+    if (count === 2) return UI_COLORS.activeBlue;
+    if (count === 3) return UI_COLORS.goldHighlight;
+    return UI_COLORS.activeGreen;
+  };
+
+  return (
+    <>
+      <Box flexDirection="column" alignItems="center" marginBottom={1}>
+        <Text color={UI_COLORS.mutedText}>Select table size</Text>
+      </Box>
+      <Box flexDirection="column" marginY={1} width={46}>
+        {[2, 3, 4].map((count) => {
+          const isSelected = count === maxPlayers;
+          return (
+            <Box key={count} marginTop={count === 2 ? 0 : 1}>
+              <NetworkOptionRow
+                numericChoice={String(count)}
+                title={`${count} Players`}
+                description={`${count}-player table only`}
+                isSelected={isSelected}
+                isSubmitting={false}
+                arrowGlyph={arrowGlyph}
+                isGliding={isGliding}
+                activeColor={getTableSizeColor(count)}
+              />
+            </Box>
+          );
+        })}
+      </Box>
+    </>
+  );
+}
+
 export function CreateRoomCard({
+  step,
   selectedMode,
+  maxPlayers,
   isSubmitting,
   paddingX,
 }: CreateRoomCardProps) {
-  const focusedIndex = selectedMode === 'LAN' ? 0 : 1;
+  const focusedIndex =
+    step === 'mode' ? (selectedMode === 'LAN' ? 0 : 1) : maxPlayers - 2;
   const { glyph, isGliding } = useArrowMotion(focusedIndex);
 
   return (
@@ -107,32 +153,41 @@ export function CreateRoomCard({
       paddingX={paddingX}
       paddingY={1}
     >
-      <CreateRoomCardHeader />
-
-      <Box flexDirection="column" marginY={1} width={46}>
-        <NetworkOptionRow
-          numericChoice="1"
-          title="LAN Mode"
-          description="Local WiFi (Host IPv4)"
-          isSelected={selectedMode === 'LAN'}
-          isSubmitting={isSubmitting}
+      {step === 'mode' ? (
+        <>
+          <CreateRoomCardHeader />
+          <Box flexDirection="column" marginY={1} width={46}>
+            <NetworkOptionRow
+              numericChoice="1"
+              title="LAN Mode"
+              description="Local WiFi (Host IPv4)"
+              isSelected={selectedMode === 'LAN'}
+              isSubmitting={isSubmitting}
+              arrowGlyph={glyph}
+              isGliding={isGliding}
+              activeColor={UI_COLORS.activeGreen}
+            />
+            <Box marginTop={1}>
+              <NetworkOptionRow
+                numericChoice="2"
+                title="Online Mode"
+                description="Shared online server"
+                isSelected={selectedMode === 'INTERNET'}
+                isSubmitting={isSubmitting}
+                arrowGlyph={glyph}
+                isGliding={isGliding}
+                activeColor={UI_COLORS.activeBlue}
+              />
+            </Box>
+          </Box>
+        </>
+      ) : (
+        <RoomSettingsCardContent
+          maxPlayers={maxPlayers}
           arrowGlyph={glyph}
           isGliding={isGliding}
-          activeColor={UI_COLORS.activeGreen}
         />
-        <Box marginTop={1}>
-          <NetworkOptionRow
-            numericChoice="2"
-            title="Online Mode"
-            description="Shared online server"
-            isSelected={selectedMode === 'INTERNET'}
-            isSubmitting={isSubmitting}
-            arrowGlyph={glyph}
-            isGliding={isGliding}
-            activeColor={UI_COLORS.activeBlue}
-          />
-        </Box>
-      </Box>
+      )}
     </Box>
   );
 }

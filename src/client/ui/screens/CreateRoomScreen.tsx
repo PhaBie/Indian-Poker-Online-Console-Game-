@@ -20,7 +20,7 @@ export function CreateRoomScreen({
   onModeSelect,
 }: CreateRoomScreenProps) {
   const { columns, rows } = useTerminalSize();
-  const { selectedMode, isSubmitting } = useCreateRoomController({
+  const { maxPlayers, selectedMode, step, isSubmitting } = useCreateRoomController({
     socketClient,
     playerName,
     initialMode,
@@ -53,9 +53,14 @@ export function CreateRoomScreen({
       justifyContent="center"
     >
       <Box width={containerWidth} flexDirection="column">
-        <ShimmeringHeader containerWidth={containerWidth} pageTitle="CREATE ROOM" />
+        <ShimmeringHeader
+          containerWidth={containerWidth}
+          pageTitle={step === 'mode' ? 'CREATE ROOM' : 'ROOM SETTINGS'}
+        />
         <CreateRoomCard
+          step={step}
           selectedMode={selectedMode}
+          maxPlayers={maxPlayers}
           isSubmitting={isSubmitting}
           paddingX={paddingX}
         />

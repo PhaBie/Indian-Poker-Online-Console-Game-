@@ -85,7 +85,6 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
         >
           <RoomBrowserHeader
             networkMode={props.networkMode}
-            serverUrl={props.serverUrl}
             playerName={props.playerName}
             lastError={props.lastError}
           />
@@ -105,6 +104,8 @@ export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
               rooms={props.rooms}
               selectedIndex={selectedIndex}
               maxVisibleRows={getMaxVisibleRoomRows(rows, Boolean(props.lastError))}
+              networkMode={props.networkMode}
+              serverUrl={props.serverUrl}
             />
           )}
         </Box>

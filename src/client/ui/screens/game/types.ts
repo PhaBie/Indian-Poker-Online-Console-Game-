@@ -26,6 +26,7 @@ export interface TableSeatPositions<T> {
 export interface CardViewProps {
   readonly card?: Card;
   readonly isHidden?: boolean;
+  readonly hiddenBorderColor?: string;
 }
 
 export interface PlayerBadgeInfo {
@@ -39,6 +40,7 @@ export interface PlayerSeatNodeProps {
   readonly isThisPlayerTurn: boolean;
   readonly isPendingSideshowTargetNode: boolean;
   readonly myCards: readonly Card[];
+  readonly cardBorderGlowColors: readonly string[];
 }
 
 export interface ActionMenuItem {

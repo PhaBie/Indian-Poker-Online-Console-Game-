@@ -343,3 +343,32 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
     });
   });
 });
+
+describe('gameplay state contract', () => {
+  test('includes the current stake so a client can offer only valid bets', () => {
+    const roomManager = new RoomManager();
+    const host = new Player('host', 'Host');
+    const opponent = new Player('opponent', 'Opponent');
+    const room = roomManager.createRoom('room-1', host, 2);
+    room.join(opponent);
+    room.startGame(host.id);
+
+    const events: ServerEvent[] = [];
+    const client = {
+      send: (data: string) => events.push(JSON.parse(data)),
+    } as unknown as WSWebSocket;
+    const context: NetworkContext = {
+      roomManager,
+      sessionStore: { createSession: () => 'token', getPlayerId: () => null },
+      connectedClients: new Map([[client, { playerId: host.id, roomId: room.roomId }]]),
+    };
+
+    broadcastGameStateUpdate(room.roomId, context);
+
+    const state = events.find((event) => event.type === 'GAME_STATE_UPDATE');
+    expect(state).toMatchObject({
+      type: 'GAME_STATE_UPDATE',
+      payload: { currentStake: room.gameState?.currentStake },
+    });
+  });
+});

@@ -1,6 +1,7 @@
 import type { SocketClient } from '../../../network/socketClient';
 
 export type NetworkConnectionMode = 'LAN' | 'INTERNET';
+export type RoomMaxPlayers = 2 | 3 | 4;
 
 export interface CreateRoomScreenProps {
   readonly socketClient: SocketClient;
@@ -9,11 +10,16 @@ export interface CreateRoomScreenProps {
   readonly serverUrl: string;
   readonly playerName?: string;
   readonly initialMode?: NetworkConnectionMode;
-  readonly onModeSelect?: (mode: NetworkConnectionMode) => void;
+  readonly onModeSelect?: (
+    mode: NetworkConnectionMode,
+    maxPlayers: RoomMaxPlayers,
+  ) => void;
 }
 
 export interface CreateRoomCardProps {
+  readonly step: 'mode' | 'settings';
   readonly selectedMode: NetworkConnectionMode;
+  readonly maxPlayers: RoomMaxPlayers;
   readonly isSubmitting: boolean;
   readonly paddingX: number;
 }

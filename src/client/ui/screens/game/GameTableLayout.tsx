@@ -1,4 +1,5 @@
 import { Box } from 'ink';
+import { useEffect, useState } from 'react';
 import type { GameTableLayoutProps, GamePlayerItem } from './types';
 import { PlayerSeatNode } from './PlayerSeatNode';
 import { PotDisplayBox } from './PotDisplayBox';
@@ -9,6 +10,39 @@ interface PlayerSlotProps {
   readonly currentTurnPlayerId: string | null;
   readonly pendingSideshowTargetId?: string;
   readonly myCards: GameTableLayoutProps['myCards'];
+  readonly cardBorderGlowColors: readonly string[];
+}
+
+const CARD_BORDER_GLOW_INTERVAL_MS = 90;
+const CARD_BORDER_GLOW_PAUSE_MS = 5_000;
+const CARD_BORDER_GLOW_ACTIVE_FRAMES = [
+  ['magentaBright', 'magenta', 'magenta'],
+  ['yellow', 'magentaBright', 'magenta'],
+  ['yellowBright', 'yellow', 'magentaBright'],
+  ['yellow', 'yellowBright', 'yellow'],
+  ['magentaBright', 'yellow', 'yellowBright'],
+  ['magenta', 'magentaBright', 'yellow'],
+  ['magenta', 'magenta', 'magentaBright'],
+] as const;
+const CARD_BORDER_GLOW_PAUSE_FRAMES = Math.ceil(
+  CARD_BORDER_GLOW_PAUSE_MS / CARD_BORDER_GLOW_INTERVAL_MS,
+);
+const CARD_BORDER_GLOW_CYCLE_FRAMES =
+  CARD_BORDER_GLOW_ACTIVE_FRAMES.length + CARD_BORDER_GLOW_PAUSE_FRAMES;
+const DEFAULT_CARD_BORDER_COLORS = ['magenta', 'magenta', 'magenta'] as const;
+
+function useCardBorderGlow() {
+  const [frame, setFrame] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFrame((currentFrame) => (currentFrame + 1) % CARD_BORDER_GLOW_CYCLE_FRAMES);
+    }, CARD_BORDER_GLOW_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return CARD_BORDER_GLOW_ACTIVE_FRAMES[frame] ?? DEFAULT_CARD_BORDER_COLORS;
 }
 
 function PlayerSlot({
@@ -17,6 +51,7 @@ function PlayerSlot({
   currentTurnPlayerId,
   pendingSideshowTargetId,
   myCards,
+  cardBorderGlowColors,
 }: PlayerSlotProps) {
   const isMe = Boolean(player && player.id === myPlayerId);
   const isThisPlayerTurn = Boolean(player && player.id === currentTurnPlayerId);
@@ -31,6 +66,7 @@ function PlayerSlot({
       isThisPlayerTurn={isThisPlayerTurn}
       isPendingSideshowTargetNode={isPendingSideshowTargetNode}
       myCards={myCards}
+      cardBorderGlowColors={cardBorderGlowColors}
     />
   );
 }
@@ -67,6 +103,7 @@ export function GameTableLayout({
   pendingSideshowTargetId,
   myCards,
 }: GameTableLayoutProps) {
+  const cardBorderGlowColors = useCardBorderGlow();
   const renderSlot = (player: GamePlayerItem | undefined) => (
     <PlayerSlot
       player={player}
@@ -74,6 +111,7 @@ export function GameTableLayout({
       currentTurnPlayerId={currentTurnPlayerId}
       pendingSideshowTargetId={pendingSideshowTargetId}
       myCards={myCards}
+      cardBorderGlowColors={cardBorderGlowColors}
     />
   );
 
@@ -91,6 +129,7 @@ export function GameTableLayout({
         flexDirection="column"
         justifyContent="space-between"
         paddingTop={1}
+        paddingBottom={1}
       >
         <Box justifyContent="center" width="100%">
           {renderSlot(seatPositions.topPlayer)}
