@@ -33,6 +33,7 @@ _เทสต์ Room และ RoomManager อยู่ใน `server/domain/` 
 - เฉพาะ GameState: `bun run test:game-state`
 - เฉพาะ GameLogic: `bun run test:logic`
 - เฉพาะ Schema: `bun run test:schema`
+- เฉพาะ Validator: `bun run test:validator`
 
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง เช่น:
 
