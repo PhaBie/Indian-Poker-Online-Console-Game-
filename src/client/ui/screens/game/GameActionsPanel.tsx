@@ -77,7 +77,7 @@ function BetInputForm({
         />
       </Box>
       <Box marginTop={1}>
-        <Text color="gray">ENTER CONFIRM</Text>
+        <Text color="gray">ENTER CONFIRM · ESC BACK</Text>
       </Box>
     </Box>
   );
@@ -121,8 +121,8 @@ function TableWaitingContent({
         <Text color="gray">
           {isBankrupt
             ? 'YOU ARE NOW SPECTATING'
-            : status.text.includes('WAITING FOR NEXT ROUND')
-              ? 'SEAT RESERVED FOR NEXT ROUND'
+            : status.text.includes('WAITING FOR NEW GAME')
+              ? 'SEAT RESERVED FOR NEW GAME'
               : 'WATCH THE TABLE'}
         </Text>
       </Box>

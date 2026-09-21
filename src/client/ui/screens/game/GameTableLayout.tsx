@@ -35,7 +35,7 @@ function calculateSlotFlags(
   hasShowdownCards: boolean = false,
 ) {
   const isMe = Boolean(player && player.id === myPlayerId);
-  const isBankrupt = Boolean(player && player.chips <= 0);
+  const isBankrupt = Boolean(player && player.status === 'FOLDED' && player.chips <= 0);
   const isSideshowParticipantNode = Boolean(
     player && sideshowParticipantIds.includes(player.id),
   );

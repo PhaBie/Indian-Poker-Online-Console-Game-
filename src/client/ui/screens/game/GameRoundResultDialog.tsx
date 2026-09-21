@@ -15,8 +15,16 @@ interface GameRoundResultDialogProps {
 type ResultPlayer = Pick<
   GameStatePayload['players'][number],
   'id' | 'name' | 'chips' | 'bet'
->;
+> & {
+  readonly status?: string;
+};
 type GameResult = Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
+
+export function getRoundParticipants<T extends { readonly status?: string }>(
+  players: readonly T[],
+): T[] {
+  return players.filter((player) => player.status !== 'WAITING');
+}
 
 export function getWinningHandLabel(result: GameResult): string {
   return Object.keys(result.exposedCards).length === 0
@@ -119,7 +127,11 @@ export function GameRoundResultDialog({
   const winners = result.winnerIds
     .map((id) => gameState.players.find((player) => player.id === id)?.name ?? 'UNKNOWN')
     .join(', ');
-  const resultPlayers = sortPlayersForResult(gameState.players, result, roundStartChips);
+  const resultPlayers = sortPlayersForResult(
+    getRoundParticipants(gameState.players),
+    result,
+    roundStartChips,
+  );
   const winningHandLabel = getWinningHandLabel(result);
 
   useInput((_, key) => {
@@ -217,7 +229,7 @@ export function GameRoundResultDialog({
       {showAutoNextRound && (
         <Box justifyContent="center">
           <Text color="yellow" bold>
-            {autoAdvanceLabel ?? 'AUTO NEXT ROUND'}{' '}
+            {autoAdvanceLabel ?? 'AUTO NEW GAME'}{' '}
           </Text>
           <Text color="white">IN 6 SECONDS</Text>
         </Box>
@@ -227,7 +239,7 @@ export function GameRoundResultDialog({
           <Text color="yellow" bold>
             ENTER{' '}
           </Text>
-          <Text color="gray">NEXT DEAL</Text>
+          <Text color="gray">NEW GAME</Text>
         </Box>
       )}
     </Box>

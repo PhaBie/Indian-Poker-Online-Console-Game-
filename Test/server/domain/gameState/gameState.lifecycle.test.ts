@@ -79,6 +79,19 @@ describe('gameState.lifecycle', () => {
     expect(firstPlayer.privateCards.length).toBe(3);
   });
 
+  test('[GameState.startGame] ผู้เล่นคนแรกเป็นคนถัดจาก dealer ที่ Room กำหนด', () => {
+    const gameState = createGameStateFixture({}, [
+      { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
+      { id: 'dealer', name: 'Dealer', status: 'WAITING', chips: 1000 },
+      { id: 'firstToAct', name: 'First To Act', status: 'WAITING', chips: 1000 },
+    ]);
+
+    gameState.dealerIndex = 1;
+    gameState.startGame(2);
+
+    expect(gameState.currentPlayerIndex).toBe(2);
+  });
+
   test('[GameState.startGame] 4.18 เริ่มเกมด้วย Boot ที่กำหนดเอง → Pot และชิปถูกหักตาม Boot ใหม่', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'firstPlayer', name: 'First Player', status: 'WAITING', chips: 1000 },

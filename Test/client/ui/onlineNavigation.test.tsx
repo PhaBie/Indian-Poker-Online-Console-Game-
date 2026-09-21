@@ -69,6 +69,8 @@ describe('Online navigation', () => {
         if (intent === 'create')
           harness.getNavigation().handleCreateRoomModeSelect('INTERNET');
         else harness.getNavigation().handleJoinSubmit('INTERNET', '');
+        await waitFor(() => harness.getNavigation().screen === 'onlineConnection');
+        await harness.getNavigation().connectToOnlineServer('https://example.ngrok.app');
         await waitFor(() => harness.getNavigation().screen === 'tableLounge');
         expect(addresses).toEqual(['wss://example.ngrok.app/?mode=INTERNET']);
         expect(messages.map((event) => event.type)).toEqual([
@@ -85,32 +87,7 @@ describe('Online navigation', () => {
     });
   }
 
-  test('cancelling Online ignores a late connection result', async () => {
-    const socket = new SocketClient();
-    const messages: ClientEvent[] = [];
-    let complete: ((value: boolean) => void) | undefined;
-    socket.connectWithTimeout = () =>
-      new Promise((resolve) => {
-        complete = resolve;
-      });
-    socket.send = (event) => messages.push(event);
-    const harness = mountNavigation(socket);
-    try {
-      await waitFor(() => Boolean(harness.getNavigation()));
-      harness.getNavigation().handleJoinSubmit('INTERNET', '');
-      await waitFor(() => Boolean(complete));
-      harness.getNavigation().setScreen('joinRoom');
-      await waitFor(() => harness.getNavigation().screen === 'joinRoom');
-      complete!(true);
-      await Bun.sleep(20);
-      expect(harness.getNavigation().screen).toBe('joinRoom');
-      expect(messages).toEqual([]);
-    } finally {
-      harness.unmount();
-    }
-  });
-
-  test('missing Online configuration shows an error without using the LAN connection', async () => {
+  test('requires a pasted Online endpoint instead of falling back to LAN', async () => {
     const socket = new SocketClient();
     const messages: ClientEvent[] = [];
     socket.send = (event) => messages.push(event);
@@ -118,6 +95,8 @@ describe('Online navigation', () => {
     try {
       await waitFor(() => Boolean(harness.getNavigation()));
       harness.getNavigation().handleJoinSubmit('INTERNET', '');
+      await waitFor(() => harness.getNavigation().screen === 'onlineConnection');
+      await harness.getNavigation().connectToOnlineServer('');
       await waitFor(() => Boolean(harness.getNavigation().onlineError));
       expect(harness.getNavigation().screen).toBe('onlineConnection');
       expect(messages).toEqual([]);

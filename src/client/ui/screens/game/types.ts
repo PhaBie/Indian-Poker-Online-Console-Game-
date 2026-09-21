@@ -15,8 +15,6 @@ export interface GameScreenProps {
   readonly serverError?: string | null;
   readonly roundResult?: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   readonly roundStartChips?: Readonly<Record<string, number>>;
-  readonly isSideshowResultVisible?: boolean;
-  readonly isSideshowNoticeVisible?: boolean;
   readonly autoAdvanceRound?: boolean;
   readonly onNextRound?: () => void;
   readonly onLeave: () => void;
@@ -83,6 +81,7 @@ export interface GameActionsPanelProps {
 
 export interface StatusStateContext {
   readonly isBankrupt: boolean;
+  readonly isAllChipsCommitted?: boolean;
   readonly isWaitingForNextRound?: boolean;
   readonly isRoundEnding?: boolean;
   readonly isMyTurn: boolean;

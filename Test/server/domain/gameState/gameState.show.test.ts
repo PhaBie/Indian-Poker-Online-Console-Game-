@@ -7,6 +7,109 @@ import {
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.show', () => {
+  test('[GameState.endGame] รายงาน rank ไพ่จริงของผู้ชนะ ไม่ใช่ HIGH_CARD ตายตัว', () => {
+    const gameState = createGameStateFixture({ pot: 300 }, [
+      {
+        id: 'trailWinner',
+        name: 'Trail Winner',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { suit: 'SPADES', rank: 14 },
+          { suit: 'HEARTS', rank: 14 },
+          { suit: 'DIAMONDS', rank: 14 },
+        ],
+      },
+      {
+        id: 'loser',
+        name: 'Loser',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { suit: 'SPADES', rank: 13 },
+          { suit: 'HEARTS', rank: 8 },
+          { suit: 'DIAMONDS', rank: 3 },
+        ],
+      },
+    ]);
+
+    const result = gameState.endGame(true);
+
+    expect(result?.winnerIds).toEqual(['trailWinner']);
+    expect(result?.winningHand).toBe('TRAIL');
+  });
+
+  test('[GameState.processAction] ผู้ท้าใช้ชิปก้อนสุดท้ายต้องรอผล Sideshow ก่อน และหมอบเมื่อถึงเทิร์นเดิมพันถัดไป', () => {
+    const gameState = createGameStateFixture(
+      { pot: 600, currentPlayerIndex: 0, currentStake: 50 },
+      [
+        {
+          id: 'challenger',
+          name: 'Challenger',
+          status: 'ACTIVE',
+          chips: 100,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 14 },
+            { suit: 'HEARTS', rank: 14 },
+            { suit: 'DIAMONDS', rank: 14 },
+          ],
+        },
+        {
+          id: 'thirdPlayer',
+          name: 'Third Player',
+          status: 'ACTIVE',
+          chips: 500,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 9 },
+            { suit: 'HEARTS', rank: 8 },
+            { suit: 'DIAMONDS', rank: 7 },
+          ],
+        },
+        {
+          id: 'target',
+          name: 'Target',
+          status: 'ACTIVE',
+          chips: 500,
+          isBlind: false,
+          cards: [
+            { suit: 'CLUBS', rank: 2 },
+            { suit: 'HEARTS', rank: 3 },
+            { suit: 'DIAMONDS', rank: 4 },
+          ],
+        },
+      ],
+    );
+
+    gameState.processAction('challenger', 'SIDESHOW');
+
+    expect(gameState.activePlayers[0].chips).toBe(0);
+    expect(gameState.activePlayers[0].status).toBe('ACTIVE');
+    expect(gameState.pendingSideshow).toEqual({
+      challengerId: 'challenger',
+      targetId: 'target',
+    });
+
+    gameState.processAction('target', 'ACCEPT_SIDESHOW');
+
+    expect(gameState.lastSideshow?.winnerId).toBe('challenger');
+    expect(gameState.activePlayers[0].status).toBe('ACTIVE');
+    expect(gameState.activePlayers[2].status).toBe('FOLDED');
+
+    expect(() => gameState.processAction('thirdPlayer', 'CALL')).toThrow(
+      InvalidActionError,
+    );
+    gameState.clearSideshowResult();
+    expect(gameState.lastSideshow).toBeNull();
+
+    gameState.nextTurn();
+    gameState.nextTurn();
+
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+    expect(gameState.activePlayers[1].status).toBe('ACTIVE');
+  });
+
   test.skip('[GameState.executeSideshow] 4.10 [พักไว้หลังเดโม] → ผู้แพ้เปลี่ยนสถานะเป็น FOLDED', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       {

@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { useInput } from 'ink';
 import { isAnimationEnabled } from '../../components/ShimmeringHeader';
 
+// Leave a little more room between cards so the deal is readable without
+// making the later seat and pot animations any slower.
+const FIRST_CARD_DEAL_MS = 1_000;
+const CARD_DEAL_INTERVAL_MS = 1_200;
+const CARD_DEAL_HIGHLIGHT_MS = 500;
+const SECOND_CARD_DEAL_MS = FIRST_CARD_DEAL_MS + CARD_DEAL_INTERVAL_MS;
+const THIRD_CARD_DEAL_MS = SECOND_CARD_DEAL_MS + CARD_DEAL_INTERVAL_MS;
+const CARD_GLOW_START_MS = THIRD_CARD_DEAL_MS + CARD_DEAL_INTERVAL_MS;
+
 export interface EntranceTimelineStep {
   readonly visibleCardCount: number;
   readonly isDeckPhase: boolean;
@@ -39,33 +48,33 @@ export function getEntranceMilestones(
 
   if (shouldSkipSpinAndSweep) {
     return {
-      card1Ms: 1000,
-      card2Ms: 2000,
-      card3Ms: 3000,
-      cardGlowStartMs: 4000,
-      cardGlowEndMs: 5200,
-      seatSpinStartMs: 5200,
-      seatSpinEndMs: 5200,
-      nameGlowStartMs: 5200,
-      nameGlowEndMs: 5200,
-      potStartMs: 5200,
-      potCountDoneMs: 6200,
-      totalDurationMs: 7200,
+      card1Ms: FIRST_CARD_DEAL_MS,
+      card2Ms: SECOND_CARD_DEAL_MS,
+      card3Ms: THIRD_CARD_DEAL_MS,
+      cardGlowStartMs: CARD_GLOW_START_MS,
+      cardGlowEndMs: 5800,
+      seatSpinStartMs: 5800,
+      seatSpinEndMs: 5800,
+      nameGlowStartMs: 5800,
+      nameGlowEndMs: 5800,
+      potStartMs: 5800,
+      potCountDoneMs: 6800,
+      totalDurationMs: 7800,
     };
   }
   return {
-    card1Ms: 1000,
-    card2Ms: 2000,
-    card3Ms: 3000,
-    cardGlowStartMs: 4000,
-    cardGlowEndMs: 5200,
-    seatSpinStartMs: 5200,
-    seatSpinEndMs: 9200,
-    nameGlowStartMs: 9200,
-    nameGlowEndMs: 10000,
-    potStartMs: 10000,
-    potCountDoneMs: 11000,
-    totalDurationMs: 12000,
+    card1Ms: FIRST_CARD_DEAL_MS,
+    card2Ms: SECOND_CARD_DEAL_MS,
+    card3Ms: THIRD_CARD_DEAL_MS,
+    cardGlowStartMs: CARD_GLOW_START_MS,
+    cardGlowEndMs: 5800,
+    seatSpinStartMs: 5800,
+    seatSpinEndMs: 9800,
+    nameGlowStartMs: 9800,
+    nameGlowEndMs: 10600,
+    potStartMs: 10600,
+    potCountDoneMs: 11600,
+    totalDurationMs: 12600,
   };
 }
 
@@ -195,13 +204,22 @@ function resolvePotTimeline(
 }
 
 export function calculateJustDealtCardIndex(elapsedMs: number): number {
-  if (elapsedMs >= 1000 && elapsedMs < 1500) {
+  if (
+    elapsedMs >= FIRST_CARD_DEAL_MS &&
+    elapsedMs < FIRST_CARD_DEAL_MS + CARD_DEAL_HIGHLIGHT_MS
+  ) {
     return 0;
   }
-  if (elapsedMs >= 2000 && elapsedMs < 2500) {
+  if (
+    elapsedMs >= SECOND_CARD_DEAL_MS &&
+    elapsedMs < SECOND_CARD_DEAL_MS + CARD_DEAL_HIGHLIGHT_MS
+  ) {
     return 1;
   }
-  if (elapsedMs >= 3000 && elapsedMs < 3500) {
+  if (
+    elapsedMs >= THIRD_CARD_DEAL_MS &&
+    elapsedMs < THIRD_CARD_DEAL_MS + CARD_DEAL_HIGHLIGHT_MS
+  ) {
     return 2;
   }
   return -1;
@@ -211,11 +229,12 @@ export function calculateEntrancePhaseDescription(
   elapsedMs: number,
   milestones: EntranceMilestones,
 ): string {
-  if (elapsedMs < 1000) {
+  if (elapsedMs < milestones.card1Ms) {
     return 'Shuffling deck & preparing table...';
   }
-  if (elapsedMs < 4000) {
-    const cardStep = Math.floor((elapsedMs - 1000) / 1000) + 1;
+  if (elapsedMs < milestones.cardGlowStartMs) {
+    const cardStep =
+      Math.floor((elapsedMs - milestones.card1Ms) / CARD_DEAL_INTERVAL_MS) + 1;
     return `Dealing card ${cardStep} of 3 to player slots...`;
   }
   if (elapsedMs < milestones.cardGlowEndMs) {

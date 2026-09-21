@@ -220,7 +220,7 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
     });
 
-    test('starting with only enough chips for the boot pauses the table for bankruptcy settlement', () => {
+    test('starting a new game resets players with only enough chips for the boot', () => {
       const sentMessages: ServerEvent[] = [];
       const hostClient = {
         readyState: 1,
@@ -252,8 +252,10 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       const gameState = sentMessages.find(
         (event) => event.type === 'GAME_STATE_UPDATE',
       ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(gameState.payload.isRoundEnding).toBe(true);
-      expect(gameState.payload.currentTurnPlayerId).toBeNull();
+      expect(gameState.payload.isRoundEnding).toBe(false);
+      expect(gameState.payload.currentTurnPlayerId).not.toBeNull();
+      expect([host.id, guest.id]).toContain(gameState.payload.currentTurnPlayerId ?? '');
+      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount);
     });
 
     test('[socketHandler.handleClientMessage] 6.5 ส่ง JOIN_ROOM พร้อม Token ที่ถูกต้องของคนที่หลุด → คืนค่า GAME_STATE_UPDATE และผูก Session กับผู้เล่นเดิม รักษาชิป เดิมพันและไพ่ และออกจากสถานะ DISCONNECTED', () => {
@@ -421,6 +423,37 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
   });
 
   describe('Unhappy Paths', () => {
+    test('[socketHandler.handleClientMessage] 6.6.0 action from a folded player returns the authoritative game state for resync', () => {
+      const sentMessages: ServerEvent[] = [];
+      const mockWsClient = {
+        send: (data: string) => sentMessages.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const host = new Player('folded_player', 'Folded Player');
+      const guest = new Player('guest_player', 'Guest Player');
+      const room = mockContext.roomManager.createRoom('room_folded_resync', host);
+      room.join(guest);
+      room.startGame(host.id);
+      room.gameState?.activePlayers[0].fold();
+      mockContext.connectedClients.set(mockWsClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+
+      handleClientMessage(
+        mockWsClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'CALL' } },
+        mockContext,
+      );
+
+      expect(sentMessages.some((message) => message.type === 'ERROR')).toBe(true);
+      const gameState = sentMessages.find(
+        (message) => message.type === 'GAME_STATE_UPDATE',
+      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
+      expect(
+        gameState.payload.players.find((player) => player.id === host.id)?.status,
+      ).toBe('FOLDED');
+    });
+
     test('[socketHandler.handleClientMessage] 6.6.1 ส่ง JOIN_ROOM ด้วยชื่อที่ซ้ำในห้อง → คืนค่า NAME_TAKEN และไม่เพิ่มผู้เล่น', () => {
       const host = new Player('player_1', 'Thanathon');
       const room = mockContext.roomManager.createRoom('room_duplicate_name', host);

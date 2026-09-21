@@ -114,6 +114,12 @@ describe('gameLayoutHelpers - getPlayerBadgeInfo', () => {
   it('should prioritize folded badge when player has folded', () => {
     const badge = getPlayerBadgeInfo(true, true, true);
     expect(badge.label).toBe('[FOLD]');
+    expect(badge.color).toBe('redBright');
+  });
+
+  it('hides the folded badge while both hands are revealed for a show', () => {
+    const badge = getPlayerBadgeInfo(true, false, false, true);
+    expect(badge.label).toBeNull();
   });
 
   it('should display turn badge when player is active and has not folded', () => {
@@ -199,5 +205,19 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
     });
     expect(status.text).toBe('YOU LOST — BANKRUPT · SPECTATOR MODE');
     expect(status.color).toBe('redBright');
+  });
+
+  it('shows committed chips as pending rather than a bankruptcy loss', () => {
+    const status = getStatusDisplayInfo({
+      isBankrupt: false,
+      isAllChipsCommitted: true,
+      isMyTurn: false,
+      isPendingSideshowTarget: false,
+      isPendingSideshowChallenger: false,
+      hasPendingSideshow: true,
+    });
+
+    expect(status.text).toBe('ALL CHIPS COMMITTED · WAITING FOR OUTCOME');
+    expect(status.color).toBe('yellowBright');
   });
 });

@@ -348,6 +348,7 @@ function resolvePlayerSeatVisuals(
   isBankrupt: boolean,
   isPendingSideshowTargetNode: boolean,
   isSideshowParticipantNode: boolean,
+  isShowdownRevealed: boolean,
   isEntranceDeckPhase: boolean = false,
 ) {
   const hasFolded = player.status === 'FOLDED';
@@ -355,6 +356,7 @@ function resolvePlayerSeatVisuals(
     hasFolded,
     isThisPlayerTurn,
     isPendingSideshowTargetNode,
+    isShowdownRevealed,
   );
   const badge = getSeatBadge(
     isBankrupt,
@@ -421,6 +423,7 @@ export function PlayerSeatNode(props: PlayerSeatNodeProps) {
     props.isBankrupt,
     props.isPendingSideshowTargetNode,
     props.isSideshowParticipantNode,
+    props.isShowdownRevealed,
     props.isEntranceDeckPhase,
   );
   const renderProps: SeatNodeRenderProps = {

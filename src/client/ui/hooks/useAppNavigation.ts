@@ -6,6 +6,7 @@ import {
   createTableLoungeActions,
   createGameFlowActions,
   createMenuNavigationActions,
+  resolveRoomClosedScreen,
 } from './navigationActions';
 import { useNavigationHandlers } from './useNavigationHandlers';
 import { useOnlineConnection } from './useOnlineConnection';
@@ -73,7 +74,7 @@ export function useAppNavigation({
   state,
   socketClient,
   initialServerUrl = 'ws://127.0.0.1:8080',
-  onlineServerUrl = getOnlineServerUrl(),
+  onlineServerUrl: initialOnlineServerUrl = getOnlineServerUrl(),
   onClearState,
   onClearError,
 }: UseAppNavigationParams) {
@@ -84,6 +85,7 @@ export function useAppNavigation({
   const [pendingTarget, setPendingTarget] = useState<string>('');
   const [pendingMaxPlayers, setPendingMaxPlayers] = useState<RoomMaxPlayers>(4);
   const [currentServerUrl, setCurrentServerUrl] = useState<string>(initialServerUrl);
+  const [onlineServerUrl, setOnlineServerUrl] = useState<string>(initialOnlineServerUrl);
   const [isChangingName, setIsChangingName] = useState(false);
   const [shouldResumeRoomCode, setResumeRoomCode] = useState(false);
   const [nameChangeReturn, setNameChangeReturn] = useState<'lobby' | 'code'>('lobby');
@@ -92,10 +94,8 @@ export function useAppNavigation({
     [socketClient, playerName],
   );
   const online = useOnlineConnection({
-    screen,
     intent,
     playerName,
-    serverUrl: onlineServerUrl,
     socketClient,
     setScreen,
     setCurrentServerUrl,
@@ -143,9 +143,9 @@ export function useAppNavigation({
   useEffect(() => {
     if (!state.roomClosed) return;
 
-    setScreen('tableLounge');
+    setScreen(resolveRoomClosedScreen(intent));
     socketClient.send({ type: 'GET_ROOMS' });
-  }, [state.roomClosed, socketClient]);
+  }, [intent, socketClient, state.roomClosed]);
 
   const handlers = useNavigationHandlers({
     socketClient,
@@ -198,6 +198,8 @@ export function useAppNavigation({
     networkMode,
     setNetworkMode,
     currentServerUrl,
+    onlineServerUrl,
+    setOnlineServerUrl,
     ...handlers,
     ...online,
     ...tableActions,

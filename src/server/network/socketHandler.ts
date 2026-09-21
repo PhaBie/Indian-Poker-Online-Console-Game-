@@ -16,10 +16,12 @@ import { generatePlayerId, generateRoomId } from '../utils/helpers';
 import { GameError } from '../domain/errors/GameError';
 
 const SHOW_REVEAL_DELAY_MS = 4_000;
+const SIDESHOW_REVEAL_DELAY_MS = 6_000;
 const NEXT_ROUND_DELAY_MS = 6_000;
 const BANKRUPTCY_RESULT_DELAY_MS = 3_000;
 const RESULT_TO_LOBBY_DELAY_MS = 6_000;
 const showRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const sideshowRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const nextRoundTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const bankruptcySettlementTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const returnToLobbyTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -28,6 +30,10 @@ function clearRoomTimers(roomId: string): void {
   const showRevealTimer = showRevealTimers.get(roomId);
   if (showRevealTimer) clearTimeout(showRevealTimer);
   showRevealTimers.delete(roomId);
+
+  const sideshowRevealTimer = sideshowRevealTimers.get(roomId);
+  if (sideshowRevealTimer) clearTimeout(sideshowRevealTimer);
+  sideshowRevealTimers.delete(roomId);
 
   const nextRoundTimer = nextRoundTimers.get(roomId);
   if (nextRoundTimer) clearTimeout(nextRoundTimer);
@@ -152,6 +158,14 @@ export function handleClientMessage(
       sendError(wsClient, error.message);
     } else {
       sendError(wsClient, 'Unknown error');
+    }
+
+    // A rejected action can reveal that this client was rendering an older
+    // table snapshot. Send the authoritative state immediately so it cannot
+    // keep offering controls to a player the server has already folded.
+    const session = context.connectedClients.get(wsClient);
+    if (message.type === 'PLAYER_ACTION' && session?.roomId) {
+      broadcastGameStateUpdate(session.roomId, context);
     }
   }
 }
@@ -306,11 +320,15 @@ function handlePlayerAction(
 
   const room = context.roomManager.getRoom(session.roomId);
   if (room && room.gameState) {
-    const isGameOver = room.gameState.processAction(
+    let isGameOver = room.gameState.processAction(
       session.playerId,
       payload.action,
       payload.amount,
     );
+
+    if (room.gameState.lastSideshow) {
+      scheduleSideshowResultClear(session.roomId, context);
+    }
 
     if (room.gameState.pendingShow) {
       broadcastGameStateUpdate(session.roomId, context);
@@ -322,6 +340,13 @@ function handlePlayerAction(
       broadcastGameStateUpdate(session.roomId, context);
       scheduleBankruptcySettlement(session.roomId, context);
       return;
+    }
+
+    if (!isGameOver && payload.action !== 'SEEN' && payload.action !== 'SIDESHOW') {
+      room.gameState.nextTurn();
+      isGameOver =
+        room.gameState.checkLastManStanding() !== null ||
+        room.gameState.checkPotLimitReached();
     }
 
     if (isGameOver) {
@@ -337,10 +362,6 @@ function handlePlayerAction(
           context,
         );
         scheduleNextRound(session.roomId, context);
-      }
-    } else {
-      if (payload.action !== 'SEEN' && payload.action !== 'SIDESHOW') {
-        room.gameState.nextTurn();
       }
     }
 
@@ -432,6 +453,21 @@ function scheduleShowSettlement(roomId: string, context: NetworkContext): void {
   }, SHOW_REVEAL_DELAY_MS);
 
   showRevealTimers.set(roomId, timer);
+}
+
+function scheduleSideshowResultClear(roomId: string, context: NetworkContext): void {
+  if (sideshowRevealTimers.has(roomId)) return;
+
+  const timer = setTimeout(() => {
+    sideshowRevealTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room?.gameState?.lastSideshow) return;
+
+    room.gameState.clearSideshowResult();
+    broadcastGameStateUpdate(roomId, context);
+  }, SIDESHOW_REVEAL_DELAY_MS);
+
+  sideshowRevealTimers.set(roomId, timer);
 }
 
 function scheduleReturnToLobby(roomId: string, context: NetworkContext): void {
@@ -581,7 +617,10 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
 
   const pot = room.gameState?.pot || 0;
   const currentTurnPlayerId =
-    room.phase === 'ENDED' || room.gameState?.pendingShow || room.gameState?.isRoundEnding
+    room.phase === 'ENDED' ||
+    room.gameState?.pendingShow ||
+    room.gameState?.lastSideshow ||
+    room.gameState?.isRoundEnding
       ? null
       : room.gameState?.activePlayers[room.gameState.currentPlayerIndex]?.id || null;
   const publicPlayers = room.getPublicState();

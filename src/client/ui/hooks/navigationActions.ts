@@ -120,6 +120,10 @@ export function resolveLeaveRoomScreen(intent: 'create' | 'join' | null): Active
   return intent === 'create' ? 'mainMenu' : 'tableLounge';
 }
 
+export function resolveRoomClosedScreen(intent: 'create' | 'join' | null): ActiveScreen {
+  return intent === 'create' ? 'mainMenu' : 'tableLounge';
+}
+
 export function createMenuNavigationActions(
   setIntent: (intent: 'create' | 'join' | null) => void,
   setScreen: (screen: ActiveScreen) => void,

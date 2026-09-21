@@ -1,11 +1,12 @@
 import { Box, Text, useInput } from 'ink';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GameScreenProps, StatusStateContext, GameStatePayload } from './game/types';
 import {
   getOrderedPlayersByPerspective,
   determineSeatPositions,
 } from './game/gameLayoutHelpers';
 import { useGameActionController } from './game/useGameActionController';
+import { getGameEscapeAction } from './game/gameEscapeActions';
 import { GameTableLayout } from './game/GameTableLayout';
 import { GameActionsPanel } from './game/GameActionsPanel';
 import { getGameplayActions } from './game/gameActionHelpers';
@@ -18,6 +19,10 @@ import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
 import { useDealSequenceTracker } from './game/useDealSequenceTracker';
 import { resolveSeatPositionsForEntrance } from './game/useSeatSpinAnimation';
+import {
+  getSideshowPresentationKey,
+  getVisibleSideshowResult,
+} from './game/sideshowPresentation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
@@ -33,6 +38,9 @@ export const GAMEPLAY_WIDTH = 150;
 export const GAMEPLAY_HEIGHT = 45;
 const GAMEPLAY_MIN_COLUMNS = GAMEPLAY_WIDTH;
 const GAMEPLAY_MIN_ROWS = GAMEPLAY_HEIGHT;
+const SIDESHOW_CARDS_REVEAL_DELAY_MS = 2_000;
+const SIDESHOW_RESULT_DELAY_MS = 4_000;
+const SIDESHOW_DECLINED_DELAY_MS = 4_000;
 
 export function getRoundResultPresentation(
   isRoundResultVisible: boolean,
@@ -73,13 +81,16 @@ function buildStatusContext(
 ): StatusStateContext {
   const me = players.find((player) => player.id === myPlayerId);
   const isWaitingForNextRound = me?.status === 'WAITING';
-  const isBankrupt = (me?.chips ?? 0) <= 0 && !isWaitingForNextRound;
+  const isBankrupt = me?.status === 'FOLDED' && (me.chips ?? 0) <= 0;
+  const isAllChipsCommitted = me?.status === 'ACTIVE' && me.chips === 0;
   return {
     isBankrupt,
+    isAllChipsCommitted,
     isWaitingForNextRound,
     isRoundEnding,
     isMyTurn:
       !isBankrupt &&
+      !isAllChipsCommitted &&
       !isWaitingForNextRound &&
       currentTurnPlayerId === myPlayerId &&
       !pendingSideshow,
@@ -141,7 +152,7 @@ function GameBottomStatusBar({
     return (
       <Box height={3} justifyContent="center" alignItems="center">
         <Text color="yellowBright" bold>
-          👁 SPECTATING · YOU WILL JOIN THE TABLE IN THE NEXT ROUND
+          👁 SPECTATING · YOU WILL JOIN THE TABLE IN THE NEW GAME
         </Text>
       </Box>
     );
@@ -165,13 +176,18 @@ export function GameScreen({
   serverError,
   roundResult,
   roundStartChips,
-  isSideshowResultVisible = false,
-  isSideshowNoticeVisible = false,
   autoAdvanceRound = false,
   onNextRound,
   onLeave,
 }: GameScreenProps) {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
+  const [dismissedSideshowResultKey, setDismissedSideshowResultKey] = useState<
+    string | null
+  >(null);
+  const [isSideshowResultVisible, setIsSideshowResultVisible] = useState(false);
+  const [dismissedSideshowNoticeKey, setDismissedSideshowNoticeKey] = useState<
+    string | null
+  >(null);
   const { columns, rows } = useTerminalSize();
   const {
     players,
@@ -188,6 +204,54 @@ export function GameScreen({
     isRoundEnding = false,
     roundStartedAt,
   } = gameState;
+  const sideshowResultKey = sideshowResult
+    ? getSideshowPresentationKey(sideshowResult)
+    : null;
+  const visibleSideshowResult = getVisibleSideshowResult(
+    sideshowResult,
+    dismissedSideshowResultKey,
+  );
+  const sideshowNoticeKey = sideshowNotice
+    ? `${sideshowNotice.challengerId}|${sideshowNotice.targetId}|${sideshowNotice.outcome}`
+    : null;
+  const visibleSideshowNotice =
+    sideshowNotice && sideshowNoticeKey !== dismissedSideshowNoticeKey
+      ? sideshowNotice
+      : null;
+  const isSideshowNoticeVisible = Boolean(visibleSideshowNotice);
+
+  useEffect(() => {
+    if (!visibleSideshowResult || !sideshowResultKey) {
+      setIsSideshowResultVisible(false);
+      return;
+    }
+
+    const timer = setTimeout(
+      () => setIsSideshowResultVisible(true),
+      SIDESHOW_CARDS_REVEAL_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [sideshowResultKey, visibleSideshowResult]);
+
+  useEffect(() => {
+    if (!visibleSideshowResult || !sideshowResultKey) return;
+
+    const timer = setTimeout(() => {
+      setIsSideshowResultVisible(false);
+      setDismissedSideshowResultKey(sideshowResultKey);
+    }, SIDESHOW_CARDS_REVEAL_DELAY_MS + SIDESHOW_RESULT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [sideshowResultKey, visibleSideshowResult]);
+
+  useEffect(() => {
+    if (!visibleSideshowNotice || !sideshowNoticeKey) return;
+
+    const timer = setTimeout(
+      () => setDismissedSideshowNoticeKey(sideshowNoticeKey),
+      SIDESHOW_DECLINED_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [sideshowNoticeKey, visibleSideshowNotice]);
   const effectiveRoundResult = roundResult ?? gameState.roundResult ?? null;
   const isRoundEnded = Boolean(effectiveRoundResult);
   const nonWaitingPlayers = players.filter((player) => player.status !== 'WAITING');
@@ -251,7 +315,15 @@ export function GameScreen({
     isGameplayTooSmall || sizeStatus === 'TOO_SMALL' ? 'TOO_SMALL' : 'TOO_LARGE';
 
   useInput((_, key) => {
-    if (key.escape && !isExitDialogOpen) {
+    const escapeAction = getGameEscapeAction(
+      key.escape,
+      actionCtrl.inputMode,
+      isExitDialogOpen,
+    );
+    if (escapeAction === 'cancel_bet') {
+      actionCtrl.cancelBetInput();
+    }
+    if (escapeAction === 'open_exit') {
       setIsExitDialogOpen(true);
     }
   });
@@ -288,8 +360,8 @@ export function GameScreen({
               effectiveRoundResult ? undefined : pendingSideshow?.targetId
             }
             myCards={myCards}
-            sideshowResult={effectiveRoundResult ? null : sideshowResult}
-            sideshowNotice={effectiveRoundResult ? null : sideshowNotice}
+            sideshowResult={effectiveRoundResult ? null : visibleSideshowResult}
+            sideshowNotice={effectiveRoundResult ? null : visibleSideshowNotice}
             showdownCards={effectiveRoundResult ? null : showdownCards}
             isPotAmountVisible={isEffectivePotAmountVisible}
             entranceVisibleCardCount={entranceAnimation.visibleCardCount}
@@ -348,11 +420,14 @@ export function GameScreen({
               onNextRound={onNextRound}
             />
           )}
-          {sideshowResult && isSideshowResultVisible && !effectiveRoundResult && (
-            <GameSideshowResultDialog result={sideshowResult} players={players} />
+          {visibleSideshowResult && isSideshowResultVisible && !effectiveRoundResult && (
+            <GameSideshowResultDialog result={visibleSideshowResult} players={players} />
           )}
-          {sideshowNotice && isSideshowNoticeVisible && (
-            <GameSideshowDeclinedDialog notice={sideshowNotice} players={players} />
+          {visibleSideshowNotice && isSideshowNoticeVisible && (
+            <GameSideshowDeclinedDialog
+              notice={visibleSideshowNotice}
+              players={players}
+            />
           )}
         </Box>
         <GameBottomStatusBar

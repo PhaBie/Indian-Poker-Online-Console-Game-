@@ -33,7 +33,6 @@ export function getGameplayActions(
 ): readonly GameplayAction[] {
   const me = state.players.find((player) => player.id === state.myPlayerId);
   if (!me) return [];
-  if (me.chips <= 0) return [];
 
   if (state.pendingSideshow?.targetId === state.myPlayerId) {
     return [
@@ -41,6 +40,8 @@ export function getGameplayActions(
       { label: 'DECLINE', value: 'REJECT_SIDESHOW' },
     ];
   }
+
+  if (me.chips <= 0) return [];
 
   if (state.currentTurnPlayerId !== state.myPlayerId || state.pendingSideshow) {
     return [];

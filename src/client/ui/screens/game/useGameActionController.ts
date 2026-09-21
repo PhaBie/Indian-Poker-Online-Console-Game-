@@ -42,6 +42,13 @@ export function useGameActionController(socketClient: SocketClient) {
     [socketClient, selectedAction],
   );
 
+  const cancelBetInput = useCallback(() => {
+    setLocalError(null);
+    setBetAmount('');
+    setSelectedAction(null);
+    setInputMode('menu');
+  }, []);
+
   return {
     localError,
     inputMode,
@@ -49,5 +56,6 @@ export function useGameActionController(socketClient: SocketClient) {
     setBetAmount,
     handleActionSelect,
     handleBetSubmit,
+    cancelBetInput,
   };
 }

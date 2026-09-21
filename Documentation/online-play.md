@@ -11,7 +11,8 @@ Create Online creates a room on the central server, not on the player's computer
 2. Optionally set `NGROK_DOMAIN` to the hostname assigned to your ngrok account.
 3. Run `bun run server:online`. The game server listens on loopback port 8081;
    ngrok forwards only to that port. `ONLINE_PORT` overrides it.
-4. Copy the public `wss://` endpoint printed at startup into the client configuration.
+4. Copy the public endpoint printed at startup. It can be shared as either the
+   printed `wss://` address or its `https://` equivalent.
 
 The administrator must keep this process and machine running. The command fails
 without credentials; it does not silently expose the LAN server. Stopping it closes
@@ -19,11 +20,18 @@ the tunnel and game server. Rooms live in memory and disappear on restart.
 
 ## Distribute the client
 
-Set `DEFAULT_ONLINE_SERVER_URL` in `src/client/config.ts` before distributing the
-client, so players only need to choose Create Online or Join Online. Alternatively,
-set `POKER_ONLINE_URL` on a development machine. A secure URL passed to `bun run dev`
-also configures the Online endpoint for that run. Changing the public endpoint
-requires updating client configuration; there is no discovery/config service yet.
+Choose Create Online or Join Online, then paste the host's public ngrok URL into
+the **ONLINE / NGROK** screen. The client converts an `https://` ngrok URL into
+the secure WebSocket connection automatically and then uses the normal lobby,
+room browser, waiting room and game UI. `DEFAULT_ONLINE_SERVER_URL` or
+`POKER_ONLINE_URL` can still provide a convenient prefilled value for a fixed
+server, but are no longer required.
+
+The URL identifies the server, not one room. The host and every joining player
+must enter the same URL; room codes select a particular room after reaching that
+server. A temporary ngrok endpoint changes whenever the host restarts it, so it
+must be shared again. To avoid sharing a changing URL, use an ngrok reserved
+domain or deploy the online server to a persistent host.
 
 Never ship an ngrok authtoken in client code or configuration. Players do not need
 ngrok accounts or ngrok software. The public endpoint is not a secret.

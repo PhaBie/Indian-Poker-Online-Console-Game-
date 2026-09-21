@@ -3,6 +3,7 @@ import {
   compareHands,
   createDeck,
   dealCards,
+  evaluateHand,
   getWinners,
   shuffleDeck,
 } from '../../core/gameLogic';
@@ -81,7 +82,7 @@ export class GameState {
     this.roundStartedAt = null;
   }
 
-  public startGame(): void {
+  public startGame(firstPlayerIndex: number = 0): void {
     this.lastGameResult = null;
     this.pendingShow = null;
     this.roundStartedAt = Date.now();
@@ -105,18 +106,22 @@ export class GameState {
       this.activePlayers[index].receiveCards(result.hands[index]);
     }
 
-    // A player who used their final chip to post the Boot cannot take an
-    // action. Mark the table for the same brief elimination presentation used
-    // when a player spends their final chip later in the deal.
-    for (const player of this.activePlayers) {
-      if (player.chips === 0) {
-        player.status = 'FOLDED';
-        this.isRoundEnding = true;
-      }
-    }
+    // Room chooses the player to the dealer's left. Keep index zero as the
+    // default for direct GameState callers.
+    this.currentPlayerIndex =
+      firstPlayerIndex >= 0 && firstPlayerIndex < this.activePlayers.length
+        ? firstPlayerIndex
+        : 0;
 
-    // ให้ผู้เล่นคนแรกเริ่มเล่น
-    this.currentPlayerIndex = 0;
+    // A player who spends their last chip on the Boot has no later wager to
+    // make, so this is their first required betting turn and they must fold.
+    // For every later action, zero chips are handled only when the turn comes
+    // back to that player (not immediately after they pay).
+    const firstPlayer = this.activePlayers[this.currentPlayerIndex];
+    if (firstPlayer?.chips === 0) {
+      firstPlayer.fold();
+      this.isRoundEnding = true;
+    }
   }
 
   public nextTurn(): void {
@@ -128,9 +133,20 @@ export class GameState {
     for (let count = 0; count < this.activePlayers.length; count++) {
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
 
-      if (this.activePlayers[this.currentPlayerIndex].status === 'ACTIVE') {
-        return;
+      const nextPlayer = this.activePlayers[this.currentPlayerIndex];
+      if (nextPlayer.status !== 'ACTIVE') {
+        continue;
       }
+
+      // In Teen Patti a player pays to stay in. Spending the last chip is
+      // therefore valid for the action already taken (including a Sideshow),
+      // but the player must fold once their next betting turn arrives.
+      if (nextPlayer.chips === 0) {
+        nextPlayer.fold();
+        continue;
+      }
+
+      return;
     }
 
     throw new PlayerStateError(
@@ -145,6 +161,9 @@ export class GameState {
     amount?: number,
   ): boolean {
     if (this.isRoundEnding) {
+      throw new InvalidActionError(action);
+    }
+    if (this.lastSideshow) {
       throw new InvalidActionError(action);
     }
     if (this.pendingShow) {
@@ -280,15 +299,6 @@ export class GameState {
       this.currentStake = player.isBlind ? payment : payment / 2;
     }
 
-    // This game has no all-in side-pot rules.  Once a player has spent their
-    // final chip, remove them from the active turn cycle immediately so the
-    // table can continue and their client can switch to spectator mode.
-    if (player.chips === 0) {
-      player.status = 'FOLDED';
-      this.isRoundEnding = true;
-      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
-    }
-
     // Pagat Sideshow ท้าได้เฉพาะคนที่ลงเดิมพันก่อนหน้าซึ่งยัง ACTIVE อยู่
     if (action === 'SIDESHOW') {
       // หาผู้เล่นคนก่อนหน้าที่ยัง ACTIVE
@@ -335,7 +345,10 @@ export class GameState {
     // In our simplified setup, we can just compute hand rank directly or just hardcode 'HIGH_CARD' for now if we don't have evaluateHand.
     // Actually getWinners uses compareHands which evaluates the hand internally but doesn't return the rank directly. Let's just say it's HIGH_CARD for now unless we import evaluateHand.
     // Wait, gameLogic.ts might export evaluateHand. I'll just use a generic 'HIGH_CARD' if evaluateHand is missing, but let's check gameLogic.ts later.
-    const winningHand: HandRank = 'HIGH_CARD'; // Placeholder
+    const winningPlayer = players.find((player) => player.id === winnerIds[0]);
+    const winningHand: HandRank = winningPlayer
+      ? evaluateHand(winningPlayer.cards).rank
+      : 'HIGH_CARD';
 
     for (const player of this.activePlayers) {
       const reward = rewards[player.id];
@@ -452,6 +465,10 @@ export class GameState {
     loser.fold();
 
     // ผู้เรียก processAction จะตรวจผู้เล่นที่เหลือและสรุป Pot เพียงครั้งเดียว
+  }
+
+  public clearSideshowResult(): void {
+    this.lastSideshow = null;
   }
 
   public requestShow(playerId: string): void {

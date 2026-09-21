@@ -59,7 +59,7 @@ function renderGameplayScreens({
         onToggleReady={navigation.handleToggleReady}
         onLeave={navigation.handleLeaveRoom}
         networkMode={navigation.networkMode}
-        serverUrl={serverUrl}
+        serverUrl={navigation.currentServerUrl || serverUrl}
         serverError={state.lastError}
       />
     );
@@ -121,7 +121,13 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
   if (screen === 'onlineConnection') {
     return (
       <OnlineConnectionScreen
+        initialUrl={navigation.onlineServerUrl}
         error={navigation.onlineError}
+        isConnecting={navigation.isOnlineConnecting}
+        onConnect={async (url) => {
+          navigation.setOnlineServerUrl(url);
+          return navigation.connectToOnlineServer(url);
+        }}
         onBack={() =>
           navigation.setScreen(navigation.intent === 'create' ? 'createRoom' : 'joinRoom')
         }
@@ -175,7 +181,7 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
         socketClient={socketClient}
         onBack={() => navigation.setScreen('mainMenu')}
         roomId={state.currentRoomId}
-        serverUrl={serverUrl}
+        serverUrl={navigation.currentServerUrl || serverUrl}
         playerName={navigation.playerName}
         initialMode={navigation.networkMode}
         onModeSelect={navigation.handleCreateRoomModeSelect}

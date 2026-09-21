@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  getRoundParticipants,
   getWinningHandLabel,
   sortPlayersForResult,
 } from '../../../src/client/ui/screens/game/GameRoundResultDialog';
@@ -36,5 +37,15 @@ describe('Game round-result presentation', () => {
         second: 1_100,
       }).map((player) => player.id),
     ).toEqual(['winner', 'second', 'third']);
+  });
+
+  test('excludes waiting spectators from the round summary', () => {
+    expect(
+      getRoundParticipants([
+        { id: 'winner', name: 'Winner', chips: 550, bet: 250, status: 'ACTIVE' },
+        { id: 'loser', name: 'Loser', chips: 50, bet: 250, status: 'FOLDED' },
+        { id: 'waiting', name: 'Waiting', chips: 300, bet: 0, status: 'WAITING' },
+      ]).map((player) => player.id),
+    ).toEqual(['winner', 'loser']);
   });
 });

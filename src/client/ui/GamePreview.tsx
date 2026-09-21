@@ -33,8 +33,6 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
   const [roundStartChips, setRoundStartChips] = useState(() =>
     session.getRoundStartChips(),
   );
-  const [isSideshowResultVisible, setIsSideshowResultVisible] = useState(false);
-  const [isSideshowNoticeVisible, setIsSideshowNoticeVisible] = useState(false);
   // The session owns the result. Reading it here is a defensive fallback so a
   // completed round cannot be left on the table if a UI state update is missed.
   const resolvedRoundResult = roundResult ?? session.getRoundResult();
@@ -57,33 +55,6 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
     transport.onOpen?.();
     return socket;
   }, [session]);
-
-  useEffect(() => {
-    if (!gameState.sideshowResult) {
-      setIsSideshowResultVisible(false);
-      return;
-    }
-
-    const timer = setTimeout(
-      () => setIsSideshowResultVisible(true),
-      SIDESHOW_CARDS_REVEAL_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [gameState.sideshowResult]);
-
-  useEffect(() => {
-    if (!gameState.sideshowNotice) {
-      setIsSideshowNoticeVisible(false);
-      return;
-    }
-
-    setIsSideshowNoticeVisible(true);
-    const timer = setTimeout(
-      () => setIsSideshowNoticeVisible(false),
-      SIDESHOW_DECLINED_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [gameState.sideshowNotice]);
 
   useEffect(() => {
     const pauseDuration = gameState.sideshowResult
@@ -166,8 +137,6 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
       serverError={previewError}
       roundResult={resolvedRoundResult}
       roundStartChips={roundStartChips}
-      isSideshowResultVisible={isSideshowResultVisible}
-      isSideshowNoticeVisible={isSideshowNoticeVisible}
       autoAdvanceRound
       onNextRound={handleNextRound}
       onLeave={exit}

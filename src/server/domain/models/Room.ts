@@ -21,6 +21,14 @@ function shufflePlayerList(players: readonly Player[]): Player[] {
   return shuffledPlayers;
 }
 
+function randomDealerIndex(playerCount: number): number {
+  return Math.floor(Math.random() * playerCount);
+}
+
+function getFirstPlayerIndex(dealerIndex: number, playerCount: number): number {
+  return (dealerIndex + 1) % playerCount;
+}
+
 export class Room {
   public roomId: string;
   public phase: RoomPhase;
@@ -137,17 +145,18 @@ export class Room {
     // 3. ดึงรายชื่อผู้เล่นทั้งหมดในห้อง สุ่มตำแหน่งที่นั่ง แล้วสร้าง GameState
     const rawPlayersList = Array.from(this.players.values());
     for (const player of rawPlayersList) {
-      if (player.chips < this.bootAmount) {
-        player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
-      }
+      player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     }
     const playersList =
       this.players.size > 2 ? shufflePlayerList(rawPlayersList) : rawPlayersList;
     this.players = new Map(playersList.map((player) => [player.id, player]));
     this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
+    this.gameState.dealerIndex = randomDealerIndex(playersList.length);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)
-    this.gameState.startGame();
+    this.gameState.startGame(
+      getFirstPlayerIndex(this.gameState.dealerIndex, playersList.length),
+    );
 
     // 5. ปรับสถานะของห้องจาก LOBBY เป็น PLAYING
     this.phase = 'PLAYING';
@@ -180,8 +189,8 @@ export class Room {
   }
 
   /**
-   * เริ่มแจกไพ่ deal ถัดไปโดยคงผู้เล่นและยอดชิปไว้ในห้องเดิม
-   * ผู้เล่นที่ชิปไม่พอจ่าย Boot จะพักรอบนี้; ต้องเหลือผู้เล่นที่จ่าย Boot ได้อย่างน้อยสองคน
+   * เริ่มเกมใหม่รอบถัดไปที่โต๊ะเดิม โดยผู้เล่นที่ยังเชื่อมต่อทุกคน
+   * ได้รับทุนตั้งต้นใหม่ก่อนหัก Boot
    */
   public startNextRound(requestingPlayerId: string): void {
     if (requestingPlayerId !== this.hostId) {
@@ -191,8 +200,21 @@ export class Room {
       throw new GameError('The current deal has not ended', 'GAME_IN_PROGRESS');
     }
 
-    const eligiblePlayers = Array.from(this.players.values()).filter(
-      (player) => player.status !== 'DISCONNECTED' && player.chips >= this.bootAmount,
+    const connectedPlayers = Array.from(this.players.values()).filter(
+      (player) => player.status !== 'DISCONNECTED',
+    );
+    const previousDealerId =
+      this.gameState?.activePlayers[this.gameState.dealerIndex]?.id;
+
+    // Every deal started from the waiting room is a new game. Never carry a
+    // prior deal's wins or losses into it, regardless of whether a new player
+    // joined the room in between.
+    for (const player of connectedPlayers) {
+      player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
+    }
+
+    const eligiblePlayers = connectedPlayers.filter(
+      (player) => player.chips >= this.bootAmount,
     );
     if (eligiblePlayers.length < 2) {
       throw new GameError(
@@ -205,8 +227,21 @@ export class Room {
       player.resetForNewRound();
     }
 
-    this.gameState = new GameState(eligiblePlayers, this.bootAmount, 10000, true);
-    this.gameState.startGame();
+    // Keep the circular seating order. Only the dealer moves, preventing one
+    // player from always receiving the first action.
+    const playersForNextRound = eligiblePlayers;
+    const priorDealerIndex = playersForNextRound.findIndex(
+      (player) => player.id === previousDealerId,
+    );
+    const nextDealerIndex =
+      priorDealerIndex >= 0
+        ? getFirstPlayerIndex(priorDealerIndex, playersForNextRound.length)
+        : randomDealerIndex(playersForNextRound.length);
+    this.gameState = new GameState(playersForNextRound, this.bootAmount, 10000, true);
+    this.gameState.dealerIndex = nextDealerIndex;
+    this.gameState.startGame(
+      getFirstPlayerIndex(nextDealerIndex, playersForNextRound.length),
+    );
     this.phase = 'PLAYING';
   }
 

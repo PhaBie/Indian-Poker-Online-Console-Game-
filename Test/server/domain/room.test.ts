@@ -45,7 +45,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
 
       room.startGame('id_thanathon');
 
-      expect(room.phase).toBe('PLAYING');
+      expect(room.phase as string).toBe('PLAYING');
     });
 
     test('[Room.reconnect] 1.4 ผู้เล่น DISCONNECTED ทำการ Reconnect → สถานะเปลี่ยนเป็น WAITING พร้อมข้อมูลชิป เดิมพัน และจำนวนไพ่ 1 ใบ', () => {
@@ -82,7 +82,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
 
       const addedPlayer = room.getPlayer('id_late');
       expect(addedPlayer?.status).toBe('WAITING');
-      expect(room.phase).toBe('PLAYING');
+      expect(room.phase as string).toBe('PLAYING');
     });
 
     test('[Room.getPublicState] 1.6 ดึง Public State → คืนค่าข้อมูลที่ไม่มี property privateCards', () => {
@@ -96,7 +96,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(publicState[0]).not.toHaveProperty('privateCards');
     });
 
-    test('[Room.startGame] 1.7 เริ่มเกมด้วย Boot 100 และผู้เล่น 2 คน → หักชิปคนละ 100 และ Pot เป็น 200', () => {
+    test('[Room.startGame] 1.7 เริ่มเกมใหม่ด้วย Boot 100 → รีชิปทุกคนเป็นทุนตั้งต้นแล้วหัก Boot และ Pot เป็น 200', () => {
       const room = new Room('room_boot_100', 100);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player2');
@@ -109,8 +109,8 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
 
       expect(room.gameState).toBeDefined();
       expect(room.gameState?.pot).toBe(200);
-      expect(host.chips).toBe(900);
-      expect(secondPlayer.chips).toBe(900);
+      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - 100);
+      expect(secondPlayer.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - 100);
     });
 
     test('[Room.startGame] 1.7.1 เริ่มเกมด้วยผู้เล่นมากกว่า 2 คน → room.players และ getPublicState เรียงตามลำดับที่นั่งที่ถูกสุ่ม', () => {
@@ -211,9 +211,12 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.getPlayer('id_bankrupt')?.chips).toBe(
         GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
       );
+      expect(room.getPlayer('id_host')?.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
     });
 
-    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่ม deal ถัดไป → อยู่ที่โต๊ะเดิมและหัก Boot จากชิปคงเหลือ', () => {
+    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่มเกมใหม่ → รีชิปทุกคนแม้ไม่มีคนรอ', () => {
       const room = new Room('room_next_round', 50);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player 2');
@@ -221,15 +224,107 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       secondPlayer.chips = 900;
       room.join(host);
       room.join(secondPlayer);
+      host.status = 'ACTIVE';
+      secondPlayer.status = 'FOLDED';
 
       room.phase = 'ENDED';
       room.startNextRound('id_host');
 
       expect(room.phase as string).toBe('PLAYING');
       expect(room.gameState?.pot).toBe(100);
-      expect(room.getPlayer('id_host')?.chips).toBe(1050);
-      expect(room.getPlayer('id_p2')?.chips).toBe(850);
+      expect(room.getPlayer('id_host')?.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
+      expect(room.getPlayer('id_p2')?.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
       expect(room.gameState?.activePlayers).toHaveLength(2);
+    });
+
+    test('[Room.startNextRound] หมุน dealer และให้คนทางซ้ายเริ่ม โดยคงที่นั่งเดิม', () => {
+      const room = new Room('room_rotate_dealer', 50, 3);
+      const host = new Player('id_host', 'Host');
+      const playerTwo = new Player('id_p2', 'Player 2');
+      const playerThree = new Player('id_p3', 'Player 3');
+      room.join(host);
+      room.join(playerTwo);
+      room.join(playerThree);
+      room.startGame(host.id);
+
+      const priorGame = room.gameState!;
+      const expectedDealer =
+        priorGame.activePlayers[
+          (priorGame.dealerIndex + 1) % priorGame.activePlayers.length
+        ];
+      const expectedFirstPlayer =
+        priorGame.activePlayers[
+          (priorGame.dealerIndex + 2) % priorGame.activePlayers.length
+        ];
+      room.phase = 'ENDED';
+
+      room.startNextRound(host.id);
+
+      const nextGame = room.gameState!;
+      expect(nextGame.activePlayers[nextGame.dealerIndex].id).toBe(expectedDealer.id);
+      expect(nextGame.activePlayers[nextGame.currentPlayerIndex].id).toBe(
+        expectedFirstPlayer.id,
+      );
+    });
+
+    test('[Room.startNextRound] เหลือชิปเท่า Boot และมีคนรอ → เริ่มเกมใหม่ให้ทุกคนพร้อมชิปใหม่', () => {
+      const room = new Room('room_bankrupt_with_spectator', 50, 3);
+      const host = new Player('id_host', 'Host');
+      const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
+      const waitingSpectator = new Player('id_waiting', 'Waiting Spectator');
+      host.chips = 900;
+      bankruptPlayer.chips = 50;
+      host.status = 'ACTIVE';
+      bankruptPlayer.status = 'FOLDED';
+
+      room.join(host);
+      room.join(bankruptPlayer);
+      room.join(waitingSpectator);
+      host.status = 'ACTIVE';
+      bankruptPlayer.status = 'FOLDED';
+      room.phase = 'ENDED';
+
+      room.startNextRound(host.id);
+
+      expect(room.phase as string).toBe('PLAYING');
+      expect(room.gameState?.activePlayers).toHaveLength(3);
+      expect(room.gameState?.activePlayers.map((player) => player.id).sort()).toEqual(
+        [host.id, bankruptPlayer.id, waitingSpectator.id].sort(),
+      );
+      expect(bankruptPlayer.status as string).toBe('ACTIVE');
+      expect(bankruptPlayer.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
+      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount);
+      expect(waitingSpectator.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
+    });
+
+    test('[Room.startNextRound] ผู้เล่นล้มละลายและไม่มีคนรอ → รีชิปและเริ่มเกมใหม่ได้', () => {
+      const room = new Room('room_bankrupt_without_spectator', 50, 2);
+      const host = new Player('id_host', 'Host');
+      const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
+      bankruptPlayer.chips = 0;
+      host.status = 'ACTIVE';
+      bankruptPlayer.status = 'FOLDED';
+
+      room.join(host);
+      room.join(bankruptPlayer);
+      host.status = 'ACTIVE';
+      bankruptPlayer.status = 'FOLDED';
+      room.phase = 'ENDED';
+
+      room.startNextRound(host.id);
+
+      expect(room.phase as string).toBe('PLAYING');
+      expect(bankruptPlayer.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
     });
   });
 

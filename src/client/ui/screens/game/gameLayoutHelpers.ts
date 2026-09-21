@@ -86,9 +86,16 @@ export function getPlayerBadgeInfo(
   hasFolded: boolean,
   isThisPlayerTurn: boolean,
   isPendingSideshowTarget: boolean,
+  isShowdownRevealed: boolean = false,
 ): PlayerBadgeInfo {
+  // SHOW exposes both hands before the round result is presented. The server
+  // marks the losing hand folded internally to settle the pot, but that is
+  // not a voluntary fold and should not be shown as one during the reveal.
+  if (isShowdownRevealed) {
+    return { label: null, color: 'white' };
+  }
   if (hasFolded) {
-    return { label: '[FOLD]', color: 'gray' };
+    return { label: '[FOLD]', color: 'redBright' };
   }
   if (isThisPlayerTurn) {
     return { label: '[TURN]', color: 'yellowBright' };
@@ -111,7 +118,7 @@ export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplay
   }
   if (context.isWaitingForNextRound) {
     return {
-      text: 'SPECTATING · WAITING FOR NEXT ROUND',
+      text: 'SPECTATING · WAITING FOR NEW GAME',
       color: 'cyanBright',
       bold: true,
     };
@@ -120,6 +127,13 @@ export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplay
     return {
       text: 'YOU LOST — BANKRUPT · SPECTATOR MODE',
       color: 'redBright',
+      bold: true,
+    };
+  }
+  if (context.isAllChipsCommitted) {
+    return {
+      text: 'ALL CHIPS COMMITTED · WAITING FOR OUTCOME',
+      color: 'yellowBright',
       bold: true,
     };
   }
