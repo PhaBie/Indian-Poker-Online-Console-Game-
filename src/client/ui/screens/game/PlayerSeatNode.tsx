@@ -11,6 +11,7 @@ interface PlayerSeatHeaderProps {
   readonly isMe: boolean;
   readonly isShowdownRevealed: boolean;
   readonly isBankrupt: boolean;
+  readonly isEntranceActive?: boolean;
 }
 
 interface HandModeIndicatorProps {
@@ -65,8 +66,11 @@ function PlayerSeatHeader({
   isMe,
   isShowdownRevealed,
   isBankrupt,
+  isEntranceActive = false,
 }: PlayerSeatHeaderProps) {
   const displayName = isMe ? 'YOU' : player.name;
+  const shouldShowBlind = !isBankrupt && !isEntranceActive;
+
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
       <Text>
@@ -74,12 +78,13 @@ function PlayerSeatHeader({
           {displayName}
         </Text>
         <Text color="gray"> </Text>
-        {isBankrupt ? (
+        {isBankrupt && (
           <Text color="redBright" bold>
             {' '}
             [BANKRUPT]
           </Text>
-        ) : (
+        )}
+        {shouldShowBlind && (
           <HandModeIndicator
             isBlind={player.isBlind}
             isShowdownRevealed={isShowdownRevealed}
@@ -118,6 +123,7 @@ interface PlayerCardsPanelProps {
   readonly visibleCardCount?: number;
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
+  readonly isEntranceActive?: boolean;
 }
 
 function BankruptCardContent() {
@@ -211,16 +217,18 @@ function MySeatDetails({
   player,
   isShowdownRevealed,
   isBankrupt,
+  isEntranceActive = false,
 }: Pick<PlayerCardsPanelProps, 'player' | 'isBankrupt'> & {
   readonly isShowdownRevealed: boolean;
+  readonly isEntranceActive?: boolean;
 }) {
+  const shouldShowBlind = !isBankrupt && !isEntranceActive;
+
   return (
     <Box flexDirection="column" width={14}>
       <Text color="cyanBright" bold>
-        YOU{' '}
-        {isBankrupt ? (
-          'SPECTATOR'
-        ) : (
+        YOU {isBankrupt && 'SPECTATOR'}
+        {shouldShowBlind && (
           <HandModeIndicator
             isBlind={player.isBlind}
             isShowdownRevealed={isShowdownRevealed}
@@ -351,6 +359,7 @@ function MySeatView(props: SeatNodeRenderProps) {
           player={props.player}
           isShowdownRevealed={props.isShowdownRevealed}
           isBankrupt={props.isBankrupt}
+          isEntranceActive={props.isEntranceActive}
         />
       </Box>
     </Box>
@@ -365,6 +374,7 @@ function OtherPlayerSeatView(props: SeatNodeRenderProps) {
         isMe={props.isMe}
         isShowdownRevealed={props.isShowdownRevealed}
         isBankrupt={props.isBankrupt}
+        isEntranceActive={props.isEntranceActive}
       />
       <PlayerCardsPanel {...props} />
     </Box>

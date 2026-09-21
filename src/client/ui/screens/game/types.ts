@@ -54,6 +54,7 @@ export interface PlayerSeatNodeProps {
   readonly visibleCardCount?: number;
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
+  readonly isEntranceActive?: boolean;
 }
 
 export interface ActionMenuItem {
@@ -119,4 +120,5 @@ export interface GameTableLayoutProps {
   readonly isEntranceDeckPhase?: boolean;
   readonly entranceElapsedMs?: number;
   readonly justDealtCardIndex?: number;
+  readonly isEntranceActive?: boolean;
 }

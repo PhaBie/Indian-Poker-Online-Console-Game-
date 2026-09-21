@@ -192,6 +192,7 @@ export function GameScreen({
             isEntranceDeckPhase={entranceAnimation.isDeckPhase}
             entranceElapsedMs={entranceAnimation.elapsedMs}
             justDealtCardIndex={entranceAnimation.justDealtCardIndex}
+            isEntranceActive={entranceAnimation.isEntranceActive}
           />
           <GameSidePanel
             isMyTurn={statusContext.isMyTurn}

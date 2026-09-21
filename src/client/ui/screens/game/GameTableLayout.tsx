@@ -1,5 +1,5 @@
 import { Box } from 'ink';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GameTableLayoutProps, GamePlayerItem } from './types';
 import { PlayerSeatNode } from './PlayerSeatNode';
 import { PotDisplayBox } from './PotDisplayBox';
@@ -19,10 +19,11 @@ interface PlayerSlotProps {
   readonly visibleCardCount?: number;
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
+  readonly isEntranceActive?: boolean;
 }
 
 const CARD_BORDER_GLOW_INTERVAL_MS = 90;
-const CARD_BORDER_GLOW_PAUSE_MS = 5_000;
+const CARD_BORDER_GLOW_PAUSE_MS = 7_000;
 const CARD_BORDER_GLOW_ACTIVE_FRAMES = [
   ['magentaBright', 'magenta', 'magenta'],
   ['yellow', 'magentaBright', 'magenta'],
@@ -39,16 +40,34 @@ const CARD_BORDER_GLOW_CYCLE_FRAMES =
   CARD_BORDER_GLOW_ACTIVE_FRAMES.length + CARD_BORDER_GLOW_PAUSE_FRAMES;
 const DEFAULT_CARD_BORDER_COLORS = ['magenta', 'magenta', 'magenta'] as const;
 
-function useCardBorderGlow() {
-  const [frame, setFrame] = useState(0);
+function useCardBorderGlow(isEntranceActive: boolean = false) {
+  const [frame, setFrame] = useState(
+    isEntranceActive ? CARD_BORDER_GLOW_CYCLE_FRAMES : 0,
+  );
+  const wasEntranceActive = useRef(isEntranceActive);
 
   useEffect(() => {
+    if (wasEntranceActive.current && !isEntranceActive) {
+      setFrame(0);
+    }
+    wasEntranceActive.current = isEntranceActive;
+  }, [isEntranceActive]);
+
+  useEffect(() => {
+    if (isEntranceActive) {
+      return;
+    }
+
     const timer = setInterval(() => {
       setFrame((currentFrame) => (currentFrame + 1) % CARD_BORDER_GLOW_CYCLE_FRAMES);
     }, CARD_BORDER_GLOW_INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isEntranceActive]);
+
+  if (isEntranceActive) {
+    return DEFAULT_CARD_BORDER_COLORS;
+  }
 
   return CARD_BORDER_GLOW_ACTIVE_FRAMES[frame] ?? DEFAULT_CARD_BORDER_COLORS;
 }
@@ -106,6 +125,7 @@ function PlayerSlot(props: PlayerSlotProps) {
     visibleCardCount,
     isEntranceDeckPhase,
     justDealtCardIndex,
+    isEntranceActive,
   } = props;
 
   const flags = calculateSlotFlags(
@@ -131,6 +151,7 @@ function PlayerSlot(props: PlayerSlotProps) {
       visibleCardCount={visibleCardCount}
       isEntranceDeckPhase={isEntranceDeckPhase}
       justDealtCardIndex={justDealtCardIndex}
+      isEntranceActive={isEntranceActive}
       revealedCards={revealedCards}
       cardBorderGlowColors={cardBorderGlowColors}
     />
@@ -195,8 +216,9 @@ export function GameTableLayout({
   isEntranceDeckPhase,
   entranceElapsedMs,
   justDealtCardIndex,
+  isEntranceActive,
 }: GameTableLayoutProps) {
-  const cardBorderGlowColors = useCardBorderGlow();
+  const cardBorderGlowColors = useCardBorderGlow(isEntranceActive);
   const renderSlot = (player: GamePlayerItem | undefined) => (
     <PlayerSlot
       player={player}
@@ -218,6 +240,7 @@ export function GameTableLayout({
       visibleCardCount={entranceVisibleCardCount}
       isEntranceDeckPhase={isEntranceDeckPhase}
       justDealtCardIndex={justDealtCardIndex}
+      isEntranceActive={isEntranceActive}
     />
   );
 

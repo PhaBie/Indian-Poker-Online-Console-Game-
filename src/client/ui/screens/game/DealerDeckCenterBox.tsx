@@ -35,7 +35,7 @@ function DealingCardContent({ currentCardNum }: { readonly currentCardNum: numbe
         DEALING CARDS
       </Text>
       <Text color="yellowBright" bold>
-        [CARD {currentCardNum}/3] ➔
+        [CARD {currentCardNum}/3]
       </Text>
       <Box flexDirection="row">
         <Text color="cyanBright">{'●  '.repeat(currentCardNum)}</Text>
