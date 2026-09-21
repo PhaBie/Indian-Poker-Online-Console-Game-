@@ -51,6 +51,7 @@ export interface PlayerSeatNodeProps {
   readonly myCards: readonly Card[];
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
+  readonly visibleCardCount?: number;
 }
 
 export interface ActionMenuItem {
@@ -110,4 +111,7 @@ export interface GameTableLayoutProps {
   } | null;
   readonly showdownCards?: Record<string, readonly Card[]> | null;
   readonly isPotAmountVisible?: boolean;
+  readonly entranceVisibleCardCount?: number;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly entranceElapsedMs?: number;
 }

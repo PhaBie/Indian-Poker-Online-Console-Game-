@@ -15,6 +15,7 @@ import { GameSideshowResultDialog } from './game/GameSideshowResultDialog';
 import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
 import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
+import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
@@ -115,11 +116,15 @@ export function GameScreen({
   );
   const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking } =
     usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
+  const entranceAnimation = useTableEntranceAnimation(pot);
+  const activeTurnPlayerId = entranceAnimation.isEntranceActive
+    ? null
+    : effectiveTurnPlayerId;
   const actionCtrl = useGameActionController(socketClient);
   const orderedPlayers = getOrderedPlayersByPerspective(players, myPlayerId);
   const seatPositions = determineSeatPositions(orderedPlayers);
   const statusContext = buildStatusContext(
-    effectiveTurnPlayerId,
+    activeTurnPlayerId,
     myPlayerId,
     effectiveRoundResult ? null : pendingSideshow,
     players,
@@ -128,7 +133,7 @@ export function GameScreen({
   const actionItems = getGameplayActions({
     players,
     myPlayerId,
-    currentTurnPlayerId: effectiveTurnPlayerId,
+    currentTurnPlayerId: activeTurnPlayerId,
     currentStake,
     pendingSideshow: effectiveRoundResult ? null : (pendingSideshow ?? null),
   });
@@ -168,10 +173,10 @@ export function GameScreen({
         <GameBrandHeader hostName={hostName} roomId={roomId} width={GAMEPLAY_WIDTH} />
         <Box flexDirection="row" width={GAMEPLAY_WIDTH} height={38} position="relative">
           <GameTableLayout
-            pot={pot}
+            pot={entranceAnimation.displayedPot}
             currentStake={currentStake}
             seatPositions={seatPositions}
-            currentTurnPlayerId={effectiveTurnPlayerId}
+            currentTurnPlayerId={activeTurnPlayerId}
             myPlayerId={myPlayerId}
             pendingSideshowTargetId={
               effectiveRoundResult ? undefined : pendingSideshow?.targetId
@@ -181,6 +186,9 @@ export function GameScreen({
             sideshowNotice={effectiveRoundResult ? null : sideshowNotice}
             showdownCards={effectiveRoundResult ? null : showdownCards}
             isPotAmountVisible={isAmountVisible}
+            entranceVisibleCardCount={entranceAnimation.visibleCardCount}
+            isEntranceDeckPhase={entranceAnimation.isDeckPhase}
+            entranceElapsedMs={entranceAnimation.elapsedMs}
           />
           <GameSidePanel
             isMyTurn={statusContext.isMyTurn}
@@ -200,7 +208,8 @@ export function GameScreen({
               isRoundEnding ||
               isSideshowResultVisible ||
               isSideshowNoticeVisible ||
-              isPotBlinking
+              isPotBlinking ||
+              entranceAnimation.isEntranceActive
             }
           />
           {isExitDialogOpen && (

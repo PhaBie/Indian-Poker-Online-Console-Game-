@@ -100,6 +100,7 @@ interface PlayerCardsRowProps {
   readonly myCards: readonly Card[];
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
+  readonly visibleCardCount?: number;
 }
 
 interface PlayerCardsPanelProps {
@@ -113,6 +114,7 @@ interface PlayerCardsPanelProps {
   readonly cardBorderGlowColors: readonly string[];
   readonly isBankrupt: boolean;
   readonly isThisPlayerTurn: boolean;
+  readonly visibleCardCount?: number;
 }
 
 function BankruptCardContent() {
@@ -129,6 +131,27 @@ function BankruptCardContent() {
   );
 }
 
+function PlayerBetAndBadgeRow({
+  displayedBet,
+  badge,
+  isThisPlayerTurn,
+}: {
+  readonly displayedBet: number;
+  readonly badge: ReturnType<typeof getPlayerBadgeInfo>;
+  readonly isThisPlayerTurn: boolean;
+}) {
+  return (
+    <Box justifyContent="space-between" width={22} marginTop={1}>
+      <Text color="gray">BET ${displayedBet}</Text>
+      <PlayerBadgeIndicator
+        label={badge.label}
+        color={badge.color}
+        isThisPlayerTurn={isThisPlayerTurn}
+      />
+    </Box>
+  );
+}
+
 function PlayerCardsPanel({
   player,
   isMe,
@@ -140,7 +163,11 @@ function PlayerCardsPanel({
   cardBorderGlowColors,
   isBankrupt,
   isThisPlayerTurn,
+  visibleCardCount,
 }: PlayerCardsPanelProps) {
+  const displayedBet =
+    visibleCardCount !== undefined && visibleCardCount < 3 ? 0 : player.bet;
+
   return (
     <Box
       borderStyle="round"
@@ -162,15 +189,13 @@ function PlayerCardsPanel({
             myCards={myCards}
             revealedCards={revealedCards}
             cardBorderGlowColors={cardBorderGlowColors}
+            visibleCardCount={visibleCardCount}
           />
-          <Box justifyContent="space-between" width={22} marginTop={1}>
-            <Text color="gray">BET ${player.bet}</Text>
-            <PlayerBadgeIndicator
-              label={badge.label}
-              color={badge.color}
-              isThisPlayerTurn={isThisPlayerTurn}
-            />
-          </Box>
+          <PlayerBetAndBadgeRow
+            displayedBet={displayedBet}
+            badge={badge}
+            isThisPlayerTurn={isThisPlayerTurn}
+          />
         </>
       )}
     </Box>
@@ -211,21 +236,25 @@ function PlayerCardsRow({
   myCards,
   revealedCards,
   cardBorderGlowColors,
+  visibleCardCount = 3,
 }: PlayerCardsRowProps) {
   const cards = revealedCards ?? (isMe ? myCards : undefined);
   const shouldHideCards = !cards || (isMe && isBlind && !hasFolded && !revealedCards);
   return (
     <Box flexDirection="row" justifyContent="center">
-      {[0, 1, 2].map((cardIndex) => (
-        <CardView
-          key={`card-slot-${cardIndex}`}
-          card={shouldHideCards ? undefined : cards[cardIndex]}
-          isHidden={shouldHideCards}
-          hiddenBorderColor={
-            shouldHideCards ? cardBorderGlowColors[cardIndex] : undefined
-          }
-        />
-      ))}
+      {[0, 1, 2].map((cardIndex) => {
+        const isCardDealt = cardIndex < visibleCardCount;
+        return (
+          <CardView
+            key={`card-slot-${cardIndex}`}
+            card={!isCardDealt || shouldHideCards ? undefined : cards[cardIndex]}
+            isHidden={isCardDealt && shouldHideCards}
+            hiddenBorderColor={
+              isCardDealt && shouldHideCards ? cardBorderGlowColors[cardIndex] : undefined
+            }
+          />
+        );
+      })}
     </Box>
   );
 }

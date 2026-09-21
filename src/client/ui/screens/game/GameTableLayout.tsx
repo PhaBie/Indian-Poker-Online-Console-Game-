@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { GameTableLayoutProps, GamePlayerItem } from './types';
 import { PlayerSeatNode } from './PlayerSeatNode';
 import { PotDisplayBox } from './PotDisplayBox';
+import { DealerDeckCenterBox } from './DealerDeckCenterBox';
 
 interface PlayerSlotProps {
   readonly player: GamePlayerItem | undefined;
@@ -15,6 +16,7 @@ interface PlayerSlotProps {
   readonly showdownCards: GameTableLayoutProps['showdownCards'];
   readonly sideshowParticipantIds: readonly string[];
   readonly cardBorderGlowColors: readonly string[];
+  readonly visibleCardCount?: number;
 }
 
 const CARD_BORDER_GLOW_INTERVAL_MS = 90;
@@ -91,6 +93,7 @@ function PlayerSlot({
       isSideshowParticipantNode={isSideshowParticipantNode}
       isShowdownRevealed={isShowdownRevealed}
       myCards={myCards}
+      visibleCardCount={visibleCardCount}
       revealedCards={
         player
           ? (sideshowResult?.cards[player.id] ?? showdownCards?.[player.id])
@@ -107,6 +110,8 @@ interface TableCenterRowProps {
   readonly pot: number;
   readonly currentStake: number;
   readonly isPotAmountVisible?: boolean;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly entranceElapsedMs?: number;
 }
 
 function TableCenterRow({
@@ -115,6 +120,8 @@ function TableCenterRow({
   pot,
   currentStake,
   isPotAmountVisible,
+  isEntranceDeckPhase = false,
+  entranceElapsedMs = 0,
 }: TableCenterRowProps) {
   return (
     <Box flexDirection="row" alignItems="center" width="100%">
@@ -122,11 +129,15 @@ function TableCenterRow({
         {leftSlot}
       </Box>
       <Box width={30} flexDirection="row" justifyContent="center">
-        <PotDisplayBox
-          pot={pot}
-          currentStake={currentStake}
-          isAmountVisible={isPotAmountVisible}
-        />
+        {isEntranceDeckPhase ? (
+          <DealerDeckCenterBox elapsedMs={entranceElapsedMs} />
+        ) : (
+          <PotDisplayBox
+            pot={pot}
+            currentStake={currentStake}
+            isAmountVisible={isPotAmountVisible}
+          />
+        )}
       </Box>
       <Box width={36} justifyContent="center" alignItems="center">
         {rightSlot}
@@ -147,6 +158,9 @@ export function GameTableLayout({
   sideshowNotice,
   showdownCards,
   isPotAmountVisible,
+  entranceVisibleCardCount,
+  isEntranceDeckPhase,
+  entranceElapsedMs,
 }: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow();
   const renderSlot = (player: GamePlayerItem | undefined) => (
@@ -167,6 +181,7 @@ export function GameTableLayout({
             : []
       }
       cardBorderGlowColors={cardBorderGlowColors}
+      visibleCardCount={entranceVisibleCardCount}
     />
   );
 
@@ -196,6 +211,8 @@ export function GameTableLayout({
           pot={pot}
           currentStake={currentStake}
           isPotAmountVisible={isPotAmountVisible}
+          isEntranceDeckPhase={isEntranceDeckPhase}
+          entranceElapsedMs={entranceElapsedMs}
         />
 
         <Box justifyContent="center" width="100%">
