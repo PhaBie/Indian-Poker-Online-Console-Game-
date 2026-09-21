@@ -16,6 +16,7 @@ import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
 import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
+import { useDealSequenceTracker } from './game/useDealSequenceTracker';
 import { resolveSeatPositionsForEntrance } from './game/useSeatSpinAnimation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
@@ -113,13 +114,20 @@ export function GameScreen({
     isRoundEnding = false,
   } = gameState;
   const effectiveRoundResult = roundResult ?? gameState.roundResult ?? null;
+  const isRoundEnded = Boolean(effectiveRoundResult);
+  const { dealSequence, isSubsequentRound } = useDealSequenceTracker(isRoundEnded);
   const roundResultPresentation = getRoundResultPresentation(
-    Boolean(effectiveRoundResult),
+    isRoundEnded,
     currentTurnPlayerId,
   );
   const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking, displayedPotAmount } =
     usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
-  const entranceAnimation = useTableEntranceAnimation(pot, players.length);
+  const entranceAnimation = useTableEntranceAnimation(
+    pot,
+    players.length,
+    isSubsequentRound,
+    dealSequence,
+  );
   const activeTurnPlayerId = entranceAnimation.isEntranceActive
     ? null
     : effectiveTurnPlayerId;

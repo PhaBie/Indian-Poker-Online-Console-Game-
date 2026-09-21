@@ -15,18 +15,33 @@ import {
 interface EntranceHarnessState {
   currentResult: ReturnType<typeof useTableEntranceAnimation> | null;
   updatePot: (newPot: number) => void;
+  updateDealSequence: (newSequence: number) => void;
 }
 
-function mountEntranceAnimationHarness(initialPot: number, playerCount: number = 4) {
+function mountEntranceAnimationHarness(
+  initialPot: number,
+  playerCount: number = 4,
+  initialSubsequent: boolean = false,
+  initialSequence: number = 1,
+) {
   const harnessState: EntranceHarnessState = {
     currentResult: null,
     updatePot: () => {},
+    updateDealSequence: () => {},
   };
 
   function useHarnessComponent() {
     const [currentPot, setCurrentPot] = useState(initialPot);
+    const [currentSequence, setCurrentSequence] = useState(initialSequence);
     harnessState.updatePot = setCurrentPot;
-    harnessState.currentResult = useTableEntranceAnimation(currentPot, playerCount, true);
+    harnessState.updateDealSequence = setCurrentSequence;
+    harnessState.currentResult = useTableEntranceAnimation(
+      currentPot,
+      playerCount,
+      initialSubsequent || currentSequence > 1,
+      currentSequence,
+      true,
+    );
     return null;
   }
 
@@ -47,6 +62,8 @@ function mountEntranceAnimationHarness(initialPot: number, playerCount: number =
   return {
     getResult: () => harnessState.currentResult!,
     updatePot: (nextPot: number) => harnessState.updatePot(nextPot),
+    updateDealSequence: (nextSequence: number) =>
+      harnessState.updateDealSequence(nextSequence),
     unmount: () => inkInstance.unmount(),
   };
 }
@@ -75,6 +92,19 @@ describe('useTableEntranceAnimation', () => {
     expect(milestones4P.nameGlowEndMs).toBe(10000);
     expect(milestones4P.potStartMs).toBe(10000);
     expect(milestones4P.potCountDoneMs).toBe(11000);
+  });
+
+  test('getEntranceMilestones gives 7.2s dealing and pot profile for subsequent rounds regardless of player count', () => {
+    const subsequentMilestones = getEntranceMilestones(4, true);
+    expect(subsequentMilestones.totalDurationMs).toBe(7200);
+    expect(subsequentMilestones.cardGlowStartMs).toBe(4000);
+    expect(subsequentMilestones.cardGlowEndMs).toBe(5200);
+    expect(subsequentMilestones.seatSpinStartMs).toBe(5200);
+    expect(subsequentMilestones.seatSpinEndMs).toBe(5200);
+    expect(subsequentMilestones.nameGlowStartMs).toBe(5200);
+    expect(subsequentMilestones.nameGlowEndMs).toBe(5200);
+    expect(subsequentMilestones.potStartMs).toBe(5200);
+    expect(subsequentMilestones.potCountDoneMs).toBe(6200);
   });
 
   test('calculateEntranceTimeline advances cards, card glow, seat spin, name sweep, and pot for 4 players', () => {
@@ -225,6 +255,18 @@ describe('useTableEntranceAnimation', () => {
     expect(typeof result.isEntranceActive).toBe('boolean');
     expect(typeof result.visibleCardCount).toBe('number');
     expect(typeof result.phaseDescription).toBe('string');
+
+    harness.unmount();
+  });
+
+  test('harness resets animation when deal sequence advances', async () => {
+    const harness = mountEntranceAnimationHarness(100, 4, false, 1);
+    expect(harness.getResult().isEntranceActive).toBe(true);
+
+    harness.updateDealSequence(2);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(harness.getResult().isEntranceActive).toBe(true);
+    expect(harness.getResult().milestones.totalDurationMs).toBe(7200);
 
     harness.unmount();
   });

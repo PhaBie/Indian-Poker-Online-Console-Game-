@@ -64,7 +64,7 @@ export function resolveSeatPositionsForEntrance(
   }
 
   const opponents = collectOpponents(seats);
-  if (opponents.length <= 1) {
+  if (opponents.length <= 1 || spinStartMs >= spinEndMs) {
     return seats;
   }
 

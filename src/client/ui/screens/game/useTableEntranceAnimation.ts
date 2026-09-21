@@ -29,8 +29,11 @@ export interface EntranceMilestones {
   readonly totalDurationMs: number;
 }
 
-export function getEntranceMilestones(playerCount: number): EntranceMilestones {
-  if (playerCount <= 2) {
+export function getEntranceMilestones(
+  playerCount: number,
+  isSubsequentRound: boolean = false,
+): EntranceMilestones {
+  if (isSubsequentRound || playerCount <= 2) {
     return {
       card1Ms: 1000,
       card2Ms: 2000,
@@ -314,8 +317,16 @@ export interface TableEntranceAnimationResult {
   readonly milestones: EntranceMilestones;
 }
 
-function useEntranceTimer(isActive: boolean, totalDurationMs: number): number {
+function useEntranceTimer(
+  isActive: boolean,
+  totalDurationMs: number,
+  dealSequence: number = 1,
+): number {
   const [elapsedMs, setElapsedMs] = useState(0);
+
+  useEffect(() => {
+    setElapsedMs(0);
+  }, [dealSequence]);
 
   useEffect(() => {
     if (!isActive) {
@@ -333,18 +344,31 @@ function useEntranceTimer(isActive: boolean, totalDurationMs: number): number {
     }, 40);
 
     return () => clearInterval(intervalTimer);
-  }, [isActive, totalDurationMs]);
+  }, [isActive, totalDurationMs, dealSequence]);
 
   return elapsedMs;
+}
+
+function useSkipOnEscape(dealSequence: number): [boolean, (skipped: boolean) => void] {
+  const [isSkipped, setIsSkipped] = useState(false);
+
+  useEffect(() => {
+    setIsSkipped(false);
+  }, [dealSequence]);
+
+  return [isSkipped, setIsSkipped];
 }
 
 export function useTableEntranceAnimation(
   finalPot: number,
   playerCount: number = 4,
+  isSubsequentRound: boolean = false,
+  dealSequence: number = 1,
   initialActive: boolean = true,
 ): TableEntranceAnimationResult {
-  const milestones = getEntranceMilestones(playerCount);
-  const [isSkipped, setIsSkipped] = useState(false);
+  const isEffectiveSubsequent = isSubsequentRound || dealSequence > 1;
+  const milestones = getEntranceMilestones(playerCount, isEffectiveSubsequent);
+  const [isSkipped, setIsSkipped] = useSkipOnEscape(dealSequence);
   const shouldAnimate = initialActive && !isSkipped && isAnimationEnabled();
 
   useInput(
@@ -353,10 +377,14 @@ export function useTableEntranceAnimation(
         setIsSkipped(true);
       }
     },
-    { isActive: shouldAnimate },
+    { isActive: shouldAnimate && Boolean(process.stdin?.isTTY) },
   );
 
-  const elapsedMs = useEntranceTimer(shouldAnimate, milestones.totalDurationMs);
+  const elapsedMs = useEntranceTimer(
+    shouldAnimate,
+    milestones.totalDurationMs,
+    dealSequence,
+  );
   const isComplete = !shouldAnimate || elapsedMs >= milestones.totalDurationMs;
 
   const {
