@@ -119,7 +119,11 @@ function TableWaitingContent({
       </Text>
       <Box marginTop={2}>
         <Text color="gray">
-          {isBankrupt ? 'YOU ARE NOW SPECTATING' : 'WATCH THE TABLE'}
+          {isBankrupt
+            ? 'YOU ARE NOW SPECTATING'
+            : status.text.includes('WAITING FOR NEXT ROUND')
+              ? 'SEAT RESERVED FOR NEXT ROUND'
+              : 'WATCH THE TABLE'}
         </Text>
       </Box>
     </Box>

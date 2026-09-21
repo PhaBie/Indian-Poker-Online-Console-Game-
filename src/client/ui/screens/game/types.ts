@@ -83,6 +83,7 @@ export interface GameActionsPanelProps {
 
 export interface StatusStateContext {
   readonly isBankrupt: boolean;
+  readonly isWaitingForNextRound?: boolean;
   readonly isRoundEnding?: boolean;
   readonly isMyTurn: boolean;
   readonly isPendingSideshowTarget: boolean;

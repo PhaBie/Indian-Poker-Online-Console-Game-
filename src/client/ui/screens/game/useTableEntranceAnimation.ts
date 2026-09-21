@@ -32,8 +32,12 @@ export interface EntranceMilestones {
 export function getEntranceMilestones(
   playerCount: number,
   isSubsequentRound: boolean = false,
+  isPlayerCountChanged: boolean = false,
 ): EntranceMilestones {
-  if (isSubsequentRound || playerCount <= 2) {
+  const shouldSkipSpinAndSweep =
+    playerCount <= 2 || (isSubsequentRound && !isPlayerCountChanged);
+
+  if (shouldSkipSpinAndSweep) {
     return {
       card1Ms: 1000,
       card2Ms: 2000,
@@ -349,27 +353,12 @@ function useEntranceTimer(
   return elapsedMs;
 }
 
-function useSkipOnEscape(dealSequence: number): [boolean, (skipped: boolean) => void] {
+function useSkipOnEscape(dealSequence: number, isEscapeActive: boolean): boolean {
   const [isSkipped, setIsSkipped] = useState(false);
 
   useEffect(() => {
     setIsSkipped(false);
   }, [dealSequence]);
-
-  return [isSkipped, setIsSkipped];
-}
-
-export function useTableEntranceAnimation(
-  finalPot: number,
-  playerCount: number = 4,
-  isSubsequentRound: boolean = false,
-  dealSequence: number = 1,
-  initialActive: boolean = true,
-): TableEntranceAnimationResult {
-  const isEffectiveSubsequent = isSubsequentRound || dealSequence > 1;
-  const milestones = getEntranceMilestones(playerCount, isEffectiveSubsequent);
-  const [isSkipped, setIsSkipped] = useSkipOnEscape(dealSequence);
-  const shouldAnimate = initialActive && !isSkipped && isAnimationEnabled();
 
   useInput(
     (_input, key) => {
@@ -377,9 +366,29 @@ export function useTableEntranceAnimation(
         setIsSkipped(true);
       }
     },
-    { isActive: shouldAnimate && Boolean(process.stdin?.isTTY) },
+    { isActive: isEscapeActive && !isSkipped && Boolean(process.stdin?.isTTY) },
   );
 
+  return isSkipped;
+}
+
+export function useTableEntranceAnimation(
+  finalPot: number,
+  playerCount: number = 4,
+  isSubsequentRound: boolean = false,
+  dealSequence: number = 1,
+  isPlayerCountChanged: boolean = false,
+  initialActive: boolean = true,
+): TableEntranceAnimationResult {
+  const isEffectiveSubsequent = isSubsequentRound || dealSequence > 1;
+  const milestones = getEntranceMilestones(
+    playerCount,
+    isEffectiveSubsequent,
+    isPlayerCountChanged,
+  );
+  const isAnimationReady = initialActive && isAnimationEnabled();
+  const isSkipped = useSkipOnEscape(dealSequence, isAnimationReady);
+  const shouldAnimate = isAnimationReady && !isSkipped;
   const elapsedMs = useEntranceTimer(
     shouldAnimate,
     milestones.totalDurationMs,

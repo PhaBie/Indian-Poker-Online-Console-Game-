@@ -160,7 +160,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(errorEvent.message).toContain('full');
   });
 
-  test('rejects new player joining in-progress room with GAME_IN_PROGRESS error', () => {
+  test('allows new player to join in-progress room as waiting spectator when capacity permits', () => {
     const hostPlayer = new Player('host_4', 'Grace');
     const secondPlayer = new Player('p2', 'Heidi');
     const activeRoom = mockContext.roomManager.createRoom('playing_room', hostPlayer, 4);
@@ -182,12 +182,13 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
 
     handleClientMessage(newPlayerSocket, joinMessage, mockContext);
 
-    const errorEvent = sentEvents.find((evt) => evt.type === 'ERROR') as Extract<
-      ServerEvent,
-      { type: 'ERROR' }
-    >;
-    expect(errorEvent).toBeDefined();
-    expect(errorEvent.code).toBe('GAME_IN_PROGRESS');
+    expect(activeRoom.players.size).toBe(3);
+    const ivanPlayer = activeRoom.getPlayer(Array.from(activeRoom.players.keys())[2]);
+    expect(ivanPlayer?.name).toBe('Ivan');
+    expect(ivanPlayer?.status).toBe('WAITING');
+
+    const sessionCreatedEvent = sentEvents.find((evt) => evt.type === 'SESSION_CREATED');
+    expect(sessionCreatedEvent).toBeDefined();
   });
 
   test('allows existing player with valid token to reconnect into playing room', () => {

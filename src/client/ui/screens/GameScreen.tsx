@@ -72,16 +72,46 @@ function buildStatusContext(
   isRoundEnding: boolean,
 ): StatusStateContext {
   const me = players.find((player) => player.id === myPlayerId);
-  const isBankrupt = (me?.chips ?? 0) <= 0;
+  const isWaitingForNextRound = me?.status === 'WAITING';
+  const isBankrupt = (me?.chips ?? 0) <= 0 && !isWaitingForNextRound;
   return {
     isBankrupt,
+    isWaitingForNextRound,
     isRoundEnding,
-    isMyTurn: !isBankrupt && currentTurnPlayerId === myPlayerId && !pendingSideshow,
-    isPendingSideshowTarget: !isBankrupt && pendingSideshow?.targetId === myPlayerId,
+    isMyTurn:
+      !isBankrupt &&
+      !isWaitingForNextRound &&
+      currentTurnPlayerId === myPlayerId &&
+      !pendingSideshow,
+    isPendingSideshowTarget:
+      !isBankrupt && !isWaitingForNextRound && pendingSideshow?.targetId === myPlayerId,
     isPendingSideshowChallenger:
-      !isBankrupt && pendingSideshow?.challengerId === myPlayerId,
-    hasPendingSideshow: !isBankrupt && Boolean(pendingSideshow),
+      !isBankrupt &&
+      !isWaitingForNextRound &&
+      pendingSideshow?.challengerId === myPlayerId,
+    hasPendingSideshow: !isBankrupt && !isWaitingForNextRound && Boolean(pendingSideshow),
   };
+}
+
+function resolveGameActions(
+  players: GameStatePayload['players'],
+  myPlayerId: string | null,
+  activeTurnPlayerId: string | null,
+  currentStake: number,
+  pendingSideshow: GameStatePayload['pendingSideshow'],
+  effectiveRoundResult: unknown,
+) {
+  const me = players.find((player) => player.id === myPlayerId);
+  if (me?.status === 'WAITING') {
+    return [];
+  }
+  return getGameplayActions({
+    players,
+    myPlayerId,
+    currentTurnPlayerId: activeTurnPlayerId,
+    currentStake,
+    pendingSideshow: effectiveRoundResult ? null : (pendingSideshow ?? null),
+  });
 }
 
 export function GameScreen({
@@ -115,7 +145,8 @@ export function GameScreen({
   } = gameState;
   const effectiveRoundResult = roundResult ?? gameState.roundResult ?? null;
   const isRoundEnded = Boolean(effectiveRoundResult);
-  const { dealSequence, isSubsequentRound } = useDealSequenceTracker(isRoundEnded);
+  const { dealSequence, isSubsequentRound, isPlayerCountChanged } =
+    useDealSequenceTracker(isRoundEnded, players.length);
   const roundResultPresentation = getRoundResultPresentation(
     isRoundEnded,
     currentTurnPlayerId,
@@ -127,6 +158,7 @@ export function GameScreen({
     players.length,
     isSubsequentRound,
     dealSequence,
+    isPlayerCountChanged,
   );
   const activeTurnPlayerId = entranceAnimation.isEntranceActive
     ? null
@@ -154,13 +186,14 @@ export function GameScreen({
     players,
     isRoundEnding,
   );
-  const actionItems = getGameplayActions({
+  const actionItems = resolveGameActions(
     players,
     myPlayerId,
-    currentTurnPlayerId: activeTurnPlayerId,
+    activeTurnPlayerId,
     currentStake,
-    pendingSideshow: effectiveRoundResult ? null : (pendingSideshow ?? null),
-  });
+    pendingSideshow,
+    effectiveRoundResult,
+  );
   const notice = actionCtrl.localError ?? serverError;
   const hostName = players.find((player) => player.id === hostId)?.name;
   const sizeStatus = getTerminalSizeStatus(columns, rows);

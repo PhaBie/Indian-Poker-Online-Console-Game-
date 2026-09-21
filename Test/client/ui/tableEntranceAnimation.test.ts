@@ -23,6 +23,7 @@ function mountEntranceAnimationHarness(
   playerCount: number = 4,
   initialSubsequent: boolean = false,
   initialSequence: number = 1,
+  isPlayerCountChanged: boolean = false,
 ) {
   const harnessState: EntranceHarnessState = {
     currentResult: null,
@@ -40,6 +41,7 @@ function mountEntranceAnimationHarness(
       playerCount,
       initialSubsequent || currentSequence > 1,
       currentSequence,
+      isPlayerCountChanged,
       true,
     );
     return null;
@@ -105,6 +107,18 @@ describe('useTableEntranceAnimation', () => {
     expect(subsequentMilestones.nameGlowEndMs).toBe(5200);
     expect(subsequentMilestones.potStartMs).toBe(5200);
     expect(subsequentMilestones.potCountDoneMs).toBe(6200);
+  });
+
+  test('getEntranceMilestones reactivates 12.0s spin and glow profile when player count changes in subsequent round', () => {
+    const changedSubsequentMilestones = getEntranceMilestones(3, true, true);
+    expect(changedSubsequentMilestones.totalDurationMs).toBe(12000);
+    expect(changedSubsequentMilestones.seatSpinStartMs).toBe(5200);
+    expect(changedSubsequentMilestones.seatSpinEndMs).toBe(9200);
+    expect(changedSubsequentMilestones.nameGlowStartMs).toBe(9200);
+    expect(changedSubsequentMilestones.nameGlowEndMs).toBe(10000);
+
+    const changedTwoPlayerMilestones = getEntranceMilestones(2, true, true);
+    expect(changedTwoPlayerMilestones.totalDurationMs).toBe(7200);
   });
 
   test('calculateEntranceTimeline advances cards, card glow, seat spin, name sweep, and pot for 4 players', () => {

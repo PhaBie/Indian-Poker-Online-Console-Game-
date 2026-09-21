@@ -2,11 +2,12 @@ import { Box, Text } from 'ink';
 import { UI_COLORS } from '../../theme/colors';
 
 const COLUMN_WIDTHS = {
-  roomId: 14,
-  host: 15,
-  players: 11,
-  ante: 11,
-  status: 13,
+  roomId: 12,
+  host: 14,
+  players: 9,
+  waiting: 9,
+  ante: 10,
+  status: 12,
 } as const;
 
 export { COLUMN_WIDTHS };
@@ -59,6 +60,10 @@ export function RoomBrowserTableHeader() {
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text bold color={UI_COLORS.goldHighlight}>
         {formatGridCell('PLAYERS', COLUMN_WIDTHS.players, 'center')}
+      </Text>
+      <Text color={UI_COLORS.mutedText}>│</Text>
+      <Text bold color={UI_COLORS.goldHighlight}>
+        {formatGridCell('WAITING', COLUMN_WIDTHS.waiting, 'center')}
       </Text>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text bold color={UI_COLORS.goldHighlight}>

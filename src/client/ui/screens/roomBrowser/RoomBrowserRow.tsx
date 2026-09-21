@@ -13,7 +13,8 @@ interface RoomBrowserRowProps {
 }
 
 export function resolveRoomStatus(room: RoomSummaryDTO) {
-  if (room.playerCount >= room.maxPlayers) {
+  const totalOccupants = room.playerCount + (room.waitingCount ?? 0);
+  if (totalOccupants >= room.maxPlayers) {
     return { statusColor: UI_COLORS.errorRed, statusLabel: '● FULL' };
   }
   if (room.phase === 'PLAYING') {
@@ -49,6 +50,10 @@ export function RoomBrowserRow({ room, isSelected }: RoomBrowserRowProps) {
           COLUMN_WIDTHS.players,
           'center',
         )}
+      </Text>
+      <Text color={UI_COLORS.mutedText}>│</Text>
+      <Text color={textColor}>
+        {formatGridCell(String(room.waitingCount ?? 0), COLUMN_WIDTHS.waiting, 'center')}
       </Text>
       <Text color={UI_COLORS.mutedText}>│</Text>
       <Text color={textColor}>

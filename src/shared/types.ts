@@ -81,6 +81,7 @@ export interface RoomSummaryDTO {
   readonly roomId: string;
   readonly hostName: string;
   readonly playerCount: number;
+  readonly waitingCount: number;
   readonly maxPlayers: number;
   readonly phase: RoomPhase;
   readonly bootAmount: number;

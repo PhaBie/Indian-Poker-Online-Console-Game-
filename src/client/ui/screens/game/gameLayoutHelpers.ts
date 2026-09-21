@@ -109,6 +109,13 @@ export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplay
   if (context.isRoundEnding) {
     return { text: 'Resolving round...', color: 'yellowBright', bold: true };
   }
+  if (context.isWaitingForNextRound) {
+    return {
+      text: 'SPECTATING · WAITING FOR NEXT ROUND',
+      color: 'cyanBright',
+      bold: true,
+    };
+  }
   if (context.isBankrupt) {
     return {
       text: 'YOU LOST — BANKRUPT · SPECTATOR MODE',

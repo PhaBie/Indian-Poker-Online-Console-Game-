@@ -70,10 +70,20 @@ export function getRoomSummaryList(roomManager: RoomManager): RoomSummaryDTO[] {
   const rooms = roomManager.getAllRooms();
   return rooms.map((room) => {
     const hostPlayer = room.hostId ? room.getPlayer(room.hostId) : undefined;
+    const isPlaying = room.phase === 'PLAYING';
+    const waitingPlayersCount = isPlaying
+      ? Array.from(room.players.values()).filter((player) => player.status === 'WAITING')
+          .length
+      : 0;
+    const activePlayersCount = isPlaying
+      ? room.players.size - waitingPlayersCount
+      : room.players.size;
+
     return {
       roomId: room.roomId,
       hostName: hostPlayer?.name ?? 'Unknown',
-      playerCount: room.players.size,
+      playerCount: activePlayersCount,
+      waitingCount: waitingPlayersCount,
       maxPlayers: room.MAX_PLAYERS,
       phase: room.phase,
       bootAmount: room.bootAmount,
@@ -215,10 +225,6 @@ function handleNewJoin(
   playerName: string,
   context: NetworkContext,
 ): void {
-  if (room.phase === 'PLAYING') {
-    sendError(wsClient, 'Game already in progress', 'GAME_IN_PROGRESS');
-    return;
-  }
   if (room.players.size >= room.MAX_PLAYERS) {
     sendError(wsClient, 'Room is full', 'ROOM_FULL');
     return;

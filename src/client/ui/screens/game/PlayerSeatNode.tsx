@@ -238,12 +238,14 @@ function MySeatDetails({
   readonly isShowdownRevealed: boolean;
   readonly isEntranceActive?: boolean;
 }) {
-  const shouldShowBlind = !isBankrupt && !isEntranceActive;
+  const isWaiting = player.status === 'WAITING';
+  const shouldShowBlind = !isBankrupt && !isWaiting && !isEntranceActive;
 
   return (
     <Box flexDirection="column" width={14}>
       <Text color="cyanBright" bold>
         YOU {isBankrupt && 'SPECTATOR'}
+        {isWaiting && '[WAITING]'}
         {shouldShowBlind && (
           <HandModeIndicator
             isBlind={player.isBlind}
@@ -256,7 +258,11 @@ function MySeatDetails({
       ) : (
         <Text color="gray">
           STACK{' '}
-          <Text color={isBankrupt ? 'redBright' : 'cyanBright'}>${player.chips}</Text>
+          <Text
+            color={isBankrupt ? 'redBright' : isWaiting ? 'yellowBright' : 'cyanBright'}
+          >
+            ${player.chips}
+          </Text>
         </Text>
       )}
     </Box>
