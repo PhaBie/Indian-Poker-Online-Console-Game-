@@ -43,9 +43,16 @@ describe('useSeatSpinAnimation', () => {
     rightPlayer: undefined,
   };
 
+  const twoPlayerSeats: TableSeatPositions<GamePlayerItem> = {
+    bottomPlayer: mePlayer,
+    leftPlayer: undefined,
+    topPlayer: opponentTop,
+    rightPlayer: undefined,
+  };
+
   test('resolveSpinningOpponentSeat returns undefined for undefined player', () => {
     expect(
-      resolveSpinningOpponentSeat(undefined, [], 0, 0, 5000, 4800, 8800),
+      resolveSpinningOpponentSeat(undefined, [], 0, 0, 5000, 4000, 8000),
     ).toBeUndefined();
   });
 
@@ -56,8 +63,8 @@ describe('useSeatSpinAnimation', () => {
       0,
       0,
       2000,
-      4800,
-      8800,
+      4000,
+      8000,
     );
     expect(seat?.name).toBe('[ ··· ]');
   });
@@ -69,8 +76,8 @@ describe('useSeatSpinAnimation', () => {
       0,
       0,
       5000,
-      4800,
-      8800,
+      4000,
+      8000,
     );
     expect(seat?.name).toContain('🎲');
   });
@@ -81,9 +88,9 @@ describe('useSeatSpinAnimation', () => {
       [opponentLeft, opponentTop],
       0,
       0,
-      9000,
-      4800,
-      8800,
+      8500,
+      4000,
+      8000,
     );
     expect(seat?.name).toBe('Alice');
   });
@@ -95,8 +102,19 @@ describe('useSeatSpinAnimation', () => {
     const spinning = resolveSeatPositionsForEntrance(sampleSeats, 6000, true);
     expect(spinning.bottomPlayer?.id).toBe('id_me');
 
-    const settled = resolveSeatPositionsForEntrance(sampleSeats, 9000, true);
+    const settled = resolveSeatPositionsForEntrance(sampleSeats, 8500, true);
     expect(settled.bottomPlayer?.id).toBe('id_me');
+  });
+
+  test('resolveSeatPositionsForEntrance returns seats directly without spinning for 2-player matches', () => {
+    const early = resolveSeatPositionsForEntrance(twoPlayerSeats, 2000, true);
+    expect(early.topPlayer?.name).toBe('Bob');
+
+    const duringSpinTime = resolveSeatPositionsForEntrance(twoPlayerSeats, 6000, true);
+    expect(duringSpinTime.topPlayer?.name).toBe('Bob');
+
+    const later = resolveSeatPositionsForEntrance(twoPlayerSeats, 8500, true);
+    expect(later.topPlayer?.name).toBe('Bob');
   });
 
   test('resolveSeatPositionsForEntrance returns original seats when entrance is inactive', () => {

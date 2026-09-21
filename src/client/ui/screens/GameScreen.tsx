@@ -119,7 +119,7 @@ export function GameScreen({
   );
   const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking, displayedPotAmount } =
     usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
-  const entranceAnimation = useTableEntranceAnimation(pot);
+  const entranceAnimation = useTableEntranceAnimation(pot, players.length);
   const activeTurnPlayerId = entranceAnimation.isEntranceActive
     ? null
     : effectiveTurnPlayerId;
@@ -130,6 +130,8 @@ export function GameScreen({
     rawSeatPositions,
     entranceAnimation.elapsedMs,
     entranceAnimation.isEntranceActive,
+    entranceAnimation.milestones.seatSpinStartMs,
+    entranceAnimation.milestones.seatSpinEndMs,
   );
   const effectivePot = entranceAnimation.isEntranceActive
     ? entranceAnimation.displayedPot
@@ -205,6 +207,9 @@ export function GameScreen({
             entranceElapsedMs={entranceAnimation.elapsedMs}
             justDealtCardIndex={entranceAnimation.justDealtCardIndex}
             isEntranceActive={entranceAnimation.isEntranceActive}
+            cardGlowStartMs={entranceAnimation.milestones.cardGlowStartMs}
+            cardGlowEndMs={entranceAnimation.milestones.cardGlowEndMs}
+            playerCount={players.length}
           />
           <GameSidePanel
             isMyTurn={statusContext.isMyTurn}

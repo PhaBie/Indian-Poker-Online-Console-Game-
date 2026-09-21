@@ -13,19 +13,53 @@ export interface EntranceTimelineStep {
   readonly isEntranceComplete: boolean;
 }
 
-export const ENTRANCE_STEP_CARD_1_MS = 1000;
-export const ENTRANCE_STEP_CARD_2_MS = 2000;
-export const ENTRANCE_STEP_CARD_3_MS = 3000;
-export const ENTRANCE_STEP_CARD_GLOW_START_MS = 4000;
-export const ENTRANCE_STEP_CARD_GLOW_END_MS = 4800;
-export const ENTRANCE_STEP_SEAT_SPIN_START_MS = 4800;
-export const ENTRANCE_STEP_SEAT_SETTLED_MS = 8800;
-export const ENTRANCE_STEP_POT_START_MS = 10800;
-export const ENTRANCE_STEP_POT_COUNT_DONE_MS = 11800;
-export const ENTRANCE_TOTAL_DURATION_MS = 12800;
+export interface EntranceMilestones {
+  readonly card1Ms: number;
+  readonly card2Ms: number;
+  readonly card3Ms: number;
+  readonly seatSpinStartMs: number;
+  readonly seatSpinEndMs: number;
+  readonly cardGlowStartMs: number;
+  readonly cardGlowEndMs: number;
+  readonly potStartMs: number;
+  readonly potCountDoneMs: number;
+  readonly totalDurationMs: number;
+}
 
-function resolveEarlyCardsTimeline(elapsedMs: number): EntranceTimelineStep {
-  if (elapsedMs < ENTRANCE_STEP_CARD_1_MS) {
+export function getEntranceMilestones(playerCount: number): EntranceMilestones {
+  if (playerCount <= 2) {
+    return {
+      card1Ms: 1000,
+      card2Ms: 2000,
+      card3Ms: 3000,
+      seatSpinStartMs: 4000,
+      seatSpinEndMs: 4000,
+      cardGlowStartMs: 4000,
+      cardGlowEndMs: 5200,
+      potStartMs: 5200,
+      potCountDoneMs: 6200,
+      totalDurationMs: 7200,
+    };
+  }
+  return {
+    card1Ms: 1000,
+    card2Ms: 2000,
+    card3Ms: 3000,
+    seatSpinStartMs: 4000,
+    seatSpinEndMs: 8000,
+    cardGlowStartMs: 8000,
+    cardGlowEndMs: 9200,
+    potStartMs: 9200,
+    potCountDoneMs: 10200,
+    totalDurationMs: 11200,
+  };
+}
+
+export function calculateEntranceTimeline(
+  elapsedMs: number,
+  milestones: EntranceMilestones,
+): EntranceTimelineStep {
+  if (elapsedMs < milestones.card1Ms) {
     return {
       visibleCardCount: 0,
       isDeckPhase: true,
@@ -37,7 +71,7 @@ function resolveEarlyCardsTimeline(elapsedMs: number): EntranceTimelineStep {
       isEntranceComplete: false,
     };
   }
-  if (elapsedMs < ENTRANCE_STEP_CARD_2_MS) {
+  if (elapsedMs < milestones.card2Ms) {
     return {
       visibleCardCount: 1,
       isDeckPhase: true,
@@ -49,7 +83,7 @@ function resolveEarlyCardsTimeline(elapsedMs: number): EntranceTimelineStep {
       isEntranceComplete: false,
     };
   }
-  if (elapsedMs < ENTRANCE_STEP_CARD_3_MS) {
+  if (elapsedMs < milestones.card3Ms) {
     return {
       visibleCardCount: 2,
       isDeckPhase: true,
@@ -61,35 +95,17 @@ function resolveEarlyCardsTimeline(elapsedMs: number): EntranceTimelineStep {
       isEntranceComplete: false,
     };
   }
-  return {
-    visibleCardCount: 3,
-    isDeckPhase: true,
-    isCardGlowPhase: false,
-    isSeatSpinning: false,
-    isPlayersSeated: false,
-    isPotCountUpPhase: false,
-    isPotBlinkingPhase: false,
-    isEntranceComplete: false,
-  };
+  return resolvePostDealTimeline(elapsedMs, milestones);
 }
 
-function resolveMidEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
-  if (elapsedMs < ENTRANCE_STEP_SEAT_SPIN_START_MS) {
+function resolvePostDealTimeline(
+  elapsedMs: number,
+  milestones: EntranceMilestones,
+): EntranceTimelineStep {
+  if (elapsedMs < milestones.seatSpinEndMs) {
     return {
       visibleCardCount: 3,
-      isDeckPhase: false,
-      isCardGlowPhase: true,
-      isSeatSpinning: false,
-      isPlayersSeated: false,
-      isPotCountUpPhase: false,
-      isPotBlinkingPhase: false,
-      isEntranceComplete: false,
-    };
-  }
-  if (elapsedMs < ENTRANCE_STEP_SEAT_SETTLED_MS) {
-    return {
-      visibleCardCount: 3,
-      isDeckPhase: false,
+      isDeckPhase: true,
       isCardGlowPhase: false,
       isSeatSpinning: true,
       isPlayersSeated: false,
@@ -98,20 +114,26 @@ function resolveMidEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
       isEntranceComplete: false,
     };
   }
-  return {
-    visibleCardCount: 3,
-    isDeckPhase: false,
-    isCardGlowPhase: false,
-    isSeatSpinning: false,
-    isPlayersSeated: true,
-    isPotCountUpPhase: false,
-    isPotBlinkingPhase: false,
-    isEntranceComplete: false,
-  };
+  if (elapsedMs < milestones.cardGlowEndMs) {
+    return {
+      visibleCardCount: 3,
+      isDeckPhase: true,
+      isCardGlowPhase: true,
+      isSeatSpinning: false,
+      isPlayersSeated: true,
+      isPotCountUpPhase: false,
+      isPotBlinkingPhase: false,
+      isEntranceComplete: false,
+    };
+  }
+  return resolvePotTimeline(elapsedMs, milestones);
 }
 
-function resolvePotEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
-  if (elapsedMs < ENTRANCE_STEP_POT_COUNT_DONE_MS) {
+function resolvePotTimeline(
+  elapsedMs: number,
+  milestones: EntranceMilestones,
+): EntranceTimelineStep {
+  if (elapsedMs < milestones.potCountDoneMs) {
     return {
       visibleCardCount: 3,
       isDeckPhase: false,
@@ -123,7 +145,7 @@ function resolvePotEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
       isEntranceComplete: false,
     };
   }
-  if (elapsedMs < ENTRANCE_TOTAL_DURATION_MS) {
+  if (elapsedMs < milestones.totalDurationMs) {
     return {
       visibleCardCount: 3,
       isDeckPhase: false,
@@ -147,16 +169,6 @@ function resolvePotEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
   };
 }
 
-export function calculateEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
-  if (elapsedMs < ENTRANCE_STEP_CARD_GLOW_START_MS) {
-    return resolveEarlyCardsTimeline(elapsedMs);
-  }
-  if (elapsedMs < ENTRANCE_STEP_POT_START_MS) {
-    return resolveMidEntranceTimeline(elapsedMs);
-  }
-  return resolvePotEntranceTimeline(elapsedMs);
-}
-
 export function calculateJustDealtCardIndex(elapsedMs: number): number {
   if (elapsedMs >= 1000 && elapsedMs < 1500) {
     return 0;
@@ -170,54 +182,58 @@ export function calculateJustDealtCardIndex(elapsedMs: number): number {
   return -1;
 }
 
-export function calculateEntrancePhaseDescription(elapsedMs: number): string {
+export function calculateEntrancePhaseDescription(
+  elapsedMs: number,
+  milestones: EntranceMilestones,
+): string {
   if (elapsedMs < 1000) {
     return 'Shuffling deck & preparing table...';
   }
   if (elapsedMs < 4000) {
     const cardStep = Math.floor((elapsedMs - 1000) / 1000) + 1;
-    return `Dealing card ${cardStep} of 3 to all player slots...`;
+    return `Dealing card ${cardStep} of 3 to player slots...`;
   }
-  if (elapsedMs < 4800) {
-    return 'Activating card slots with border glow...';
-  }
-  if (elapsedMs < 8800) {
+  if (elapsedMs < milestones.seatSpinEndMs) {
     return 'Randomizing player seats around table...';
   }
-  if (elapsedMs < 10800) {
-    return 'Players seated in randomized positions';
+  if (elapsedMs < milestones.cardGlowEndMs) {
+    return 'Honoring seated players with card slot glow...';
   }
-  if (elapsedMs < 11800) {
+  if (elapsedMs < milestones.potCountDoneMs) {
     return 'Collecting ante boot to pot...';
   }
-  if (elapsedMs < 12800) {
+  if (elapsedMs < milestones.totalDurationMs) {
     return 'Confirming pot & preparing first turn...';
   }
   return 'Round ready';
 }
 
-export function calculateEntrancePot(elapsedMs: number, finalPot: number): number {
-  if (elapsedMs < ENTRANCE_STEP_POT_START_MS) {
+export function calculateEntrancePot(
+  elapsedMs: number,
+  finalPot: number,
+  milestones: EntranceMilestones,
+): number {
+  if (elapsedMs < milestones.potStartMs) {
     return 0;
   }
-  if (elapsedMs >= ENTRANCE_STEP_POT_COUNT_DONE_MS) {
+  if (elapsedMs >= milestones.potCountDoneMs) {
     return finalPot;
   }
   const countUpProgress =
-    (elapsedMs - ENTRANCE_STEP_POT_START_MS) /
-    (ENTRANCE_STEP_POT_COUNT_DONE_MS - ENTRANCE_STEP_POT_START_MS);
+    (elapsedMs - milestones.potStartMs) /
+    (milestones.potCountDoneMs - milestones.potStartMs);
   const clampedProgress = Math.min(1, Math.max(0, countUpProgress));
   return Math.round(finalPot * clampedProgress);
 }
 
-export function calculateEntrancePotAmountVisible(elapsedMs: number): boolean {
-  if (
-    elapsedMs < ENTRANCE_STEP_POT_COUNT_DONE_MS ||
-    elapsedMs >= ENTRANCE_TOTAL_DURATION_MS
-  ) {
+export function calculateEntrancePotAmountVisible(
+  elapsedMs: number,
+  milestones: EntranceMilestones,
+): boolean {
+  if (elapsedMs < milestones.potCountDoneMs || elapsedMs >= milestones.totalDurationMs) {
     return true;
   }
-  const blinkStep = Math.floor((elapsedMs - ENTRANCE_STEP_POT_COUNT_DONE_MS) / 166);
+  const blinkStep = Math.floor((elapsedMs - milestones.potCountDoneMs) / 166);
   return blinkStep % 2 === 0;
 }
 
@@ -225,6 +241,7 @@ export function resolveEntranceState(
   isComplete: boolean,
   elapsedMs: number,
   finalPot: number,
+  milestones: EntranceMilestones,
 ) {
   const timeline = isComplete
     ? {
@@ -237,16 +254,18 @@ export function resolveEntranceState(
         isPotBlinkingPhase: false,
         isEntranceComplete: true,
       }
-    : calculateEntranceTimeline(elapsedMs);
+    : calculateEntranceTimeline(elapsedMs, milestones);
 
-  const displayedPot = isComplete ? finalPot : calculateEntrancePot(elapsedMs, finalPot);
+  const displayedPot = isComplete
+    ? finalPot
+    : calculateEntrancePot(elapsedMs, finalPot, milestones);
   const isPotAmountVisible = isComplete
     ? true
-    : calculateEntrancePotAmountVisible(elapsedMs);
+    : calculateEntrancePotAmountVisible(elapsedMs, milestones);
   const justDealtCardIndex = isComplete ? -1 : calculateJustDealtCardIndex(elapsedMs);
   const phaseDescription = isComplete
     ? 'Round ready'
-    : calculateEntrancePhaseDescription(elapsedMs);
+    : calculateEntrancePhaseDescription(elapsedMs, milestones);
 
   return {
     timeline,
@@ -268,9 +287,10 @@ export interface TableEntranceAnimationResult {
   readonly elapsedMs: number;
   readonly justDealtCardIndex: number;
   readonly phaseDescription: string;
+  readonly milestones: EntranceMilestones;
 }
 
-function useEntranceTimer(isActive: boolean): number {
+function useEntranceTimer(isActive: boolean, totalDurationMs: number): number {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
@@ -280,7 +300,7 @@ function useEntranceTimer(isActive: boolean): number {
 
     const intervalTimer = setInterval(() => {
       setElapsedMs((previousMs) => {
-        if (previousMs >= ENTRANCE_TOTAL_DURATION_MS) {
+        if (previousMs >= totalDurationMs) {
           clearInterval(intervalTimer);
           return previousMs;
         }
@@ -289,15 +309,17 @@ function useEntranceTimer(isActive: boolean): number {
     }, 40);
 
     return () => clearInterval(intervalTimer);
-  }, [isActive]);
+  }, [isActive, totalDurationMs]);
 
   return elapsedMs;
 }
 
 export function useTableEntranceAnimation(
   finalPot: number,
+  playerCount: number = 4,
   initialActive: boolean = true,
 ): TableEntranceAnimationResult {
+  const milestones = getEntranceMilestones(playerCount);
   const [isSkipped, setIsSkipped] = useState(false);
   const shouldAnimate = initialActive && !isSkipped && isAnimationEnabled();
 
@@ -310,8 +332,8 @@ export function useTableEntranceAnimation(
     { isActive: shouldAnimate },
   );
 
-  const elapsedMs = useEntranceTimer(shouldAnimate);
-  const isComplete = !shouldAnimate || elapsedMs >= ENTRANCE_TOTAL_DURATION_MS;
+  const elapsedMs = useEntranceTimer(shouldAnimate, milestones.totalDurationMs);
+  const isComplete = !shouldAnimate || elapsedMs >= milestones.totalDurationMs;
 
   const {
     timeline,
@@ -319,7 +341,7 @@ export function useTableEntranceAnimation(
     isPotAmountVisible,
     justDealtCardIndex,
     phaseDescription,
-  } = resolveEntranceState(isComplete, elapsedMs, finalPot);
+  } = resolveEntranceState(isComplete, elapsedMs, finalPot, milestones);
 
   return {
     isEntranceActive: !isComplete,
@@ -332,5 +354,6 @@ export function useTableEntranceAnimation(
     elapsedMs,
     justDealtCardIndex,
     phaseDescription,
+    milestones,
   };
 }

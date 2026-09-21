@@ -116,6 +116,7 @@ interface TableCenterRowProps {
   readonly isPotAmountVisible?: boolean;
   readonly isEntranceDeckPhase?: boolean;
   readonly entranceElapsedMs?: number;
+  readonly playerCount?: number;
 }
 
 function TableCenterRow({
@@ -126,6 +127,7 @@ function TableCenterRow({
   isPotAmountVisible,
   isEntranceDeckPhase = false,
   entranceElapsedMs = 0,
+  playerCount,
 }: TableCenterRowProps) {
   return (
     <Box flexDirection="row" alignItems="center" width="100%">
@@ -134,7 +136,7 @@ function TableCenterRow({
       </Box>
       <Box width={30} flexDirection="row" justifyContent="center">
         {isEntranceDeckPhase ? (
-          <DealerDeckCenterBox elapsedMs={entranceElapsedMs} />
+          <DealerDeckCenterBox elapsedMs={entranceElapsedMs} playerCount={playerCount} />
         ) : (
           <PotDisplayBox
             pot={pot}
@@ -173,6 +175,7 @@ interface TableSlotsLayoutProps {
   readonly isPotAmountVisible?: boolean;
   readonly isEntranceDeckPhase?: boolean;
   readonly entranceElapsedMs?: number;
+  readonly playerCount?: number;
 }
 
 function TableSlotsLayout({
@@ -185,6 +188,7 @@ function TableSlotsLayout({
   isPotAmountVisible,
   isEntranceDeckPhase,
   entranceElapsedMs,
+  playerCount,
 }: TableSlotsLayoutProps) {
   return (
     <Box
@@ -213,6 +217,7 @@ function TableSlotsLayout({
           isPotAmountVisible={isPotAmountVisible}
           isEntranceDeckPhase={isEntranceDeckPhase}
           entranceElapsedMs={entranceElapsedMs}
+          playerCount={playerCount}
         />
         <Box justifyContent="center" width="100%">
           {bottomSlot}
@@ -226,6 +231,8 @@ export function GameTableLayout(props: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow(
     props.isEntranceActive,
     props.entranceElapsedMs,
+    props.cardGlowStartMs,
+    props.cardGlowEndMs,
   );
   const participantIds = buildSideshowParticipantIds(
     props.sideshowResult,
@@ -262,6 +269,7 @@ export function GameTableLayout(props: GameTableLayoutProps) {
       isPotAmountVisible={props.isPotAmountVisible}
       isEntranceDeckPhase={props.isEntranceDeckPhase}
       entranceElapsedMs={props.entranceElapsedMs}
+      playerCount={props.playerCount}
     />
   );
 }

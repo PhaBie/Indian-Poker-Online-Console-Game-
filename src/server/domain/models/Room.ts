@@ -141,7 +141,8 @@ export class Room {
         player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
       }
     }
-    const playersList = shufflePlayerList(rawPlayersList);
+    const playersList =
+      this.players.size > 2 ? shufflePlayerList(rawPlayersList) : rawPlayersList;
     this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)

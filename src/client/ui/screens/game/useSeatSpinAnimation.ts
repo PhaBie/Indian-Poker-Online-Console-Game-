@@ -1,8 +1,8 @@
 import type { GamePlayerItem, TableSeatPositions } from './types';
 
 export const SEAT_SPIN_INTERVAL_MS = 120;
-export const DEFAULT_SPIN_START_MS = 4800;
-export const DEFAULT_SPIN_END_MS = 8800;
+export const DEFAULT_SPIN_START_MS = 4000;
+export const DEFAULT_SPIN_END_MS = 8000;
 
 export function resolveSpinningOpponentSeat(
   originalPlayer: GamePlayerItem | undefined,
@@ -64,6 +64,10 @@ export function resolveSeatPositionsForEntrance(
   }
 
   const opponents = collectOpponents(seats);
+  if (opponents.length <= 1) {
+    return seats;
+  }
+
   const spinIndex = Math.floor(
     Math.max(0, elapsedMs - spinStartMs) / SEAT_SPIN_INTERVAL_MS,
   );

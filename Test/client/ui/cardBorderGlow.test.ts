@@ -9,11 +9,7 @@ import {
   CARD_BORDER_GLOW_ACTIVE_FRAMES,
   DEFAULT_CARD_BORDER_COLORS,
 } from '../../../src/client/ui/screens/game/useCardBorderGlow';
-import {
-  ENTRANCE_STEP_CARD_GLOW_START_MS,
-  ENTRANCE_STEP_CARD_GLOW_END_MS,
-  ENTRANCE_TOTAL_DURATION_MS,
-} from '../../../src/client/ui/screens/game/useTableEntranceAnimation';
+import { getEntranceMilestones } from '../../../src/client/ui/screens/game/useTableEntranceAnimation';
 
 interface GlowHarnessState {
   currentColors: ReturnType<typeof useCardBorderGlow> | null;
@@ -23,6 +19,8 @@ interface GlowHarnessState {
 function mountCardBorderGlowHarness(
   initialEntranceActive: boolean,
   initialElapsedMs: number,
+  glowStartMs?: number,
+  glowEndMs?: number,
 ) {
   const harnessState: GlowHarnessState = {
     currentColors: null,
@@ -36,7 +34,12 @@ function mountCardBorderGlowHarness(
       setIsEntranceActive(nextEntranceActive);
       setElapsedMs(nextElapsedMs);
     };
-    harnessState.currentColors = useCardBorderGlow(isEntranceActive, elapsedMs);
+    harnessState.currentColors = useCardBorderGlow(
+      isEntranceActive,
+      elapsedMs,
+      glowStartMs,
+      glowEndMs,
+    );
     return null;
   }
 
@@ -63,48 +66,101 @@ function mountCardBorderGlowHarness(
 }
 
 describe('useCardBorderGlow', () => {
-  test('calculateEntranceBorderGlowColors returns default colors before dealing cards finishes', () => {
-    expect(calculateEntranceBorderGlowColors(0)).toEqual(DEFAULT_CARD_BORDER_COLORS);
-    expect(calculateEntranceBorderGlowColors(1000)).toEqual(DEFAULT_CARD_BORDER_COLORS);
-    expect(calculateEntranceBorderGlowColors(3500)).toEqual(DEFAULT_CARD_BORDER_COLORS);
+  const milestones4P = getEntranceMilestones(4);
+  const milestones2P = getEntranceMilestones(2);
+
+  test('calculateEntranceBorderGlowColors returns default colors before seated players honor milestone', () => {
     expect(
-      calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS - 10),
+      calculateEntranceBorderGlowColors(
+        0,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
+    ).toEqual(DEFAULT_CARD_BORDER_COLORS);
+    expect(
+      calculateEntranceBorderGlowColors(
+        1000,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
+    ).toEqual(DEFAULT_CARD_BORDER_COLORS);
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones4P.cardGlowStartMs - 10,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
     ).toEqual(DEFAULT_CARD_BORDER_COLORS);
   });
 
-  test('calculateEntranceBorderGlowColors plays active glow frames sequentially right after card dealing finishes', () => {
-    expect(calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS)).toEqual(
-      CARD_BORDER_GLOW_ACTIVE_FRAMES[0],
-    );
+  test('calculateEntranceBorderGlowColors plays active glow frames for 4 players when seats are locked', () => {
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
+    ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[0]);
 
     expect(
-      calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS + 90),
+      calculateEntranceBorderGlowColors(
+        milestones4P.cardGlowStartMs + 140,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
     ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[1]);
 
     expect(
-      calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS + 180),
+      calculateEntranceBorderGlowColors(
+        milestones4P.cardGlowStartMs + 280,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
     ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[2]);
-
-    expect(
-      calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS + 540),
-    ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[6]);
   });
 
-  test('calculateEntranceBorderGlowColors returns default colors during seat spin and pot payment stages', () => {
+  test('calculateEntranceBorderGlowColors plays active glow frames for 2 players directly after dealing cards', () => {
     expect(
-      calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_START_MS + 650),
+      calculateEntranceBorderGlowColors(
+        milestones2P.cardGlowStartMs,
+        milestones2P.cardGlowStartMs,
+        milestones2P.cardGlowEndMs,
+      ),
+    ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[0]);
+
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones2P.cardGlowStartMs + 140,
+        milestones2P.cardGlowStartMs,
+        milestones2P.cardGlowEndMs,
+      ),
+    ).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[1]);
+
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones2P.cardGlowEndMs,
+        milestones2P.cardGlowStartMs,
+        milestones2P.cardGlowEndMs,
+      ),
+    ).toEqual(DEFAULT_CARD_BORDER_COLORS);
+  });
+
+  test('calculateEntranceBorderGlowColors returns default colors once sweep duration finishes', () => {
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones4P.cardGlowEndMs,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
     ).toEqual(DEFAULT_CARD_BORDER_COLORS);
 
-    expect(calculateEntranceBorderGlowColors(ENTRANCE_STEP_CARD_GLOW_END_MS)).toEqual(
-      DEFAULT_CARD_BORDER_COLORS,
-    );
-
-    expect(calculateEntranceBorderGlowColors(6000)).toEqual(DEFAULT_CARD_BORDER_COLORS);
-    expect(calculateEntranceBorderGlowColors(11000)).toEqual(DEFAULT_CARD_BORDER_COLORS);
-
-    expect(calculateEntranceBorderGlowColors(ENTRANCE_TOTAL_DURATION_MS)).toEqual(
-      DEFAULT_CARD_BORDER_COLORS,
-    );
+    expect(
+      calculateEntranceBorderGlowColors(
+        milestones4P.totalDurationMs,
+        milestones4P.cardGlowStartMs,
+        milestones4P.cardGlowEndMs,
+      ),
+    ).toEqual(DEFAULT_CARD_BORDER_COLORS);
   });
 
   test('calculatePeriodicBorderGlowColors returns frame colors when index is within active frames', () => {
@@ -121,11 +177,16 @@ describe('useCardBorderGlow', () => {
     expect(calculatePeriodicBorderGlowColors(50)).toEqual(DEFAULT_CARD_BORDER_COLORS);
   });
 
-  test('harness reflects entrance glow state synchronized with card deal completion timing', async () => {
-    const harness = mountCardBorderGlowHarness(true, 1000);
+  test('harness reflects entrance glow state synchronized with seated players timing', async () => {
+    const harness = mountCardBorderGlowHarness(
+      true,
+      1000,
+      milestones4P.cardGlowStartMs,
+      milestones4P.cardGlowEndMs,
+    );
     expect(harness.getColors()).toEqual(DEFAULT_CARD_BORDER_COLORS);
 
-    harness.updateEntranceState(true, ENTRANCE_STEP_CARD_GLOW_START_MS + 40);
+    harness.updateEntranceState(true, milestones4P.cardGlowStartMs + 50);
     await Bun.sleep(20);
     expect(harness.getColors()).toEqual(CARD_BORDER_GLOW_ACTIVE_FRAMES[0]);
 

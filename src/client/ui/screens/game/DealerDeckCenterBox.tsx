@@ -1,7 +1,9 @@
 import { Box, Text } from 'ink';
+import { getEntranceMilestones } from './useTableEntranceAnimation';
 
 export interface DealerDeckCenterBoxProps {
   readonly elapsedMs: number;
+  readonly playerCount?: number;
 }
 
 const SHUFFLE_PATTERNS = [
@@ -45,16 +47,16 @@ function DealingCardContent({ currentCardNum }: { readonly currentCardNum: numbe
   );
 }
 
-function CardGlowPhaseContent() {
+function PlayerHonorContent() {
   return (
     <>
       <Text color="magentaBright" bold>
-        CARD SLOTS
+        HONORING SEATS
       </Text>
       <Text color="yellowBright" bold>
-        ⚡ ACTIVATING ⚡
+        ⚡ GLOW SWEEP ⚡
       </Text>
-      <Text color="magenta">GLOW SWEEP</Text>
+      <Text color="cyanBright">PLAYERS READY</Text>
     </>
   );
 }
@@ -90,30 +92,33 @@ function SeatsSettledContent() {
   );
 }
 
-function resolveCenterBoxContent(elapsedMs: number) {
-  if (elapsedMs < 1000) {
+function resolveCenterBoxContent(elapsedMs: number, playerCount: number = 4) {
+  const milestones = getEntranceMilestones(playerCount);
+
+  if (elapsedMs < milestones.card1Ms) {
     return {
       borderColor: 'cyanBright',
       content: <ShuffleDeckContent elapsedMs={elapsedMs} />,
     };
   }
-  if (elapsedMs < 4000) {
-    const currentCardNum = elapsedMs < 2000 ? 1 : elapsedMs < 3000 ? 2 : 3;
+  if (elapsedMs < milestones.seatSpinStartMs) {
+    const currentCardNum =
+      elapsedMs < milestones.card2Ms ? 1 : elapsedMs < milestones.card3Ms ? 2 : 3;
     return {
       borderColor: 'cyanBright',
       content: <DealingCardContent currentCardNum={currentCardNum} />,
     };
   }
-  if (elapsedMs < 4800) {
-    return {
-      borderColor: 'magentaBright',
-      content: <CardGlowPhaseContent />,
-    };
-  }
-  if (elapsedMs < 8800) {
+  if (elapsedMs < milestones.seatSpinEndMs) {
     return {
       borderColor: 'yellowBright',
       content: <SeatRouletteContent elapsedMs={elapsedMs} />,
+    };
+  }
+  if (elapsedMs < milestones.cardGlowEndMs) {
+    return {
+      borderColor: 'magentaBright',
+      content: <PlayerHonorContent />,
     };
   }
   return {
@@ -122,8 +127,11 @@ function resolveCenterBoxContent(elapsedMs: number) {
   };
 }
 
-export function DealerDeckCenterBox({ elapsedMs }: DealerDeckCenterBoxProps) {
-  const { borderColor, content } = resolveCenterBoxContent(elapsedMs);
+export function DealerDeckCenterBox({
+  elapsedMs,
+  playerCount,
+}: DealerDeckCenterBoxProps) {
+  const { borderColor, content } = resolveCenterBoxContent(elapsedMs, playerCount);
 
   return (
     <Box

@@ -121,4 +121,7 @@ export interface GameTableLayoutProps {
   readonly entranceElapsedMs?: number;
   readonly justDealtCardIndex?: number;
   readonly isEntranceActive?: boolean;
+  readonly cardGlowStartMs?: number;
+  readonly cardGlowEndMs?: number;
+  readonly playerCount?: number;
 }
