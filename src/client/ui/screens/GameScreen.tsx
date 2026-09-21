@@ -209,6 +209,11 @@ export function GameScreen({
             isEntranceActive={entranceAnimation.isEntranceActive}
             cardGlowStartMs={entranceAnimation.milestones.cardGlowStartMs}
             cardGlowEndMs={entranceAnimation.milestones.cardGlowEndMs}
+            isNameGlowPhase={entranceAnimation.isNameGlowPhase}
+            nameGlowElapsedMs={Math.max(
+              0,
+              entranceAnimation.elapsedMs - entranceAnimation.milestones.nameGlowStartMs,
+            )}
             playerCount={players.length}
           />
           <GameSidePanel

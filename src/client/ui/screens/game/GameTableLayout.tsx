@@ -20,6 +20,8 @@ interface PlayerSlotProps {
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
   readonly isEntranceActive?: boolean;
+  readonly isNameGlowPhase?: boolean;
+  readonly nameGlowElapsedMs?: number;
 }
 
 function calculateSlotFlags(
@@ -76,8 +78,9 @@ function PlayerSlot(props: PlayerSlotProps) {
     isEntranceDeckPhase,
     justDealtCardIndex,
     isEntranceActive,
+    isNameGlowPhase,
+    nameGlowElapsedMs,
   } = props;
-
   const flags = calculateSlotFlags(
     player,
     myPlayerId,
@@ -102,6 +105,8 @@ function PlayerSlot(props: PlayerSlotProps) {
       isEntranceDeckPhase={isEntranceDeckPhase}
       justDealtCardIndex={justDealtCardIndex}
       isEntranceActive={isEntranceActive}
+      isNameGlowPhase={isNameGlowPhase}
+      nameGlowElapsedMs={nameGlowElapsedMs}
       revealedCards={revealedCards}
       cardBorderGlowColors={cardBorderGlowColors}
     />
@@ -127,7 +132,6 @@ function TableCenterRow({
   isPotAmountVisible,
   isEntranceDeckPhase = false,
   entranceElapsedMs = 0,
-  playerCount,
 }: TableCenterRowProps) {
   return (
     <Box flexDirection="row" alignItems="center" width="100%">
@@ -136,7 +140,7 @@ function TableCenterRow({
       </Box>
       <Box width={30} flexDirection="row" justifyContent="center">
         {isEntranceDeckPhase ? (
-          <DealerDeckCenterBox elapsedMs={entranceElapsedMs} playerCount={playerCount} />
+          <DealerDeckCenterBox elapsedMs={entranceElapsedMs} />
         ) : (
           <PotDisplayBox
             pot={pot}
@@ -255,6 +259,8 @@ export function GameTableLayout(props: GameTableLayoutProps) {
       isEntranceDeckPhase={props.isEntranceDeckPhase}
       justDealtCardIndex={props.justDealtCardIndex}
       isEntranceActive={props.isEntranceActive}
+      isNameGlowPhase={props.isNameGlowPhase}
+      nameGlowElapsedMs={props.nameGlowElapsedMs}
     />
   );
 

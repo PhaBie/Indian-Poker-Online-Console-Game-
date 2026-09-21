@@ -55,6 +55,8 @@ export interface PlayerSeatNodeProps {
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
   readonly isEntranceActive?: boolean;
+  readonly isNameGlowPhase?: boolean;
+  readonly nameGlowElapsedMs?: number;
 }
 
 export interface ActionMenuItem {
@@ -123,5 +125,7 @@ export interface GameTableLayoutProps {
   readonly isEntranceActive?: boolean;
   readonly cardGlowStartMs?: number;
   readonly cardGlowEndMs?: number;
+  readonly isNameGlowPhase?: boolean;
+  readonly nameGlowElapsedMs?: number;
   readonly playerCount?: number;
 }

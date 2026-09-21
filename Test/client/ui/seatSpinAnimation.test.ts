@@ -52,7 +52,7 @@ describe('useSeatSpinAnimation', () => {
 
   test('resolveSpinningOpponentSeat returns undefined for undefined player', () => {
     expect(
-      resolveSpinningOpponentSeat(undefined, [], 0, 0, 5000, 4000, 8000),
+      resolveSpinningOpponentSeat(undefined, [], 0, 0, 5000, 5200, 9200),
     ).toBeUndefined();
   });
 
@@ -63,8 +63,8 @@ describe('useSeatSpinAnimation', () => {
       0,
       0,
       2000,
-      4000,
-      8000,
+      5200,
+      9200,
     );
     expect(seat?.name).toBe('[ ··· ]');
   });
@@ -75,11 +75,12 @@ describe('useSeatSpinAnimation', () => {
       [opponentLeft, opponentTop],
       0,
       0,
-      5000,
-      4000,
-      8000,
+      6000,
+      5200,
+      9200,
     );
-    expect(seat?.name).toContain('🎲');
+    expect(seat).toBeDefined();
+    expect(['Alice', 'Bob']).toContain(seat!.name);
   });
 
   test('resolveSpinningOpponentSeat returns original player after spin phase completes', () => {
@@ -88,9 +89,9 @@ describe('useSeatSpinAnimation', () => {
       [opponentLeft, opponentTop],
       0,
       0,
-      8500,
-      4000,
-      8000,
+      9500,
+      5200,
+      9200,
     );
     expect(seat?.name).toBe('Alice');
   });
@@ -102,7 +103,7 @@ describe('useSeatSpinAnimation', () => {
     const spinning = resolveSeatPositionsForEntrance(sampleSeats, 6000, true);
     expect(spinning.bottomPlayer?.id).toBe('id_me');
 
-    const settled = resolveSeatPositionsForEntrance(sampleSeats, 8500, true);
+    const settled = resolveSeatPositionsForEntrance(sampleSeats, 9500, true);
     expect(settled.bottomPlayer?.id).toBe('id_me');
   });
 
@@ -113,7 +114,7 @@ describe('useSeatSpinAnimation', () => {
     const duringSpinTime = resolveSeatPositionsForEntrance(twoPlayerSeats, 6000, true);
     expect(duringSpinTime.topPlayer?.name).toBe('Bob');
 
-    const later = resolveSeatPositionsForEntrance(twoPlayerSeats, 8500, true);
+    const later = resolveSeatPositionsForEntrance(twoPlayerSeats, 9500, true);
     expect(later.topPlayer?.name).toBe('Bob');
   });
 

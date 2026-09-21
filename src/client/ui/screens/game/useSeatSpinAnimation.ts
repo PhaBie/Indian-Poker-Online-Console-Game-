@@ -1,8 +1,8 @@
 import type { GamePlayerItem, TableSeatPositions } from './types';
 
 export const SEAT_SPIN_INTERVAL_MS = 120;
-export const DEFAULT_SPIN_START_MS = 4000;
-export const DEFAULT_SPIN_END_MS = 8000;
+export const DEFAULT_SPIN_START_MS = 5200;
+export const DEFAULT_SPIN_END_MS = 9200;
 
 export function resolveSpinningOpponentSeat(
   originalPlayer: GamePlayerItem | undefined,
@@ -29,7 +29,7 @@ export function resolveSpinningOpponentSeat(
     const candidate = opponents[candidateIndex] ?? originalPlayer;
     return {
       ...originalPlayer,
-      name: `🎲 ${candidate.name}`,
+      name: candidate.name,
     };
   }
 

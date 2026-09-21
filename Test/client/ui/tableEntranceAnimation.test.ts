@@ -55,25 +55,29 @@ describe('useTableEntranceAnimation', () => {
   const milestones4P = getEntranceMilestones(4);
   const milestones2P = getEntranceMilestones(2);
 
-  test('getEntranceMilestones gives 7.2s profile for 2 players and 11.2s profile for 4 players', () => {
-    expect(milestones2P.totalDurationMs).toBe(7200);
-    expect(milestones2P.seatSpinStartMs).toBe(4000);
-    expect(milestones2P.seatSpinEndMs).toBe(4000);
+  test('getEntranceMilestones gives 8.4s profile for 2 players and 12.4s profile for 4 players', () => {
+    expect(milestones2P.totalDurationMs).toBe(8400);
     expect(milestones2P.cardGlowStartMs).toBe(4000);
     expect(milestones2P.cardGlowEndMs).toBe(5200);
-    expect(milestones2P.potStartMs).toBe(5200);
-    expect(milestones2P.potCountDoneMs).toBe(6200);
+    expect(milestones2P.seatSpinStartMs).toBe(5200);
+    expect(milestones2P.seatSpinEndMs).toBe(5200);
+    expect(milestones2P.nameGlowStartMs).toBe(5200);
+    expect(milestones2P.nameGlowEndMs).toBe(6400);
+    expect(milestones2P.potStartMs).toBe(6400);
+    expect(milestones2P.potCountDoneMs).toBe(7400);
 
-    expect(milestones4P.totalDurationMs).toBe(11200);
-    expect(milestones4P.seatSpinStartMs).toBe(4000);
-    expect(milestones4P.seatSpinEndMs).toBe(8000);
-    expect(milestones4P.cardGlowStartMs).toBe(8000);
-    expect(milestones4P.cardGlowEndMs).toBe(9200);
-    expect(milestones4P.potStartMs).toBe(9200);
-    expect(milestones4P.potCountDoneMs).toBe(10200);
+    expect(milestones4P.totalDurationMs).toBe(12400);
+    expect(milestones4P.cardGlowStartMs).toBe(4000);
+    expect(milestones4P.cardGlowEndMs).toBe(5200);
+    expect(milestones4P.seatSpinStartMs).toBe(5200);
+    expect(milestones4P.seatSpinEndMs).toBe(9200);
+    expect(milestones4P.nameGlowStartMs).toBe(9200);
+    expect(milestones4P.nameGlowEndMs).toBe(10400);
+    expect(milestones4P.potStartMs).toBe(10400);
+    expect(milestones4P.potCountDoneMs).toBe(11400);
   });
 
-  test('calculateEntranceTimeline advances cards, seat roulette, honor glow, and pot for 4 players', () => {
+  test('calculateEntranceTimeline advances cards, card glow, seat spin, name sweep, and pot for 4 players', () => {
     const stepZero = calculateEntranceTimeline(0, milestones4P);
     expect(stepZero.visibleCardCount).toBe(0);
     expect(stepZero.isDeckPhase).toBe(true);
@@ -91,21 +95,29 @@ describe('useTableEntranceAnimation', () => {
     expect(stepThree.visibleCardCount).toBe(3);
     expect(stepThree.isDeckPhase).toBe(true);
 
+    const stepCardGlow = calculateEntranceTimeline(
+      milestones4P.cardGlowStartMs + 50,
+      milestones4P,
+    );
+    expect(stepCardGlow.isCardGlowPhase).toBe(true);
+    expect(stepCardGlow.isDeckPhase).toBe(false);
+    expect(stepCardGlow.isSeatSpinning).toBe(false);
+    expect(stepCardGlow.isPlayersSeated).toBe(false);
+
     const stepSpin = calculateEntranceTimeline(
       milestones4P.seatSpinStartMs + 50,
       milestones4P,
     );
     expect(stepSpin.isSeatSpinning).toBe(true);
-    expect(stepSpin.isDeckPhase).toBe(true);
+    expect(stepSpin.isDeckPhase).toBe(false);
     expect(stepSpin.isPlayersSeated).toBe(false);
 
-    const stepHonorGlow = calculateEntranceTimeline(
-      milestones4P.cardGlowStartMs + 50,
+    const stepNameGlow = calculateEntranceTimeline(
+      milestones4P.nameGlowStartMs + 50,
       milestones4P,
     );
-    expect(stepHonorGlow.isCardGlowPhase).toBe(true);
-    expect(stepHonorGlow.isDeckPhase).toBe(true);
-    expect(stepHonorGlow.isPlayersSeated).toBe(true);
+    expect(stepNameGlow.isNameGlowPhase).toBe(true);
+    expect(stepNameGlow.isPlayersSeated).toBe(true);
 
     const stepPot = calculateEntranceTimeline(milestones4P.potStartMs + 50, milestones4P);
     expect(stepPot.isPotCountUpPhase).toBe(true);
@@ -125,22 +137,27 @@ describe('useTableEntranceAnimation', () => {
     expect(stepDone.isEntranceComplete).toBe(true);
   });
 
-  test('calculateEntranceTimeline bypasses seat spin and plays honor glow directly for 2 players', () => {
-    const stepHonorGlow2P = calculateEntranceTimeline(
+  test('calculateEntranceTimeline bypasses seat spin and plays name sweep directly after card glow for 2 players', () => {
+    const stepCardGlow2P = calculateEntranceTimeline(
       milestones2P.cardGlowStartMs + 50,
       milestones2P,
     );
-    expect(stepHonorGlow2P.isSeatSpinning).toBe(false);
-    expect(stepHonorGlow2P.isCardGlowPhase).toBe(true);
-    expect(stepHonorGlow2P.isPlayersSeated).toBe(true);
-    expect(stepHonorGlow2P.isDeckPhase).toBe(true);
+    expect(stepCardGlow2P.isCardGlowPhase).toBe(true);
+    expect(stepCardGlow2P.isSeatSpinning).toBe(false);
+
+    const stepNameGlow2P = calculateEntranceTimeline(
+      milestones2P.nameGlowStartMs + 50,
+      milestones2P,
+    );
+    expect(stepNameGlow2P.isSeatSpinning).toBe(false);
+    expect(stepNameGlow2P.isNameGlowPhase).toBe(true);
+    expect(stepNameGlow2P.isPlayersSeated).toBe(true);
 
     const stepPot2P = calculateEntranceTimeline(
       milestones2P.potStartMs + 50,
       milestones2P,
     );
     expect(stepPot2P.isPotCountUpPhase).toBe(true);
-    expect(stepPot2P.isDeckPhase).toBe(false);
   });
 
   test('calculateEntrancePot counts up pot proportionally after boot step until pot count done', () => {
@@ -173,19 +190,25 @@ describe('useTableEntranceAnimation', () => {
     expect(calculateEntrancePhaseDescription(1500, milestones4P)).toContain('card 1');
     expect(calculateEntrancePhaseDescription(2500, milestones4P)).toContain('card 2');
     expect(calculateEntrancePhaseDescription(3500, milestones4P)).toContain('card 3');
-    expect(calculateEntrancePhaseDescription(5500, milestones4P)).toContain(
+    expect(calculateEntrancePhaseDescription(4500, milestones4P)).toContain(
+      'border glow',
+    );
+    expect(calculateEntrancePhaseDescription(6500, milestones4P)).toContain(
       'Randomizing',
     );
-    expect(calculateEntrancePhaseDescription(8500, milestones4P)).toContain('Honoring');
-    expect(calculateEntrancePhaseDescription(9500, milestones4P)).toContain('ante boot');
-    expect(calculateEntrancePhaseDescription(10500, milestones4P)).toContain(
+    expect(calculateEntrancePhaseDescription(9500, milestones4P)).toContain('Welcoming');
+    expect(calculateEntrancePhaseDescription(10500, milestones4P)).toContain('ante boot');
+    expect(calculateEntrancePhaseDescription(11500, milestones4P)).toContain(
       'first turn',
     );
   });
 
   test('calculateEntrancePhaseDescription returns descriptive status for 2-player game without randomization', () => {
-    expect(calculateEntrancePhaseDescription(4500, milestones2P)).toContain('Honoring');
-    expect(calculateEntrancePhaseDescription(5500, milestones2P)).toContain('ante boot');
+    expect(calculateEntrancePhaseDescription(4500, milestones2P)).toContain(
+      'border glow',
+    );
+    expect(calculateEntrancePhaseDescription(5500, milestones2P)).toContain('Welcoming');
+    expect(calculateEntrancePhaseDescription(6500, milestones2P)).toContain('ante boot');
   });
 
   test('resolveEntranceState yields final values when complete is true', () => {

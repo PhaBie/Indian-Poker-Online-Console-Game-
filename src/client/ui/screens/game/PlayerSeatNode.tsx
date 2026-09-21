@@ -5,6 +5,7 @@ import type { PlayerSeatNodeProps, GamePlayerItem } from './types';
 import { CardView } from './CardView';
 import { getPlayerBadgeInfo } from './gameLayoutHelpers';
 import { PlayerBadgeIndicator } from './PlayerBadgeIndicator';
+import { SweepingPlayerName } from './SweepingPlayerName';
 
 interface PlayerSeatHeaderProps {
   readonly player: GamePlayerItem;
@@ -12,6 +13,8 @@ interface PlayerSeatHeaderProps {
   readonly isShowdownRevealed: boolean;
   readonly isBankrupt: boolean;
   readonly isEntranceActive?: boolean;
+  readonly isNameGlowPhase?: boolean;
+  readonly nameGlowElapsedMs?: number;
 }
 
 interface HandModeIndicatorProps {
@@ -67,16 +70,23 @@ function PlayerSeatHeader({
   isShowdownRevealed,
   isBankrupt,
   isEntranceActive = false,
+  isNameGlowPhase = false,
+  nameGlowElapsedMs = 0,
 }: PlayerSeatHeaderProps) {
   const displayName = isMe ? 'YOU' : player.name;
   const shouldShowBlind = !isBankrupt && !isEntranceActive;
+  const shouldSweepName = !isMe && !isBankrupt && isNameGlowPhase;
 
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
       <Text>
-        <Text color={isBankrupt ? 'redBright' : isMe ? 'cyanBright' : 'white'} bold>
-          {displayName}
-        </Text>
+        {shouldSweepName ? (
+          <SweepingPlayerName name={player.name} elapsedMs={nameGlowElapsedMs} />
+        ) : (
+          <Text color={isBankrupt ? 'redBright' : isMe ? 'cyanBright' : 'white'} bold>
+            {displayName}
+          </Text>
+        )}
         <Text color="gray"> </Text>
         {isBankrupt && (
           <Text color="redBright" bold>
@@ -124,6 +134,8 @@ interface PlayerCardsPanelProps {
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
   readonly isEntranceActive?: boolean;
+  readonly isNameGlowPhase?: boolean;
+  readonly nameGlowElapsedMs?: number;
 }
 
 function BankruptCardContent() {
@@ -375,6 +387,8 @@ function OtherPlayerSeatView(props: SeatNodeRenderProps) {
         isShowdownRevealed={props.isShowdownRevealed}
         isBankrupt={props.isBankrupt}
         isEntranceActive={props.isEntranceActive}
+        isNameGlowPhase={props.isNameGlowPhase}
+        nameGlowElapsedMs={props.nameGlowElapsedMs}
       />
       <PlayerCardsPanel {...props} />
     </Box>
