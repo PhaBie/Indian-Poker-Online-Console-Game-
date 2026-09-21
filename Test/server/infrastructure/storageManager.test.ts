@@ -35,8 +35,18 @@ describe('9. ระบบบันทึกและกู้คืนสถา�
       if (room.gameState) {
         room.gameState.pot = 500;
         room.gameState.currentStake = 100;
-        room.gameState.activePlayers[0].privateCards = [{ suit: 'SPADES', rank: 14 }];
-        room.gameState.activePlayers[1].privateCards = [{ suit: 'HEARTS', rank: 2 }];
+        const playerOne = room.gameState.activePlayers.find(
+          (player) => player.id === 'id_p1',
+        );
+        const playerTwo = room.gameState.activePlayers.find(
+          (player) => player.id === 'id_p2',
+        );
+        if (playerOne) {
+          playerOne.privateCards = [{ suit: 'SPADES', rank: 14 }];
+        }
+        if (playerTwo) {
+          playerTwo.privateCards = [{ suit: 'HEARTS', rank: 2 }];
+        }
       }
 
       storage1.saveRoomState(room);

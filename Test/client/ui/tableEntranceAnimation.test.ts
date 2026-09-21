@@ -12,7 +12,10 @@ import {
   ENTRANCE_STEP_CARD_1_MS,
   ENTRANCE_STEP_CARD_2_MS,
   ENTRANCE_STEP_CARD_3_MS,
-  ENTRANCE_STEP_BOOT_POT_MS,
+  ENTRANCE_STEP_CARD_GLOW_START_MS,
+  ENTRANCE_STEP_SEAT_SPIN_START_MS,
+  ENTRANCE_STEP_SEAT_SETTLED_MS,
+  ENTRANCE_STEP_POT_START_MS,
   ENTRANCE_STEP_POT_COUNT_DONE_MS,
   ENTRANCE_TOTAL_DURATION_MS,
 } from '../../../src/client/ui/screens/game/useTableEntranceAnimation';
@@ -75,10 +78,21 @@ describe('useTableEntranceAnimation', () => {
     expect(stepThree.visibleCardCount).toBe(3);
     expect(stepThree.isDeckPhase).toBe(true);
 
-    const stepBoot = calculateEntranceTimeline(ENTRANCE_STEP_BOOT_POT_MS + 50);
-    expect(stepBoot.visibleCardCount).toBe(3);
-    expect(stepBoot.isDeckPhase).toBe(false);
-    expect(stepBoot.isPotCountUpPhase).toBe(true);
+    const stepGlow = calculateEntranceTimeline(ENTRANCE_STEP_CARD_GLOW_START_MS + 50);
+    expect(stepGlow.visibleCardCount).toBe(3);
+    expect(stepGlow.isCardGlowPhase).toBe(true);
+
+    const stepSpin = calculateEntranceTimeline(ENTRANCE_STEP_SEAT_SPIN_START_MS + 50);
+    expect(stepSpin.isSeatSpinning).toBe(true);
+
+    const stepSeated = calculateEntranceTimeline(ENTRANCE_STEP_SEAT_SETTLED_MS + 50);
+    expect(stepSeated.isPlayersSeated).toBe(true);
+
+    const stepPot = calculateEntranceTimeline(ENTRANCE_STEP_POT_START_MS + 50);
+    expect(stepPot.isPotCountUpPhase).toBe(true);
+
+    const stepBlink = calculateEntranceTimeline(ENTRANCE_STEP_POT_COUNT_DONE_MS + 50);
+    expect(stepBlink.isPotBlinkingPhase).toBe(true);
 
     const stepDone = calculateEntranceTimeline(ENTRANCE_TOTAL_DURATION_MS + 10);
     expect(stepDone.visibleCardCount).toBe(3);
@@ -87,12 +101,12 @@ describe('useTableEntranceAnimation', () => {
 
   test('calculateEntrancePot counts up pot proportionally after boot step until pot count done', () => {
     expect(calculateEntrancePot(0, 100)).toBe(0);
-    expect(calculateEntrancePot(ENTRANCE_STEP_BOOT_POT_MS - 50, 100)).toBe(0);
-    expect(calculateEntrancePot(ENTRANCE_STEP_BOOT_POT_MS, 100)).toBe(0);
+    expect(calculateEntrancePot(ENTRANCE_STEP_POT_START_MS - 50, 100)).toBe(0);
+    expect(calculateEntrancePot(ENTRANCE_STEP_POT_START_MS, 100)).toBe(0);
 
     const midElapsedMs =
-      ENTRANCE_STEP_BOOT_POT_MS +
-      (ENTRANCE_STEP_POT_COUNT_DONE_MS - ENTRANCE_STEP_BOOT_POT_MS) / 2;
+      ENTRANCE_STEP_POT_START_MS +
+      (ENTRANCE_STEP_POT_COUNT_DONE_MS - ENTRANCE_STEP_POT_START_MS) / 2;
     expect(calculateEntrancePot(midElapsedMs, 100)).toBe(50);
     expect(calculateEntrancePot(ENTRANCE_STEP_POT_COUNT_DONE_MS, 100)).toBe(100);
     expect(calculateEntrancePot(ENTRANCE_TOTAL_DURATION_MS, 100)).toBe(100);
@@ -111,8 +125,10 @@ describe('useTableEntranceAnimation', () => {
     expect(calculateEntrancePhaseDescription(1500)).toContain('card 1');
     expect(calculateEntrancePhaseDescription(2500)).toContain('card 2');
     expect(calculateEntrancePhaseDescription(3500)).toContain('card 3');
-    expect(calculateEntrancePhaseDescription(4500)).toContain('ante boot');
-    expect(calculateEntrancePhaseDescription(5500)).toContain('player cards');
+    expect(calculateEntrancePhaseDescription(4500)).toContain('border glow');
+    expect(calculateEntrancePhaseDescription(5500)).toContain('seats');
+    expect(calculateEntrancePhaseDescription(9500)).toContain('seated');
+    expect(calculateEntrancePhaseDescription(11500)).toContain('ante boot');
   });
 
   test('resolveEntranceState yields final values when complete is true', () => {

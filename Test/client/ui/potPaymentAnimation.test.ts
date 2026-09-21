@@ -4,6 +4,8 @@ import { PassThrough, Writable } from 'stream';
 import { render } from 'ink';
 import {
   usePotPaymentAnimation,
+  POT_COUNT_UP_TOTAL_STEPS,
+  POT_COUNT_UP_INTERVAL_MS,
   POT_FLASH_PULSE_DURATION_MS,
   POT_FLASH_TOTAL_STEPS,
 } from '../../../src/client/ui/screens/game/usePotPaymentAnimation';
@@ -63,6 +65,7 @@ describe('usePotPaymentAnimation', () => {
 
     expect(result.isPotBlinking).toBe(false);
     expect(result.isAmountVisible).toBe(true);
+    expect(result.displayedPotAmount).toBe(150);
     expect(result.effectiveTurnPlayerId).toBe('player_alpha');
 
     harness.unmount();
@@ -81,7 +84,7 @@ describe('usePotPaymentAnimation', () => {
     harness.unmount();
   });
 
-  test('activates blinking state and holds effective turn as null when pot increases', async () => {
+  test('activates count up state and holds effective turn as null when pot increases', async () => {
     const harness = mountPotAnimationHarness(150, 'player_next');
     harness.updatePot(200);
     await Bun.sleep(10);
@@ -90,6 +93,8 @@ describe('usePotPaymentAnimation', () => {
     expect(result.isPotBlinking).toBe(true);
     expect(result.isAmountVisible).toBe(true);
     expect(result.effectiveTurnPlayerId).toBeNull();
+    expect(result.displayedPotAmount).toBeGreaterThanOrEqual(150);
+    expect(result.displayedPotAmount).toBeLessThanOrEqual(200);
 
     harness.unmount();
   });
@@ -102,15 +107,19 @@ describe('usePotPaymentAnimation', () => {
     expect(harness.getResult().isAmountVisible).toBe(true);
     expect(harness.getResult().effectiveTurnPlayerId).toBeNull();
 
-    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS + 20);
+    await Bun.sleep(
+      POT_COUNT_UP_INTERVAL_MS * POT_COUNT_UP_TOTAL_STEPS +
+        POT_FLASH_PULSE_DURATION_MS +
+        80,
+    );
     expect(harness.getResult().isAmountVisible).toBe(false);
     expect(harness.getResult().effectiveTurnPlayerId).toBeNull();
 
-    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS + 20);
+    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS);
     expect(harness.getResult().isAmountVisible).toBe(true);
     expect(harness.getResult().effectiveTurnPlayerId).toBeNull();
 
-    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS + 20);
+    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS);
     expect(harness.getResult().isAmountVisible).toBe(false);
     expect(harness.getResult().effectiveTurnPlayerId).toBeNull();
 
@@ -125,6 +134,7 @@ describe('usePotPaymentAnimation', () => {
     const result = harness.getResult();
     expect(result.isPotBlinking).toBe(false);
     expect(result.isAmountVisible).toBe(true);
+    expect(result.displayedPotAmount).toBe(150);
     expect(result.effectiveTurnPlayerId).toBe('player_alpha');
 
     harness.unmount();
@@ -138,11 +148,16 @@ describe('usePotPaymentAnimation', () => {
     expect(harness.getResult().isPotBlinking).toBe(true);
     expect(harness.getResult().effectiveTurnPlayerId).toBeNull();
 
-    await Bun.sleep(POT_FLASH_PULSE_DURATION_MS * POT_FLASH_TOTAL_STEPS + 80);
+    await Bun.sleep(
+      POT_COUNT_UP_INTERVAL_MS * POT_COUNT_UP_TOTAL_STEPS +
+        POT_FLASH_PULSE_DURATION_MS * POT_FLASH_TOTAL_STEPS +
+        80,
+    );
 
     const result = harness.getResult();
     expect(result.isPotBlinking).toBe(false);
     expect(result.isAmountVisible).toBe(true);
+    expect(result.displayedPotAmount).toBe(200);
     expect(result.effectiveTurnPlayerId).toBe('player_next');
 
     harness.unmount();

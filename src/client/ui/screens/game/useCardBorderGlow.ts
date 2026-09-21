@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  ENTRANCE_STEP_POT_COUNT_DONE_MS,
-  ENTRANCE_TOTAL_DURATION_MS,
+  ENTRANCE_STEP_CARD_GLOW_START_MS,
+  ENTRANCE_STEP_CARD_GLOW_END_MS,
 } from './useTableEntranceAnimation';
 
 export type CardBorderColorTriple = readonly [string, string, string];
@@ -36,14 +36,14 @@ export function calculateEntranceBorderGlowColors(
   elapsedMs: number,
 ): CardBorderColorTriple {
   if (
-    elapsedMs < ENTRANCE_STEP_POT_COUNT_DONE_MS ||
-    elapsedMs >= ENTRANCE_TOTAL_DURATION_MS
+    elapsedMs < ENTRANCE_STEP_CARD_GLOW_START_MS ||
+    elapsedMs >= ENTRANCE_STEP_CARD_GLOW_END_MS
   ) {
     return DEFAULT_CARD_BORDER_COLORS;
   }
 
   const frameIndex = Math.floor(
-    (elapsedMs - ENTRANCE_STEP_POT_COUNT_DONE_MS) / CARD_BORDER_GLOW_INTERVAL_MS,
+    (elapsedMs - ENTRANCE_STEP_CARD_GLOW_START_MS) / CARD_BORDER_GLOW_INTERVAL_MS,
   );
 
   if (frameIndex >= 0 && frameIndex < CARD_BORDER_GLOW_ACTIVE_FRAMES.length) {

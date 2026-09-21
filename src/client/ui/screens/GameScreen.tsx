@@ -16,6 +16,7 @@ import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
 import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
+import { resolveSeatPositionsForEntrance } from './game/useSeatSpinAnimation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
@@ -116,7 +117,7 @@ export function GameScreen({
     Boolean(effectiveRoundResult),
     currentTurnPlayerId,
   );
-  const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking } =
+  const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking, displayedPotAmount } =
     usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
   const entranceAnimation = useTableEntranceAnimation(pot);
   const activeTurnPlayerId = entranceAnimation.isEntranceActive
@@ -124,7 +125,18 @@ export function GameScreen({
     : effectiveTurnPlayerId;
   const actionCtrl = useGameActionController(socketClient);
   const orderedPlayers = getOrderedPlayersByPerspective(players, myPlayerId);
-  const seatPositions = determineSeatPositions(orderedPlayers);
+  const rawSeatPositions = determineSeatPositions(orderedPlayers);
+  const seatPositions = resolveSeatPositionsForEntrance(
+    rawSeatPositions,
+    entranceAnimation.elapsedMs,
+    entranceAnimation.isEntranceActive,
+  );
+  const effectivePot = entranceAnimation.isEntranceActive
+    ? entranceAnimation.displayedPot
+    : displayedPotAmount;
+  const isEffectivePotAmountVisible = entranceAnimation.isEntranceActive
+    ? entranceAnimation.isPotAmountVisible
+    : isAmountVisible;
   const statusContext = buildStatusContext(
     activeTurnPlayerId,
     myPlayerId,
@@ -175,7 +187,7 @@ export function GameScreen({
         <GameBrandHeader hostName={hostName} roomId={roomId} width={GAMEPLAY_WIDTH} />
         <Box flexDirection="row" width={GAMEPLAY_WIDTH} height={38} position="relative">
           <GameTableLayout
-            pot={entranceAnimation.displayedPot}
+            pot={effectivePot}
             currentStake={currentStake}
             seatPositions={seatPositions}
             currentTurnPlayerId={activeTurnPlayerId}
@@ -187,7 +199,7 @@ export function GameScreen({
             sideshowResult={effectiveRoundResult ? null : sideshowResult}
             sideshowNotice={effectiveRoundResult ? null : sideshowNotice}
             showdownCards={effectiveRoundResult ? null : showdownCards}
-            isPotAmountVisible={isAmountVisible}
+            isPotAmountVisible={isEffectivePotAmountVisible}
             entranceVisibleCardCount={entranceAnimation.visibleCardCount}
             isEntranceDeckPhase={entranceAnimation.isDeckPhase}
             entranceElapsedMs={entranceAnimation.elapsedMs}

@@ -45,25 +45,97 @@ function DealingCardContent({ currentCardNum }: { readonly currentCardNum: numbe
   );
 }
 
+function CardGlowPhaseContent() {
+  return (
+    <>
+      <Text color="magentaBright" bold>
+        CARD SLOTS
+      </Text>
+      <Text color="yellowBright" bold>
+        ⚡ ACTIVATING ⚡
+      </Text>
+      <Text color="magenta">GLOW SWEEP</Text>
+    </>
+  );
+}
+
+function SeatRouletteContent({ elapsedMs }: { readonly elapsedMs: number }) {
+  const dicePatterns = ['🎲 ⚀ ⚁ ⚂', '🎲 ⚂ ⚃ ⚄', '🎲 ⚄ ⚅ ⚀', '🎲 ⚁ ⚃ ⚅'];
+  const index = Math.floor(elapsedMs / 150) % dicePatterns.length;
+
+  return (
+    <>
+      <Text color="yellowBright" bold>
+        SEAT ROULETTE
+      </Text>
+      <Text color="cyanBright" bold>
+        {dicePatterns[index]}
+      </Text>
+      <Text color="yellow">SPINNING...</Text>
+    </>
+  );
+}
+
+function SeatsSettledContent() {
+  return (
+    <>
+      <Text color="greenBright" bold>
+        SEATS LOCKED
+      </Text>
+      <Text color="cyanBright" bold>
+        [ READY ]
+      </Text>
+      <Text color="gray">TAKING SEATS</Text>
+    </>
+  );
+}
+
+function resolveCenterBoxContent(elapsedMs: number) {
+  if (elapsedMs < 1000) {
+    return {
+      borderColor: 'cyanBright',
+      content: <ShuffleDeckContent elapsedMs={elapsedMs} />,
+    };
+  }
+  if (elapsedMs < 4000) {
+    const currentCardNum = elapsedMs < 2000 ? 1 : elapsedMs < 3000 ? 2 : 3;
+    return {
+      borderColor: 'cyanBright',
+      content: <DealingCardContent currentCardNum={currentCardNum} />,
+    };
+  }
+  if (elapsedMs < 4800) {
+    return {
+      borderColor: 'magentaBright',
+      content: <CardGlowPhaseContent />,
+    };
+  }
+  if (elapsedMs < 8800) {
+    return {
+      borderColor: 'yellowBright',
+      content: <SeatRouletteContent elapsedMs={elapsedMs} />,
+    };
+  }
+  return {
+    borderColor: 'greenBright',
+    content: <SeatsSettledContent />,
+  };
+}
+
 export function DealerDeckCenterBox({ elapsedMs }: DealerDeckCenterBoxProps) {
-  const isShufflePhase = elapsedMs < 1000;
-  const currentCardNum = elapsedMs < 2000 ? 1 : elapsedMs < 3000 ? 2 : 3;
+  const { borderColor, content } = resolveCenterBoxContent(elapsedMs);
 
   return (
     <Box
       borderStyle="round"
-      borderColor="cyanBright"
+      borderColor={borderColor}
       width={19}
       height={5}
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
     >
-      {isShufflePhase ? (
-        <ShuffleDeckContent elapsedMs={elapsedMs} />
-      ) : (
-        <DealingCardContent currentCardNum={currentCardNum} />
-      )}
+      {content}
     </Box>
   );
 }

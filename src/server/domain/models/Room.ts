@@ -10,6 +10,17 @@ import {
 } from '../errors/GameError';
 import { GAME_CONSTANTS } from '../../../shared/constants';
 
+function shufflePlayerList(players: readonly Player[]): Player[] {
+  const shuffledPlayers = [...players];
+  for (let index = shuffledPlayers.length - 1; index > 0; index--) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const temporary = shuffledPlayers[index];
+    shuffledPlayers[index] = shuffledPlayers[swapIndex];
+    shuffledPlayers[swapIndex] = temporary;
+  }
+  return shuffledPlayers;
+}
+
 export class Room {
   public roomId: string;
   public phase: RoomPhase;
@@ -123,13 +134,14 @@ export class Room {
       throw new GameError('Need at least 2 players to start game', 'NOT_ENOUGH_PLAYERS');
     }
 
-    // 3. ดึงรายชื่อผู้เล่นทั้งหมดในห้อง แปลงเป็น Array แล้วสร้าง GameState
-    const playersList = Array.from(this.players.values());
-    for (const player of playersList) {
+    // 3. ดึงรายชื่อผู้เล่นทั้งหมดในห้อง สุ่มตำแหน่งที่นั่ง แล้วสร้าง GameState
+    const rawPlayersList = Array.from(this.players.values());
+    for (const player of rawPlayersList) {
       if (player.chips < this.bootAmount) {
         player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
       }
     }
+    const playersList = shufflePlayerList(rawPlayersList);
     this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)
