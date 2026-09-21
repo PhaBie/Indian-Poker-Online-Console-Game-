@@ -101,6 +101,7 @@ interface PlayerCardsRowProps {
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
   readonly visibleCardCount?: number;
+  readonly justDealtCardIndex?: number;
 }
 
 interface PlayerCardsPanelProps {
@@ -115,6 +116,8 @@ interface PlayerCardsPanelProps {
   readonly isBankrupt: boolean;
   readonly isThisPlayerTurn: boolean;
   readonly visibleCardCount?: number;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly justDealtCardIndex?: number;
 }
 
 function BankruptCardContent() {
@@ -164,9 +167,10 @@ function PlayerCardsPanel({
   isBankrupt,
   isThisPlayerTurn,
   visibleCardCount,
+  isEntranceDeckPhase,
+  justDealtCardIndex,
 }: PlayerCardsPanelProps) {
-  const displayedBet =
-    visibleCardCount !== undefined && visibleCardCount < 3 ? 0 : player.bet;
+  const displayedBet = isEntranceDeckPhase ? 0 : player.bet;
 
   return (
     <Box
@@ -190,6 +194,7 @@ function PlayerCardsPanel({
             revealedCards={revealedCards}
             cardBorderGlowColors={cardBorderGlowColors}
             visibleCardCount={visibleCardCount}
+            justDealtCardIndex={justDealtCardIndex}
           />
           <PlayerBetAndBadgeRow
             displayedBet={displayedBet}
@@ -237,6 +242,7 @@ function PlayerCardsRow({
   revealedCards,
   cardBorderGlowColors,
   visibleCardCount = 3,
+  justDealtCardIndex = -1,
 }: PlayerCardsRowProps) {
   const cards = revealedCards ?? (isMe ? myCards : undefined);
   const shouldHideCards = !cards || (isMe && isBlind && !hasFolded && !revealedCards);
@@ -244,19 +250,61 @@ function PlayerCardsRow({
     <Box flexDirection="row" justifyContent="center">
       {[0, 1, 2].map((cardIndex) => {
         const isCardDealt = cardIndex < visibleCardCount;
+        const isLandingFlash = cardIndex === justDealtCardIndex;
+        const hiddenBorder = isLandingFlash
+          ? 'yellowBright'
+          : cardBorderGlowColors[cardIndex];
         return (
           <CardView
             key={`card-slot-${cardIndex}`}
             card={!isCardDealt || shouldHideCards ? undefined : cards[cardIndex]}
             isHidden={isCardDealt && shouldHideCards}
-            hiddenBorderColor={
-              isCardDealt && shouldHideCards ? cardBorderGlowColors[cardIndex] : undefined
-            }
+            hiddenBorderColor={isCardDealt && shouldHideCards ? hiddenBorder : undefined}
           />
         );
       })}
     </Box>
   );
+}
+
+function getSeatBadge(
+  isBankrupt: boolean,
+  isSideshowParticipant: boolean,
+  isEntranceDeckPhase: boolean,
+  fallbackBadge: ReturnType<typeof getPlayerBadgeInfo>,
+) {
+  if (isBankrupt) {
+    return { label: '[OUT]', color: 'redBright' };
+  }
+  if (isSideshowParticipant) {
+    return { label: '[DUEL]', color: 'cyanBright' };
+  }
+  if (isEntranceDeckPhase) {
+    return { label: '[DEALING]', color: 'cyanBright' };
+  }
+  return fallbackBadge;
+}
+
+function getSeatBorderColor(
+  isBankrupt: boolean,
+  isSideshowParticipant: boolean,
+  isPendingSideshowTarget: boolean,
+  isThisPlayerTurn: boolean,
+  isEntranceDeckPhase: boolean,
+) {
+  if (isBankrupt) {
+    return 'redBright';
+  }
+  if (isSideshowParticipant) {
+    return 'cyanBright';
+  }
+  if (isPendingSideshowTarget) {
+    return 'magentaBright';
+  }
+  if (isThisPlayerTurn && !isEntranceDeckPhase) {
+    return 'yellowBright';
+  }
+  return 'gray';
 }
 
 function resolvePlayerSeatVisuals(
@@ -265,22 +313,27 @@ function resolvePlayerSeatVisuals(
   isBankrupt: boolean,
   isPendingSideshowTargetNode: boolean,
   isSideshowParticipantNode: boolean,
+  isEntranceDeckPhase: boolean = false,
 ) {
   const hasFolded = player.status === 'FOLDED';
-  const badge = isBankrupt
-    ? { label: '[OUT]', color: 'redBright' }
-    : isSideshowParticipantNode
-      ? { label: '[DUEL]', color: 'cyanBright' }
-      : getPlayerBadgeInfo(hasFolded, isThisPlayerTurn, isPendingSideshowTargetNode);
-  const borderColor = isBankrupt
-    ? 'redBright'
-    : isSideshowParticipantNode
-      ? 'cyanBright'
-      : isPendingSideshowTargetNode
-        ? 'magentaBright'
-        : isThisPlayerTurn
-          ? 'yellowBright'
-          : 'gray';
+  const fallbackBadge = getPlayerBadgeInfo(
+    hasFolded,
+    isThisPlayerTurn,
+    isPendingSideshowTargetNode,
+  );
+  const badge = getSeatBadge(
+    isBankrupt,
+    isSideshowParticipantNode,
+    isEntranceDeckPhase,
+    fallbackBadge,
+  );
+  const borderColor = getSeatBorderColor(
+    isBankrupt,
+    isSideshowParticipantNode,
+    isPendingSideshowTargetNode,
+    isThisPlayerTurn,
+    isEntranceDeckPhase,
+  );
 
   return { hasFolded, badge, borderColor };
 }
@@ -329,6 +382,7 @@ export function PlayerSeatNode(props: PlayerSeatNodeProps) {
     props.isBankrupt,
     props.isPendingSideshowTargetNode,
     props.isSideshowParticipantNode,
+    props.isEntranceDeckPhase,
   );
   const renderProps: SeatNodeRenderProps = {
     ...props,

@@ -5,6 +5,8 @@ import { render } from 'ink';
 import {
   calculateEntranceTimeline,
   calculateEntrancePot,
+  calculateJustDealtCardIndex,
+  calculateEntrancePhaseDescription,
   resolveEntranceState,
   useTableEntranceAnimation,
   ENTRANCE_STEP_CARD_1_MS,
@@ -94,11 +96,29 @@ describe('useTableEntranceAnimation', () => {
     expect(calculateEntrancePot(ENTRANCE_TOTAL_DURATION_MS, 100)).toBe(100);
   });
 
+  test('calculateJustDealtCardIndex identifies landing card by timing window', () => {
+    expect(calculateJustDealtCardIndex(500)).toBe(-1);
+    expect(calculateJustDealtCardIndex(1100)).toBe(0);
+    expect(calculateJustDealtCardIndex(2100)).toBe(1);
+    expect(calculateJustDealtCardIndex(3100)).toBe(2);
+    expect(calculateJustDealtCardIndex(4500)).toBe(-1);
+  });
+
+  test('calculateEntrancePhaseDescription returns descriptive status for each stage', () => {
+    expect(calculateEntrancePhaseDescription(500)).toContain('Shuffling');
+    expect(calculateEntrancePhaseDescription(1500)).toContain('card 1');
+    expect(calculateEntrancePhaseDescription(2500)).toContain('card 2');
+    expect(calculateEntrancePhaseDescription(3500)).toContain('card 3');
+    expect(calculateEntrancePhaseDescription(4500)).toContain('ante boot');
+  });
+
   test('resolveEntranceState yields final values when complete is true', () => {
     const resolved = resolveEntranceState(true, 0, 200);
     expect(resolved.displayedPot).toBe(200);
     expect(resolved.timeline.visibleCardCount).toBe(3);
     expect(resolved.timeline.isEntranceComplete).toBe(true);
+    expect(resolved.justDealtCardIndex).toBe(-1);
+    expect(resolved.phaseDescription).toBe('Round ready');
   });
 
   test('harness mounts and provides entrance animation progression', () => {
@@ -108,6 +128,7 @@ describe('useTableEntranceAnimation', () => {
     expect(result).not.toBeNull();
     expect(typeof result.isEntranceActive).toBe('boolean');
     expect(typeof result.visibleCardCount).toBe('number');
+    expect(typeof result.phaseDescription).toBe('string');
 
     harness.unmount();
   });

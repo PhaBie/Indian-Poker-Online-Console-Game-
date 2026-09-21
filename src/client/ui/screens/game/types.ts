@@ -52,6 +52,8 @@ export interface PlayerSeatNodeProps {
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
   readonly visibleCardCount?: number;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly justDealtCardIndex?: number;
 }
 
 export interface ActionMenuItem {
@@ -72,6 +74,8 @@ export interface GameActionsPanelProps {
   readonly notice?: string | null;
   readonly isInputDisabled?: boolean;
   readonly shouldShowActions?: boolean;
+  readonly isEntranceActive?: boolean;
+  readonly entranceDescription?: string;
 }
 
 export interface StatusStateContext {
@@ -114,4 +118,5 @@ export interface GameTableLayoutProps {
   readonly entranceVisibleCardCount?: number;
   readonly isEntranceDeckPhase?: boolean;
   readonly entranceElapsedMs?: number;
+  readonly justDealtCardIndex?: number;
 }

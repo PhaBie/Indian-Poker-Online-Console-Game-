@@ -9,11 +9,11 @@ export interface EntranceTimelineStep {
   readonly isEntranceComplete: boolean;
 }
 
-export const ENTRANCE_STEP_CARD_1_MS = 350;
-export const ENTRANCE_STEP_CARD_2_MS = 650;
-export const ENTRANCE_STEP_CARD_3_MS = 950;
-export const ENTRANCE_STEP_BOOT_POT_MS = 1250;
-export const ENTRANCE_TOTAL_DURATION_MS = 1700;
+export const ENTRANCE_STEP_CARD_1_MS = 1000;
+export const ENTRANCE_STEP_CARD_2_MS = 2000;
+export const ENTRANCE_STEP_CARD_3_MS = 3000;
+export const ENTRANCE_STEP_BOOT_POT_MS = 4000;
+export const ENTRANCE_TOTAL_DURATION_MS = 5200;
 
 export function calculateEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
   if (elapsedMs < ENTRANCE_STEP_CARD_1_MS) {
@@ -64,6 +64,38 @@ export function calculateEntranceTimeline(elapsedMs: number): EntranceTimelineSt
   };
 }
 
+export function calculateJustDealtCardIndex(elapsedMs: number): number {
+  if (elapsedMs >= 1000 && elapsedMs < 1500) {
+    return 0;
+  }
+  if (elapsedMs >= 2000 && elapsedMs < 2500) {
+    return 1;
+  }
+  if (elapsedMs >= 3000 && elapsedMs < 3500) {
+    return 2;
+  }
+  return -1;
+}
+
+export function calculateEntrancePhaseDescription(elapsedMs: number): string {
+  if (elapsedMs < 1000) {
+    return 'Shuffling deck & preparing table...';
+  }
+  if (elapsedMs < 2000) {
+    return 'Dealing card 1 of 3 to all players...';
+  }
+  if (elapsedMs < 3000) {
+    return 'Dealing card 2 of 3 to all players...';
+  }
+  if (elapsedMs < 4000) {
+    return 'Dealing card 3 of 3 to all players...';
+  }
+  if (elapsedMs < 5200) {
+    return 'Collecting ante boot to pot...';
+  }
+  return 'Round ready';
+}
+
 export function calculateEntrancePot(elapsedMs: number, finalPot: number): number {
   if (elapsedMs < ENTRANCE_STEP_BOOT_POT_MS) {
     return 0;
@@ -90,8 +122,12 @@ export function resolveEntranceState(
     : calculateEntranceTimeline(elapsedMs);
 
   const displayedPot = isComplete ? finalPot : calculateEntrancePot(elapsedMs, finalPot);
+  const justDealtCardIndex = isComplete ? -1 : calculateJustDealtCardIndex(elapsedMs);
+  const phaseDescription = isComplete
+    ? 'Round ready'
+    : calculateEntrancePhaseDescription(elapsedMs);
 
-  return { timeline, displayedPot };
+  return { timeline, displayedPot, justDealtCardIndex, phaseDescription };
 }
 
 export interface TableEntranceAnimationResult {
@@ -100,6 +136,8 @@ export interface TableEntranceAnimationResult {
   readonly isDeckPhase: boolean;
   readonly displayedPot: number;
   readonly elapsedMs: number;
+  readonly justDealtCardIndex: number;
+  readonly phaseDescription: string;
 }
 
 function useEntranceTimer(isActive: boolean): number {
@@ -134,8 +172,8 @@ export function useTableEntranceAnimation(
   const shouldAnimate = initialActive && !isSkipped && isAnimationEnabled();
 
   useInput(
-    (input, key) => {
-      if (key.return || input === ' ' || key.escape) {
+    (_input, key) => {
+      if (key.escape) {
         setIsSkipped(true);
       }
     },
@@ -145,11 +183,8 @@ export function useTableEntranceAnimation(
   const elapsedMs = useEntranceTimer(shouldAnimate);
   const isComplete = !shouldAnimate || elapsedMs >= ENTRANCE_TOTAL_DURATION_MS;
 
-  const { timeline, displayedPot } = resolveEntranceState(
-    isComplete,
-    elapsedMs,
-    finalPot,
-  );
+  const { timeline, displayedPot, justDealtCardIndex, phaseDescription } =
+    resolveEntranceState(isComplete, elapsedMs, finalPot);
 
   return {
     isEntranceActive: !isComplete,
@@ -157,5 +192,7 @@ export function useTableEntranceAnimation(
     isDeckPhase: timeline.isDeckPhase,
     displayedPot,
     elapsedMs,
+    justDealtCardIndex,
+    phaseDescription,
   };
 }

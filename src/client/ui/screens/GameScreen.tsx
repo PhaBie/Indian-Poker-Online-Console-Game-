@@ -54,6 +54,8 @@ interface GameSidePanelProps {
   readonly notice: string | null;
   readonly isInputDisabled: boolean;
   readonly shouldShowActions?: boolean;
+  readonly isEntranceActive?: boolean;
+  readonly entranceDescription?: string;
 }
 
 function GameSidePanel(props: GameSidePanelProps) {
@@ -189,6 +191,7 @@ export function GameScreen({
             entranceVisibleCardCount={entranceAnimation.visibleCardCount}
             isEntranceDeckPhase={entranceAnimation.isDeckPhase}
             entranceElapsedMs={entranceAnimation.elapsedMs}
+            justDealtCardIndex={entranceAnimation.justDealtCardIndex}
           />
           <GameSidePanel
             isMyTurn={statusContext.isMyTurn}
@@ -201,6 +204,8 @@ export function GameScreen({
             actionItems={actionItems}
             notice={notice ?? null}
             shouldShowActions={roundResultPresentation.shouldShowActions}
+            isEntranceActive={entranceAnimation.isEntranceActive}
+            entranceDescription={entranceAnimation.phaseDescription}
             isInputDisabled={
               !roundResultPresentation.shouldShowActions ||
               isExitDialogOpen ||
@@ -238,7 +243,11 @@ export function GameScreen({
           )}
         </Box>
         <Box height={3} justifyContent="center" alignItems="center">
-          {!effectiveRoundResult && (
+          {entranceAnimation.isEntranceActive ? (
+            <Text color="cyanBright" bold>
+              ♦ DEALING IN PROGRESS · ALL ACTIONS LOCKED ♦
+            </Text>
+          ) : !effectiveRoundResult ? (
             <>
               <Text color="gray">↑ ↓ </Text>
               <Text color="white">CHOOSE</Text>
@@ -247,7 +256,7 @@ export function GameScreen({
               <Text color="white"> CONFIRM</Text>
               <Text color="gray"> · ONLY LEGAL MOVES ARE SHOWN</Text>
             </>
-          )}
+          ) : null}
         </Box>
       </Box>
     </Box>

@@ -83,26 +83,179 @@ function BetInputForm({
   );
 }
 
-export function GameActionsPanel({
-  isMyTurn,
+function EntranceInitializingContent({
+  entranceDescription,
+}: {
+  readonly entranceDescription?: string;
+}) {
+  return (
+    <Box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center">
+      <Text color="cyanBright" bold>
+        ROUND INITIALIZING
+      </Text>
+      <Box marginTop={1}>
+        <Text color="yellowBright" bold>
+          {entranceDescription ?? 'Dealing cards to players...'}
+        </Text>
+      </Box>
+      <Box marginTop={2}>
+        <Text color="gray">WAITING FOR DEAL TO FINISH</Text>
+      </Box>
+    </Box>
+  );
+}
+
+function TableWaitingContent({
+  status,
+  isBankrupt,
+}: {
+  readonly status: ReturnType<typeof getStatusDisplayInfo>;
+  readonly isBankrupt: boolean;
+}) {
+  return (
+    <Box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center">
+      <Text color={status.color} bold={status.bold}>
+        {status.text}
+      </Text>
+      <Box marginTop={2}>
+        <Text color="gray">
+          {isBankrupt ? 'YOU ARE NOW SPECTATING' : 'WATCH THE TABLE'}
+        </Text>
+      </Box>
+    </Box>
+  );
+}
+
+interface PanelHeaderProps {
+  readonly isEntranceActive: boolean;
+  readonly canChooseAction: boolean;
+  readonly isPulseOn: boolean;
+  readonly panelTitle: string;
+  readonly status: ReturnType<typeof getStatusDisplayInfo>;
+}
+
+function PanelHeader({
+  isEntranceActive,
+  canChooseAction,
+  isPulseOn,
+  panelTitle,
+  status,
+}: PanelHeaderProps) {
+  const headerColor = isEntranceActive
+    ? 'cyanBright'
+    : canChooseAction
+      ? 'yellow'
+      : 'gray';
+  const titleText = isEntranceActive
+    ? 'TABLE INITIALIZING'
+    : canChooseAction
+      ? `${isPulseOn ? '●' : '○'} ${panelTitle}`
+      : 'TABLE STATUS';
+
+  return (
+    <Box justifyContent="space-between" marginBottom={1}>
+      <Text color={headerColor} bold>
+        {titleText}
+      </Text>
+      <Text color={isEntranceActive ? 'cyanBright' : status.color} bold={status.bold}>
+        ●
+      </Text>
+    </Box>
+  );
+}
+
+interface PanelBodyContentProps {
+  readonly isEntranceActive: boolean;
+  readonly canChooseAction: boolean;
+  readonly inputMode: 'menu' | 'input_bet';
+  readonly menuItems: { label: string; value: string }[];
+  readonly onActionSelect: (item: { label: string; value: string }) => void;
+  readonly isInputDisabled: boolean;
+  readonly betAmount: string;
+  readonly onBetChange: (value: string) => void;
+  readonly onBetSubmit: (value: string) => void;
+  readonly entranceDescription?: string;
+  readonly status: ReturnType<typeof getStatusDisplayInfo>;
+  readonly isBankrupt: boolean;
+}
+
+function PanelBodyContent({
+  isEntranceActive,
+  canChooseAction,
   inputMode,
-  betAmount,
-  actionItems,
+  menuItems,
   onActionSelect,
+  isInputDisabled,
+  betAmount,
   onBetChange,
   onBetSubmit,
-  statusContext,
-  notice,
-  isInputDisabled = false,
-  shouldShowActions = true,
-}: GameActionsPanelProps) {
+  entranceDescription,
+  status,
+  isBankrupt,
+}: PanelBodyContentProps) {
+  if (isEntranceActive) {
+    return <EntranceInitializingContent entranceDescription={entranceDescription} />;
+  }
+
+  if (!canChooseAction) {
+    return <TableWaitingContent status={status} isBankrupt={isBankrupt} />;
+  }
+
+  if (inputMode === 'input_bet') {
+    return (
+      <BetInputForm
+        betAmount={betAmount}
+        onBetChange={onBetChange}
+        onBetSubmit={onBetSubmit}
+        isInputDisabled={isInputDisabled}
+      />
+    );
+  }
+
+  return (
+    <SelectInput
+      items={menuItems}
+      onSelect={onActionSelect}
+      isFocused={!isInputDisabled}
+      indicatorComponent={EmptyIndicator}
+      itemComponent={ActionButton}
+    />
+  );
+}
+
+function PanelControlsFooter({
+  canChooseAction,
+  isEntranceActive,
+}: {
+  readonly canChooseAction: boolean;
+  readonly isEntranceActive: boolean;
+}) {
+  return (
+    <Box
+      borderStyle="single"
+      borderBottom={false}
+      borderLeft={false}
+      borderRight={false}
+      borderColor="gray"
+      paddingTop={1}
+      flexDirection="column"
+    >
+      <Text color={isEntranceActive ? 'yellowBright' : 'gray'}>
+        {canChooseAction ? 'KEYBOARD CONTROLS' : 'ACTIONS LOCKED'}
+      </Text>
+      <Text color="gray">
+        {canChooseAction
+          ? '↑↓ Navigate · Enter select'
+          : isEntranceActive
+            ? 'Please wait for dealing to finish...'
+            : 'Controls disabled'}
+      </Text>
+    </Box>
+  );
+}
+
+function useActionPulse(canChooseAction: boolean): boolean {
   const [isPulseOn, setIsPulseOn] = useState(false);
-  const status = getStatusDisplayInfo(statusContext);
-  const canChooseAction =
-    shouldShowActions && (isMyTurn || statusContext.isPendingSideshowTarget);
-  const panelTitle = statusContext.isPendingSideshowTarget
-    ? 'SIDESHOW REQUEST'
-    : 'YOUR MOVE';
 
   useEffect(() => {
     if (!canChooseAction) return;
@@ -110,91 +263,113 @@ export function GameActionsPanel({
     return () => clearInterval(timer);
   }, [canChooseAction]);
 
-  const menuItems = actionItems.map((item) => ({
+  return isPulseOn;
+}
+
+function formatMenuItems(
+  actionItems: readonly { label: string; value: string; hint?: string }[],
+) {
+  return actionItems.map((item) => ({
     label: item.hint ? `${item.label}|${item.hint}` : item.label,
     value: item.value,
   }));
+}
+
+function NoticeBox({ notice }: { readonly notice?: string | null }) {
+  if (!notice) return null;
+  return (
+    <Box marginBottom={1} flexDirection="column">
+      <Text color="redBright" bold wrap="wrap">
+        [!] {notice}
+      </Text>
+    </Box>
+  );
+}
+
+function PanelContentGroup({
+  props,
+  canChooseAction,
+  menuItems,
+  status,
+}: {
+  readonly props: GameActionsPanelProps;
+  readonly canChooseAction: boolean;
+  readonly menuItems: { label: string; value: string }[];
+  readonly status: ReturnType<typeof getStatusDisplayInfo>;
+}) {
+  return (
+    <>
+      <PanelBodyContent
+        isEntranceActive={props.isEntranceActive ?? false}
+        canChooseAction={canChooseAction}
+        inputMode={props.inputMode}
+        menuItems={menuItems}
+        onActionSelect={props.onActionSelect}
+        isInputDisabled={props.isInputDisabled ?? false}
+        betAmount={props.betAmount}
+        onBetChange={props.onBetChange}
+        onBetSubmit={props.onBetSubmit}
+        entranceDescription={props.entranceDescription}
+        status={status}
+        isBankrupt={props.statusContext.isBankrupt}
+      />
+      <Box flexGrow={1} />
+      <NoticeBox notice={props.notice} />
+      <PanelControlsFooter
+        canChooseAction={canChooseAction}
+        isEntranceActive={props.isEntranceActive ?? false}
+      />
+    </>
+  );
+}
+
+export function GameActionsPanel(props: GameActionsPanelProps) {
+  const {
+    isMyTurn,
+    statusContext,
+    shouldShowActions = true,
+    isEntranceActive = false,
+  } = props;
+
+  const canChooseAction =
+    !isEntranceActive &&
+    shouldShowActions &&
+    (isMyTurn || statusContext.isPendingSideshowTarget);
+  const isPulseOn = useActionPulse(canChooseAction);
+  const status = getStatusDisplayInfo(statusContext);
+  const panelTitle = statusContext.isPendingSideshowTarget
+    ? 'SIDESHOW REQUEST'
+    : 'YOUR MOVE';
+  const menuItems = formatMenuItems(props.actionItems);
+  const borderColor = isEntranceActive
+    ? 'cyanBright'
+    : canChooseAction
+      ? 'yellow'
+      : 'gray';
 
   return (
     <Box
       borderStyle="round"
-      borderColor={canChooseAction ? 'yellow' : 'gray'}
+      borderColor={borderColor}
       flexDirection="column"
       paddingX={1}
       width={45}
       height={38}
       marginLeft={1}
     >
-      <Box justifyContent="space-between" marginBottom={1}>
-        <Text color={canChooseAction ? 'yellow' : 'gray'} bold>
-          {canChooseAction ? `${isPulseOn ? '●' : '○'} ${panelTitle}` : 'TABLE STATUS'}
-        </Text>
-        <Text color={status.color} bold={status.bold}>
-          ●
-        </Text>
-      </Box>
-
-      {canChooseAction && inputMode === 'menu' && (
-        <SelectInput
-          items={menuItems}
-          onSelect={onActionSelect}
-          isFocused={!isInputDisabled}
-          indicatorComponent={EmptyIndicator}
-          itemComponent={ActionButton}
-        />
-      )}
-
-      {canChooseAction && inputMode === 'input_bet' && (
-        <BetInputForm
-          betAmount={betAmount}
-          onBetChange={onBetChange}
-          onBetSubmit={onBetSubmit}
-          isInputDisabled={isInputDisabled}
-        />
-      )}
-
-      {!canChooseAction && (
-        <Box
-          flexDirection="column"
-          flexGrow={1}
-          justifyContent="center"
-          alignItems="center"
-        >
-          <Text color={status.color} bold={status.bold}>
-            {status.text}
-          </Text>
-          <Box marginTop={2}>
-            <Text color="gray">
-              {statusContext.isBankrupt ? 'YOU ARE NOW SPECTATING' : 'WATCH THE TABLE'}
-            </Text>
-          </Box>
-        </Box>
-      )}
-
-      <Box flexGrow={1} />
-      {notice && (
-        <Box marginBottom={1} flexDirection="column">
-          <Text color="redBright" bold wrap="wrap">
-            [!] {notice}
-          </Text>
-        </Box>
-      )}
-      <Box
-        borderStyle="single"
-        borderBottom={false}
-        borderLeft={false}
-        borderRight={false}
-        borderColor="gray"
-        paddingTop={1}
-        flexDirection="column"
-      >
-        <Text color="gray">
-          {canChooseAction ? 'KEYBOARD CONTROLS' : 'ACTIONS LOCKED'}
-        </Text>
-        <Text color="gray">
-          {canChooseAction ? '↑↓ Navigate · Enter select' : 'Controls disabled'}
-        </Text>
-      </Box>
+      <PanelHeader
+        isEntranceActive={isEntranceActive}
+        canChooseAction={canChooseAction}
+        isPulseOn={isPulseOn}
+        panelTitle={panelTitle}
+        status={status}
+      />
+      <PanelContentGroup
+        props={props}
+        canChooseAction={canChooseAction}
+        menuItems={menuItems}
+        status={status}
+      />
     </Box>
   );
 }

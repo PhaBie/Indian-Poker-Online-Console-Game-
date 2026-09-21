@@ -32,10 +32,14 @@ export function CardView({ card, isHidden = false, hiddenBorderColor }: CardView
       <Box
         borderStyle="single"
         borderColor="gray"
-        paddingX={1}
+        paddingX={0}
         width={CARD_WIDTH}
         height={CARD_HEIGHT}
-      />
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Text color="gray">·</Text>
+      </Box>
     );
   }
 

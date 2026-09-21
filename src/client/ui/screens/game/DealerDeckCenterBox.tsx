@@ -4,16 +4,50 @@ export interface DealerDeckCenterBoxProps {
   readonly elapsedMs: number;
 }
 
-const DECK_SUIT_ICONS = ['♠', '♥', '♦', '♣'] as const;
-const DECK_SUIT_COLORS = [
-  'cyanBright',
-  'redBright',
-  'yellowBright',
-  'blueBright',
+const SHUFFLE_PATTERNS = [
+  '[♠]  ·   ·   · ',
+  ' ·  [♥]  ·   · ',
+  ' ·   ·  [♦]  · ',
+  ' ·   ·   ·  [♣]',
 ] as const;
 
+function ShuffleDeckContent({ elapsedMs }: { readonly elapsedMs: number }) {
+  const patternIndex = Math.floor(elapsedMs / 250) % SHUFFLE_PATTERNS.length;
+  const currentPattern = SHUFFLE_PATTERNS[patternIndex];
+
+  return (
+    <>
+      <Text color="cyanBright" bold>
+        DEALER DECK
+      </Text>
+      <Text color="cyan" bold>
+        {currentPattern}
+      </Text>
+      <Text color="gray">SHUFFLING...</Text>
+    </>
+  );
+}
+
+function DealingCardContent({ currentCardNum }: { readonly currentCardNum: number }) {
+  return (
+    <>
+      <Text color="cyanBright" bold>
+        DEALING CARDS
+      </Text>
+      <Text color="yellowBright" bold>
+        [CARD {currentCardNum}/3] ➔
+      </Text>
+      <Box flexDirection="row">
+        <Text color="cyanBright">{'●  '.repeat(currentCardNum)}</Text>
+        <Text color="gray">{'○  '.repeat(3 - currentCardNum)}</Text>
+      </Box>
+    </>
+  );
+}
+
 export function DealerDeckCenterBox({ elapsedMs }: DealerDeckCenterBoxProps) {
-  const activeIconIndex = Math.floor(elapsedMs / 120) % DECK_SUIT_ICONS.length;
+  const isShufflePhase = elapsedMs < 1000;
+  const currentCardNum = elapsedMs < 2000 ? 1 : elapsedMs < 3000 ? 2 : 3;
 
   return (
     <Box
@@ -25,21 +59,11 @@ export function DealerDeckCenterBox({ elapsedMs }: DealerDeckCenterBoxProps) {
       alignItems="center"
       justifyContent="center"
     >
-      <Text color="cyanBright" bold>
-        DEALING
-      </Text>
-      <Box flexDirection="row">
-        {DECK_SUIT_ICONS.map((suit, index) => {
-          const isHighlighted = index === activeIconIndex;
-          const color = isHighlighted ? 'white' : DECK_SUIT_COLORS[index];
-          return (
-            <Text key={suit} color={color} bold={isHighlighted}>
-              {suit}
-              {index < DECK_SUIT_ICONS.length - 1 ? '   ' : ''}
-            </Text>
-          );
-        })}
-      </Box>
+      {isShufflePhase ? (
+        <ShuffleDeckContent elapsedMs={elapsedMs} />
+      ) : (
+        <DealingCardContent currentCardNum={currentCardNum} />
+      )}
     </Box>
   );
 }

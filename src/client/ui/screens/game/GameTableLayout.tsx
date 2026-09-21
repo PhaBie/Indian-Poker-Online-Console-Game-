@@ -17,6 +17,8 @@ interface PlayerSlotProps {
   readonly sideshowParticipantIds: readonly string[];
   readonly cardBorderGlowColors: readonly string[];
   readonly visibleCardCount?: number;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly justDealtCardIndex?: number;
 }
 
 const CARD_BORDER_GLOW_INTERVAL_MS = 90;
@@ -51,55 +53,85 @@ function useCardBorderGlow() {
   return CARD_BORDER_GLOW_ACTIVE_FRAMES[frame] ?? DEFAULT_CARD_BORDER_COLORS;
 }
 
-function PlayerSlot({
-  player,
-  myPlayerId,
-  currentTurnPlayerId,
-  pendingSideshowTargetId,
-  myCards,
-  sideshowResult,
-  sideshowNotice,
-  showdownCards,
-  sideshowParticipantIds,
-  cardBorderGlowColors,
-  visibleCardCount,
-}: PlayerSlotProps) {
+function calculateSlotFlags(
+  player: GamePlayerItem | undefined,
+  myPlayerId: string | null,
+  currentTurnPlayerId: string | null,
+  pendingSideshowTargetId?: string,
+  sideshowParticipantIds: readonly string[] = [],
+  hasSideshowResult: boolean = false,
+  hasSideshowNotice: boolean = false,
+  hasShowdownCards: boolean = false,
+) {
   const isMe = Boolean(player && player.id === myPlayerId);
   const isBankrupt = Boolean(player && player.chips <= 0);
   const isSideshowParticipantNode = Boolean(
     player && sideshowParticipantIds.includes(player.id),
   );
-  const isShowdownRevealed = Boolean(player && showdownCards?.[player.id]);
+  const isShowdownRevealed = Boolean(player && hasShowdownCards);
   const isThisPlayerTurn = Boolean(
-    // The engine has already advanced its index after a Sideshow reply, but
-    // that next turn must not appear until the reveal/result pause finishes.
     player &&
     !isBankrupt &&
-    !sideshowResult &&
-    !sideshowNotice &&
-    !showdownCards &&
+    !hasSideshowResult &&
+    !hasSideshowNotice &&
+    !hasShowdownCards &&
     player.id === currentTurnPlayerId,
   );
   const isPendingSideshowTargetNode = Boolean(
     player && !isBankrupt && player.id === pendingSideshowTargetId,
   );
 
+  return {
+    isMe,
+    isBankrupt,
+    isSideshowParticipantNode,
+    isShowdownRevealed,
+    isThisPlayerTurn,
+    isPendingSideshowTargetNode,
+  };
+}
+
+function PlayerSlot(props: PlayerSlotProps) {
+  const {
+    player,
+    myPlayerId,
+    currentTurnPlayerId,
+    pendingSideshowTargetId,
+    myCards,
+    sideshowResult,
+    sideshowNotice,
+    showdownCards,
+    sideshowParticipantIds,
+    cardBorderGlowColors,
+    visibleCardCount,
+    isEntranceDeckPhase,
+    justDealtCardIndex,
+  } = props;
+
+  const flags = calculateSlotFlags(
+    player,
+    myPlayerId,
+    currentTurnPlayerId,
+    pendingSideshowTargetId,
+    sideshowParticipantIds,
+    Boolean(sideshowResult),
+    Boolean(sideshowNotice),
+    Boolean(player && showdownCards?.[player.id]),
+  );
+
+  const revealedCards = player
+    ? (sideshowResult?.cards[player.id] ?? showdownCards?.[player.id])
+    : undefined;
+
   return (
     <PlayerSeatNode
       player={player}
-      isMe={isMe}
-      isThisPlayerTurn={isThisPlayerTurn}
-      isBankrupt={isBankrupt}
-      isPendingSideshowTargetNode={isPendingSideshowTargetNode}
-      isSideshowParticipantNode={isSideshowParticipantNode}
-      isShowdownRevealed={isShowdownRevealed}
+      {...flags}
       myCards={myCards}
       visibleCardCount={visibleCardCount}
-      revealedCards={
-        player
-          ? (sideshowResult?.cards[player.id] ?? showdownCards?.[player.id])
-          : undefined
-      }
+      isEntranceDeckPhase={isEntranceDeckPhase}
+      justDealtCardIndex={justDealtCardIndex}
+      revealedCards={revealedCards}
       cardBorderGlowColors={cardBorderGlowColors}
     />
   );
@@ -162,6 +194,7 @@ export function GameTableLayout({
   entranceVisibleCardCount,
   isEntranceDeckPhase,
   entranceElapsedMs,
+  justDealtCardIndex,
 }: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow();
   const renderSlot = (player: GamePlayerItem | undefined) => (
@@ -183,6 +216,8 @@ export function GameTableLayout({
       }
       cardBorderGlowColors={cardBorderGlowColors}
       visibleCardCount={entranceVisibleCardCount}
+      isEntranceDeckPhase={isEntranceDeckPhase}
+      justDealtCardIndex={justDealtCardIndex}
     />
   );
 
