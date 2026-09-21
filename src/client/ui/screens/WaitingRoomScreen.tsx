@@ -21,6 +21,7 @@ export function WaitingRoomScreen(props: WaitingRoomScreenProps) {
     onStart: props.onStart,
     onToggleReady: props.onToggleReady,
     onLeave: props.onLeave,
+    serverError: props.serverError,
   });
 
   const sizeStatus = getTerminalSizeStatus(columns, rows);
@@ -39,7 +40,13 @@ export function WaitingRoomScreen(props: WaitingRoomScreenProps) {
   const paddingX = containerWidth >= 88 ? 4 : 2;
 
   return (
-    <Box flexDirection="column" width="100%" height={rows} alignItems="center" justifyContent="center">
+    <Box
+      flexDirection="column"
+      width="100%"
+      height={rows}
+      alignItems="center"
+      justifyContent="center"
+    >
       <Box width={containerWidth} flexDirection="column">
         <ShimmeringHeader containerWidth={containerWidth} pageTitle="WAITING ROOM" />
         <WaitingRoomCard props={props} paddingX={paddingX} errorMessage={errorMessage} />

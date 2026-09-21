@@ -60,6 +60,7 @@ function renderGameplayScreens({
         onLeave={navigation.handleLeaveRoom}
         networkMode={navigation.networkMode}
         serverUrl={serverUrl}
+        serverError={state.lastError}
       />
     );
   }

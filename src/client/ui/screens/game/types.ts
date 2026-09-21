@@ -70,6 +70,7 @@ export interface GameActionsPanelProps {
   readonly statusContext: StatusStateContext;
   readonly notice?: string | null;
   readonly isInputDisabled?: boolean;
+  readonly shouldShowActions?: boolean;
 }
 
 export interface StatusStateContext {
@@ -108,4 +109,5 @@ export interface GameTableLayoutProps {
     readonly outcome: 'DECLINED';
   } | null;
   readonly showdownCards?: Record<string, readonly Card[]> | null;
+  readonly isPotAmountVisible?: boolean;
 }

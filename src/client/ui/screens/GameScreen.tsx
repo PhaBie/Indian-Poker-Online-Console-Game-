@@ -14,6 +14,7 @@ import { GameRoundResultDialog } from './game/GameRoundResultDialog';
 import { GameSideshowResultDialog } from './game/GameSideshowResultDialog';
 import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
+import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
@@ -51,6 +52,7 @@ interface GameSidePanelProps {
   readonly actionItems: readonly { label: string; value: string; hint?: string }[];
   readonly notice: string | null;
   readonly isInputDisabled: boolean;
+  readonly shouldShowActions?: boolean;
 }
 
 function GameSidePanel(props: GameSidePanelProps) {
@@ -111,11 +113,13 @@ export function GameScreen({
     Boolean(effectiveRoundResult),
     currentTurnPlayerId,
   );
+  const { isAmountVisible, effectiveTurnPlayerId, isPotBlinking } =
+    usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
   const actionCtrl = useGameActionController(socketClient);
   const orderedPlayers = getOrderedPlayersByPerspective(players, myPlayerId);
   const seatPositions = determineSeatPositions(orderedPlayers);
   const statusContext = buildStatusContext(
-    roundResultPresentation.currentTurnPlayerId,
+    effectiveTurnPlayerId,
     myPlayerId,
     effectiveRoundResult ? null : pendingSideshow,
     players,
@@ -124,7 +128,7 @@ export function GameScreen({
   const actionItems = getGameplayActions({
     players,
     myPlayerId,
-    currentTurnPlayerId: roundResultPresentation.currentTurnPlayerId,
+    currentTurnPlayerId: effectiveTurnPlayerId,
     currentStake,
     pendingSideshow: effectiveRoundResult ? null : (pendingSideshow ?? null),
   });
@@ -167,7 +171,7 @@ export function GameScreen({
             pot={pot}
             currentStake={currentStake}
             seatPositions={seatPositions}
-            currentTurnPlayerId={roundResultPresentation.currentTurnPlayerId}
+            currentTurnPlayerId={effectiveTurnPlayerId}
             myPlayerId={myPlayerId}
             pendingSideshowTargetId={
               effectiveRoundResult ? undefined : pendingSideshow?.targetId
@@ -176,27 +180,29 @@ export function GameScreen({
             sideshowResult={effectiveRoundResult ? null : sideshowResult}
             sideshowNotice={effectiveRoundResult ? null : sideshowNotice}
             showdownCards={effectiveRoundResult ? null : showdownCards}
+            isPotAmountVisible={isAmountVisible}
           />
-          {roundResultPresentation.shouldShowActions && (
-            <GameSidePanel
-              isMyTurn={statusContext.isMyTurn}
-              inputMode={actionCtrl.inputMode}
-              betAmount={actionCtrl.betAmount}
-              onActionSelect={actionCtrl.handleActionSelect}
-              onBetChange={actionCtrl.setBetAmount}
-              onBetSubmit={actionCtrl.handleBetSubmit}
-              statusContext={statusContext}
-              actionItems={actionItems}
-              notice={notice ?? null}
-              isInputDisabled={
-                isExitDialogOpen ||
-                Boolean(showdownCards) ||
-                isRoundEnding ||
-                isSideshowResultVisible ||
-                isSideshowNoticeVisible
-              }
-            />
-          )}
+          <GameSidePanel
+            isMyTurn={statusContext.isMyTurn}
+            inputMode={actionCtrl.inputMode}
+            betAmount={actionCtrl.betAmount}
+            onActionSelect={actionCtrl.handleActionSelect}
+            onBetChange={actionCtrl.setBetAmount}
+            onBetSubmit={actionCtrl.handleBetSubmit}
+            statusContext={statusContext}
+            actionItems={actionItems}
+            notice={notice ?? null}
+            shouldShowActions={roundResultPresentation.shouldShowActions}
+            isInputDisabled={
+              !roundResultPresentation.shouldShowActions ||
+              isExitDialogOpen ||
+              Boolean(showdownCards) ||
+              isRoundEnding ||
+              isSideshowResultVisible ||
+              isSideshowNoticeVisible ||
+              isPotBlinking
+            }
+          />
           {isExitDialogOpen && (
             <GameExitConfirmDialog
               onConfirm={onLeave}

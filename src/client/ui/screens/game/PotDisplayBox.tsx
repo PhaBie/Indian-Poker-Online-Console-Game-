@@ -3,6 +3,7 @@ import { Box, Text } from 'ink';
 export interface PotDisplayBoxProps {
   readonly pot: number;
   readonly currentStake: number;
+  readonly isAmountVisible?: boolean;
 }
 
 export function formatPotAmount(potAmount: number): string {
@@ -17,9 +18,14 @@ export function getStakeLabel(formattedStake: string): string {
   return formattedStake.length > 4 ? 'STAKE · ' : 'CURRENT STAKE · ';
 }
 
-export function PotDisplayBox({ pot, currentStake }: PotDisplayBoxProps) {
+export function PotDisplayBox({
+  pot,
+  currentStake,
+  isAmountVisible = true,
+}: PotDisplayBoxProps) {
   const formattedPot = formatPotAmount(pot);
   const formattedStake = formatStakeAmount(currentStake);
+  const displayAmount = isAmountVisible ? formattedPot : ' '.repeat(formattedPot.length);
 
   return (
     <Box
@@ -35,7 +41,7 @@ export function PotDisplayBox({ pot, currentStake }: PotDisplayBoxProps) {
         TOTAL POT
       </Text>
       <Text color="greenBright" bold>
-        {formattedPot}
+        {displayAmount}
       </Text>
       <Box flexDirection="row" alignItems="center">
         <Text color="gray">STAKE </Text>

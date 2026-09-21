@@ -106,16 +106,27 @@ interface TableCenterRowProps {
   readonly rightSlot: React.ReactNode;
   readonly pot: number;
   readonly currentStake: number;
+  readonly isPotAmountVisible?: boolean;
 }
 
-function TableCenterRow({ leftSlot, rightSlot, pot, currentStake }: TableCenterRowProps) {
+function TableCenterRow({
+  leftSlot,
+  rightSlot,
+  pot,
+  currentStake,
+  isPotAmountVisible,
+}: TableCenterRowProps) {
   return (
     <Box flexDirection="row" alignItems="center" width="100%">
       <Box width={36} justifyContent="center" alignItems="center">
         {leftSlot}
       </Box>
       <Box width={30} flexDirection="row" justifyContent="center">
-        <PotDisplayBox pot={pot} currentStake={currentStake} />
+        <PotDisplayBox
+          pot={pot}
+          currentStake={currentStake}
+          isAmountVisible={isPotAmountVisible}
+        />
       </Box>
       <Box width={36} justifyContent="center" alignItems="center">
         {rightSlot}
@@ -135,6 +146,7 @@ export function GameTableLayout({
   sideshowResult,
   sideshowNotice,
   showdownCards,
+  isPotAmountVisible,
 }: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow();
   const renderSlot = (player: GamePlayerItem | undefined) => (
@@ -183,6 +195,7 @@ export function GameTableLayout({
           rightSlot={renderSlot(seatPositions.rightPlayer)}
           pot={pot}
           currentStake={currentStake}
+          isPotAmountVisible={isPotAmountVisible}
         />
 
         <Box justifyContent="center" width="100%">

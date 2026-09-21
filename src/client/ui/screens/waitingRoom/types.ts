@@ -11,6 +11,7 @@ export interface WaitingRoomScreenProps {
   readonly networkMode?: string;
   readonly maxPlayers?: number;
   readonly serverUrl?: string;
+  readonly serverError?: string | null;
 }
 
 export type { PublicPlayerDTO };

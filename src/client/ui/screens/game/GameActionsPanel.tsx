@@ -94,10 +94,12 @@ export function GameActionsPanel({
   statusContext,
   notice,
   isInputDisabled = false,
+  shouldShowActions = true,
 }: GameActionsPanelProps) {
   const [isPulseOn, setIsPulseOn] = useState(false);
   const status = getStatusDisplayInfo(statusContext);
-  const canChooseAction = isMyTurn || statusContext.isPendingSideshowTarget;
+  const canChooseAction =
+    shouldShowActions && (isMyTurn || statusContext.isPendingSideshowTarget);
   const panelTitle = statusContext.isPendingSideshowTarget
     ? 'SIDESHOW REQUEST'
     : 'YOUR MOVE';
@@ -186,8 +188,12 @@ export function GameActionsPanel({
         paddingTop={1}
         flexDirection="column"
       >
-        <Text color="gray">KEYBOARD CONTROLS</Text>
-        <Text color="gray">↑↓ Navigate · Enter select</Text>
+        <Text color="gray">
+          {canChooseAction ? 'KEYBOARD CONTROLS' : 'ACTIONS LOCKED'}
+        </Text>
+        <Text color="gray">
+          {canChooseAction ? '↑↓ Navigate · Enter select' : 'Controls disabled'}
+        </Text>
       </Box>
     </Box>
   );

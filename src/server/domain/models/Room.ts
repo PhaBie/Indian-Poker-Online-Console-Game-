@@ -8,6 +8,7 @@ import {
   GameError,
   DuplicatePlayerNameError,
 } from '../errors/GameError';
+import { GAME_CONSTANTS } from '../../../shared/constants';
 
 export class Room {
   public roomId: string;
@@ -124,6 +125,11 @@ export class Room {
 
     // 3. ดึงรายชื่อผู้เล่นทั้งหมดในห้อง แปลงเป็น Array แล้วสร้าง GameState
     const playersList = Array.from(this.players.values());
+    for (const player of playersList) {
+      if (player.chips < this.bootAmount) {
+        player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
+      }
+    }
     this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)
@@ -205,9 +211,12 @@ export class Room {
     // 2. เคลียร์โต๊ะเกมเดิมทิ้ง
     this.gameState = null;
 
-    // 3. รีเซ็ตไพ่และยอดเดิมพันของผู้เล่นทุกคน เตรียมพร้อมสำหรับรอบใหม่ (ชิปยังคงอยู่เท่าเดิม)
+    // 3. รีเซ็ตไพ่และยอดเดิมพันของผู้เล่นทุกคน เตรียมพร้อมสำหรับรอบใหม่ และเติมชิปให้ผู้เล่นที่ล้มละลาย
     for (const player of this.players.values()) {
       player.resetForNewRound();
+      if (player.chips < this.bootAmount) {
+        player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
+      }
     }
   }
   //ดึงข้อมูลผู้เล่นตาม ID จากห้อง

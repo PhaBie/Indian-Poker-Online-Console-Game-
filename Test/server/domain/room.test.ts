@@ -8,6 +8,7 @@ import {
   GameError,
   DuplicatePlayerNameError,
 } from '../../../src/server/domain/errors/GameError';
+import { GAME_CONSTANTS } from '../../../src/shared/constants';
 
 describe('1. ระบบการจัดการห้องเล่น (Room Management)', () => {
   describe('Happy Paths', () => {
@@ -146,6 +147,49 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.getPlayerCount()).toBe(2);
       expect(room.getPlayer('id_host')?.chips).toBe(1500);
       expect(room.getPlayer('id_p2')?.chips).toBe(500);
+    });
+
+    test('[Room.resetToLobby] 1.9.2 รีเซ็ตห้องที่ผู้เล่นล้มละลายหรือชิปไม่พอ Boot → เติมชิปผู้เล่นนั้นกลับเป็น DEFAULT_STARTING_CHIPS', () => {
+      const room = new Room('room_reset_bankrupt');
+      const hostPlayer = new Player('id_host', 'Host');
+      const bankruptPlayer = new Player('id_bankrupt', 'BankruptPlayer');
+
+      hostPlayer.chips = 600;
+      bankruptPlayer.chips = 0;
+
+      room.join(hostPlayer);
+      room.join(bankruptPlayer);
+
+      room.phase = 'ENDED';
+      room.gameState = new GameState([hostPlayer, bankruptPlayer]);
+
+      room.resetToLobby();
+
+      expect(room.phase as string).toBe('LOBBY');
+      expect(room.getPlayer('id_host')?.chips).toBe(600);
+      expect(room.getPlayer('id_bankrupt')?.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS,
+      );
+    });
+
+    test('[Room.startGame] 1.9.3 เริ่มเกมใหม่จาก Lobby โดยมีผู้เล่นที่ชิปไม่พอ Boot → เติมชิปให้อัตโนมัติและเริ่มเกมสำเร็จ', () => {
+      const room = new Room('room_start_bankrupt');
+      const hostPlayer = new Player('id_host', 'Host');
+      const bankruptPlayer = new Player('id_bankrupt', 'BankruptPlayer');
+
+      hostPlayer.chips = 600;
+      bankruptPlayer.chips = 0;
+
+      room.join(hostPlayer);
+      room.join(bankruptPlayer);
+
+      room.startGame('id_host');
+
+      expect(room.phase as string).toBe('PLAYING');
+      expect(room.gameState).not.toBeNull();
+      expect(room.getPlayer('id_bankrupt')?.chips).toBe(
+        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      );
     });
 
     test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่ม deal ถัดไป → อยู่ที่โต๊ะเดิมและหัก Boot จากชิปคงเหลือ', () => {

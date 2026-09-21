@@ -4,6 +4,7 @@ import type { Card } from '../../../../shared/types';
 import type { PlayerSeatNodeProps, GamePlayerItem } from './types';
 import { CardView } from './CardView';
 import { getPlayerBadgeInfo } from './gameLayoutHelpers';
+import { PlayerBadgeIndicator } from './PlayerBadgeIndicator';
 
 interface PlayerSeatHeaderProps {
   readonly player: GamePlayerItem;
@@ -111,6 +112,21 @@ interface PlayerCardsPanelProps {
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
   readonly isBankrupt: boolean;
+  readonly isThisPlayerTurn: boolean;
+}
+
+function BankruptCardContent() {
+  return (
+    <Box flexDirection="column" alignItems="center">
+      <Text color="redBright" bold>
+        PLAYER ELIMINATED
+      </Text>
+      <Text color="redBright" bold>
+        BANKRUPT
+      </Text>
+      <Text color="red">OUT OF CHIPS</Text>
+    </Box>
+  );
 }
 
 function PlayerCardsPanel({
@@ -123,6 +139,7 @@ function PlayerCardsPanel({
   revealedCards,
   cardBorderGlowColors,
   isBankrupt,
+  isThisPlayerTurn,
 }: PlayerCardsPanelProps) {
   return (
     <Box
@@ -135,15 +152,7 @@ function PlayerCardsPanel({
       alignItems="center"
     >
       {isBankrupt ? (
-        <Box flexDirection="column" alignItems="center">
-          <Text color="redBright" bold>
-            PLAYER ELIMINATED
-          </Text>
-          <Text color="redBright" bold>
-            BANKRUPT
-          </Text>
-          <Text color="red">OUT OF CHIPS</Text>
-        </Box>
+        <BankruptCardContent />
       ) : (
         <>
           <PlayerCardsRow
@@ -156,11 +165,11 @@ function PlayerCardsPanel({
           />
           <Box justifyContent="space-between" width={22} marginTop={1}>
             <Text color="gray">BET ${player.bet}</Text>
-            {badge.label ? (
-              <Text color={badge.color}>{badge.label}</Text>
-            ) : (
-              <Text color="gray">ACTIVE</Text>
-            )}
+            <PlayerBadgeIndicator
+              label={badge.label}
+              color={badge.color}
+              isThisPlayerTurn={isThisPlayerTurn}
+            />
           </Box>
         </>
       )}
@@ -221,22 +230,13 @@ function PlayerCardsRow({
   );
 }
 
-export function PlayerSeatNode({
-  player,
-  isMe,
-  isThisPlayerTurn,
-  isBankrupt,
-  isPendingSideshowTargetNode,
-  isSideshowParticipantNode,
-  isShowdownRevealed,
-  myCards,
-  revealedCards,
-  cardBorderGlowColors,
-}: PlayerSeatNodeProps) {
-  if (!player) {
-    return <Box width={26} height={8} />;
-  }
-
+function resolvePlayerSeatVisuals(
+  player: GamePlayerItem,
+  isThisPlayerTurn: boolean,
+  isBankrupt: boolean,
+  isPendingSideshowTargetNode: boolean,
+  isSideshowParticipantNode: boolean,
+) {
   const hasFolded = player.status === 'FOLDED';
   const badge = isBankrupt
     ? { label: '[OUT]', color: 'redBright' }
@@ -253,50 +253,63 @@ export function PlayerSeatNode({
           ? 'yellowBright'
           : 'gray';
 
-  if (isMe) {
-    return (
-      <Box flexDirection="row" alignItems="center" width={42}>
-        <PlayerCardsPanel
-          player={player}
-          isMe
-          hasFolded={hasFolded}
-          badge={badge}
-          borderColor={borderColor}
-          myCards={myCards}
-          revealedCards={revealedCards}
-          cardBorderGlowColors={cardBorderGlowColors}
-          isBankrupt={isBankrupt}
-        />
-        <Box marginLeft={2}>
-          <MySeatDetails
-            player={player}
-            isShowdownRevealed={isShowdownRevealed}
-            isBankrupt={isBankrupt}
-          />
-        </Box>
-      </Box>
-    );
-  }
+  return { hasFolded, badge, borderColor };
+}
 
+interface SeatNodeRenderProps extends PlayerCardsPanelProps {
+  readonly isShowdownRevealed: boolean;
+}
+
+function MySeatView(props: SeatNodeRenderProps) {
+  return (
+    <Box flexDirection="row" alignItems="center" width={42}>
+      <PlayerCardsPanel {...props} />
+      <Box marginLeft={2}>
+        <MySeatDetails
+          player={props.player}
+          isShowdownRevealed={props.isShowdownRevealed}
+          isBankrupt={props.isBankrupt}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+function OtherPlayerSeatView(props: SeatNodeRenderProps) {
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
       <PlayerSeatHeader
-        player={player}
-        isMe={isMe}
-        isShowdownRevealed={isShowdownRevealed}
-        isBankrupt={isBankrupt}
+        player={props.player}
+        isMe={props.isMe}
+        isShowdownRevealed={props.isShowdownRevealed}
+        isBankrupt={props.isBankrupt}
       />
-      <PlayerCardsPanel
-        player={player}
-        isMe={isMe}
-        hasFolded={hasFolded}
-        badge={badge}
-        borderColor={borderColor}
-        myCards={myCards}
-        revealedCards={revealedCards}
-        cardBorderGlowColors={cardBorderGlowColors}
-        isBankrupt={isBankrupt}
-      />
+      <PlayerCardsPanel {...props} />
     </Box>
+  );
+}
+
+export function PlayerSeatNode(props: PlayerSeatNodeProps) {
+  if (!props.player) {
+    return <Box width={26} height={8} />;
+  }
+
+  const visuals = resolvePlayerSeatVisuals(
+    props.player,
+    props.isThisPlayerTurn,
+    props.isBankrupt,
+    props.isPendingSideshowTargetNode,
+    props.isSideshowParticipantNode,
+  );
+  const renderProps: SeatNodeRenderProps = {
+    ...props,
+    player: props.player,
+    ...visuals,
+  };
+
+  return props.isMe ? (
+    <MySeatView {...renderProps} />
+  ) : (
+    <OtherPlayerSeatView {...renderProps} />
   );
 }

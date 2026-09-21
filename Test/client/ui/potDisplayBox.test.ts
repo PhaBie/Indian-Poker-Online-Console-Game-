@@ -3,6 +3,7 @@ import {
   formatPotAmount,
   formatStakeAmount,
   getStakeLabel,
+  PotDisplayBox,
 } from '../../../src/client/ui/screens/game/PotDisplayBox';
 
 describe('formatPotAmount', () => {
@@ -68,5 +69,21 @@ describe('getStakeLabel', () => {
     const largeFormattedStake = '$1,000';
     const labelResult = getStakeLabel(largeFormattedStake);
     expect(labelResult).toBe('STAKE · ');
+  });
+});
+
+describe('PotDisplayBox', () => {
+  test('renders successfully with default visible amount', () => {
+    const boxElement = PotDisplayBox({ pot: 300, currentStake: 50 });
+    expect(boxElement).toBeDefined();
+  });
+
+  test('renders successfully when amount is hidden during blink pulse', () => {
+    const boxElement = PotDisplayBox({
+      pot: 300,
+      currentStake: 50,
+      isAmountVisible: false,
+    });
+    expect(boxElement).toBeDefined();
   });
 });
