@@ -2,11 +2,13 @@ import { expect, test, describe, beforeEach } from 'bun:test';
 import type { NetworkContext } from '../../../src/server/network/socketHandler';
 import {
   handleClientMessage,
+  handleClientDisconnect,
   broadcastGameStateUpdate,
 } from '../../../src/server/network/socketHandler';
 import type { ClientEvent, ServerEvent } from '../../../src/shared/types';
 import { RoomManager } from '../../../src/server/domain/models/RoomManager';
 import { Player } from '../../../src/server/domain/models/Player';
+import { GAME_CONSTANTS } from '../../../src/shared/constants';
 import type { WebSocket as WSWebSocket } from 'ws';
 
 describe('6. ระบบจัดการเครือข่าย (WebSocket Handler)', () => {
@@ -161,6 +163,30 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       ]);
     });
 
+    test('[socketHandler.broadcastGameStateUpdate] 6.3.1 ระหว่างสรุปผลรอบ → ไม่มี current turn เพื่อไม่ไฮไลต์หรือเปิด Action ให้ใคร', () => {
+      const sentMessages: ServerEvent[] = [];
+      const mockWsClient = {
+        send: (data: string) => sentMessages.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const host = new Player('player_1', 'Host');
+      const secondPlayer = new Player('player_2', 'P2');
+      const room = mockContext.roomManager.createRoom('room_ended', host);
+      room.join(secondPlayer);
+      room.startGame(host.id);
+      room.phase = 'ENDED';
+      mockContext.connectedClients.set(mockWsClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+
+      broadcastGameStateUpdate(room.roomId, mockContext);
+
+      const stateEvent = sentMessages.find(
+        (message) => message.type === 'GAME_STATE_UPDATE',
+      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
+      expect(stateEvent.payload.currentTurnPlayerId).toBeNull();
+    });
+
     test('[socketHandler.handleClientMessage] 6.4 โฮสต์ส่ง START_GAME → คืนค่า GAME_STATE_UPDATE ที่มี phase เป็น PLAYING', () => {
       const sentMessages: ServerEvent[] = [];
       const mockWsClient = {
@@ -192,6 +218,42 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
       expect(updateEvent).toBeDefined();
       expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
+    });
+
+    test('starting with only enough chips for the boot pauses the table for bankruptcy settlement', () => {
+      const sentMessages: ServerEvent[] = [];
+      const hostClient = {
+        readyState: 1,
+        send: (data: string) => sentMessages.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const guestClient = {
+        readyState: 1,
+        send: () => undefined,
+      } as unknown as WSWebSocket;
+      const host = new Player('host_bankrupt', 'Host');
+      const guest = new Player('guest_solvent', 'Guest');
+      host.chips = 50;
+      guest.chips = 100;
+      const room = mockContext.roomManager.createRoom('room_boot_bankrupt', host);
+      room.join(guest);
+      host.status = 'READY';
+      guest.status = 'READY';
+      mockContext.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      mockContext.connectedClients.set(guestClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
+
+      handleClientMessage(hostClient, { type: 'START_GAME' }, mockContext);
+
+      const gameState = sentMessages.find(
+        (event) => event.type === 'GAME_STATE_UPDATE',
+      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
+      expect(gameState.payload.isRoundEnding).toBe(true);
+      expect(gameState.payload.currentTurnPlayerId).toBeNull();
     });
 
     test('[socketHandler.handleClientMessage] 6.5 ส่ง JOIN_ROOM พร้อม Token ที่ถูกต้องของคนที่หลุด → คืนค่า GAME_STATE_UPDATE และผูก Session กับผู้เล่นเดิม รักษาชิป เดิมพันและไพ่ และออกจากสถานะ DISCONNECTED', () => {
@@ -228,6 +290,133 @@ describe('6. ระบบจัดการเครือข่าย (WebSocke
       expect(host.chips).toBe(800);
       expect(host.bet).toBe(200);
       expect(host.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
+    });
+
+    test('[socketHandler.handleClientMessage] 6.5.1 ผู้เล่นออกจน Host เหลือคนเดียว → ยกเลิกรอบและ Host กลับ LOBBY', () => {
+      const hostEvents: ServerEvent[] = [];
+      const hostClient = {
+        readyState: 1,
+        send: (data: string) => hostEvents.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const leavingClient = {
+        readyState: 1,
+        send: () => undefined,
+      } as unknown as WSWebSocket;
+      const host = new Player('host_id', 'Host');
+      const guest = new Player('guest_id', 'Guest');
+      const room = mockContext.roomManager.createRoom('room_leave_guest', host);
+      room.join(guest);
+      room.startGame(host.id);
+      mockContext.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      mockContext.connectedClients.set(leavingClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
+
+      handleClientMessage(leavingClient, { type: 'LEAVE_ROOM' }, mockContext);
+
+      expect(room.phase).toBe('LOBBY');
+      expect(room.gameState).toBeNull();
+      expect(room.getPlayerCount()).toBe(1);
+      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS + 50);
+      expect(hostEvents.some((event) => event.type === 'GAME_STATE_UPDATE')).toBe(true);
+    });
+
+    test('[socketHandler.handleClientMessage] 6.5.2 Host ออก → ปิดห้องและส่งผู้เล่นที่เหลือกลับ Room Lobby', () => {
+      const hostEvents: ServerEvent[] = [];
+      const guestEvents: ServerEvent[] = [];
+      const hostClient = {
+        readyState: 1,
+        send: (data: string) => hostEvents.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const guestClient = {
+        readyState: 1,
+        send: (data: string) => guestEvents.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const host = new Player('host_close', 'Host');
+      const guest = new Player('guest_close', 'Guest');
+      const room = mockContext.roomManager.createRoom('room_host_leave', host);
+      room.join(guest);
+      mockContext.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      mockContext.connectedClients.set(guestClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
+
+      handleClientMessage(hostClient, { type: 'LEAVE_ROOM' }, mockContext);
+
+      expect(mockContext.roomManager.getRoom(room.roomId)).toBeUndefined();
+      expect(guestEvents.some((event) => event.type === 'ROOM_CLOSED')).toBe(true);
+      expect(mockContext.connectedClients.get(guestClient)?.roomId).toBeNull();
+    });
+
+    test('[socketHandler.handleClientDisconnect] 6.5.3 ผู้เล่นหลุดจน Host เหลือคนเดียว → Host กลับ Waiting Room', () => {
+      const hostEvents: ServerEvent[] = [];
+      const hostClient = {
+        readyState: 1,
+        send: (data: string) => hostEvents.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const disconnectedClient = {
+        readyState: 1,
+        send: () => undefined,
+      } as unknown as WSWebSocket;
+      const host = new Player('host_disconnect', 'Host');
+      const guest = new Player('guest_disconnect', 'Guest');
+      const room = mockContext.roomManager.createRoom('room_guest_disconnect', host);
+      room.join(guest);
+      room.startGame(host.id);
+      mockContext.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      mockContext.connectedClients.set(disconnectedClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
+
+      handleClientDisconnect(disconnectedClient, mockContext);
+
+      expect(room.phase).toBe('LOBBY');
+      expect(room.gameState).toBeNull();
+      expect(room.getPlayerCount()).toBe(1);
+      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS + 50);
+      expect(hostEvents.some((event) => event.type === 'GAME_STATE_UPDATE')).toBe(true);
+    });
+
+    test('[socketHandler.handleClientDisconnect] 6.5.4 Host หลุด → ปิดห้องและส่งผู้เล่นที่เหลือกลับ Room Lobby', () => {
+      const guestEvents: ServerEvent[] = [];
+      const hostClient = {
+        readyState: 1,
+        send: () => undefined,
+      } as unknown as WSWebSocket;
+      const guestClient = {
+        readyState: 1,
+        send: (data: string) => guestEvents.push(JSON.parse(data)),
+      } as unknown as WSWebSocket;
+      const host = new Player('host_disconnected_close', 'Host');
+      const guest = new Player('guest_disconnected_close', 'Guest');
+      const room = mockContext.roomManager.createRoom('room_host_disconnect', host);
+      room.join(guest);
+      mockContext.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      mockContext.connectedClients.set(guestClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
+
+      handleClientDisconnect(hostClient, mockContext);
+
+      expect(mockContext.roomManager.getRoom(room.roomId)).toBeUndefined();
+      expect(guestEvents.some((event) => event.type === 'ROOM_CLOSED')).toBe(true);
+      expect(mockContext.connectedClients.get(guestClient)?.roomId).toBeNull();
     });
   });
 

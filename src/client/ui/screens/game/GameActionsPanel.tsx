@@ -92,6 +92,7 @@ export function GameActionsPanel({
   onBetChange,
   onBetSubmit,
   statusContext,
+  notice,
   isInputDisabled = false,
 }: GameActionsPanelProps) {
   const [isPulseOn, setIsPulseOn] = useState(false);
@@ -150,7 +151,7 @@ export function GameActionsPanel({
         />
       )}
 
-      {!canChooseAction && inputMode === 'menu' && (
+      {!canChooseAction && (
         <Box
           flexDirection="column"
           flexGrow={1}
@@ -161,12 +162,21 @@ export function GameActionsPanel({
             {status.text}
           </Text>
           <Box marginTop={2}>
-            <Text color="gray">WATCH THE TABLE</Text>
+            <Text color="gray">
+              {statusContext.isBankrupt ? 'YOU ARE NOW SPECTATING' : 'WATCH THE TABLE'}
+            </Text>
           </Box>
         </Box>
       )}
 
       <Box flexGrow={1} />
+      {notice && (
+        <Box marginBottom={1} flexDirection="column">
+          <Text color="redBright" bold wrap="wrap">
+            [!] {notice}
+          </Text>
+        </Box>
+      )}
       <Box
         borderStyle="single"
         borderBottom={false}

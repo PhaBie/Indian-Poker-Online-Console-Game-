@@ -133,8 +133,21 @@ describe('gameLayoutHelpers - getPlayerBadgeInfo', () => {
 });
 
 describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
+  it('shows a resolving state before any player can act', () => {
+    const status = getStatusDisplayInfo({
+      isBankrupt: false,
+      isRoundEnding: true,
+      isMyTurn: true,
+      isPendingSideshowTarget: false,
+      isPendingSideshowChallenger: false,
+      hasPendingSideshow: false,
+    });
+    expect(status.text).toBe('Resolving round...');
+  });
+
   it('should display your turn message when isMyTurn is true', () => {
     const status = getStatusDisplayInfo({
+      isBankrupt: false,
       isMyTurn: true,
       isPendingSideshowTarget: false,
       isPendingSideshowChallenger: false,
@@ -145,6 +158,7 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
 
   it('should display action required when targeted by sideshow', () => {
     const status = getStatusDisplayInfo({
+      isBankrupt: false,
       isMyTurn: false,
       isPendingSideshowTarget: true,
       isPendingSideshowChallenger: false,
@@ -155,6 +169,7 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
 
   it('should display waiting for target when challenger initiated sideshow', () => {
     const status = getStatusDisplayInfo({
+      isBankrupt: false,
       isMyTurn: false,
       isPendingSideshowTarget: false,
       isPendingSideshowChallenger: true,
@@ -165,11 +180,24 @@ describe('gameLayoutHelpers - getStatusDisplayInfo', () => {
 
   it('should display default waiting message when idle', () => {
     const status = getStatusDisplayInfo({
+      isBankrupt: false,
       isMyTurn: false,
       isPendingSideshowTarget: false,
       isPendingSideshowChallenger: false,
       hasPendingSideshow: false,
     });
     expect(status.text).toBe('Waiting for turn...');
+  });
+
+  it('shows the spectator message before any turn or pending-action message', () => {
+    const status = getStatusDisplayInfo({
+      isBankrupt: true,
+      isMyTurn: true,
+      isPendingSideshowTarget: true,
+      isPendingSideshowChallenger: false,
+      hasPendingSideshow: true,
+    });
+    expect(status.text).toBe('YOU LOST — BANKRUPT · SPECTATOR MODE');
+    expect(status.color).toBe('redBright');
   });
 });

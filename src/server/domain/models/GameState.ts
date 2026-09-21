@@ -15,6 +15,13 @@ import {
 } from '../errors/GameError';
 import type { Player } from './Player';
 
+type GameResult = {
+  winnerIds: string[];
+  winningHand: HandRank;
+  payouts: Record<string, number>;
+  exposedCards: Record<string, Card[]>;
+};
+
 export class GameState {
   public pot: number;
   public currentStake: number;
@@ -25,8 +32,35 @@ export class GameState {
   public maxPotLimit: number;
   public dealerIndex: number;
   public pendingSideshow: { challengerId: string; targetId: string } | null;
+  public lastSideshow: {
+    challengerId: string;
+    targetId: string;
+    winnerId: string;
+    loserId: string;
+    cards: Record<string, Card[]>;
+  } | null;
+  public lastSideshowNotice: {
+    challengerId: string;
+    targetId: string;
+    outcome: 'DECLINED';
+  } | null;
+  public pendingShow: {
+    requesterId: string;
+    opponentId: string;
+    cards: Record<string, Card[]>;
+  } | null;
+  public readonly deferShowSettlement: boolean;
+  /** Keep the bankrupt seat visible briefly before this deal is settled. */
+  public isRoundEnding: boolean;
+  /** Settlement is idempotent: callers after SHOW receive this result, not null. */
+  public lastGameResult: GameResult | null;
 
-  constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
+  constructor(
+    players: Player[],
+    bootAmount: number = 50,
+    maxPotLimit: number = 10000,
+    deferShowSettlement: boolean = false,
+  ) {
     this.pot = 0;
     this.currentStake = bootAmount;
     this.currentPlayerIndex = 0;
@@ -36,9 +70,17 @@ export class GameState {
     this.maxPotLimit = maxPotLimit;
     this.dealerIndex = 0;
     this.pendingSideshow = null;
+    this.lastSideshow = null;
+    this.lastSideshowNotice = null;
+    this.pendingShow = null;
+    this.deferShowSettlement = deferShowSettlement;
+    this.isRoundEnding = false;
+    this.lastGameResult = null;
   }
 
   public startGame(): void {
+    this.lastGameResult = null;
+    this.pendingShow = null;
     // ตรวจชิปทุกคนก่อนเริ่มจ่าย เพื่อไม่ให้หักเงินไปบางส่วน
     if (this.activePlayers.some((player) => player.chips < this.bootAmount)) {
       throw new GameError('Insufficient chips to start game', 'INSUFFICIENT_CHIPS');
@@ -57,6 +99,16 @@ export class GameState {
 
     for (let index = 0; index < this.activePlayers.length; index++) {
       this.activePlayers[index].receiveCards(result.hands[index]);
+    }
+
+    // A player who used their final chip to post the Boot cannot take an
+    // action. Mark the table for the same brief elimination presentation used
+    // when a player spends their final chip later in the deal.
+    for (const player of this.activePlayers) {
+      if (player.chips === 0) {
+        player.status = 'FOLDED';
+        this.isRoundEnding = true;
+      }
     }
 
     // ให้ผู้เล่นคนแรกเริ่มเล่น
@@ -88,6 +140,15 @@ export class GameState {
     action: GameActionType,
     amount?: number,
   ): boolean {
+    if (this.isRoundEnding) {
+      throw new InvalidActionError(action);
+    }
+    if (this.pendingShow) {
+      throw new InvalidActionError(action);
+    }
+    // ผลการเปรียบไพ่จะอยู่ให้ client คู่ดวลแสดงหนึ่ง state แล้วถูกล้างที่ action ถัดไป
+    this.lastSideshow = null;
+    this.lastSideshowNotice = null;
     // ต้องเป็นเทิร์นของผู้เล่นคนนี้ก่อนจึงจะเล่นได้
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
@@ -118,6 +179,12 @@ export class GameState {
           this.pendingSideshow.challengerId,
           this.pendingSideshow.targetId,
         );
+      } else {
+        this.lastSideshowNotice = {
+          challengerId: this.pendingSideshow.challengerId,
+          targetId: this.pendingSideshow.targetId,
+          outcome: 'DECLINED',
+        };
       }
       this.pendingSideshow = null;
 
@@ -174,10 +241,25 @@ export class GameState {
         return false;
       case 'SHOW':
         this.requestShow(playerId);
-        return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+        return (
+          !this.deferShowSettlement &&
+          (this.checkLastManStanding() !== null || this.checkPotLimitReached())
+        );
       case 'SIDESHOW':
-        // ในกติกาเดิม Sideshow ทำได้ต่อเมื่อมีผู้เล่นมากกว่า 2 คน
-        payment = player.isBlind ? this.currentStake : this.currentStake * 2;
+        // Pagat: Sideshow ทำได้เมื่อยังเหลืออย่างน้อย 3 คน และทุกคนที่อยู่ใน
+        // รอบเป็น Seen; ผู้ท้าจ่ายขั้นต่ำของ Seen แล้วท้าคนที่ลงก่อนหน้าตนเอง
+        {
+          const activePlayers = this.activePlayers.filter(
+            (activePlayer) => activePlayer.status === 'ACTIVE',
+          );
+          if (
+            activePlayers.length <= 2 ||
+            activePlayers.some((activePlayer) => activePlayer.isBlind)
+          ) {
+            throw new InvalidActionError('SIDESHOW');
+          }
+        }
+        payment = this.currentStake * 2;
         break;
       default:
         throw new InvalidActionError(action);
@@ -194,7 +276,16 @@ export class GameState {
       this.currentStake = player.isBlind ? payment : payment / 2;
     }
 
-    // ถ้าเป็น Sideshow ให้ดวลกับคนก่อนหน้า หลังจากจ่ายเงินเสร็จ
+    // This game has no all-in side-pot rules.  Once a player has spent their
+    // final chip, remove them from the active turn cycle immediately so the
+    // table can continue and their client can switch to spectator mode.
+    if (player.chips === 0) {
+      player.status = 'FOLDED';
+      this.isRoundEnding = true;
+      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+    }
+
+    // Pagat Sideshow ท้าได้เฉพาะคนที่ลงเดิมพันก่อนหน้าซึ่งยัง ACTIVE อยู่
     if (action === 'SIDESHOW') {
       // หาผู้เล่นคนก่อนหน้าที่ยัง ACTIVE
       let targetPlayer: Player | undefined;
@@ -222,12 +313,7 @@ export class GameState {
     return this.checkLastManStanding() !== null || this.checkPotLimitReached();
   }
 
-  public evaluateWinner(): {
-    winnerIds: string[];
-    winningHand: HandRank;
-    payouts: Record<string, number>;
-    exposedCards: Record<string, Card[]>;
-  } | null {
+  public evaluateWinner(): GameResult | null {
     // ใช้เฉพาะผู้เล่นที่ยังไม่หมอบในการหาผู้ชนะ
     const players = this.activePlayers
       .filter((player) => player.status === 'ACTIVE')
@@ -280,17 +366,10 @@ export class GameState {
     };
   }
 
-  public endGame(
-    forceShowdown: boolean = false,
-  ): {
-    winnerIds: string[];
-    winningHand: HandRank;
-    payouts: Record<string, number>;
-    exposedCards: Record<string, Card[]>;
-  } | null {
+  public endGame(forceShowdown: boolean = false): GameResult | null {
     // จบรอบซ้ำไม่ได้ เพราะ Pot ถูกจ่ายไปแล้ว
     if (this.pot === 0) {
-      return null;
+      return this.lastGameResult;
     }
 
     const remainingPlayers = this.activePlayers.filter(
@@ -312,17 +391,21 @@ export class GameState {
       const payouts: Record<string, number> = {};
       payouts[winner.id] = payout;
 
-      return {
+      const exposedCards = this.pendingShow?.cards ?? {};
+      this.pendingShow = null;
+      this.lastGameResult = {
         winnerIds: [winner.id],
         winningHand: 'HIGH_CARD', // Not shown on fold win
         payouts,
-        exposedCards: {}, // Folded players don't show cards
+        exposedCards,
       };
+      return this.lastGameResult;
     }
 
     // ถ้ายังเหลือหลายคน (กรณีเรียก Show หรือสุดรอบ) ต้อง evaluateWinner
     if (forceShowdown) {
-      return this.evaluateWinner();
+      this.lastGameResult = this.evaluateWinner();
+      return this.lastGameResult;
     }
 
     return null;
@@ -347,16 +430,24 @@ export class GameState {
 
     // เปรียบเทียบไพ่: ค่าบวกแปลว่าผู้ท้าชนะ ค่าลบแปลว่าเป้าหมายชนะ
     const result = compareHands(challenger.privateCards, target.privateCards);
+    const loser = result <= 0 ? challenger : target;
+    const winner = loser === challenger ? target : challenger;
+
+    this.lastSideshow = {
+      challengerId,
+      targetId,
+      winnerId: winner.id,
+      loserId: loser.id,
+      cards: {
+        [challengerId]: challenger.privateCards,
+        [targetId]: target.privateCards,
+      },
+    };
 
     // ถ้าเสมอ ผู้ท้าต้องเป็นฝ่ายหมอบ
-    if (result <= 0) {
-      challenger.fold();
-    } else {
-      target.fold();
-    }
+    loser.fold();
 
-    // ถ้าเหลือผู้เล่นคนเดียว ให้ผู้เล่นคนนั้นรับ Pot
-    this.endGame();
+    // ผู้เรียก processAction จะตรวจผู้เล่นที่เหลือและสรุป Pot เพียงครั้งเดียว
   }
 
   public requestShow(playerId: string): void {
@@ -398,8 +489,18 @@ export class GameState {
       opponent.fold();
     }
 
-    // สรุปผลเกมและหาผู้ชนะ
-    this.endGame();
+    this.pendingShow = {
+      requesterId: player.id,
+      opponentId: opponent.id,
+      cards: {
+        [player.id]: player.showCards(),
+        [opponent.id]: opponent.showCards(),
+      },
+    };
+
+    if (!this.deferShowSettlement) {
+      this.endGame();
+    }
   }
 
   public canForceShow(): boolean {

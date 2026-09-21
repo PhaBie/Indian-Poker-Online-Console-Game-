@@ -13,7 +13,6 @@ import { OnlineConnectionScreen } from './screens/OnlineConnectionScreen';
 import { RoomBrowserScreen } from './screens/RoomBrowserScreen';
 import { WaitingRoomScreen } from './screens/WaitingRoomScreen';
 import { GameScreen } from './screens/GameScreen';
-import { RoundResultScreen } from './screens/RoundResultScreen';
 import {
   useTerminalSize,
   clearTerminalScreen,
@@ -77,10 +76,13 @@ function renderGameplayScreens({
   }
   if (screen === 'result' && state.latestGameResult && state.latestGameState) {
     return (
-      <RoundResultScreen
-        result={state.latestGameResult}
+      <GameScreen
         gameState={state.latestGameState}
         socketClient={socketClient}
+        myPlayerId={state.myPlayerId}
+        serverError={state.lastError}
+        roundResult={state.latestGameResult}
+        autoAdvanceRound
         onLeave={navigation.handleLeaveRoom}
       />
     );

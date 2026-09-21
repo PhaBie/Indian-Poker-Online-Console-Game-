@@ -8,14 +8,17 @@ import { getPlayerBadgeInfo } from './gameLayoutHelpers';
 interface PlayerSeatHeaderProps {
   readonly player: GamePlayerItem;
   readonly isMe: boolean;
+  readonly isShowdownRevealed: boolean;
+  readonly isBankrupt: boolean;
 }
 
 interface HandModeIndicatorProps {
   readonly isBlind: boolean;
+  readonly isShowdownRevealed: boolean;
 }
 
-function HandModeIndicator({ isBlind }: HandModeIndicatorProps) {
-  const handMode = isBlind ? 'BLIND' : 'SEEN';
+function HandModeIndicator({ isBlind, isShowdownRevealed }: HandModeIndicatorProps) {
+  const handMode = isShowdownRevealed ? 'REVEALED' : isBlind ? 'BLIND' : 'SEEN';
   const displayText = `[${handMode}]`;
   const [lightPosition, setLightPosition] = useState<number | null>(0);
   const baseColor = isBlind ? 'yellow' : 'cyan';
@@ -56,16 +59,31 @@ function HandModeIndicator({ isBlind }: HandModeIndicatorProps) {
   );
 }
 
-function PlayerSeatHeader({ player, isMe }: PlayerSeatHeaderProps) {
+function PlayerSeatHeader({
+  player,
+  isMe,
+  isShowdownRevealed,
+  isBankrupt,
+}: PlayerSeatHeaderProps) {
   const displayName = isMe ? 'YOU' : player.name;
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
       <Text>
-        <Text color={isMe ? 'cyanBright' : 'white'} bold={isMe}>
+        <Text color={isBankrupt ? 'redBright' : isMe ? 'cyanBright' : 'white'} bold>
           {displayName}
         </Text>
         <Text color="gray"> </Text>
-        <HandModeIndicator isBlind={player.isBlind} />
+        {isBankrupt ? (
+          <Text color="redBright" bold>
+            {' '}
+            [BANKRUPT]
+          </Text>
+        ) : (
+          <HandModeIndicator
+            isBlind={player.isBlind}
+            isShowdownRevealed={isShowdownRevealed}
+          />
+        )}
       </Text>
       <Text color="gray">
         STACK <Text color={isMe ? 'cyanBright' : 'white'}>${player.chips}</Text>
@@ -79,6 +97,7 @@ interface PlayerCardsRowProps {
   readonly isBlind: boolean;
   readonly hasFolded: boolean;
   readonly myCards: readonly Card[];
+  readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
 }
 
@@ -89,7 +108,9 @@ interface PlayerCardsPanelProps {
   readonly badge: ReturnType<typeof getPlayerBadgeInfo>;
   readonly borderColor: string;
   readonly myCards: readonly Card[];
+  readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
+  readonly isBankrupt: boolean;
 }
 
 function PlayerCardsPanel({
@@ -99,7 +120,9 @@ function PlayerCardsPanel({
   badge,
   borderColor,
   myCards,
+  revealedCards,
   cardBorderGlowColors,
+  isBankrupt,
 }: PlayerCardsPanelProps) {
   return (
     <Box
@@ -111,33 +134,62 @@ function PlayerCardsPanel({
       justifyContent="center"
       alignItems="center"
     >
-      <PlayerCardsRow
-        isMe={isMe}
-        isBlind={player.isBlind}
-        hasFolded={hasFolded}
-        myCards={myCards}
-        cardBorderGlowColors={cardBorderGlowColors}
-      />
-      <Box justifyContent="space-between" width={22} marginTop={1}>
-        <Text color="gray">BET ${player.bet}</Text>
-        {badge.label ? (
-          <Text color={badge.color}>{badge.label}</Text>
-        ) : (
-          <Text color="gray">ACTIVE</Text>
-        )}
-      </Box>
+      {isBankrupt ? (
+        <Box flexDirection="column" alignItems="center">
+          <Text color="redBright" bold>
+            PLAYER ELIMINATED
+          </Text>
+          <Text color="redBright" bold>
+            BANKRUPT
+          </Text>
+          <Text color="red">OUT OF CHIPS</Text>
+        </Box>
+      ) : (
+        <>
+          <PlayerCardsRow
+            isMe={isMe}
+            isBlind={player.isBlind}
+            hasFolded={hasFolded}
+            myCards={myCards}
+            revealedCards={revealedCards}
+            cardBorderGlowColors={cardBorderGlowColors}
+          />
+          <Box justifyContent="space-between" width={22} marginTop={1}>
+            <Text color="gray">BET ${player.bet}</Text>
+            {badge.label ? (
+              <Text color={badge.color}>{badge.label}</Text>
+            ) : (
+              <Text color="gray">ACTIVE</Text>
+            )}
+          </Box>
+        </>
+      )}
     </Box>
   );
 }
 
-function MySeatDetails({ player }: Pick<PlayerCardsPanelProps, 'player'>) {
+function MySeatDetails({
+  player,
+  isShowdownRevealed,
+  isBankrupt,
+}: Pick<PlayerCardsPanelProps, 'player' | 'isBankrupt'> & {
+  readonly isShowdownRevealed: boolean;
+}) {
   return (
     <Box flexDirection="column" width={14}>
       <Text color="cyanBright" bold>
-        YOU <HandModeIndicator isBlind={player.isBlind} />
+        YOU{' '}
+        {isBankrupt ? (
+          'SPECTATOR'
+        ) : (
+          <HandModeIndicator
+            isBlind={player.isBlind}
+            isShowdownRevealed={isShowdownRevealed}
+          />
+        )}
       </Text>
       <Text color="gray">
-        STACK <Text color="cyanBright">${player.chips}</Text>
+        STACK <Text color={isBankrupt ? 'redBright' : 'cyanBright'}>${player.chips}</Text>
       </Text>
     </Box>
   );
@@ -148,15 +200,17 @@ function PlayerCardsRow({
   isBlind,
   hasFolded,
   myCards,
+  revealedCards,
   cardBorderGlowColors,
 }: PlayerCardsRowProps) {
-  const shouldHideCards = !isMe || (isBlind && !hasFolded);
+  const cards = revealedCards ?? (isMe ? myCards : undefined);
+  const shouldHideCards = !cards || (isMe && isBlind && !hasFolded && !revealedCards);
   return (
     <Box flexDirection="row" justifyContent="center">
       {[0, 1, 2].map((cardIndex) => (
         <CardView
           key={`card-slot-${cardIndex}`}
-          card={shouldHideCards ? undefined : myCards[cardIndex]}
+          card={shouldHideCards ? undefined : cards[cardIndex]}
           isHidden={shouldHideCards}
           hiddenBorderColor={
             shouldHideCards ? cardBorderGlowColors[cardIndex] : undefined
@@ -171,8 +225,12 @@ export function PlayerSeatNode({
   player,
   isMe,
   isThisPlayerTurn,
+  isBankrupt,
   isPendingSideshowTargetNode,
+  isSideshowParticipantNode,
+  isShowdownRevealed,
   myCards,
+  revealedCards,
   cardBorderGlowColors,
 }: PlayerSeatNodeProps) {
   if (!player) {
@@ -180,13 +238,20 @@ export function PlayerSeatNode({
   }
 
   const hasFolded = player.status === 'FOLDED';
-  const badge = getPlayerBadgeInfo(
-    hasFolded,
-    isThisPlayerTurn,
-    isPendingSideshowTargetNode,
-  );
-  const borderColor =
-    isThisPlayerTurn || isPendingSideshowTargetNode ? 'cyanBright' : 'gray';
+  const badge = isBankrupt
+    ? { label: '[OUT]', color: 'redBright' }
+    : isSideshowParticipantNode
+      ? { label: '[DUEL]', color: 'cyanBright' }
+      : getPlayerBadgeInfo(hasFolded, isThisPlayerTurn, isPendingSideshowTargetNode);
+  const borderColor = isBankrupt
+    ? 'redBright'
+    : isSideshowParticipantNode
+      ? 'cyanBright'
+      : isPendingSideshowTargetNode
+        ? 'magentaBright'
+        : isThisPlayerTurn
+          ? 'yellowBright'
+          : 'gray';
 
   if (isMe) {
     return (
@@ -198,10 +263,16 @@ export function PlayerSeatNode({
           badge={badge}
           borderColor={borderColor}
           myCards={myCards}
+          revealedCards={revealedCards}
           cardBorderGlowColors={cardBorderGlowColors}
+          isBankrupt={isBankrupt}
         />
         <Box marginLeft={2}>
-          <MySeatDetails player={player} />
+          <MySeatDetails
+            player={player}
+            isShowdownRevealed={isShowdownRevealed}
+            isBankrupt={isBankrupt}
+          />
         </Box>
       </Box>
     );
@@ -209,7 +280,12 @@ export function PlayerSeatNode({
 
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
-      <PlayerSeatHeader player={player} isMe={isMe} />
+      <PlayerSeatHeader
+        player={player}
+        isMe={isMe}
+        isShowdownRevealed={isShowdownRevealed}
+        isBankrupt={isBankrupt}
+      />
       <PlayerCardsPanel
         player={player}
         isMe={isMe}
@@ -217,7 +293,9 @@ export function PlayerSeatNode({
         badge={badge}
         borderColor={borderColor}
         myCards={myCards}
+        revealedCards={revealedCards}
         cardBorderGlowColors={cardBorderGlowColors}
+        isBankrupt={isBankrupt}
       />
     </Box>
   );

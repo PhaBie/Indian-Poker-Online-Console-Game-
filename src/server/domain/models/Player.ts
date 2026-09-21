@@ -1,6 +1,7 @@
 import type { ServerPlayer, PlayerStatus, Card } from '../../../shared/types';
 import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/GameError';
 import { playerSaveSchema } from '../schemas/playerSchema';
+import { GAME_CONSTANTS } from '../../../shared/constants';
 
 export abstract class BaseUser {
   public id: string;
@@ -23,7 +24,7 @@ export class Player extends BaseUser implements ServerPlayer {
 
   constructor(id: string, name: string) {
     super(id, name);
-    this.chips = 1000;
+    this.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     this.bet = 0;
     this.status = 'WAITING';
     this.privateCards = [];

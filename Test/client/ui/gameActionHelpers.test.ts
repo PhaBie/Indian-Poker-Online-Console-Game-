@@ -43,4 +43,31 @@ describe('getGameplayActions', () => {
       }),
     ).toEqual([]);
   });
+
+  test('hides every action for a bankrupt player even if the server still points at them', () => {
+    expect(
+      getGameplayActions({
+        players: [{ ...players[0], chips: 0 }, players[1]],
+        myPlayerId: 'me',
+        currentTurnPlayerId: 'me',
+        currentStake: 50,
+        pendingSideshow: null,
+      }),
+    ).toEqual([]);
+  });
+
+  test('shows only fold when a seen player cannot afford the call or show cost', () => {
+    expect(
+      getGameplayActions({
+        players: [
+          { ...players[0], chips: 50, isBlind: false },
+          { ...players[1], chips: 50, isBlind: false },
+        ],
+        myPlayerId: 'me',
+        currentTurnPlayerId: 'me',
+        currentStake: 50,
+        pendingSideshow: null,
+      }),
+    ).toEqual([{ label: 'FOLD', value: 'FOLD' }]);
+  });
 });

@@ -126,6 +126,8 @@ export type ServerEvent =
   | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
   | { type: 'ROOM_CREATED'; payload: { roomId: string } }
   | { type: 'ROOM_LIST'; payload: { rooms: RoomSummaryDTO[] } }
+  /** ห้องถูกปิดเพราะ Host ออกหรือขาดการเชื่อมต่อ */
+  | { type: 'ROOM_CLOSED'; payload: { roomId: string } }
   | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
   | { type: 'GAME_LOG_MESSAGE'; payload: { message: string } }
   | { type: 'GAME_SAVED'; payload: { roomId: string } }
@@ -140,10 +142,35 @@ export type ServerEvent =
         pot: number;
         currentStake: number;
         currentTurnPlayerId: string | null;
+        /** The table is showing an elimination before the result dialog appears. */
+        isRoundEnding?: boolean;
         turnEndTime: number | null;
         players: PublicPlayerDTO[];
         /** ข้อมูลคำขอท้า Sideshow (ถ้ามี) */
         pendingSideshow?: { challengerId: string; targetId: string } | null;
+        /** ผล Sideshow ล่าสุด; ส่งไพ่เฉพาะคู่ดวลหลัง target ยอมรับแล้วเท่านั้น */
+        sideshowResult?: {
+          challengerId: string;
+          targetId: string;
+          winnerId: string;
+          loserId: string;
+          cards: Record<string, Card[]>;
+        } | null;
+        /** แจ้งทุกคนว่าเป้าหมายปฏิเสธ Sideshow; ไม่มีการเปิดไพ่ */
+        sideshowNotice?: {
+          challengerId: string;
+          targetId: string;
+          outcome: 'DECLINED';
+        } | null;
+        /** Preview: ไพ่ที่เปิดบนโต๊ะระหว่างรอแสดงผล SHOW */
+        showdownCards?: Record<string, Card[]> | null;
+        /** ผลรอบสำหรับ client ที่ต้องวาด table และผลลัพธ์จาก snapshot เดียวกัน */
+        roundResult?: {
+          winnerIds: string[];
+          winningHand: HandRank;
+          payouts: Record<string, number>;
+          exposedCards: Record<string, Card[]>;
+        } | null;
         /** ไพ่ส่วนตัว จะถูกส่งให้ตรงกับ session ของ Client เท่านั้น (ถ้าอยู่ใน Lobby จะเป็น array ว่าง) */
         myCards: Card[];
       };

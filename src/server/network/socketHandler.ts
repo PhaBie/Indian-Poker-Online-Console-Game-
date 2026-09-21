@@ -15,6 +15,43 @@ import { Player } from '../domain/models/Player';
 import { generatePlayerId, generateRoomId } from '../utils/helpers';
 import { GameError } from '../domain/errors/GameError';
 
+const SHOW_REVEAL_DELAY_MS = 4_000;
+const NEXT_ROUND_DELAY_MS = 6_000;
+const BANKRUPTCY_RESULT_DELAY_MS = 3_000;
+const RESULT_TO_LOBBY_DELAY_MS = 6_000;
+const showRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const nextRoundTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const bankruptcySettlementTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const returnToLobbyTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function clearRoomTimers(roomId: string): void {
+  const showRevealTimer = showRevealTimers.get(roomId);
+  if (showRevealTimer) clearTimeout(showRevealTimer);
+  showRevealTimers.delete(roomId);
+
+  const nextRoundTimer = nextRoundTimers.get(roomId);
+  if (nextRoundTimer) clearTimeout(nextRoundTimer);
+  nextRoundTimers.delete(roomId);
+
+  const bankruptcySettlementTimer = bankruptcySettlementTimers.get(roomId);
+  if (bankruptcySettlementTimer) clearTimeout(bankruptcySettlementTimer);
+  bankruptcySettlementTimers.delete(roomId);
+
+  const returnToLobbyTimer = returnToLobbyTimers.get(roomId);
+  if (returnToLobbyTimer) clearTimeout(returnToLobbyTimer);
+  returnToLobbyTimers.delete(roomId);
+}
+
+function settleAbandonedRound(room: Room, leavingPlayerId: string): void {
+  if (!room.gameState) return;
+
+  const isGameOver = room.gameState.handlePlayerDisconnect(leavingPlayerId);
+  if (!isGameOver) return;
+
+  const result = room.endGame(true);
+  if (result) saveGameHistory(room, result);
+}
+
 export interface SocketSession {
   playerId: string;
   roomId: string | null;
@@ -243,6 +280,9 @@ function handleStartGame(wsClient: WebSocket, context: NetworkContext) {
     }
     room.startGame(session.playerId);
     broadcastGameStateUpdate(session.roomId, context);
+    if (room.gameState?.isRoundEnding) {
+      scheduleBankruptcySettlement(session.roomId, context);
+    }
     broadcastRoomList(context);
   }
 }
@@ -266,6 +306,18 @@ function handlePlayerAction(
       payload.amount,
     );
 
+    if (room.gameState.pendingShow) {
+      broadcastGameStateUpdate(session.roomId, context);
+      scheduleShowSettlement(session.roomId, context);
+      return;
+    }
+
+    if (room.gameState.isRoundEnding) {
+      broadcastGameStateUpdate(session.roomId, context);
+      scheduleBankruptcySettlement(session.roomId, context);
+      return;
+    }
+
     if (isGameOver) {
       const result = room.endGame(true);
       if (result) {
@@ -278,6 +330,7 @@ function handlePlayerAction(
           result.exposedCards,
           context,
         );
+        scheduleNextRound(session.roomId, context);
       }
     } else {
       if (payload.action !== 'SEEN' && payload.action !== 'SIDESHOW') {
@@ -287,6 +340,108 @@ function handlePlayerAction(
 
     broadcastGameStateUpdate(session.roomId, context);
   }
+}
+
+function scheduleBankruptcySettlement(roomId: string, context: NetworkContext): void {
+  if (bankruptcySettlementTimers.has(roomId)) return;
+
+  const timer = setTimeout(() => {
+    bankruptcySettlementTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room?.gameState?.isRoundEnding) return;
+
+    const isGameOver =
+      room.gameState.checkLastManStanding() !== null ||
+      room.gameState.checkPotLimitReached();
+    if (isGameOver) {
+      const result = room.endGame(true);
+      if (result) {
+        saveGameHistory(room, result);
+        broadcastGameResult(
+          roomId,
+          result.winnerIds,
+          result.winningHand,
+          result.payouts,
+          result.exposedCards,
+          context,
+        );
+        scheduleReturnToLobby(roomId, context);
+      }
+    } else {
+      room.gameState.isRoundEnding = false;
+      room.gameState.nextTurn();
+    }
+
+    broadcastGameStateUpdate(roomId, context);
+  }, BANKRUPTCY_RESULT_DELAY_MS);
+
+  bankruptcySettlementTimers.set(roomId, timer);
+}
+
+function scheduleNextRound(roomId: string, context: NetworkContext): void {
+  if (nextRoundTimers.has(roomId)) return;
+
+  const timer = setTimeout(() => {
+    nextRoundTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room || room.phase !== 'ENDED' || !room.hostId) return;
+
+    try {
+      room.startNextRound(room.hostId);
+      broadcastGameStateUpdate(roomId, context);
+      if (room.gameState?.isRoundEnding) {
+        scheduleBankruptcySettlement(roomId, context);
+      }
+      broadcastRoomList(context);
+    } catch {
+      scheduleReturnToLobby(roomId, context);
+    }
+  }, NEXT_ROUND_DELAY_MS);
+
+  nextRoundTimers.set(roomId, timer);
+}
+
+function scheduleShowSettlement(roomId: string, context: NetworkContext): void {
+  if (showRevealTimers.has(roomId)) return;
+
+  const timer = setTimeout(() => {
+    showRevealTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room?.gameState?.pendingShow) return;
+
+    const result = room.endGame(true);
+    if (result) {
+      saveGameHistory(room, result);
+      broadcastGameResult(
+        roomId,
+        result.winnerIds,
+        result.winningHand,
+        result.payouts,
+        result.exposedCards,
+        context,
+      );
+      scheduleNextRound(roomId, context);
+    }
+    broadcastGameStateUpdate(roomId, context);
+  }, SHOW_REVEAL_DELAY_MS);
+
+  showRevealTimers.set(roomId, timer);
+}
+
+function scheduleReturnToLobby(roomId: string, context: NetworkContext): void {
+  if (returnToLobbyTimers.has(roomId)) return;
+
+  const timer = setTimeout(() => {
+    returnToLobbyTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room || room.phase !== 'ENDED') return;
+
+    room.resetToLobby();
+    broadcastGameStateUpdate(roomId, context);
+    broadcastRoomList(context);
+  }, RESULT_TO_LOBBY_DELAY_MS);
+
+  returnToLobbyTimers.set(roomId, timer);
 }
 
 function handleToggleReady(wsClient: WebSocket, context: NetworkContext) {
@@ -308,15 +463,35 @@ function handleLeaveRoom(wsClient: WebSocket, context: NetworkContext) {
 
   const room = context.roomManager.getRoom(session.roomId);
   if (room) {
-    room.leave(session.playerId);
-    if (room.getPlayerCount() === 0) {
-      context.roomManager.deleteRoom(session.roomId);
-    } else {
-      broadcastGameStateUpdate(session.roomId, context);
+    if (room.hostId === session.playerId) {
+      closeRoom(session.roomId, context);
+      return;
     }
+
+    if (room.getPlayerCount() === 2) settleAbandonedRound(room, session.playerId);
+    room.leave(session.playerId);
+    context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
+
+    if (room.getPlayerCount() < 2) room.resetToLobby();
+    broadcastGameStateUpdate(session.roomId, context);
+  } else {
+    context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
   }
 
-  context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
+  broadcastRoomList(context);
+}
+
+function closeRoom(roomId: string, context: NetworkContext): void {
+  clearRoomTimers(roomId);
+  context.roomManager.deleteRoom(roomId);
+
+  for (const [client, session] of context.connectedClients.entries()) {
+    if (session.roomId !== roomId) continue;
+
+    context.connectedClients.set(client, { playerId: session.playerId, roomId: null });
+    sendEvent(client, { type: 'ROOM_CLOSED', payload: { roomId } });
+  }
+
   broadcastRoomList(context);
 }
 
@@ -336,6 +511,28 @@ export function handleClientDisconnect(
     return;
   }
 
+  if (room.hostId === session.playerId) {
+    closeRoom(session.roomId, context);
+    context.connectedClients.delete(wsClient);
+    return;
+  }
+
+  const connectedPlayersAfterDisconnect = Array.from(room.players.values()).filter(
+    (player) => player.id !== session.playerId && player.status !== 'DISCONNECTED',
+  );
+  if (connectedPlayersAfterDisconnect.length < 2) {
+    settleAbandonedRound(room, session.playerId);
+    room.leave(session.playerId);
+    for (const player of Array.from(room.players.values())) {
+      if (player.status === 'DISCONNECTED') room.leave(player.id);
+    }
+    room.resetToLobby();
+    context.connectedClients.delete(wsClient);
+    broadcastGameStateUpdate(session.roomId, context);
+    broadcastRoomList(context);
+    return;
+  }
+
   if (room.gameState) {
     const isGameOver = room.gameState.handlePlayerDisconnect(session.playerId);
     if (isGameOver) {
@@ -350,6 +547,7 @@ export function handleClientDisconnect(
           result.exposedCards,
           context,
         );
+        scheduleNextRound(session.roomId, context);
       }
     }
   } else {
@@ -377,7 +575,9 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
 
   const pot = room.gameState?.pot || 0;
   const currentTurnPlayerId =
-    room.gameState?.activePlayers[room.gameState.currentPlayerIndex]?.id || null;
+    room.phase === 'ENDED' || room.gameState?.pendingShow || room.gameState?.isRoundEnding
+      ? null
+      : room.gameState?.activePlayers[room.gameState.currentPlayerIndex]?.id || null;
   const publicPlayers = room.getPublicState();
   const hostId = room.hostId || '';
 
@@ -388,7 +588,13 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
       const myCards = player && !player.isBlind ? player.privateCards : [];
 
       const pendingSideshow = room.gameState?.pendingSideshow || null;
-
+      const sideshowResult = room.gameState?.lastSideshow || null;
+      const sideshowNotice = room.gameState?.lastSideshowNotice || null;
+      const showdownCards = room.gameState?.pendingShow?.cards || null;
+      const isSideshowParticipant =
+        sideshowResult !== null &&
+        (session.playerId === sideshowResult.challengerId ||
+          session.playerId === sideshowResult.targetId);
       const payload = {
         roomId,
         phase: room.phase,
@@ -397,9 +603,13 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
         pot,
         currentStake: room.gameState?.currentStake ?? room.bootAmount,
         currentTurnPlayerId,
+        isRoundEnding: room.gameState?.isRoundEnding ?? false,
         turnEndTime: null,
         players: publicPlayers,
         pendingSideshow,
+        sideshowResult: isSideshowParticipant ? sideshowResult : null,
+        sideshowNotice,
+        showdownCards,
         myCards,
       };
 

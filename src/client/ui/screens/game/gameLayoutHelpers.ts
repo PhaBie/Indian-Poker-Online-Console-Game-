@@ -91,7 +91,7 @@ export function getPlayerBadgeInfo(
     return { label: '[FOLD]', color: 'gray' };
   }
   if (isThisPlayerTurn) {
-    return { label: '[TURN]', color: 'cyanBright' };
+    return { label: '[TURN]', color: 'yellowBright' };
   }
   if (isPendingSideshowTarget) {
     return { label: '[SIDESHOW?]', color: 'magentaBright' };
@@ -106,6 +106,16 @@ export interface StatusDisplayInfo {
 }
 
 export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplayInfo {
+  if (context.isRoundEnding) {
+    return { text: 'Resolving round...', color: 'yellowBright', bold: true };
+  }
+  if (context.isBankrupt) {
+    return {
+      text: 'YOU LOST — BANKRUPT · SPECTATOR MODE',
+      color: 'redBright',
+      bold: true,
+    };
+  }
   if (context.isMyTurn) {
     return { text: 'Your turn!', color: 'greenBright', bold: true };
   }

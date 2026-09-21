@@ -47,4 +47,32 @@ describe('ClientState lobby error lifecycle', () => {
 
     expect(state.getSnapshot().lastError).toBeNull();
   });
+
+  test('clears the active game and marks the room as closed when its host leaves', () => {
+    const state = new ClientState();
+    state.updateState({
+      type: 'GAME_STATE_UPDATE',
+      payload: {
+        roomId: 'room-1',
+        phase: 'PLAYING',
+        hostId: 'host-1',
+        maxPlayers: 2,
+        pot: 100,
+        currentStake: 50,
+        currentTurnPlayerId: 'host-1',
+        turnEndTime: null,
+        players: [],
+        myCards: [],
+      },
+    });
+
+    state.updateState({ type: 'ROOM_CLOSED', payload: { roomId: 'room-1' } });
+
+    expect(state.getSnapshot()).toMatchObject({
+      currentRoomId: null,
+      latestGameState: null,
+      latestGameResult: null,
+      roomClosed: true,
+    });
+  });
 });

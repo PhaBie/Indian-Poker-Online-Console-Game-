@@ -140,6 +140,13 @@ export function useAppNavigation({
   };
 
   useGameStatePhaseSync(state.latestGameState, state.myPlayerId, screen, setScreen);
+  useEffect(() => {
+    if (!state.roomClosed) return;
+
+    setScreen('tableLounge');
+    socketClient.send({ type: 'GET_ROOMS' });
+  }, [state.roomClosed, socketClient]);
+
   const handlers = useNavigationHandlers({
     socketClient,
     playerName,

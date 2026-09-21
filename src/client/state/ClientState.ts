@@ -8,6 +8,7 @@ export interface ClientStateSnapshot {
   lastError: string | null;
   myCards: Card[];
   availableRooms: RoomSummaryDTO[];
+  roomClosed: boolean;
 }
 
 export class ClientState {
@@ -19,6 +20,7 @@ export class ClientState {
     Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   public lastError: string | null;
   public availableRooms: RoomSummaryDTO[];
+  public roomClosed: boolean;
   private listeners: Set<() => void>;
   private cachedSnapshot: ClientStateSnapshot;
 
@@ -29,6 +31,7 @@ export class ClientState {
     this.latestGameResult = null;
     this.lastError = null;
     this.availableRooms = [];
+    this.roomClosed = false;
     this.listeners = new Set();
     this.cachedSnapshot = this.createSnapshot();
   }
@@ -42,6 +45,7 @@ export class ClientState {
       lastError: this.lastError,
       myCards: this.getMyCards(),
       availableRooms: this.availableRooms,
+      roomClosed: this.roomClosed,
     };
   }
 
@@ -61,9 +65,18 @@ export class ClientState {
       }
       case 'ROOM_LIST': {
         this.availableRooms = event.payload.rooms;
+        this.roomClosed = false;
         // ROOM_LIST is a fresh lobby snapshot. Any previous join/create error
         // belongs to the older request and must not remain on the lobby screen.
         this.lastError = null;
+        break;
+      }
+      case 'ROOM_CLOSED': {
+        this.currentRoomId = null;
+        this.latestGameState = null;
+        this.latestGameResult = null;
+        this.lastError = null;
+        this.roomClosed = true;
         break;
       }
       case 'GAME_STATE_UPDATE': {
@@ -99,6 +112,7 @@ export class ClientState {
     this.latestGameResult = null;
     this.lastError = null;
     this.availableRooms = [];
+    this.roomClosed = false;
     this.notifyListeners();
   }
 

@@ -147,6 +147,25 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.getPlayer('id_host')?.chips).toBe(1500);
       expect(room.getPlayer('id_p2')?.chips).toBe(500);
     });
+
+    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่ม deal ถัดไป → อยู่ที่โต๊ะเดิมและหัก Boot จากชิปคงเหลือ', () => {
+      const room = new Room('room_next_round', 50);
+      const host = new Player('id_host', 'Host');
+      const secondPlayer = new Player('id_p2', 'Player 2');
+      host.chips = 1100;
+      secondPlayer.chips = 900;
+      room.join(host);
+      room.join(secondPlayer);
+
+      room.phase = 'ENDED';
+      room.startNextRound('id_host');
+
+      expect(room.phase as string).toBe('PLAYING');
+      expect(room.gameState?.pot).toBe(100);
+      expect(room.getPlayer('id_host')?.chips).toBe(1050);
+      expect(room.getPlayer('id_p2')?.chips).toBe(850);
+      expect(room.gameState?.activePlayers).toHaveLength(2);
+    });
   });
 
   describe('Unhappy Paths', () => {

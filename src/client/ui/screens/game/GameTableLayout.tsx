@@ -10,6 +10,10 @@ interface PlayerSlotProps {
   readonly currentTurnPlayerId: string | null;
   readonly pendingSideshowTargetId?: string;
   readonly myCards: GameTableLayoutProps['myCards'];
+  readonly sideshowResult: GameTableLayoutProps['sideshowResult'];
+  readonly sideshowNotice: GameTableLayoutProps['sideshowNotice'];
+  readonly showdownCards: GameTableLayoutProps['showdownCards'];
+  readonly sideshowParticipantIds: readonly string[];
   readonly cardBorderGlowColors: readonly string[];
 }
 
@@ -51,12 +55,30 @@ function PlayerSlot({
   currentTurnPlayerId,
   pendingSideshowTargetId,
   myCards,
+  sideshowResult,
+  sideshowNotice,
+  showdownCards,
+  sideshowParticipantIds,
   cardBorderGlowColors,
 }: PlayerSlotProps) {
   const isMe = Boolean(player && player.id === myPlayerId);
-  const isThisPlayerTurn = Boolean(player && player.id === currentTurnPlayerId);
+  const isBankrupt = Boolean(player && player.chips <= 0);
+  const isSideshowParticipantNode = Boolean(
+    player && sideshowParticipantIds.includes(player.id),
+  );
+  const isShowdownRevealed = Boolean(player && showdownCards?.[player.id]);
+  const isThisPlayerTurn = Boolean(
+    // The engine has already advanced its index after a Sideshow reply, but
+    // that next turn must not appear until the reveal/result pause finishes.
+    player &&
+    !isBankrupt &&
+    !sideshowResult &&
+    !sideshowNotice &&
+    !showdownCards &&
+    player.id === currentTurnPlayerId,
+  );
   const isPendingSideshowTargetNode = Boolean(
-    player && player.id === pendingSideshowTargetId,
+    player && !isBankrupt && player.id === pendingSideshowTargetId,
   );
 
   return (
@@ -64,8 +86,16 @@ function PlayerSlot({
       player={player}
       isMe={isMe}
       isThisPlayerTurn={isThisPlayerTurn}
+      isBankrupt={isBankrupt}
       isPendingSideshowTargetNode={isPendingSideshowTargetNode}
+      isSideshowParticipantNode={isSideshowParticipantNode}
+      isShowdownRevealed={isShowdownRevealed}
       myCards={myCards}
+      revealedCards={
+        player
+          ? (sideshowResult?.cards[player.id] ?? showdownCards?.[player.id])
+          : undefined
+      }
       cardBorderGlowColors={cardBorderGlowColors}
     />
   );
@@ -102,6 +132,9 @@ export function GameTableLayout({
   myPlayerId,
   pendingSideshowTargetId,
   myCards,
+  sideshowResult,
+  sideshowNotice,
+  showdownCards,
 }: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow();
   const renderSlot = (player: GamePlayerItem | undefined) => (
@@ -111,6 +144,16 @@ export function GameTableLayout({
       currentTurnPlayerId={currentTurnPlayerId}
       pendingSideshowTargetId={pendingSideshowTargetId}
       myCards={myCards}
+      sideshowResult={sideshowResult}
+      sideshowNotice={sideshowNotice}
+      showdownCards={showdownCards}
+      sideshowParticipantIds={
+        sideshowResult
+          ? [sideshowResult.challengerId, sideshowResult.targetId]
+          : sideshowNotice
+            ? [sideshowNotice.challengerId, sideshowNotice.targetId]
+            : []
+      }
       cardBorderGlowColors={cardBorderGlowColors}
     />
   );

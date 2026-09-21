@@ -124,7 +124,7 @@ export class Room {
 
     // 3. ดึงรายชื่อผู้เล่นทั้งหมดในห้อง แปลงเป็น Array แล้วสร้าง GameState
     const playersList = Array.from(this.players.values());
-    this.gameState = new GameState(playersList, this.bootAmount);
+    this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)
     this.gameState.startGame();
@@ -157,6 +157,37 @@ export class Room {
       this.phase = 'ENDED';
     }
     return result;
+  }
+
+  /**
+   * เริ่มแจกไพ่ deal ถัดไปโดยคงผู้เล่นและยอดชิปไว้ในห้องเดิม
+   * ผู้เล่นที่ชิปไม่พอจ่าย Boot จะพักรอบนี้; ต้องเหลือผู้เล่นที่จ่าย Boot ได้อย่างน้อยสองคน
+   */
+  public startNextRound(requestingPlayerId: string): void {
+    if (requestingPlayerId !== this.hostId) {
+      throw new NotHostError(requestingPlayerId);
+    }
+    if (this.phase !== 'ENDED') {
+      throw new GameError('The current deal has not ended', 'GAME_IN_PROGRESS');
+    }
+
+    const eligiblePlayers = Array.from(this.players.values()).filter(
+      (player) => player.status !== 'DISCONNECTED' && player.chips >= this.bootAmount,
+    );
+    if (eligiblePlayers.length < 2) {
+      throw new GameError(
+        'Need at least 2 players with enough chips for the next deal',
+        'NOT_ENOUGH_PLAYERS',
+      );
+    }
+
+    for (const player of eligiblePlayers) {
+      player.resetForNewRound();
+    }
+
+    this.gameState = new GameState(eligiblePlayers, this.bootAmount, 10000, true);
+    this.gameState.startGame();
+    this.phase = 'PLAYING';
   }
 
   /**
