@@ -114,6 +114,50 @@ function resolveGameActions(
   });
 }
 
+interface GameBottomStatusBarProps {
+  readonly isEntranceActive: boolean;
+  readonly isRoundEnded: boolean;
+  readonly isWaitingForNextRound: boolean;
+}
+
+function GameBottomStatusBar({
+  isEntranceActive,
+  isRoundEnded,
+  isWaitingForNextRound,
+}: GameBottomStatusBarProps) {
+  if (isEntranceActive) {
+    return (
+      <Box height={3} justifyContent="center" alignItems="center">
+        <Text color="cyanBright" bold>
+          ♦ DEALING IN PROGRESS · ALL ACTIONS LOCKED ♦
+        </Text>
+      </Box>
+    );
+  }
+  if (isRoundEnded) {
+    return <Box height={3} />;
+  }
+  if (isWaitingForNextRound) {
+    return (
+      <Box height={3} justifyContent="center" alignItems="center">
+        <Text color="yellowBright" bold>
+          👁 SPECTATING · YOU WILL JOIN THE TABLE IN THE NEXT ROUND
+        </Text>
+      </Box>
+    );
+  }
+  return (
+    <Box height={3} justifyContent="center" alignItems="center">
+      <Text color="gray">↑ ↓ </Text>
+      <Text color="white">CHOOSE</Text>
+      <Text color="gray"> · </Text>
+      <Text color="yellow">ENTER</Text>
+      <Text color="white"> CONFIRM</Text>
+      <Text color="gray"> · ONLY LEGAL MOVES ARE SHOWN</Text>
+    </Box>
+  );
+}
+
 export function GameScreen({
   gameState,
   myPlayerId,
@@ -142,11 +186,14 @@ export function GameScreen({
     sideshowNotice,
     showdownCards,
     isRoundEnding = false,
+    roundStartedAt,
   } = gameState;
   const effectiveRoundResult = roundResult ?? gameState.roundResult ?? null;
   const isRoundEnded = Boolean(effectiveRoundResult);
+  const nonWaitingPlayers = players.filter((player) => player.status !== 'WAITING');
+  const activeTablePlayers = nonWaitingPlayers.length > 0 ? nonWaitingPlayers : players;
   const { dealSequence, isSubsequentRound, isPlayerCountChanged } =
-    useDealSequenceTracker(isRoundEnded, players.length);
+    useDealSequenceTracker(isRoundEnded, activeTablePlayers.length);
   const roundResultPresentation = getRoundResultPresentation(
     isRoundEnded,
     currentTurnPlayerId,
@@ -155,16 +202,18 @@ export function GameScreen({
     usePotPaymentAnimation(pot, roundResultPresentation.currentTurnPlayerId);
   const entranceAnimation = useTableEntranceAnimation(
     pot,
-    players.length,
+    activeTablePlayers.length,
     isSubsequentRound,
     dealSequence,
     isPlayerCountChanged,
+    true,
+    roundStartedAt,
   );
   const activeTurnPlayerId = entranceAnimation.isEntranceActive
     ? null
     : effectiveTurnPlayerId;
   const actionCtrl = useGameActionController(socketClient);
-  const orderedPlayers = getOrderedPlayersByPerspective(players, myPlayerId);
+  const orderedPlayers = getOrderedPlayersByPerspective(activeTablePlayers, myPlayerId);
   const rawSeatPositions = determineSeatPositions(orderedPlayers);
   const seatPositions = resolveSeatPositionsForEntrance(
     rawSeatPositions,
@@ -255,7 +304,7 @@ export function GameScreen({
               0,
               entranceAnimation.elapsedMs - entranceAnimation.milestones.nameGlowStartMs,
             )}
-            playerCount={players.length}
+            playerCount={activeTablePlayers.length}
           />
           <GameSidePanel
             isMyTurn={statusContext.isMyTurn}
@@ -306,22 +355,11 @@ export function GameScreen({
             <GameSideshowDeclinedDialog notice={sideshowNotice} players={players} />
           )}
         </Box>
-        <Box height={3} justifyContent="center" alignItems="center">
-          {entranceAnimation.isEntranceActive ? (
-            <Text color="cyanBright" bold>
-              ♦ DEALING IN PROGRESS · ALL ACTIONS LOCKED ♦
-            </Text>
-          ) : !effectiveRoundResult ? (
-            <>
-              <Text color="gray">↑ ↓ </Text>
-              <Text color="white">CHOOSE</Text>
-              <Text color="gray"> · </Text>
-              <Text color="yellow">ENTER</Text>
-              <Text color="white"> CONFIRM</Text>
-              <Text color="gray"> · ONLY LEGAL MOVES ARE SHOWN</Text>
-            </>
-          ) : null}
-        </Box>
+        <GameBottomStatusBar
+          isEntranceActive={entranceAnimation.isEntranceActive}
+          isRoundEnded={Boolean(effectiveRoundResult)}
+          isWaitingForNextRound={statusContext.isWaitingForNextRound ?? false}
+        />
       </Box>
     </Box>
   );

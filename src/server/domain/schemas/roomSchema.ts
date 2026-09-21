@@ -32,6 +32,9 @@ export const gameStateSaveSchema = z.object({
 
   // ลำดับ Index ของตำแหน่งคนแจกไพ่ (Dealer Index)
   dealerIndex: z.number().int().nonnegative().default(0),
+
+  // เวลาเริ่มต้นของรอบเกม (Timestamp ในหน่วยมิลลิวินาที)
+  roundStartedAt: z.number().int().positive().nullable().optional(),
 });
 
 /**

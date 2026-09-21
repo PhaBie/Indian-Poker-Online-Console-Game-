@@ -321,34 +321,51 @@ export interface TableEntranceAnimationResult {
   readonly milestones: EntranceMilestones;
 }
 
+function computeServerElapsed(roundStartedAt?: number | null): number | null {
+  if (typeof roundStartedAt === 'number' && roundStartedAt > 0) {
+    return Math.max(0, Date.now() - roundStartedAt);
+  }
+  return null;
+}
+
 function useEntranceTimer(
   isActive: boolean,
   totalDurationMs: number,
   dealSequence: number = 1,
+  roundStartedAt?: number | null,
 ): number {
-  const [elapsedMs, setElapsedMs] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(() => {
+    const initialServerElapsed = computeServerElapsed(roundStartedAt);
+    return initialServerElapsed ?? 0;
+  });
 
   useEffect(() => {
-    setElapsedMs(0);
-  }, [dealSequence]);
+    const updatedServerElapsed = computeServerElapsed(roundStartedAt);
+    setElapsedMs(updatedServerElapsed ?? 0);
+  }, [dealSequence, roundStartedAt]);
 
   useEffect(() => {
     if (!isActive) {
       return;
     }
-
+    const initialServerElapsed = computeServerElapsed(roundStartedAt);
+    if (initialServerElapsed !== null && initialServerElapsed >= totalDurationMs) {
+      setElapsedMs(initialServerElapsed);
+      return;
+    }
     const intervalTimer = setInterval(() => {
-      setElapsedMs((previousMs) => {
-        if (previousMs >= totalDurationMs) {
+      setElapsedMs((previousElapsed) => {
+        const liveServerElapsed = computeServerElapsed(roundStartedAt);
+        const nextElapsed = liveServerElapsed ?? previousElapsed + 40;
+        if (nextElapsed >= totalDurationMs) {
           clearInterval(intervalTimer);
-          return previousMs;
+          return nextElapsed;
         }
-        return previousMs + 40;
+        return nextElapsed;
       });
     }, 40);
-
     return () => clearInterval(intervalTimer);
-  }, [isActive, totalDurationMs, dealSequence]);
+  }, [isActive, totalDurationMs, dealSequence, roundStartedAt]);
 
   return elapsedMs;
 }
@@ -379,6 +396,7 @@ export function useTableEntranceAnimation(
   dealSequence: number = 1,
   isPlayerCountChanged: boolean = false,
   initialActive: boolean = true,
+  roundStartedAt?: number | null,
 ): TableEntranceAnimationResult {
   const isEffectiveSubsequent = isSubsequentRound || dealSequence > 1;
   const milestones = getEntranceMilestones(
@@ -393,6 +411,7 @@ export function useTableEntranceAnimation(
     shouldAnimate,
     milestones.totalDurationMs,
     dealSequence,
+    roundStartedAt,
   );
   const isComplete = !shouldAnimate || elapsedMs >= milestones.totalDurationMs;
 

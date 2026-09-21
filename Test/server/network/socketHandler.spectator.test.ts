@@ -173,4 +173,25 @@ describe('Spectator and Queue Operations', () => {
     expect(charlieInNextRound?.status).toBe('ACTIVE');
     expect(charlieInNextRound?.privateCards.length).toBe(3);
   });
+
+  test('broadcasts roundStartedAt timestamp in GAME_STATE_UPDATE after game starts', () => {
+    const hostPlayer = new Player('host_1', 'Alice');
+    const guestPlayer = new Player('guest_1', 'Bob');
+    const activeRoom = mockNetworkContext.roomManager.createRoom(
+      'room_606',
+      hostPlayer,
+      4,
+    );
+    activeRoom.join(guestPlayer);
+
+    const timestampBeforeStart = Date.now();
+    activeRoom.startGame('host_1');
+    const timestampAfterStart = Date.now();
+
+    expect(activeRoom.gameState).not.toBeNull();
+    expect(activeRoom.gameState!.roundStartedAt).toBeGreaterThanOrEqual(
+      timestampBeforeStart,
+    );
+    expect(activeRoom.gameState!.roundStartedAt).toBeLessThanOrEqual(timestampAfterStart);
+  });
 });

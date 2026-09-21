@@ -3595,5 +3595,397 @@
         ]
       }
     ]
+  },
+  {
+    "timestamp": "2026-09-21T12:49:37.190Z",
+    "roomId": "room_leave_guest",
+    "pot": 100,
+    "winners": ["host_id"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 13
+          },
+          {
+            "suit": "SPADES",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T12:49:37.202Z",
+    "roomId": "room_guest_disconnect",
+    "pot": 100,
+    "winners": ["host_disconnect"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 10
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 10
+          },
+          {
+            "suit": "SPADES",
+            "rank": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:49:23.992Z",
+    "roomId": "room_leave_guest",
+    "pot": 100,
+    "winners": ["host_id"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 4
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:49:24.004Z",
+    "roomId": "room_guest_disconnect",
+    "pot": 100,
+    "winners": ["host_disconnect"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 10
+          },
+          {
+            "suit": "SPADES",
+            "rank": 8
+          },
+          {
+            "suit": "SPADES",
+            "rank": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:50:49.302Z",
+    "roomId": "room_leave_guest",
+    "pot": 100,
+    "winners": ["host_id"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 10
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          },
+          {
+            "suit": "SPADES",
+            "rank": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:50:49.313Z",
+    "roomId": "room_guest_disconnect",
+    "pot": 100,
+    "winners": ["host_disconnect"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 2
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 7
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 13
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:52:39.711Z",
+    "roomId": "room_leave_guest",
+    "pot": 100,
+    "winners": ["host_id"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          },
+          {
+            "suit": "SPADES",
+            "rank": 12
+          },
+          {
+            "suit": "SPADES",
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 7
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 11
+          },
+          {
+            "suit": "SPADES",
+            "rank": 9
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-21T13:52:39.723Z",
+    "roomId": "room_guest_disconnect",
+    "pot": 100,
+    "winners": ["host_disconnect"],
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 4
+          },
+          {
+            "suit": "SPADES",
+            "rank": 14
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 250,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 14
+          },
+          {
+            "suit": "SPADES",
+            "rank": 8
+          }
+        ]
+      }
+    ]
   }
 ]

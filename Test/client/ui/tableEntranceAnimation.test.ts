@@ -285,3 +285,40 @@ describe('useTableEntranceAnimation', () => {
     harness.unmount();
   });
 });
+
+describe('server-synced entrance animation via roundStartedAt', () => {
+  test('resolveEntranceState marks complete when elapsed exceeds total duration', () => {
+    const milestones = getEntranceMilestones(4);
+    const resolved = resolveEntranceState(
+      true,
+      milestones.totalDurationMs + 5000,
+      200,
+      milestones,
+    );
+
+    expect(resolved.timeline.isEntranceComplete).toBe(true);
+    expect(resolved.timeline.isPlayersSeated).toBe(true);
+    expect(resolved.displayedPot).toBe(200);
+    expect(resolved.isPotAmountVisible).toBe(true);
+  });
+
+  test('resolveEntranceState shows mid-animation state for partial elapsed', () => {
+    const milestones = getEntranceMilestones(4);
+    const partialElapsed = milestones.card2Ms + 100;
+    const resolved = resolveEntranceState(false, partialElapsed, 200, milestones);
+
+    expect(resolved.timeline.isEntranceComplete).toBe(false);
+    expect(resolved.timeline.isDeckPhase).toBe(true);
+    expect(resolved.timeline.visibleCardCount).toBe(2);
+  });
+
+  test('calculateEntranceTimeline at seatSpin phase shows spinning for 4-player first round', () => {
+    const milestones = getEntranceMilestones(4);
+    const spinMidpoint = milestones.seatSpinStartMs + 500;
+    const timeline = calculateEntranceTimeline(spinMidpoint, milestones);
+
+    expect(timeline.isSeatSpinning).toBe(true);
+    expect(timeline.isPlayersSeated).toBe(false);
+    expect(timeline.isEntranceComplete).toBe(false);
+  });
+});

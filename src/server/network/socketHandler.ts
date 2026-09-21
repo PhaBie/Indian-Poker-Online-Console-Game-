@@ -611,6 +611,7 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
         currentTurnPlayerId,
         isRoundEnding: room.gameState?.isRoundEnding ?? false,
         turnEndTime: null,
+        roundStartedAt: room.gameState?.roundStartedAt ?? null,
         players: publicPlayers,
         pendingSideshow,
         sideshowResult: isSideshowParticipant ? sideshowResult : null,

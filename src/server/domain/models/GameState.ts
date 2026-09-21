@@ -54,6 +54,8 @@ export class GameState {
   public isRoundEnding: boolean;
   /** Settlement is idempotent: callers after SHOW receive this result, not null. */
   public lastGameResult: GameResult | null;
+  /** Timestamp in milliseconds when this round was started on the server */
+  public roundStartedAt: number | null;
 
   constructor(
     players: Player[],
@@ -76,11 +78,13 @@ export class GameState {
     this.deferShowSettlement = deferShowSettlement;
     this.isRoundEnding = false;
     this.lastGameResult = null;
+    this.roundStartedAt = null;
   }
 
   public startGame(): void {
     this.lastGameResult = null;
     this.pendingShow = null;
+    this.roundStartedAt = Date.now();
     // ตรวจชิปทุกคนก่อนเริ่มจ่าย เพื่อไม่ให้หักเงินไปบางส่วน
     if (this.activePlayers.some((player) => player.chips < this.bootAmount)) {
       throw new GameError('Insufficient chips to start game', 'INSUFFICIENT_CHIPS');

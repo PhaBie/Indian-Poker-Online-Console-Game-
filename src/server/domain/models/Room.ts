@@ -309,6 +309,7 @@ export class Room {
             bootAmount: this.gameState.bootAmount,
             maxPotLimit: this.gameState.maxPotLimit,
             dealerIndex: this.gameState.dealerIndex,
+            roundStartedAt: this.gameState.roundStartedAt,
           }
         : null,
     };
@@ -422,6 +423,7 @@ export class Room {
     restoredGameState.currentPlayerIndex = gameStateData.currentPlayerIndex;
     restoredGameState.deck = (gameStateData.deck ?? []) as Card[];
     restoredGameState.dealerIndex = gameStateData.dealerIndex;
+    restoredGameState.roundStartedAt = gameStateData.roundStartedAt ?? null;
 
     targetRoom.gameState = restoredGameState;
   }

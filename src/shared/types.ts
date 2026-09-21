@@ -146,6 +146,8 @@ export type ServerEvent =
         /** The table is showing an elimination before the result dialog appears. */
         isRoundEnding?: boolean;
         turnEndTime: number | null;
+        /** Timestamp when the round/deal started on the server (used for real-time animation sync) */
+        roundStartedAt?: number | null;
         players: PublicPlayerDTO[];
         /** ข้อมูลคำขอท้า Sideshow (ถ้ามี) */
         pendingSideshow?: { challengerId: string; targetId: string } | null;
