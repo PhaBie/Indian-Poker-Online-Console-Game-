@@ -40,10 +40,10 @@ export function getEntranceMilestones(playerCount: number): EntranceMilestones {
       seatSpinStartMs: 5200,
       seatSpinEndMs: 5200,
       nameGlowStartMs: 5200,
-      nameGlowEndMs: 6400,
-      potStartMs: 6400,
-      potCountDoneMs: 7400,
-      totalDurationMs: 8400,
+      nameGlowEndMs: 6000,
+      potStartMs: 6000,
+      potCountDoneMs: 7000,
+      totalDurationMs: 8000,
     };
   }
   return {
@@ -55,10 +55,10 @@ export function getEntranceMilestones(playerCount: number): EntranceMilestones {
     seatSpinStartMs: 5200,
     seatSpinEndMs: 9200,
     nameGlowStartMs: 9200,
-    nameGlowEndMs: 10400,
-    potStartMs: 10400,
-    potCountDoneMs: 11400,
-    totalDurationMs: 12400,
+    nameGlowEndMs: 10000,
+    potStartMs: 10000,
+    potCountDoneMs: 11000,
+    totalDurationMs: 12000,
   };
 }
 

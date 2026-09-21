@@ -8,35 +8,35 @@ import {
 } from '../../../src/client/ui/screens/game/SweepingPlayerName';
 
 describe('SweepingPlayerName', () => {
-  test('calculateCharacterGlowColor returns peak white bold when beam matches character index', () => {
+  test('calculateCharacterGlowColor returns peak yellowBright bold when beam matches character index', () => {
     const result = calculateCharacterGlowColor(2, 2);
-    expect(result.color).toBe('white');
+    expect(result.color).toBe('yellowBright');
     expect(result.isBold).toBe(true);
   });
 
-  test('calculateCharacterGlowColor returns cyanBright bold for adjacent characters', () => {
+  test('calculateCharacterGlowColor returns greenBright bold for adjacent characters', () => {
     const leftAdjacent = calculateCharacterGlowColor(1, 2);
-    expect(leftAdjacent.color).toBe('cyanBright');
+    expect(leftAdjacent.color).toBe('greenBright');
     expect(leftAdjacent.isBold).toBe(true);
 
     const rightAdjacent = calculateCharacterGlowColor(3, 2);
-    expect(rightAdjacent.color).toBe('cyanBright');
+    expect(rightAdjacent.color).toBe('greenBright');
     expect(rightAdjacent.isBold).toBe(true);
   });
 
-  test('calculateCharacterGlowColor returns cyan for distance of two characters', () => {
+  test('calculateCharacterGlowColor returns green bold for distance of two characters', () => {
     const leftDistanceTwo = calculateCharacterGlowColor(0, 2);
-    expect(leftDistanceTwo.color).toBe('cyan');
-    expect(leftDistanceTwo.isBold).toBe(false);
+    expect(leftDistanceTwo.color).toBe('green');
+    expect(leftDistanceTwo.isBold).toBe(true);
 
     const rightDistanceTwo = calculateCharacterGlowColor(4, 2);
-    expect(rightDistanceTwo.color).toBe('cyan');
-    expect(rightDistanceTwo.isBold).toBe(false);
+    expect(rightDistanceTwo.color).toBe('green');
+    expect(rightDistanceTwo.isBold).toBe(true);
   });
 
-  test('calculateCharacterGlowColor returns gray for distant characters', () => {
+  test('calculateCharacterGlowColor returns white for distant characters to prevent dullness', () => {
     const distant = calculateCharacterGlowColor(10, 2);
-    expect(distant.color).toBe('gray');
+    expect(distant.color).toBe('white');
     expect(distant.isBold).toBe(false);
   });
 
@@ -50,8 +50,8 @@ describe('SweepingPlayerName', () => {
     const inkInstance = render(
       createElement(SweepingPlayerName, {
         name: 'BRAVO',
-        elapsedMs: 600,
-        durationMs: 1200,
+        elapsedMs: 400,
+        durationMs: 800,
       }),
       {
         stdout: outputStream as unknown as NodeJS.WriteStream,

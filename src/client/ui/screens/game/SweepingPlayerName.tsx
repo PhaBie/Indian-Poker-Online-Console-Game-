@@ -6,7 +6,7 @@ export interface SweepingPlayerNameProps {
   readonly durationMs?: number;
 }
 
-export const DEFAULT_NAME_SWEEP_DURATION_MS = 1200;
+export const DEFAULT_NAME_SWEEP_DURATION_MS = 800;
 
 export function calculateCharacterGlowColor(
   characterIndex: number,
@@ -14,15 +14,15 @@ export function calculateCharacterGlowColor(
 ): { readonly color: string; readonly isBold: boolean } {
   const distance = Math.abs(characterIndex - activeBeamIndex);
   if (distance === 0) {
-    return { color: 'white', isBold: true };
+    return { color: 'yellowBright', isBold: true };
   }
   if (distance === 1) {
-    return { color: 'cyanBright', isBold: true };
+    return { color: 'greenBright', isBold: true };
   }
   if (distance === 2) {
-    return { color: 'cyan', isBold: false };
+    return { color: 'green', isBold: true };
   }
-  return { color: 'gray', isBold: false };
+  return { color: 'white', isBold: false };
 }
 
 export function SweepingPlayerName({

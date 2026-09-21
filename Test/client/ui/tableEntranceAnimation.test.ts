@@ -55,26 +55,26 @@ describe('useTableEntranceAnimation', () => {
   const milestones4P = getEntranceMilestones(4);
   const milestones2P = getEntranceMilestones(2);
 
-  test('getEntranceMilestones gives 8.4s profile for 2 players and 12.4s profile for 4 players', () => {
-    expect(milestones2P.totalDurationMs).toBe(8400);
+  test('getEntranceMilestones gives 8.0s profile for 2 players and 12.0s profile for 4 players', () => {
+    expect(milestones2P.totalDurationMs).toBe(8000);
     expect(milestones2P.cardGlowStartMs).toBe(4000);
     expect(milestones2P.cardGlowEndMs).toBe(5200);
     expect(milestones2P.seatSpinStartMs).toBe(5200);
     expect(milestones2P.seatSpinEndMs).toBe(5200);
     expect(milestones2P.nameGlowStartMs).toBe(5200);
-    expect(milestones2P.nameGlowEndMs).toBe(6400);
-    expect(milestones2P.potStartMs).toBe(6400);
-    expect(milestones2P.potCountDoneMs).toBe(7400);
+    expect(milestones2P.nameGlowEndMs).toBe(6000);
+    expect(milestones2P.potStartMs).toBe(6000);
+    expect(milestones2P.potCountDoneMs).toBe(7000);
 
-    expect(milestones4P.totalDurationMs).toBe(12400);
+    expect(milestones4P.totalDurationMs).toBe(12000);
     expect(milestones4P.cardGlowStartMs).toBe(4000);
     expect(milestones4P.cardGlowEndMs).toBe(5200);
     expect(milestones4P.seatSpinStartMs).toBe(5200);
     expect(milestones4P.seatSpinEndMs).toBe(9200);
     expect(milestones4P.nameGlowStartMs).toBe(9200);
-    expect(milestones4P.nameGlowEndMs).toBe(10400);
-    expect(milestones4P.potStartMs).toBe(10400);
-    expect(milestones4P.potCountDoneMs).toBe(11400);
+    expect(milestones4P.nameGlowEndMs).toBe(10000);
+    expect(milestones4P.potStartMs).toBe(10000);
+    expect(milestones4P.potCountDoneMs).toBe(11000);
   });
 
   test('calculateEntranceTimeline advances cards, card glow, seat spin, name sweep, and pot for 4 players', () => {
