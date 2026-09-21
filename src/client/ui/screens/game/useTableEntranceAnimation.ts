@@ -40,10 +40,10 @@ export function getEntranceMilestones(playerCount: number): EntranceMilestones {
       seatSpinStartMs: 5200,
       seatSpinEndMs: 5200,
       nameGlowStartMs: 5200,
-      nameGlowEndMs: 6000,
-      potStartMs: 6000,
-      potCountDoneMs: 7000,
-      totalDurationMs: 8000,
+      nameGlowEndMs: 5200,
+      potStartMs: 5200,
+      potCountDoneMs: 6200,
+      totalDurationMs: 7200,
     };
   }
   return {
