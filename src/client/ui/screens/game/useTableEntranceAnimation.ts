@@ -13,7 +13,8 @@ export const ENTRANCE_STEP_CARD_1_MS = 1000;
 export const ENTRANCE_STEP_CARD_2_MS = 2000;
 export const ENTRANCE_STEP_CARD_3_MS = 3000;
 export const ENTRANCE_STEP_BOOT_POT_MS = 4000;
-export const ENTRANCE_TOTAL_DURATION_MS = 5200;
+export const ENTRANCE_STEP_POT_COUNT_DONE_MS = 5200;
+export const ENTRANCE_TOTAL_DURATION_MS = 6000;
 
 export function calculateEntranceTimeline(elapsedMs: number): EntranceTimelineStep {
   if (elapsedMs < ENTRANCE_STEP_CARD_1_MS) {
@@ -52,7 +53,7 @@ export function calculateEntranceTimeline(elapsedMs: number): EntranceTimelineSt
     return {
       visibleCardCount: 3,
       isDeckPhase: false,
-      isPotCountUpPhase: true,
+      isPotCountUpPhase: elapsedMs < ENTRANCE_STEP_POT_COUNT_DONE_MS,
       isEntranceComplete: false,
     };
   }
@@ -93,6 +94,9 @@ export function calculateEntrancePhaseDescription(elapsedMs: number): string {
   if (elapsedMs < 5200) {
     return 'Collecting ante boot to pot...';
   }
+  if (elapsedMs < 6000) {
+    return 'Activating player cards...';
+  }
   return 'Round ready';
 }
 
@@ -100,9 +104,12 @@ export function calculateEntrancePot(elapsedMs: number, finalPot: number): numbe
   if (elapsedMs < ENTRANCE_STEP_BOOT_POT_MS) {
     return 0;
   }
+  if (elapsedMs >= ENTRANCE_STEP_POT_COUNT_DONE_MS) {
+    return finalPot;
+  }
   const countUpProgress =
     (elapsedMs - ENTRANCE_STEP_BOOT_POT_MS) /
-    (ENTRANCE_TOTAL_DURATION_MS - ENTRANCE_STEP_BOOT_POT_MS);
+    (ENTRANCE_STEP_POT_COUNT_DONE_MS - ENTRANCE_STEP_BOOT_POT_MS);
   const clampedProgress = Math.min(1, Math.max(0, countUpProgress));
   return Math.round(finalPot * clampedProgress);
 }

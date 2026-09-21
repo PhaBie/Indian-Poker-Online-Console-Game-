@@ -1,9 +1,9 @@
 import { Box } from 'ink';
-import { useEffect, useRef, useState } from 'react';
 import type { GameTableLayoutProps, GamePlayerItem } from './types';
 import { PlayerSeatNode } from './PlayerSeatNode';
 import { PotDisplayBox } from './PotDisplayBox';
 import { DealerDeckCenterBox } from './DealerDeckCenterBox';
+import { useCardBorderGlow } from './useCardBorderGlow';
 
 interface PlayerSlotProps {
   readonly player: GamePlayerItem | undefined;
@@ -20,56 +20,6 @@ interface PlayerSlotProps {
   readonly isEntranceDeckPhase?: boolean;
   readonly justDealtCardIndex?: number;
   readonly isEntranceActive?: boolean;
-}
-
-const CARD_BORDER_GLOW_INTERVAL_MS = 90;
-const CARD_BORDER_GLOW_PAUSE_MS = 7_000;
-const CARD_BORDER_GLOW_ACTIVE_FRAMES = [
-  ['magentaBright', 'magenta', 'magenta'],
-  ['yellow', 'magentaBright', 'magenta'],
-  ['yellowBright', 'yellow', 'magentaBright'],
-  ['yellow', 'yellowBright', 'yellow'],
-  ['magentaBright', 'yellow', 'yellowBright'],
-  ['magenta', 'magentaBright', 'yellow'],
-  ['magenta', 'magenta', 'magentaBright'],
-] as const;
-const CARD_BORDER_GLOW_PAUSE_FRAMES = Math.ceil(
-  CARD_BORDER_GLOW_PAUSE_MS / CARD_BORDER_GLOW_INTERVAL_MS,
-);
-const CARD_BORDER_GLOW_CYCLE_FRAMES =
-  CARD_BORDER_GLOW_ACTIVE_FRAMES.length + CARD_BORDER_GLOW_PAUSE_FRAMES;
-const DEFAULT_CARD_BORDER_COLORS = ['magenta', 'magenta', 'magenta'] as const;
-
-function useCardBorderGlow(isEntranceActive: boolean = false) {
-  const [frame, setFrame] = useState(
-    isEntranceActive ? CARD_BORDER_GLOW_CYCLE_FRAMES : 0,
-  );
-  const wasEntranceActive = useRef(isEntranceActive);
-
-  useEffect(() => {
-    if (wasEntranceActive.current && !isEntranceActive) {
-      setFrame(0);
-    }
-    wasEntranceActive.current = isEntranceActive;
-  }, [isEntranceActive]);
-
-  useEffect(() => {
-    if (isEntranceActive) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setFrame((currentFrame) => (currentFrame + 1) % CARD_BORDER_GLOW_CYCLE_FRAMES);
-    }, CARD_BORDER_GLOW_INTERVAL_MS);
-
-    return () => clearInterval(timer);
-  }, [isEntranceActive]);
-
-  if (isEntranceActive) {
-    return DEFAULT_CARD_BORDER_COLORS;
-  }
-
-  return CARD_BORDER_GLOW_ACTIVE_FRAMES[frame] ?? DEFAULT_CARD_BORDER_COLORS;
 }
 
 function calculateSlotFlags(
@@ -200,50 +150,42 @@ function TableCenterRow({
   );
 }
 
-export function GameTableLayout({
+function buildSideshowParticipantIds(
+  sideshowResult: GameTableLayoutProps['sideshowResult'],
+  sideshowNotice: GameTableLayoutProps['sideshowNotice'],
+): readonly string[] {
+  if (sideshowResult) {
+    return [sideshowResult.challengerId, sideshowResult.targetId];
+  }
+  if (sideshowNotice) {
+    return [sideshowNotice.challengerId, sideshowNotice.targetId];
+  }
+  return [];
+}
+
+interface TableSlotsLayoutProps {
+  readonly topSlot: React.ReactNode;
+  readonly leftSlot: React.ReactNode;
+  readonly rightSlot: React.ReactNode;
+  readonly bottomSlot: React.ReactNode;
+  readonly pot: number;
+  readonly currentStake: number;
+  readonly isPotAmountVisible?: boolean;
+  readonly isEntranceDeckPhase?: boolean;
+  readonly entranceElapsedMs?: number;
+}
+
+function TableSlotsLayout({
+  topSlot,
+  leftSlot,
+  rightSlot,
+  bottomSlot,
   pot,
   currentStake,
-  seatPositions,
-  currentTurnPlayerId,
-  myPlayerId,
-  pendingSideshowTargetId,
-  myCards,
-  sideshowResult,
-  sideshowNotice,
-  showdownCards,
   isPotAmountVisible,
-  entranceVisibleCardCount,
   isEntranceDeckPhase,
   entranceElapsedMs,
-  justDealtCardIndex,
-  isEntranceActive,
-}: GameTableLayoutProps) {
-  const cardBorderGlowColors = useCardBorderGlow(isEntranceActive);
-  const renderSlot = (player: GamePlayerItem | undefined) => (
-    <PlayerSlot
-      player={player}
-      myPlayerId={myPlayerId}
-      currentTurnPlayerId={currentTurnPlayerId}
-      pendingSideshowTargetId={pendingSideshowTargetId}
-      myCards={myCards}
-      sideshowResult={sideshowResult}
-      sideshowNotice={sideshowNotice}
-      showdownCards={showdownCards}
-      sideshowParticipantIds={
-        sideshowResult
-          ? [sideshowResult.challengerId, sideshowResult.targetId]
-          : sideshowNotice
-            ? [sideshowNotice.challengerId, sideshowNotice.targetId]
-            : []
-      }
-      cardBorderGlowColors={cardBorderGlowColors}
-      visibleCardCount={entranceVisibleCardCount}
-      isEntranceDeckPhase={isEntranceDeckPhase}
-      justDealtCardIndex={justDealtCardIndex}
-      isEntranceActive={isEntranceActive}
-    />
-  );
-
+}: TableSlotsLayoutProps) {
   return (
     <Box
       borderStyle="round"
@@ -261,23 +203,65 @@ export function GameTableLayout({
         paddingBottom={1}
       >
         <Box justifyContent="center" width="100%">
-          {renderSlot(seatPositions.topPlayer)}
+          {topSlot}
         </Box>
-
         <TableCenterRow
-          leftSlot={renderSlot(seatPositions.leftPlayer)}
-          rightSlot={renderSlot(seatPositions.rightPlayer)}
+          leftSlot={leftSlot}
+          rightSlot={rightSlot}
           pot={pot}
           currentStake={currentStake}
           isPotAmountVisible={isPotAmountVisible}
           isEntranceDeckPhase={isEntranceDeckPhase}
           entranceElapsedMs={entranceElapsedMs}
         />
-
         <Box justifyContent="center" width="100%">
-          {renderSlot(seatPositions.bottomPlayer)}
+          {bottomSlot}
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export function GameTableLayout(props: GameTableLayoutProps) {
+  const cardBorderGlowColors = useCardBorderGlow(
+    props.isEntranceActive,
+    props.entranceElapsedMs,
+  );
+  const participantIds = buildSideshowParticipantIds(
+    props.sideshowResult,
+    props.sideshowNotice,
+  );
+
+  const renderSlot = (player: GamePlayerItem | undefined) => (
+    <PlayerSlot
+      player={player}
+      myPlayerId={props.myPlayerId}
+      currentTurnPlayerId={props.currentTurnPlayerId}
+      pendingSideshowTargetId={props.pendingSideshowTargetId}
+      myCards={props.myCards}
+      sideshowResult={props.sideshowResult}
+      sideshowNotice={props.sideshowNotice}
+      showdownCards={props.showdownCards}
+      sideshowParticipantIds={participantIds}
+      cardBorderGlowColors={cardBorderGlowColors}
+      visibleCardCount={props.entranceVisibleCardCount}
+      isEntranceDeckPhase={props.isEntranceDeckPhase}
+      justDealtCardIndex={props.justDealtCardIndex}
+      isEntranceActive={props.isEntranceActive}
+    />
+  );
+
+  return (
+    <TableSlotsLayout
+      topSlot={renderSlot(props.seatPositions.topPlayer)}
+      leftSlot={renderSlot(props.seatPositions.leftPlayer)}
+      rightSlot={renderSlot(props.seatPositions.rightPlayer)}
+      bottomSlot={renderSlot(props.seatPositions.bottomPlayer)}
+      pot={props.pot}
+      currentStake={props.currentStake}
+      isPotAmountVisible={props.isPotAmountVisible}
+      isEntranceDeckPhase={props.isEntranceDeckPhase}
+      entranceElapsedMs={props.entranceElapsedMs}
+    />
   );
 }

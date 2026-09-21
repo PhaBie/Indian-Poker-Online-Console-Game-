@@ -13,6 +13,7 @@ import {
   ENTRANCE_STEP_CARD_2_MS,
   ENTRANCE_STEP_CARD_3_MS,
   ENTRANCE_STEP_BOOT_POT_MS,
+  ENTRANCE_STEP_POT_COUNT_DONE_MS,
   ENTRANCE_TOTAL_DURATION_MS,
 } from '../../../src/client/ui/screens/game/useTableEntranceAnimation';
 
@@ -84,15 +85,16 @@ describe('useTableEntranceAnimation', () => {
     expect(stepDone.isEntranceComplete).toBe(true);
   });
 
-  test('calculateEntrancePot counts up pot proportionally after boot step', () => {
+  test('calculateEntrancePot counts up pot proportionally after boot step until pot count done', () => {
     expect(calculateEntrancePot(0, 100)).toBe(0);
     expect(calculateEntrancePot(ENTRANCE_STEP_BOOT_POT_MS - 50, 100)).toBe(0);
     expect(calculateEntrancePot(ENTRANCE_STEP_BOOT_POT_MS, 100)).toBe(0);
 
     const midElapsedMs =
       ENTRANCE_STEP_BOOT_POT_MS +
-      (ENTRANCE_TOTAL_DURATION_MS - ENTRANCE_STEP_BOOT_POT_MS) / 2;
+      (ENTRANCE_STEP_POT_COUNT_DONE_MS - ENTRANCE_STEP_BOOT_POT_MS) / 2;
     expect(calculateEntrancePot(midElapsedMs, 100)).toBe(50);
+    expect(calculateEntrancePot(ENTRANCE_STEP_POT_COUNT_DONE_MS, 100)).toBe(100);
     expect(calculateEntrancePot(ENTRANCE_TOTAL_DURATION_MS, 100)).toBe(100);
   });
 
@@ -110,6 +112,7 @@ describe('useTableEntranceAnimation', () => {
     expect(calculateEntrancePhaseDescription(2500)).toContain('card 2');
     expect(calculateEntrancePhaseDescription(3500)).toContain('card 3');
     expect(calculateEntrancePhaseDescription(4500)).toContain('ante boot');
+    expect(calculateEntrancePhaseDescription(5500)).toContain('player cards');
   });
 
   test('resolveEntranceState yields final values when complete is true', () => {
