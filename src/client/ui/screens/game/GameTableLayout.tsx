@@ -62,6 +62,7 @@ function PlayerSlot({
   showdownCards,
   sideshowParticipantIds,
   cardBorderGlowColors,
+  visibleCardCount,
 }: PlayerSlotProps) {
   const isMe = Boolean(player && player.id === myPlayerId);
   const isBankrupt = Boolean(player && player.chips <= 0);
