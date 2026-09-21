@@ -12,15 +12,43 @@ const PREVIEW_PLAYER_NAMES = ['YOU', 'ALPHA', 'BRAVO', 'CHARLIE'] as const;
 const PREVIEW_BET = 50;
 type GameResultPayload = Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
 
+export function shuffleOpponentNames(
+  opponentNames: readonly string[],
+): readonly string[] {
+  if (opponentNames.length <= 1) {
+    return opponentNames;
+  }
+  const shuffledNames = [...opponentNames];
+  for (let currentIndex = shuffledNames.length - 1; currentIndex > 0; currentIndex--) {
+    const targetSwapIndex = Math.floor(Math.random() * (currentIndex + 1));
+    const currentName = shuffledNames[currentIndex];
+    shuffledNames[currentIndex] = shuffledNames[targetSwapIndex];
+    shuffledNames[targetSwapIndex] = currentName;
+  }
+  const isIdenticalToOriginal = shuffledNames.every(
+    (name, index) => name === opponentNames[index],
+  );
+  if (isIdenticalToOriginal) {
+    return [...shuffledNames.slice(1), shuffledNames[0]];
+  }
+  return shuffledNames;
+}
+
 function createPlayers(playerCount: GamePreviewPlayerCount): Player[] {
-  return PREVIEW_PLAYER_NAMES.slice(0, playerCount).map((name, index) => {
-    const player = new Player(
-      index === 0 ? GAME_PREVIEW_PLAYER_ID : `preview-${name.toLowerCase()}`,
-      name,
-    );
-    player.chips = 10_000;
-    return player;
+  const humanPlayer = new Player(GAME_PREVIEW_PLAYER_ID, 'YOU');
+  humanPlayer.chips = 10_000;
+
+  const rawOpponentNames = PREVIEW_PLAYER_NAMES.slice(1, playerCount);
+  const resolvedOpponentNames =
+    playerCount > 2 ? shuffleOpponentNames(rawOpponentNames) : rawOpponentNames;
+
+  const botOpponents = resolvedOpponentNames.map((opponentName) => {
+    const botPlayer = new Player(`preview-${opponentName.toLowerCase()}`, opponentName);
+    botPlayer.chips = 10_000;
+    return botPlayer;
   });
+
+  return [humanPlayer, ...botOpponents];
 }
 
 /** Runs a fully local game using the same rule classes as the server. */

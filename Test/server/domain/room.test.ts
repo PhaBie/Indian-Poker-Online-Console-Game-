@@ -113,6 +113,27 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(secondPlayer.chips).toBe(900);
     });
 
+    test('[Room.startGame] 1.7.1 เริ่มเกมด้วยผู้เล่นมากกว่า 2 คน → room.players และ getPublicState เรียงตามลำดับที่นั่งที่ถูกสุ่ม', () => {
+      const room = new Room('room_shuffle_seating', 50);
+      const playerOne = new Player('p1', 'Player1');
+      const playerTwo = new Player('p2', 'Player2');
+      const playerThree = new Player('p3', 'Player3');
+      const playerFour = new Player('p4', 'Player4');
+
+      room.join(playerOne);
+      room.join(playerTwo);
+      room.join(playerThree);
+      room.join(playerFour);
+      room.startGame('p1');
+
+      const gameStatePlayerIds = room.gameState!.activePlayers.map((player) => player.id);
+      const roomMapPlayerIds = Array.from(room.players.keys());
+      const publicStatePlayerIds = room.getPublicState().map((player) => player.id);
+
+      expect(roomMapPlayerIds).toEqual(gameStatePlayerIds);
+      expect(publicStatePlayerIds).toEqual(gameStatePlayerIds);
+    });
+
     test('[Room.leave] 1.8 โฮสต์ปัจจุบันออกจากการเล่น → โฮสต์ตกไปเป็นคนถัดไปและผู้เล่นเหลือ 1 คน', () => {
       const room = new Room('room_leave');
       const host = new Player('id_host', 'Host');

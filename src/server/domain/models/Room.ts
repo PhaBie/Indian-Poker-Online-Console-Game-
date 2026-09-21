@@ -143,6 +143,7 @@ export class Room {
     }
     const playersList =
       this.players.size > 2 ? shufflePlayerList(rawPlayersList) : rawPlayersList;
+    this.players = new Map(playersList.map((player) => [player.id, player]));
     this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)

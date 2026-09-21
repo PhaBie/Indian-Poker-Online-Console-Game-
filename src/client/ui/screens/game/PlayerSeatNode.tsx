@@ -101,9 +101,13 @@ function PlayerSeatHeader({
           />
         )}
       </Text>
-      <Text color="gray">
-        STACK <Text color={isMe ? 'cyanBright' : 'white'}>${player.chips}</Text>
-      </Text>
+      {isEntranceActive ? (
+        <Text> </Text>
+      ) : (
+        <Text color="gray">
+          STACK <Text color={isMe ? 'cyanBright' : 'white'}>${player.chips}</Text>
+        </Text>
+      )}
     </Box>
   );
 }
@@ -185,10 +189,10 @@ function PlayerCardsPanel({
   isBankrupt,
   isThisPlayerTurn,
   visibleCardCount,
-  isEntranceDeckPhase,
   justDealtCardIndex,
+  isEntranceActive = false,
 }: PlayerCardsPanelProps) {
-  const displayedBet = isEntranceDeckPhase ? 0 : player.bet;
+  const displayedBet = isEntranceActive ? 0 : player.bet;
 
   return (
     <Box
@@ -247,9 +251,14 @@ function MySeatDetails({
           />
         )}
       </Text>
-      <Text color="gray">
-        STACK <Text color={isBankrupt ? 'redBright' : 'cyanBright'}>${player.chips}</Text>
-      </Text>
+      {isEntranceActive ? (
+        <Text> </Text>
+      ) : (
+        <Text color="gray">
+          STACK{' '}
+          <Text color={isBankrupt ? 'redBright' : 'cyanBright'}>${player.chips}</Text>
+        </Text>
+      )}
     </Box>
   );
 }
