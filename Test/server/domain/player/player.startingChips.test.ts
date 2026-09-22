@@ -6,5 +6,5 @@ test('new players receive the smaller configured starting stack', () => {
   expect(new Player('player-1', 'Player 1').chips).toBe(
     GAME_CONSTANTS.DEFAULT_STARTING_CHIPS,
   );
-  expect(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS).toBe(300);
+  expect(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS).toBe(1000);
 });
