@@ -1,4 +1,4 @@
-import { Box, Text, useInput } from 'ink';
+import { Box, useInput } from 'ink';
 import { useEffect, useState } from 'react';
 import type { GameScreenProps, StatusStateContext, GameStatePayload } from './game/types';
 import {
@@ -123,50 +123,6 @@ function resolveGameActions(
     currentStake,
     pendingSideshow: effectiveRoundResult ? null : (pendingSideshow ?? null),
   });
-}
-
-interface GameBottomStatusBarProps {
-  readonly isEntranceActive: boolean;
-  readonly isRoundEnded: boolean;
-  readonly isWaitingForNextRound: boolean;
-}
-
-function GameBottomStatusBar({
-  isEntranceActive,
-  isRoundEnded,
-  isWaitingForNextRound,
-}: GameBottomStatusBarProps) {
-  if (isEntranceActive) {
-    return (
-      <Box height={1} justifyContent="center" alignItems="center">
-        <Text color="cyanBright" bold>
-          ♦ DEALING IN PROGRESS · ALL ACTIONS LOCKED ♦
-        </Text>
-      </Box>
-    );
-  }
-  if (isRoundEnded) {
-    return <Box height={1} />;
-  }
-  if (isWaitingForNextRound) {
-    return (
-      <Box height={1} justifyContent="center" alignItems="center">
-        <Text color="yellowBright" bold>
-          👁 SPECTATING · YOU WILL JOIN THE TABLE IN THE NEW GAME
-        </Text>
-      </Box>
-    );
-  }
-  return (
-    <Box height={1} justifyContent="center" alignItems="center">
-      <Text color="gray">↑ ↓ </Text>
-      <Text color="white">CHOOSE</Text>
-      <Text color="gray"> · </Text>
-      <Text color="yellow">ENTER</Text>
-      <Text color="white"> CONFIRM</Text>
-      <Text color="gray"> · ONLY LEGAL MOVES ARE SHOWN</Text>
-    </Box>
-  );
 }
 
 export function GameScreen({
@@ -484,11 +440,6 @@ export function GameScreen({
               />
             )}
           </Box>
-          <GameBottomStatusBar
-            isEntranceActive={entranceAnimation.isEntranceActive}
-            isRoundEnded={Boolean(effectiveRoundResult)}
-            isWaitingForNextRound={statusContext.isWaitingForNextRound ?? false}
-          />
         </Box>
       )}
     </Box>
