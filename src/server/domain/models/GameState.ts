@@ -51,8 +51,6 @@ export class GameState {
     cards: Record<string, Card[]>;
   } | null;
   public readonly deferShowSettlement: boolean;
-  /** Keep the bankrupt seat visible briefly before this deal is settled. */
-  public isRoundEnding: boolean;
   /** Settlement is idempotent: callers after SHOW receive this result, not null. */
   public lastGameResult: GameResult | null;
   /** Timestamp in milliseconds when this round was started on the server */
@@ -77,7 +75,6 @@ export class GameState {
     this.lastSideshowNotice = null;
     this.pendingShow = null;
     this.deferShowSettlement = deferShowSettlement;
-    this.isRoundEnding = false;
     this.lastGameResult = null;
     this.roundStartedAt = null;
   }
@@ -112,16 +109,6 @@ export class GameState {
       firstPlayerIndex >= 0 && firstPlayerIndex < this.activePlayers.length
         ? firstPlayerIndex
         : 0;
-
-    // A player who spends their last chip on the Boot has no later wager to
-    // make, so this is their first required betting turn and they must fold.
-    // For every later action, zero chips are handled only when the turn comes
-    // back to that player (not immediately after they pay).
-    const firstPlayer = this.activePlayers[this.currentPlayerIndex];
-    if (firstPlayer?.chips === 0) {
-      firstPlayer.fold();
-      this.isRoundEnding = true;
-    }
   }
 
   public nextTurn(): void {
@@ -160,9 +147,6 @@ export class GameState {
     action: GameActionType,
     amount?: number,
   ): boolean {
-    if (this.isRoundEnding) {
-      throw new InvalidActionError(action);
-    }
     if (this.lastSideshow) {
       throw new InvalidActionError(action);
     }
@@ -297,6 +281,14 @@ export class GameState {
 
     if (action === 'BET' || action === 'RAISE') {
       this.currentStake = player.isBlind ? payment : payment / 2;
+    }
+
+    // A player who has no chips left cannot make another decision. Fold them
+    // in the same authoritative action so the turn cursor never points to an
+    // unusable seat.
+    if (player.chips === 0) {
+      player.fold();
+      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
     }
 
     // Pagat Sideshow ท้าได้เฉพาะคนที่ลงเดิมพันก่อนหน้าซึ่งยัง ACTIVE อยู่
@@ -598,17 +590,18 @@ export class GameState {
       (activePlayer) => activePlayer.id === playerId,
     );
 
-    // ถ้าไม่พบผู้เล่น ก็ไม่มีอะไรให้เปลี่ยน
-    if (player === undefined) {
-      throw new GameError('Player not found', 'PLAYER_NOT_FOUND');
+    // A spectator can leave without ever having occupied a hand.
+    if (player === undefined || player.status !== 'ACTIVE') return false;
+
+    if (
+      this.pendingSideshow?.challengerId === playerId ||
+      this.pendingSideshow?.targetId === playerId
+    ) {
+      this.pendingSideshow = null;
     }
 
-    if (player.status === 'DISCONNECTED') {
-      return false;
-    }
-
-    // เปลี่ยนสถานะเพื่อไม่ให้ผู้เล่นที่หลุดเล่นต่อได้
-    player.status = 'DISCONNECTED';
+    // A departed participant contributes no more actions to this hand.
+    player.fold();
 
     // ถ้าเป็นเทิร์นของผู้เล่นที่หลุด ให้ข้ามไปคนถัดไป
     if (

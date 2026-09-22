@@ -15,8 +15,8 @@ export interface GameScreenProps {
   readonly serverError?: string | null;
   readonly roundResult?: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'] | null;
   readonly roundStartChips?: Readonly<Record<string, number>>;
-  readonly autoAdvanceRound?: boolean;
-  readonly onNextRound?: () => void;
+  readonly onNextGame?: () => void;
+  readonly onEndGame?: () => void;
   readonly onLeave: () => void;
 }
 
@@ -42,7 +42,6 @@ export interface PlayerSeatNodeProps {
   readonly player: GamePlayerItem | undefined;
   readonly isMe: boolean;
   readonly isThisPlayerTurn: boolean;
-  readonly isBankrupt: boolean;
   readonly isPendingSideshowTargetNode: boolean;
   readonly isSideshowParticipantNode: boolean;
   readonly isShowdownRevealed: boolean;
@@ -80,10 +79,7 @@ export interface GameActionsPanelProps {
 }
 
 export interface StatusStateContext {
-  readonly isBankrupt: boolean;
-  readonly isAllChipsCommitted?: boolean;
   readonly isWaitingForNextRound?: boolean;
-  readonly isRoundEnding?: boolean;
   readonly isMyTurn: boolean;
   readonly isPendingSideshowTarget: boolean;
   readonly isPendingSideshowChallenger: boolean;

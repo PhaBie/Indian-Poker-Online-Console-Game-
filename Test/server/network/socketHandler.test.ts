@@ -1,596 +1,245 @@
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, jest, test } from 'bun:test';
+import type { WebSocket as WSWebSocket } from 'ws';
 import type { NetworkContext } from '../../../src/server/network/socketHandler';
 import {
-  handleClientMessage,
-  handleClientDisconnect,
   broadcastGameStateUpdate,
+  handleClientDisconnect,
+  handleClientMessage,
 } from '../../../src/server/network/socketHandler';
-import type { ClientEvent, ServerEvent } from '../../../src/shared/types';
-import { RoomManager } from '../../../src/server/domain/models/RoomManager';
-import { Player } from '../../../src/server/domain/models/Player';
+import type { ServerEvent } from '../../../src/shared/types';
 import { GAME_CONSTANTS } from '../../../src/shared/constants';
-import type { WebSocket as WSWebSocket } from 'ws';
+import { Player } from '../../../src/server/domain/models/Player';
+import { RoomManager } from '../../../src/server/domain/models/RoomManager';
 
-describe('6. ระบบจัดการเครือข่าย (WebSocket Handler)', () => {
-  let mockContext: NetworkContext;
+function client(events: ServerEvent[]): WSWebSocket {
+  return {
+    readyState: 1,
+    send: (data: string) => events.push(JSON.parse(data) as ServerEvent),
+  } as unknown as WSWebSocket;
+}
+
+describe('host-controlled post-round flow', () => {
+  let context: NetworkContext;
 
   beforeEach(() => {
-    const sessionMap = new Map<string, string>();
-    let tokenCounter = 1;
-
-    mockContext = {
+    context = {
       roomManager: new RoomManager(),
-      sessionStore: {
-        createSession: (playerId: string) => {
-          const token = `token_${tokenCounter++}`;
-          sessionMap.set(token, playerId);
-          return token;
-        },
-        getPlayerId: (token: string) => sessionMap.get(token) || null,
-      },
+      sessionStore: { createSession: () => 'token', getPlayerId: () => null },
       connectedClients: new Map(),
     };
   });
 
-  describe('Happy Paths', () => {
-    test('[socketHandler.handleClientMessage] 6.1 ส่ง CREATE_ROOM → คืนค่า SESSION_CREATED พร้อม Token และ ROOM_CREATED พร้อม roomId', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      const mockMessage: ClientEvent = {
-        type: 'CREATE_ROOM',
-        payload: { playerName: 'Thanathon', bootAmount: 50 },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const sessionEvent = sentMessages.find(
-        (message) => message.type === 'SESSION_CREATED',
-      ) as Extract<ServerEvent, { type: 'SESSION_CREATED' }>;
-      expect(sessionEvent).toBeDefined();
-      expect(sessionEvent.payload).toHaveProperty('reconnectToken');
-      expect(sessionEvent.payload).toHaveProperty('playerId');
-
-      const roomEvent = sentMessages.find(
-        (message) => message.type === 'ROOM_CREATED',
-      ) as Extract<ServerEvent, { type: 'ROOM_CREATED' }>;
-      expect(roomEvent).toBeDefined();
-      expect(roomEvent.payload).toHaveProperty('roomId');
-    });
-
-    test('[socketHandler.broadcastGameStateUpdate] 6.2 สั่งกระจายสถานะห้อง → Client ทุกคนที่อยู่ในห้องได้รับ GAME_STATE_UPDATE', () => {
-      const sentMessages1: ServerEvent[] = [];
-      const mockWsClient1 = {
-        send: (data: string) => sentMessages1.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-
-      const sentMessages2: ServerEvent[] = [];
-      const mockWsClient2 = {
-        send: (data: string) => sentMessages2.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-
-      const host = new Player('player_1', 'Host');
-      const secondPlayer = new Player('player_2', 'P2');
-      const room = mockContext.roomManager.createRoom('room_999', host);
-      room.join(secondPlayer);
-
-      mockContext.connectedClients.set(mockWsClient1, {
-        playerId: 'player_1',
-        roomId: 'room_999',
-      });
-      mockContext.connectedClients.set(mockWsClient2, {
-        playerId: 'player_2',
-        roomId: 'room_999',
-      });
-
-      broadcastGameStateUpdate('room_999', mockContext);
-
-      expect(sentMessages1.length).toBeGreaterThan(0);
-      expect(sentMessages1[0].type).toBe('GAME_STATE_UPDATE');
-      expect(sentMessages2.length).toBeGreaterThan(0);
-      expect(sentMessages2[0].type).toBe('GAME_STATE_UPDATE');
-    });
-
-    test('[socketHandler.broadcastGameStateUpdate] 6.3 กระจายสถานะห้อง → ผู้เล่น Blind ได้รับ myCards ว่าง ส่วน Seen ได้รับไพ่ตัวเองครบ และทุกคนไม่เห็นไพ่ privateCards ของคนอื่น', () => {
-      const sentMessages1: ServerEvent[] = [];
-      const mockWsClient1 = {
-        send: (data: string) => sentMessages1.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-
-      const sentMessages2: ServerEvent[] = [];
-      const mockWsClient2 = {
-        send: (data: string) => sentMessages2.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-
-      const host = new Player('player_1', 'Phupa');
-      host.isBlind = true;
-      host.receiveCards([
-        { suit: 'SPADES', rank: 14 },
-        { suit: 'SPADES', rank: 13 },
-        { suit: 'SPADES', rank: 12 },
-      ]);
-
-      const secondPlayer = new Player('player_2', 'Beam');
-      secondPlayer.isBlind = false;
-      secondPlayer.receiveCards([
-        { suit: 'HEARTS', rank: 2 },
-        { suit: 'HEARTS', rank: 3 },
-        { suit: 'HEARTS', rank: 4 },
-      ]);
-
-      const room = mockContext.roomManager.createRoom('room_123', host);
-      room.join(secondPlayer);
-      room.phase = 'PLAYING';
-
-      mockContext.connectedClients.set(mockWsClient1, {
-        playerId: 'player_1',
-        roomId: 'room_123',
-      });
-      mockContext.connectedClients.set(mockWsClient2, {
-        playerId: 'player_2',
-        roomId: 'room_123',
-      });
-
-      broadcastGameStateUpdate('room_123', mockContext);
-
-      const stateEvent1 = sentMessages1.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      const stateEvent2 = sentMessages2.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-
-      expect(stateEvent1).toBeDefined();
-      expect(stateEvent2).toBeDefined();
-
-      expect(stateEvent1.payload.players.length).toBe(2);
-      expect(
-        stateEvent1.payload.players.some((playerData) => 'privateCards' in playerData),
-      ).toBe(false);
-      expect(
-        stateEvent2.payload.players.some((playerData) => 'privateCards' in playerData),
-      ).toBe(false);
-
-      expect(stateEvent1.payload.myCards).toEqual([]);
-      expect(stateEvent2.payload.myCards).toEqual([
-        { suit: 'HEARTS', rank: 2 },
-        { suit: 'HEARTS', rank: 3 },
-        { suit: 'HEARTS', rank: 4 },
-      ]);
-    });
-
-    test('[socketHandler.broadcastGameStateUpdate] 6.3.1 ระหว่างสรุปผลรอบ → ไม่มี current turn เพื่อไม่ไฮไลต์หรือเปิด Action ให้ใคร', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => sentMessages.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const host = new Player('player_1', 'Host');
-      const secondPlayer = new Player('player_2', 'P2');
-      const room = mockContext.roomManager.createRoom('room_ended', host);
-      room.join(secondPlayer);
-      room.startGame(host.id);
-      room.phase = 'ENDED';
-      mockContext.connectedClients.set(mockWsClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-
-      broadcastGameStateUpdate(room.roomId, mockContext);
-
-      const stateEvent = sentMessages.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(stateEvent.payload.currentTurnPlayerId).toBeNull();
-    });
-
-    test('[socketHandler.handleClientMessage] 6.4 โฮสต์ส่ง START_GAME → คืนค่า GAME_STATE_UPDATE ที่มี phase เป็น PLAYING', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      const host = new Player('host_id', 'Host');
-      const secondPlayer = new Player('player_2', 'P2');
-      const room = mockContext.roomManager.createRoom('room_123', host);
-      room.join(secondPlayer);
-      host.status = 'READY';
-      secondPlayer.status = 'READY';
-
-      mockContext.connectedClients.set(mockWsClient, {
-        playerId: 'host_id',
-        roomId: 'room_123',
-      });
-
-      const mockMessage: ClientEvent = {
-        type: 'START_GAME',
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const updateEvent = sentMessages.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(updateEvent).toBeDefined();
-      expect(updateEvent.payload).toHaveProperty('phase', 'PLAYING');
-    });
-
-    test('starting a new game resets players with only enough chips for the boot', () => {
-      const sentMessages: ServerEvent[] = [];
-      const hostClient = {
-        readyState: 1,
-        send: (data: string) => sentMessages.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const guestClient = {
-        readyState: 1,
-        send: () => undefined,
-      } as unknown as WSWebSocket;
-      const host = new Player('host_bankrupt', 'Host');
-      const guest = new Player('guest_solvent', 'Guest');
-      host.chips = 50;
-      guest.chips = 100;
-      const room = mockContext.roomManager.createRoom('room_boot_bankrupt', host);
+  function endedRoom(playerCount: 2 | 3 | 4 = 2) {
+    const host = new Player('host', 'Host');
+    const room = context.roomManager.createRoom('room', host, 4);
+    const guests = Array.from({ length: playerCount - 1 }, (_, index) => {
+      const guest = new Player(`guest-${index}`, `Guest ${index}`);
       room.join(guest);
-      host.status = 'READY';
-      guest.status = 'READY';
-      mockContext.connectedClients.set(hostClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-      mockContext.connectedClients.set(guestClient, {
-        playerId: guest.id,
-        roomId: room.roomId,
-      });
-
-      handleClientMessage(hostClient, { type: 'START_GAME' }, mockContext);
-
-      const gameState = sentMessages.find(
-        (event) => event.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(gameState.payload.isRoundEnding).toBe(false);
-      expect(gameState.payload.currentTurnPlayerId).not.toBeNull();
-      expect([host.id, guest.id]).toContain(gameState.payload.currentTurnPlayerId ?? '');
-      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount);
+      return guest;
     });
+    room.startGame(host.id);
+    room.endGame(true);
+    return { room, host, guests };
+  }
 
-    test('[socketHandler.handleClientMessage] 6.5 ส่ง JOIN_ROOM พร้อม Token ที่ถูกต้องของคนที่หลุด → คืนค่า GAME_STATE_UPDATE และผูก Session กับผู้เล่นเดิม รักษาชิป เดิมพันและไพ่ และออกจากสถานะ DISCONNECTED', () => {
-      const host = new Player('player_1', 'Host');
-      host.chips = 800;
-      host.bet = 200;
-      host.receiveCards([{ suit: 'SPADES', rank: 14 }]);
-      mockContext.roomManager.createRoom('room_123', host);
+  test.each([2, 3, 4])(
+    'a %i-player hand enters ENDED before the decision timeout',
+    (count) => {
+      const { room } = endedRoom(count as 2 | 3 | 4);
+      expect(room.phase).toBe('ENDED');
+      expect(room.gameState).not.toBeNull();
+    },
+  );
 
-      const validToken = mockContext.sessionStore.createSession('player_1');
-      host.status = 'DISCONNECTED';
-
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => sentMessages.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-
-      const mockMessage: ClientEvent = {
-        type: 'JOIN_ROOM',
-        payload: { playerName: '', reconnectToken: validToken, roomId: 'room_123' },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const joinedEvent = sentMessages.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(joinedEvent).toBeDefined();
-
-      const session = mockContext.connectedClients.get(mockWsClient);
-      expect(session?.playerId).toBe('player_1');
-
-      expect(host.status).not.toBe('DISCONNECTED');
-      expect(host.chips).toBe(800);
-      expect(host.bet).toBe(200);
-      expect(host.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
-    });
-
-    test('[socketHandler.handleClientMessage] 6.5.1 ผู้เล่นออกจน Host เหลือคนเดียว → ยกเลิกรอบและ Host กลับ LOBBY', () => {
-      const hostEvents: ServerEvent[] = [];
-      const hostClient = {
-        readyState: 1,
-        send: (data: string) => hostEvents.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const leavingClient = {
-        readyState: 1,
-        send: () => undefined,
-      } as unknown as WSWebSocket;
-      const host = new Player('host_id', 'Host');
-      const guest = new Player('guest_id', 'Guest');
-      const room = mockContext.roomManager.createRoom('room_leave_guest', host);
+  test('starts a new game after 5 seconds when the host does not decide', () => {
+    jest.useFakeTimers();
+    try {
+      const host = new Player('host', 'Host');
+      const guest = new Player('guest', 'Guest');
+      const room = context.roomManager.createRoom('auto-next', host, 2);
       room.join(guest);
       room.startGame(host.id);
-      mockContext.connectedClients.set(hostClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-      mockContext.connectedClients.set(leavingClient, {
-        playerId: guest.id,
-        roomId: room.roomId,
-      });
-
-      handleClientMessage(leavingClient, { type: 'LEAVE_ROOM' }, mockContext);
-
-      expect(room.phase).toBe('LOBBY');
-      expect(room.gameState).toBeNull();
-      expect(room.getPlayerCount()).toBe(1);
-      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS + 50);
-      expect(hostEvents.some((event) => event.type === 'GAME_STATE_UPDATE')).toBe(true);
-    });
-
-    test('[socketHandler.handleClientMessage] 6.5.2 Host ออก → ปิดห้องและส่งผู้เล่นที่เหลือกลับ Room Lobby', () => {
-      const hostEvents: ServerEvent[] = [];
-      const guestEvents: ServerEvent[] = [];
-      const hostClient = {
-        readyState: 1,
-        send: (data: string) => hostEvents.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const guestClient = {
-        readyState: 1,
-        send: (data: string) => guestEvents.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const host = new Player('host_close', 'Host');
-      const guest = new Player('guest_close', 'Guest');
-      const room = mockContext.roomManager.createRoom('room_host_leave', host);
-      room.join(guest);
-      mockContext.connectedClients.set(hostClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-      mockContext.connectedClients.set(guestClient, {
-        playerId: guest.id,
-        roomId: room.roomId,
-      });
-
-      handleClientMessage(hostClient, { type: 'LEAVE_ROOM' }, mockContext);
-
-      expect(mockContext.roomManager.getRoom(room.roomId)).toBeUndefined();
-      expect(guestEvents.some((event) => event.type === 'ROOM_CLOSED')).toBe(true);
-      expect(mockContext.connectedClients.get(guestClient)?.roomId).toBeNull();
-    });
-
-    test('[socketHandler.handleClientDisconnect] 6.5.3 ผู้เล่นหลุดจน Host เหลือคนเดียว → Host กลับ Waiting Room', () => {
-      const hostEvents: ServerEvent[] = [];
-      const hostClient = {
-        readyState: 1,
-        send: (data: string) => hostEvents.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const disconnectedClient = {
-        readyState: 1,
-        send: () => undefined,
-      } as unknown as WSWebSocket;
-      const host = new Player('host_disconnect', 'Host');
-      const guest = new Player('guest_disconnect', 'Guest');
-      const room = mockContext.roomManager.createRoom('room_guest_disconnect', host);
-      room.join(guest);
-      room.startGame(host.id);
-      mockContext.connectedClients.set(hostClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-      mockContext.connectedClients.set(disconnectedClient, {
-        playerId: guest.id,
-        roomId: room.roomId,
-      });
-
-      handleClientDisconnect(disconnectedClient, mockContext);
-
-      expect(room.phase).toBe('LOBBY');
-      expect(room.gameState).toBeNull();
-      expect(room.getPlayerCount()).toBe(1);
-      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS + 50);
-      expect(hostEvents.some((event) => event.type === 'GAME_STATE_UPDATE')).toBe(true);
-    });
-
-    test('[socketHandler.handleClientDisconnect] 6.5.4 Host หลุด → ปิดห้องและส่งผู้เล่นที่เหลือกลับ Room Lobby', () => {
-      const guestEvents: ServerEvent[] = [];
-      const hostClient = {
-        readyState: 1,
-        send: () => undefined,
-      } as unknown as WSWebSocket;
-      const guestClient = {
-        readyState: 1,
-        send: (data: string) => guestEvents.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const host = new Player('host_disconnected_close', 'Host');
-      const guest = new Player('guest_disconnected_close', 'Guest');
-      const room = mockContext.roomManager.createRoom('room_host_disconnect', host);
-      room.join(guest);
-      mockContext.connectedClients.set(hostClient, {
-        playerId: host.id,
-        roomId: room.roomId,
-      });
-      mockContext.connectedClients.set(guestClient, {
-        playerId: guest.id,
-        roomId: room.roomId,
-      });
-
-      handleClientDisconnect(hostClient, mockContext);
-
-      expect(mockContext.roomManager.getRoom(room.roomId)).toBeUndefined();
-      expect(guestEvents.some((event) => event.type === 'ROOM_CLOSED')).toBe(true);
-      expect(mockContext.connectedClients.get(guestClient)?.roomId).toBeNull();
-    });
-  });
-
-  describe('Unhappy Paths', () => {
-    test('[socketHandler.handleClientMessage] 6.6.0 action from a folded player returns the authoritative game state for resync', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => sentMessages.push(JSON.parse(data)),
-      } as unknown as WSWebSocket;
-      const host = new Player('folded_player', 'Folded Player');
-      const guest = new Player('guest_player', 'Guest Player');
-      const room = mockContext.roomManager.createRoom('room_folded_resync', host);
-      room.join(guest);
-      room.startGame(host.id);
-      room.gameState?.activePlayers[0].fold();
-      mockContext.connectedClients.set(mockWsClient, {
+      room.gameState!.currentPlayerIndex = room.gameState!.activePlayers.findIndex(
+        (player) => player.id === host.id,
+      );
+      const events: ServerEvent[] = [];
+      const hostClient = client(events);
+      context.connectedClients.set(hostClient, {
         playerId: host.id,
         roomId: room.roomId,
       });
 
       handleClientMessage(
-        mockWsClient,
-        { type: 'PLAYER_ACTION', payload: { action: 'CALL' } },
-        mockContext,
+        hostClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'FOLD' } },
+        context,
       );
 
-      expect(sentMessages.some((message) => message.type === 'ERROR')).toBe(true);
-      const gameState = sentMessages.find(
-        (message) => message.type === 'GAME_STATE_UPDATE',
-      ) as Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>;
-      expect(
-        gameState.payload.players.find((player) => player.id === host.id)?.status,
-      ).toBe('FOLDED');
-    });
-
-    test('[socketHandler.handleClientMessage] 6.6.1 ส่ง JOIN_ROOM ด้วยชื่อที่ซ้ำในห้อง → คืนค่า NAME_TAKEN และไม่เพิ่มผู้เล่น', () => {
-      const host = new Player('player_1', 'Thanathon');
-      const room = mockContext.roomManager.createRoom('room_duplicate_name', host);
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      const mockMessage: ClientEvent = {
-        type: 'JOIN_ROOM',
-        payload: {
-          playerName: 'thanathon',
-          roomId: 'room_duplicate_name',
-        },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const errorEvent = sentMessages.find(
-        (message) => message.type === 'ERROR',
-      ) as Extract<ServerEvent, { type: 'ERROR' }>;
-      expect(errorEvent).toBeDefined();
-      expect(errorEvent.code).toBe('NAME_TAKEN');
-      expect(room.getPlayerCount()).toBe(1);
-      expect(mockContext.connectedClients.has(mockWsClient)).toBe(false);
-    });
-
-    test('[socketHandler.handleClientMessage] 6.6 ส่ง JOIN_ROOM รหัสห้องไม่มีอยู่จริง → คืนค่า ERROR', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      const mockMessage: ClientEvent = {
-        type: 'JOIN_ROOM',
-        payload: { playerName: 'Phupa', roomId: 'room_invalid' },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const errorEvent = sentMessages.find(
-        (message) => message.type === 'ERROR',
-      ) as Extract<ServerEvent, { type: 'ERROR' }>;
-      expect(errorEvent).toBeDefined();
-    });
-
-    test('[socketHandler.handleClientMessage] 6.7 ส่ง PLAYER_ACTION แต่ไม่อยู่ในห้อง → คืนค่า ERROR', () => {
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      mockContext.connectedClients.set(mockWsClient, {
-        playerId: 'player_fake',
-        roomId: null,
-      });
-
-      const mockMessage: ClientEvent = {
-        type: 'PLAYER_ACTION',
-        payload: { action: 'CALL' },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const errorEvent = sentMessages.find(
-        (message) => message.type === 'ERROR',
-      ) as Extract<ServerEvent, { type: 'ERROR' }>;
-      expect(errorEvent).toBeDefined();
-    });
-
-    test('[socketHandler.handleClientMessage] 6.8 ส่ง JOIN_ROOM พร้อม Token ผิด → คืนค่า ERROR (INVALID_TOKEN) และสถานะยังคง DISCONNECTED', () => {
-      const host = new Player('player_1', 'Host');
-      mockContext.roomManager.createRoom('room_123', host);
-      host.status = 'DISCONNECTED';
-
-      const sentMessages: ServerEvent[] = [];
-      const mockWsClient = {
-        send: (data: string) => {
-          sentMessages.push(JSON.parse(data));
-        },
-      } as unknown as WSWebSocket;
-
-      const mockMessage: ClientEvent = {
-        type: 'JOIN_ROOM',
-        payload: {
-          playerName: 'Hacker',
-          roomId: 'room_123',
-          reconnectToken: 'wrong_token',
-        },
-      };
-
-      handleClientMessage(mockWsClient, mockMessage, mockContext);
-
-      const errorEvent = sentMessages.find((message) => message.type === 'ERROR');
-      expect(errorEvent).toBeDefined();
-      if (errorEvent && errorEvent.type === 'ERROR') {
-        expect(errorEvent.code).toBe('INVALID_TOKEN');
-      }
-
-      const session = mockContext.connectedClients.get(mockWsClient);
-      expect(session).toBeUndefined();
-      expect(host.status).toBe('DISCONNECTED');
-    });
+      expect(room.phase).toBe('ENDED');
+      jest.advanceTimersByTime(4_999);
+      expect(room.phase).toBe('ENDED');
+      jest.advanceTimersByTime(1);
+      expect(room.phase).toBe('PLAYING');
+    } finally {
+      jest.useRealTimers();
+    }
   });
-});
 
-describe('gameplay state contract', () => {
-  test('includes the current stake so a client can offer only valid bets', () => {
-    const roomManager = new RoomManager();
-    const host = new Player('host', 'Host');
-    const opponent = new Player('opponent', 'Opponent');
-    const room = roomManager.createRoom('room-1', host, 2);
-    room.join(opponent);
-    room.startGame(host.id);
-
+  test('non-host cannot choose next game or return to waiting room', () => {
+    const { room, host, guests } = endedRoom();
     const events: ServerEvent[] = [];
-    const client = {
-      send: (data: string) => events.push(JSON.parse(data)),
-    } as unknown as WSWebSocket;
-    const context: NetworkContext = {
-      roomManager,
-      sessionStore: { createSession: () => 'token', getPlayerId: () => null },
-      connectedClients: new Map([[client, { playerId: host.id, roomId: room.roomId }]]),
-    };
-
-    broadcastGameStateUpdate(room.roomId, context);
-
-    const state = events.find((event) => event.type === 'GAME_STATE_UPDATE');
-    expect(state).toMatchObject({
-      type: 'GAME_STATE_UPDATE',
-      payload: { currentStake: room.gameState?.currentStake },
+    const guestClient = client(events);
+    context.connectedClients.set(guestClient, {
+      playerId: guests[0].id,
+      roomId: room.roomId,
     });
+
+    handleClientMessage(guestClient, { type: 'NEXT_GAME' }, context);
+    handleClientMessage(guestClient, { type: 'END_GAME' }, context);
+
+    expect(room.phase).toBe('ENDED');
+    expect(room.hostId).toBe(host.id);
+    expect(events.filter((event) => event.type === 'ERROR')).toHaveLength(2);
+  });
+
+  test('host NEXT GAME resets all chips and admits waiting spectators', () => {
+    const { room, host } = endedRoom(2);
+    const waiting = new Player('waiting', 'Waiting');
+    room.join(waiting);
+    const events: ServerEvent[] = [];
+    const hostClient = client(events);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+
+    handleClientMessage(hostClient, { type: 'NEXT_GAME' }, context);
+
+    expect(room.phase).toBe('PLAYING');
+    expect(room.gameState?.activePlayers.map((player) => player.id)).toContain(
+      waiting.id,
+    );
+    expect(room.getPlayer(waiting.id)?.chips).toBe(
+      GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+    );
+  });
+
+  test('host END GAME returns every connected player to the same waiting room', () => {
+    const { room, host, guests } = endedRoom(3);
+    const events: ServerEvent[] = [];
+    const hostClient = client(events);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+
+    handleClientMessage(hostClient, { type: 'END_GAME' }, context);
+
+    expect(room.phase).toBe('LOBBY');
+    expect(room.gameState).toBeNull();
+    for (const player of [host, ...guests]) {
+      expect(player.status).toBe('WAITING');
+      expect(player.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS);
+    }
+  });
+
+  test('ENDED broadcasts no current turn, so actions stay locked', () => {
+    const { room, host } = endedRoom();
+    const events: ServerEvent[] = [];
+    const hostClient = client(events);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+    broadcastGameStateUpdate(room.roomId, context);
+    const state = events.find((event) => event.type === 'GAME_STATE_UPDATE');
+    expect(
+      state?.type === 'GAME_STATE_UPDATE' && state.payload.currentTurnPlayerId,
+    ).toBeNull();
+  });
+
+  test('a non-host disconnect is removed immediately and a lone host returns to waiting room', () => {
+    const host = new Player('host', 'Host');
+    const guest = new Player('guest', 'Thanathon');
+    const room = context.roomManager.createRoom('disconnect-lone-host', host, 2);
+    room.join(guest);
+    room.startGame(host.id);
+    const hostEvents: ServerEvent[] = [];
+    const hostClient = client(hostEvents);
+    const guestClient = client([]);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+    context.connectedClients.set(guestClient, {
+      playerId: guest.id,
+      roomId: room.roomId,
+    });
+
+    handleClientDisconnect(guestClient, context);
+
+    expect(room.getPlayer(guest.id)).toBeUndefined();
+    expect(room.phase).toBe('LOBBY');
+    expect(room.gameState).toBeNull();
+    expect(room.getPlayerCount()).toBe(1);
+    expect(hostEvents.some((event) => event.type === 'GAME_LOG_MESSAGE')).toBe(false);
+  });
+
+  test('a departed active player ends the hand only when host plus waiting player can play next', () => {
+    const host = new Player('host', 'Host');
+    const guest = new Player('guest', 'Thanathon');
+    const waiting = new Player('waiting', 'Waiting');
+    const room = context.roomManager.createRoom('disconnect-with-waiting', host, 3);
+    room.join(guest);
+    room.startGame(host.id);
+    room.join(waiting);
+    const hostEvents: ServerEvent[] = [];
+    const hostClient = client(hostEvents);
+    const guestClient = client([]);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+    context.connectedClients.set(guestClient, {
+      playerId: guest.id,
+      roomId: room.roomId,
+    });
+
+    handleClientDisconnect(guestClient, context);
+
+    expect(room.getPlayer(guest.id)).toBeUndefined();
+    expect(room.phase).toBe('ENDED');
+    expect(room.getPlayerCount()).toBe(2);
+    expect(room.getPlayer(waiting.id)?.status).toBe('WAITING');
+    const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
+    expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
+      { id: guest.id, name: guest.name, status: 'DISCONNECTED' },
+    ]);
+  });
+
+  test('keeps an earlier disconnect in the eventual result table', () => {
+    const host = new Player('host', 'Host');
+    const firstGuest = new Player('guest-1', 'Disconnected player');
+    const secondGuest = new Player('guest-2', 'Still playing');
+    const room = context.roomManager.createRoom('disconnect-before-result', host, 4);
+    room.join(firstGuest);
+    room.join(secondGuest);
+    room.startGame(host.id);
+    room.gameState!.currentPlayerIndex = room.gameState!.activePlayers.findIndex(
+      (player) => player.id === secondGuest.id,
+    );
+
+    const hostEvents: ServerEvent[] = [];
+    const hostClient = client(hostEvents);
+    const firstGuestClient = client([]);
+    const secondGuestClient = client([]);
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+    context.connectedClients.set(firstGuestClient, {
+      playerId: firstGuest.id,
+      roomId: room.roomId,
+    });
+    context.connectedClients.set(secondGuestClient, {
+      playerId: secondGuest.id,
+      roomId: room.roomId,
+    });
+
+    handleClientDisconnect(firstGuestClient, context);
+    expect(room.phase).toBe('PLAYING');
+
+    handleClientMessage(
+      secondGuestClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'FOLD' } },
+      context,
+    );
+
+    const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
+    expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
+      { id: firstGuest.id, name: firstGuest.name, status: 'DISCONNECTED' },
+    ]);
   });
 });

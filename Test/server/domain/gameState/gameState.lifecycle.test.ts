@@ -185,7 +185,7 @@ describe('gameState.lifecycle', () => {
     expect(gameState.dealerIndex).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.29 เปลี่ยนสถานะผู้เล่นเป็น DISCONNECTED ไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
+  test('[GameState.handlePlayerDisconnect] 4.29 หมอบผู้เล่นที่หลุดโดยไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
     const gameState = createGameStateFixture({ pot: 500, currentPlayerIndex: 0 }, [
       {
         id: 'disconnectingPlayer',
@@ -201,7 +201,7 @@ describe('gameState.lifecycle', () => {
 
     gameState.handlePlayerDisconnect(disconnectingPlayer.id);
 
-    expect(disconnectingPlayer.status).toBe('DISCONNECTED');
+    expect(disconnectingPlayer.status).toBe('FOLDED');
     expect(disconnectingPlayer.chips).toBe(900);
     expect(secondPlayer.chips).toBe(1000);
     expect(thirdPlayer.chips).toBe(1000);
@@ -231,18 +231,15 @@ describe('gameState.lifecycle', () => {
     expect(gameState.activePlayers[0].privateCards.length).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.55 เรียกตัดการเชื่อมต่อด้วย ID ที่ไม่มีอยู่ -> โยน GameError PLAYER_NOT_FOUND', () => {
+  test('[GameState.handlePlayerDisconnect] 4.55 ID ที่ไม่มีอยู่ไม่กระทบเกม', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
     ]);
 
-    expectGameErrorWithCode(
-      () => gameState.handlePlayerDisconnect('ghost'),
-      'PLAYER_NOT_FOUND',
-    );
+    expect(gameState.handlePlayerDisconnect('ghost')).toBe(false);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.56 หลุดนอกตาตัวเอง -> เปลี่ยนสถานะเป็น DISCONNECTED แต่ไม่ขยับตา', () => {
+  test('[GameState.handlePlayerDisconnect] 4.56 หลุดนอกตาตัวเอง -> หมอบแต่ไม่ขยับตา', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
@@ -250,11 +247,11 @@ describe('gameState.lifecycle', () => {
     ]);
 
     gameState.handlePlayerDisconnect('playerTwo');
-    expect(gameState.activePlayers[1].status).toBe('DISCONNECTED');
+    expect(gameState.activePlayers[1].status).toBe('FOLDED');
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.57 ตัดการเชื่อมต่อซ้ำ (DISCONNECTED อยู่แล้ว) ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
+  test('[GameState.handlePlayerDisconnect] 4.57 ผู้เล่นที่ไม่ ACTIVE ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
       { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },

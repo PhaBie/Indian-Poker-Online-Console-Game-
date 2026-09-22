@@ -7,9 +7,9 @@ interface GameRoundResultDialogProps {
   readonly result: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
   readonly gameState: GameStatePayload;
   readonly roundStartChips: Readonly<Record<string, number>>;
-  readonly showAutoNextRound?: boolean;
-  readonly autoAdvanceLabel?: string;
-  readonly onNextRound?: () => void;
+  readonly myPlayerId: string | null;
+  readonly onNextGame: () => void;
+  readonly onEndGame: () => void;
 }
 
 type ResultPlayer = Pick<
@@ -120,9 +120,9 @@ export function GameRoundResultDialog({
   result,
   gameState,
   roundStartChips,
-  showAutoNextRound = false,
-  autoAdvanceLabel,
-  onNextRound,
+  myPlayerId,
+  onNextGame,
+  onEndGame,
 }: GameRoundResultDialogProps) {
   const winners = result.winnerIds
     .map((id) => gameState.players.find((player) => player.id === id)?.name ?? 'UNKNOWN')
@@ -132,10 +132,26 @@ export function GameRoundResultDialog({
     result,
     roundStartChips,
   );
+  const departedPlayers = result.departedPlayers ?? [];
   const winningHandLabel = getWinningHandLabel(result);
 
-  useInput((_, key) => {
-    if (!showAutoNextRound && key.return && onNextRound) onNextRound();
+  const isHost = gameState.hostId === myPlayerId;
+  const [secondsRemaining, setSecondsRemaining] = useState(5);
+
+  useEffect(() => {
+    if (!isHost) return;
+    setSecondsRemaining(5);
+    const interval = setInterval(
+      () => setSecondsRemaining((seconds) => Math.max(0, seconds - 1)),
+      1_000,
+    );
+    return () => clearInterval(interval);
+  }, [isHost, result]);
+
+  useInput((input) => {
+    if (!isHost) return;
+    if (input.toLowerCase() === 'n') onNextGame();
+    if (input.toLowerCase() === 'e') onEndGame();
   });
 
   return (
@@ -144,7 +160,7 @@ export function GameRoundResultDialog({
       top={7}
       left={35}
       width={74}
-      height={27}
+      height={30}
       borderStyle="double"
       borderColor="yellowBright"
       backgroundColor="black"
@@ -166,22 +182,22 @@ export function GameRoundResultDialog({
       </Box>
       <Box marginTop={2} flexDirection="column" width={66}>
         <Box>
-          <ResultTableCell width={16} color="yellow" bold align="center">
+          <ResultTableCell width={14} color="yellow" bold align="center">
             PLAYER
           </ResultTableCell>
-          <ResultTableCell width={10} color="yellow" bold align="center">
+          <ResultTableCell width={9} color="yellow" bold align="center">
             START
           </ResultTableCell>
-          <ResultTableCell width={9} color="yellow" bold align="center">
+          <ResultTableCell width={8} color="yellow" bold align="center">
             BET
           </ResultTableCell>
-          <ResultTableCell width={11} color="yellow" bold align="center">
+          <ResultTableCell width={10} color="yellow" bold align="center">
             PAYOUT
           </ResultTableCell>
-          <ResultTableCell width={10} color="yellow" bold align="center">
+          <ResultTableCell width={9} color="yellow" bold align="center">
             END
           </ResultTableCell>
-          <ResultTableCell width={10} color="yellow" bold align="center">
+          <ResultTableCell width={16} color="yellow" bold align="center">
             NET
           </ResultTableCell>
         </Box>
@@ -194,7 +210,7 @@ export function GameRoundResultDialog({
           return (
             <Box key={player.id}>
               <ResultTableCell
-                width={16}
+                width={14}
                 color={
                   isWinner
                     ? 'greenBright'
@@ -206,42 +222,74 @@ export function GameRoundResultDialog({
               >
                 {isWinner ? <WinnerName>{player.name}</WinnerName> : player.name}
               </ResultTableCell>
-              <ResultTableCell width={10} color="gray">
+              <ResultTableCell width={9} color="gray">
                 ${startChips}
               </ResultTableCell>
-              <ResultTableCell width={9} color="redBright">
+              <ResultTableCell width={8} color="redBright">
                 -${player.bet}
               </ResultTableCell>
-              <ResultTableCell width={11} color={payout > 0 ? 'greenBright' : 'gray'}>
+              <ResultTableCell width={10} color={payout > 0 ? 'greenBright' : 'gray'}>
                 {payout > 0 ? `+$${payout}` : '—'}
               </ResultTableCell>
-              <ResultTableCell width={10} color="white">
+              <ResultTableCell width={9} color="white">
                 ${player.chips}
               </ResultTableCell>
-              <ResultTableCell width={10} color={net >= 0 ? 'greenBright' : 'redBright'}>
+              <ResultTableCell width={16} color={net >= 0 ? 'greenBright' : 'redBright'}>
                 {net >= 0 ? '+' : ''}${net}
               </ResultTableCell>
             </Box>
           );
         })}
+        {departedPlayers.map((player) => (
+          <Box key={`departed-${player.id}`}>
+            <ResultTableCell width={14} color="redBright" bold align="center">
+              {player.name}
+            </ResultTableCell>
+            <ResultTableCell width={9} color="gray">
+              —
+            </ResultTableCell>
+            <ResultTableCell width={8} color="gray">
+              —
+            </ResultTableCell>
+            <ResultTableCell width={10} color="gray">
+              —
+            </ResultTableCell>
+            <ResultTableCell width={9} color="gray">
+              —
+            </ResultTableCell>
+            <ResultTableCell width={16} color="redBright" bold align="center">
+              {player.status}
+            </ResultTableCell>
+          </Box>
+        ))}
       </Box>
       <Box flexGrow={1} />
-      {showAutoNextRound && (
-        <Box justifyContent="center">
-          <Text color="yellow" bold>
-            {autoAdvanceLabel ?? 'AUTO NEW GAME'}{' '}
-          </Text>
-          <Text color="white">IN 6 SECONDS</Text>
-        </Box>
-      )}
-      {!showAutoNextRound && onNextRound && (
-        <Box justifyContent="center">
-          <Text color="yellow" bold>
-            ENTER{' '}
-          </Text>
-          <Text color="gray">NEW GAME</Text>
-        </Box>
-      )}
+      <Box marginTop={1} flexDirection="column" alignItems="center">
+        {isHost ? (
+          <>
+            <Text color="yellowBright" bold>
+              HOST DECISION
+            </Text>
+            <Box marginTop={1} flexDirection="column" alignItems="center">
+              <Text color="white">
+                <Text color="yellow" bold>
+                  [N]
+                </Text>{' '}
+                NEXT GAME
+              </Text>
+              <Text color="white">
+                <Text color="yellow" bold>
+                  [E]
+                </Text>{' '}
+                RETURN TO WAITING ROOM
+              </Text>
+            </Box>
+            <Text color="gray">Auto-starting next game in {secondsRemaining}s</Text>
+          </>
+        ) : (
+          <Text color="gray">Waiting for host decision...</Text>
+        )}
+      </Box>
     </Box>
   );
 }

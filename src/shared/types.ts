@@ -106,6 +106,8 @@ export type ClientEvent =
   | { type: 'GET_ROOMS' }
   | { type: 'LEAVE_ROOM' }
   | { type: 'START_GAME' }
+  | { type: 'NEXT_GAME' }
+  | { type: 'END_GAME' }
   | { type: 'TOGGLE_READY' }
   | { type: 'RESET_LOBBY' }
   | { type: 'SAVE_GAME' }
@@ -143,8 +145,6 @@ export type ServerEvent =
         pot: number;
         currentStake: number;
         currentTurnPlayerId: string | null;
-        /** The table is showing an elimination before the result dialog appears. */
-        isRoundEnding?: boolean;
         turnEndTime: number | null;
         /** Timestamp when the round/deal started on the server (used for real-time animation sync) */
         roundStartedAt?: number | null;
@@ -184,6 +184,12 @@ export type ServerEvent =
         winnerIds: string[];
         winningHand: HandRank;
         payouts: Record<string, number>;
+        /** Players who left during this hand; shown in the result table only. */
+        departedPlayers?: Array<{
+          id: string;
+          name: string;
+          status: 'DISCONNECTED' | 'LEFT';
+        }>;
         /** ข้อมูลไพ่ที่ถูกเปิดเผยเมื่อจบเกม Key คือ Player ID */
         exposedCards: Record<string, Card[]>;
       };

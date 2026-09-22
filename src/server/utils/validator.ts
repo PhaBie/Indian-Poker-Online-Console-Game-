@@ -54,6 +54,14 @@ export const startGameEventSchema = z.object({
   type: z.literal('START_GAME'),
 });
 
+export const nextGameEventSchema = z.object({
+  type: z.literal('NEXT_GAME'),
+});
+
+export const endGameEventSchema = z.object({
+  type: z.literal('END_GAME'),
+});
+
 /**
  * Schema สำหรับ Event: SAVE_GAME
  */
@@ -116,6 +124,8 @@ export const clientEventSchema = z.discriminatedUnion('type', [
   getRoomsEventSchema,
   leaveRoomEventSchema,
   startGameEventSchema,
+  nextGameEventSchema,
+  endGameEventSchema,
   toggleReadyEventSchema,
   resetLobbyEventSchema,
   saveGameEventSchema,

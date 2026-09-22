@@ -137,8 +137,8 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
       serverError={previewError}
       roundResult={resolvedRoundResult}
       roundStartChips={roundStartChips}
-      autoAdvanceRound
-      onNextRound={handleNextRound}
+      onNextGame={handleNextRound}
+      onEndGame={handleNextRound}
       onLeave={exit}
     />
   );

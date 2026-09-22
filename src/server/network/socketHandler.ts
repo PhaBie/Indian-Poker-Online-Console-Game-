@@ -17,14 +17,15 @@ import { GameError } from '../domain/errors/GameError';
 
 const SHOW_REVEAL_DELAY_MS = 4_000;
 const SIDESHOW_REVEAL_DELAY_MS = 6_000;
-const NEXT_ROUND_DELAY_MS = 6_000;
-const BANKRUPTCY_RESULT_DELAY_MS = 3_000;
-const RESULT_TO_LOBBY_DELAY_MS = 6_000;
+const HOST_DECISION_TIMEOUT_MS = 5_000;
 const showRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const sideshowRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const nextRoundTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const bankruptcySettlementTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const returnToLobbyTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const autoNextGameTimers = new Map<string, ReturnType<typeof setTimeout>>();
+type DepartedPlayer = { id: string; name: string; status: 'DISCONNECTED' | 'LEFT' };
+// A player can leave before the action that actually ends a hand. Keep that
+// information at room scope so the eventual result still tells the table who
+// left, rather than showing an unrelated Action-panel notification.
+const departedPlayersByRoom = new Map<string, DepartedPlayer[]>();
 
 function clearRoomTimers(roomId: string): void {
   const showRevealTimer = showRevealTimers.get(roomId);
@@ -35,27 +36,22 @@ function clearRoomTimers(roomId: string): void {
   if (sideshowRevealTimer) clearTimeout(sideshowRevealTimer);
   sideshowRevealTimers.delete(roomId);
 
-  const nextRoundTimer = nextRoundTimers.get(roomId);
-  if (nextRoundTimer) clearTimeout(nextRoundTimer);
-  nextRoundTimers.delete(roomId);
-
-  const bankruptcySettlementTimer = bankruptcySettlementTimers.get(roomId);
-  if (bankruptcySettlementTimer) clearTimeout(bankruptcySettlementTimer);
-  bankruptcySettlementTimers.delete(roomId);
-
-  const returnToLobbyTimer = returnToLobbyTimers.get(roomId);
-  if (returnToLobbyTimer) clearTimeout(returnToLobbyTimer);
-  returnToLobbyTimers.delete(roomId);
+  const autoNextGameTimer = autoNextGameTimers.get(roomId);
+  if (autoNextGameTimer) clearTimeout(autoNextGameTimer);
+  autoNextGameTimers.delete(roomId);
+  departedPlayersByRoom.delete(roomId);
 }
 
-function settleAbandonedRound(room: Room, leavingPlayerId: string): void {
-  if (!room.gameState) return;
+function recordDepartedPlayer(roomId: string, player: DepartedPlayer): void {
+  const departedPlayers = departedPlayersByRoom.get(roomId) ?? [];
+  departedPlayers.push(player);
+  departedPlayersByRoom.set(roomId, departedPlayers);
+}
 
-  const isGameOver = room.gameState.handlePlayerDisconnect(leavingPlayerId);
-  if (!isGameOver) return;
-
-  const result = room.endGame(true);
-  if (result) saveGameHistory(room, result);
+function consumeDepartedPlayers(roomId: string): DepartedPlayer[] {
+  const departedPlayers = departedPlayersByRoom.get(roomId) ?? [];
+  departedPlayersByRoom.delete(roomId);
+  return departedPlayers;
 }
 
 export interface SocketSession {
@@ -137,6 +133,12 @@ export function handleClientMessage(
       case 'START_GAME':
         handleStartGame(wsClient, context);
         break;
+      case 'NEXT_GAME':
+        handleNextGame(wsClient, context);
+        break;
+      case 'END_GAME':
+        handleEndGame(wsClient, context);
+        break;
       case 'PLAYER_ACTION':
         handlePlayerAction(wsClient, message.payload, context);
         break;
@@ -180,6 +182,7 @@ function handleResetLobby(wsClient: WebSocket, context: NetworkContext) {
       return;
     }
     room.resetToLobby();
+    departedPlayersByRoom.delete(session.roomId);
     broadcastGameStateUpdate(session.roomId, context);
     broadcastRoomList(context);
   }
@@ -300,11 +303,44 @@ function handleStartGame(wsClient: WebSocket, context: NetworkContext) {
     }
     room.startGame(session.playerId);
     broadcastGameStateUpdate(session.roomId, context);
-    if (room.gameState?.isRoundEnding) {
-      scheduleBankruptcySettlement(session.roomId, context);
-    }
     broadcastRoomList(context);
   }
+}
+
+function handleNextGame(wsClient: WebSocket, context: NetworkContext): void {
+  const session = context.connectedClients.get(wsClient);
+  if (!session?.roomId) return;
+  const room = context.roomManager.getRoom(session.roomId);
+  if (!room) return;
+  if (room.hostId !== session.playerId) {
+    sendError(wsClient, 'Only the host can start the next game', 'NOT_HOST');
+    return;
+  }
+  clearAutoNextGameTimer(session.roomId);
+  departedPlayersByRoom.delete(session.roomId);
+  room.startNextRound(session.playerId);
+  broadcastGameStateUpdate(session.roomId, context);
+  broadcastRoomList(context);
+}
+
+function handleEndGame(wsClient: WebSocket, context: NetworkContext): void {
+  const session = context.connectedClients.get(wsClient);
+  if (!session?.roomId) return;
+  const room = context.roomManager.getRoom(session.roomId);
+  if (!room) return;
+  if (room.hostId !== session.playerId) {
+    sendError(wsClient, 'Only the host can return to the waiting room', 'NOT_HOST');
+    return;
+  }
+  if (room.phase !== 'ENDED') {
+    sendError(wsClient, 'The current game has not ended', 'GAME_IN_PROGRESS');
+    return;
+  }
+  clearAutoNextGameTimer(session.roomId);
+  departedPlayersByRoom.delete(session.roomId);
+  room.resetToLobby();
+  broadcastGameStateUpdate(session.roomId, context);
+  broadcastRoomList(context);
 }
 
 function handlePlayerAction(
@@ -319,6 +355,10 @@ function handlePlayerAction(
   }
 
   const room = context.roomManager.getRoom(session.roomId);
+  if (room && room.phase !== 'PLAYING') {
+    sendError(wsClient, 'Waiting for host decision', 'GAME_ENDED');
+    return;
+  }
   if (room && room.gameState) {
     let isGameOver = room.gameState.processAction(
       session.playerId,
@@ -333,12 +373,6 @@ function handlePlayerAction(
     if (room.gameState.pendingShow) {
       broadcastGameStateUpdate(session.roomId, context);
       scheduleShowSettlement(session.roomId, context);
-      return;
-    }
-
-    if (room.gameState.isRoundEnding) {
-      broadcastGameStateUpdate(session.roomId, context);
-      scheduleBankruptcySettlement(session.roomId, context);
       return;
     }
 
@@ -360,72 +394,14 @@ function handlePlayerAction(
           result.payouts,
           result.exposedCards,
           context,
+          consumeDepartedPlayers(session.roomId),
         );
-        scheduleNextRound(session.roomId, context);
+        scheduleAutoNextGame(session.roomId, context);
       }
     }
 
     broadcastGameStateUpdate(session.roomId, context);
   }
-}
-
-function scheduleBankruptcySettlement(roomId: string, context: NetworkContext): void {
-  if (bankruptcySettlementTimers.has(roomId)) return;
-
-  const timer = setTimeout(() => {
-    bankruptcySettlementTimers.delete(roomId);
-    const room = context.roomManager.getRoom(roomId);
-    if (!room?.gameState?.isRoundEnding) return;
-
-    const isGameOver =
-      room.gameState.checkLastManStanding() !== null ||
-      room.gameState.checkPotLimitReached();
-    if (isGameOver) {
-      const result = room.endGame(true);
-      if (result) {
-        saveGameHistory(room, result);
-        broadcastGameResult(
-          roomId,
-          result.winnerIds,
-          result.winningHand,
-          result.payouts,
-          result.exposedCards,
-          context,
-        );
-        scheduleReturnToLobby(roomId, context);
-      }
-    } else {
-      room.gameState.isRoundEnding = false;
-      room.gameState.nextTurn();
-    }
-
-    broadcastGameStateUpdate(roomId, context);
-  }, BANKRUPTCY_RESULT_DELAY_MS);
-
-  bankruptcySettlementTimers.set(roomId, timer);
-}
-
-function scheduleNextRound(roomId: string, context: NetworkContext): void {
-  if (nextRoundTimers.has(roomId)) return;
-
-  const timer = setTimeout(() => {
-    nextRoundTimers.delete(roomId);
-    const room = context.roomManager.getRoom(roomId);
-    if (!room || room.phase !== 'ENDED' || !room.hostId) return;
-
-    try {
-      room.startNextRound(room.hostId);
-      broadcastGameStateUpdate(roomId, context);
-      if (room.gameState?.isRoundEnding) {
-        scheduleBankruptcySettlement(roomId, context);
-      }
-      broadcastRoomList(context);
-    } catch {
-      scheduleReturnToLobby(roomId, context);
-    }
-  }, NEXT_ROUND_DELAY_MS);
-
-  nextRoundTimers.set(roomId, timer);
 }
 
 function scheduleShowSettlement(roomId: string, context: NetworkContext): void {
@@ -446,13 +422,39 @@ function scheduleShowSettlement(roomId: string, context: NetworkContext): void {
         result.payouts,
         result.exposedCards,
         context,
+        consumeDepartedPlayers(roomId),
       );
-      scheduleNextRound(roomId, context);
+      scheduleAutoNextGame(roomId, context);
     }
     broadcastGameStateUpdate(roomId, context);
   }, SHOW_REVEAL_DELAY_MS);
 
   showRevealTimers.set(roomId, timer);
+}
+
+function clearAutoNextGameTimer(roomId: string): void {
+  const timer = autoNextGameTimers.get(roomId);
+  if (timer) clearTimeout(timer);
+  autoNextGameTimers.delete(roomId);
+}
+
+function scheduleAutoNextGame(roomId: string, context: NetworkContext): void {
+  if (autoNextGameTimers.has(roomId)) return;
+  const timer = setTimeout(() => {
+    autoNextGameTimers.delete(roomId);
+    const room = context.roomManager.getRoom(roomId);
+    if (!room?.hostId || room.phase !== 'ENDED') return;
+    try {
+      room.startNextRound(room.hostId);
+      departedPlayersByRoom.delete(roomId);
+      broadcastGameStateUpdate(roomId, context);
+      broadcastRoomList(context);
+    } catch {
+      // With fewer than two connected players there is no valid next game.
+      // Keep the completed result visible for the host to decide manually.
+    }
+  }, HOST_DECISION_TIMEOUT_MS);
+  autoNextGameTimers.set(roomId, timer);
 }
 
 function scheduleSideshowResultClear(roomId: string, context: NetworkContext): void {
@@ -468,22 +470,6 @@ function scheduleSideshowResultClear(roomId: string, context: NetworkContext): v
   }, SIDESHOW_REVEAL_DELAY_MS);
 
   sideshowRevealTimers.set(roomId, timer);
-}
-
-function scheduleReturnToLobby(roomId: string, context: NetworkContext): void {
-  if (returnToLobbyTimers.has(roomId)) return;
-
-  const timer = setTimeout(() => {
-    returnToLobbyTimers.delete(roomId);
-    const room = context.roomManager.getRoom(roomId);
-    if (!room || room.phase !== 'ENDED') return;
-
-    room.resetToLobby();
-    broadcastGameStateUpdate(roomId, context);
-    broadcastRoomList(context);
-  }, RESULT_TO_LOBBY_DELAY_MS);
-
-  returnToLobbyTimers.set(roomId, timer);
 }
 
 function handleToggleReady(wsClient: WebSocket, context: NetworkContext) {
@@ -510,17 +496,62 @@ function handleLeaveRoom(wsClient: WebSocket, context: NetworkContext) {
       return;
     }
 
-    if (room.getPlayerCount() === 2) settleAbandonedRound(room, session.playerId);
-    room.leave(session.playerId);
+    removeNonHostPlayer(room, session.playerId, 'left the table', context);
     context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
-
-    if (room.getPlayerCount() < 2) room.resetToLobby();
-    broadcastGameStateUpdate(session.roomId, context);
   } else {
     context.connectedClients.set(wsClient, { playerId: session.playerId, roomId: null });
   }
 
   broadcastRoomList(context);
+}
+
+function removeNonHostPlayer(
+  room: Room,
+  playerId: string,
+  reason: 'disconnected' | 'left the table',
+  context: NetworkContext,
+): void {
+  const playerName = room.getPlayer(playerId)?.name ?? 'A player';
+  const isPlayingInThisHand =
+    room.phase === 'PLAYING' &&
+    room.gameState?.activePlayers.some((player) => player.id === playerId) === true;
+  if (isPlayingInThisHand) {
+    recordDepartedPlayer(room.roomId, {
+      id: playerId,
+      name: playerName,
+      status: reason === 'disconnected' ? 'DISCONNECTED' : 'LEFT',
+    });
+  }
+  const isGameOver = room.gameState?.handlePlayerDisconnect(playerId) ?? false;
+  room.leave(playerId);
+
+  // A host left alone cannot play or choose a meaningful next game. Keep the
+  // room itself, but return it immediately to its waiting state.
+  if (room.getPlayerCount() < 2) {
+    clearAutoNextGameTimer(room.roomId);
+    departedPlayersByRoom.delete(room.roomId);
+    room.resetToLobby();
+    broadcastGameStateUpdate(room.roomId, context);
+    return;
+  }
+
+  if (isGameOver) {
+    const result = room.endGame(true);
+    if (result) {
+      saveGameHistory(room, result);
+      broadcastGameResult(
+        room.roomId,
+        result.winnerIds,
+        result.winningHand,
+        result.payouts,
+        result.exposedCards,
+        context,
+        consumeDepartedPlayers(room.roomId),
+      );
+      scheduleAutoNextGame(room.roomId, context);
+    }
+  }
+  broadcastGameStateUpdate(room.roomId, context);
 }
 
 function closeRoom(roomId: string, context: NetworkContext): void {
@@ -559,54 +590,7 @@ export function handleClientDisconnect(
     return;
   }
 
-  const connectedPlayersAfterDisconnect = Array.from(room.players.values()).filter(
-    (player) => player.id !== session.playerId && player.status !== 'DISCONNECTED',
-  );
-  if (connectedPlayersAfterDisconnect.length < 2) {
-    settleAbandonedRound(room, session.playerId);
-    room.leave(session.playerId);
-    for (const player of Array.from(room.players.values())) {
-      if (player.status === 'DISCONNECTED') room.leave(player.id);
-    }
-    room.resetToLobby();
-    context.connectedClients.delete(wsClient);
-    broadcastGameStateUpdate(session.roomId, context);
-    broadcastRoomList(context);
-    return;
-  }
-
-  if (room.gameState) {
-    const isGameOver = room.gameState.handlePlayerDisconnect(session.playerId);
-    if (isGameOver) {
-      const result = room.endGame(true);
-      if (result) {
-        saveGameHistory(room, result);
-        broadcastGameResult(
-          session.roomId,
-          result.winnerIds,
-          result.winningHand,
-          result.payouts,
-          result.exposedCards,
-          context,
-        );
-        scheduleNextRound(session.roomId, context);
-      }
-    }
-  } else {
-    const player = room.getPlayer(session.playerId);
-    if (player) {
-      player.status = 'DISCONNECTED';
-    }
-  }
-  broadcastGameStateUpdate(session.roomId, context);
-
-  const isAllDisconnected = Array.from(room.players.values()).every(
-    (p) => p.status === 'DISCONNECTED',
-  );
-  if (isAllDisconnected) {
-    context.roomManager.deleteRoom(session.roomId);
-  }
-
+  removeNonHostPlayer(room, session.playerId, 'disconnected', context);
   context.connectedClients.delete(wsClient);
   broadcastRoomList(context);
 }
@@ -617,10 +601,7 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
 
   const pot = room.gameState?.pot || 0;
   const currentTurnPlayerId =
-    room.phase === 'ENDED' ||
-    room.gameState?.pendingShow ||
-    room.gameState?.lastSideshow ||
-    room.gameState?.isRoundEnding
+    room.phase === 'ENDED' || room.gameState?.pendingShow || room.gameState?.lastSideshow
       ? null
       : room.gameState?.activePlayers[room.gameState.currentPlayerIndex]?.id || null;
   const publicPlayers = room.getPublicState();
@@ -648,7 +629,6 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
         pot,
         currentStake: room.gameState?.currentStake ?? room.bootAmount,
         currentTurnPlayerId,
-        isRoundEnding: room.gameState?.isRoundEnding ?? false,
         turnEndTime: null,
         roundStartedAt: room.gameState?.roundStartedAt ?? null,
         players: publicPlayers,
@@ -671,6 +651,7 @@ export function broadcastGameResult(
   payouts: Record<string, number>,
   exposedCards: Record<string, Card[]>,
   context: NetworkContext,
+  departedPlayers: DepartedPlayer[] = [],
 ): void {
   for (const [client, session] of context.connectedClients.entries()) {
     if (session.roomId === roomId) {
@@ -680,6 +661,7 @@ export function broadcastGameResult(
           winnerIds,
           winningHand,
           payouts,
+          departedPlayers,
           exposedCards,
         },
       });

@@ -10,6 +10,8 @@ const SHUFFLE_PATTERNS = [
   ' ·   ·  [♦]  · ',
   ' ·   ·   ·  [♣]',
 ] as const;
+const SHUFFLE_DURATION_MS = 1_000;
+const CARD_DEAL_INTERVAL_MS = 1_000;
 
 function ShuffleDeckContent({ elapsedMs }: { readonly elapsedMs: number }) {
   const patternIndex = Math.floor(elapsedMs / 250) % SHUFFLE_PATTERNS.length;
@@ -46,13 +48,18 @@ function DealingCardContent({ currentCardNum }: { readonly currentCardNum: numbe
 }
 
 function resolveCenterBoxContent(elapsedMs: number) {
-  if (elapsedMs < 1000) {
+  if (elapsedMs < SHUFFLE_DURATION_MS) {
     return {
       borderColor: 'cyanBright',
       content: <ShuffleDeckContent elapsedMs={elapsedMs} />,
     };
   }
-  const currentCardNum = elapsedMs < 2000 ? 1 : elapsedMs < 3000 ? 2 : 3;
+  const currentCardNum =
+    elapsedMs < SHUFFLE_DURATION_MS + CARD_DEAL_INTERVAL_MS
+      ? 1
+      : elapsedMs < SHUFFLE_DURATION_MS + CARD_DEAL_INTERVAL_MS * 2
+        ? 2
+        : 3;
   return {
     borderColor: 'cyanBright',
     content: <DealingCardContent currentCardNum={currentCardNum} />,

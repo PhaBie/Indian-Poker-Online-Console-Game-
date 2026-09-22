@@ -39,7 +39,7 @@ describe('gameState.show', () => {
     expect(result?.winningHand).toBe('TRAIL');
   });
 
-  test('[GameState.processAction] ผู้ท้าใช้ชิปก้อนสุดท้ายต้องรอผล Sideshow ก่อน และหมอบเมื่อถึงเทิร์นเดิมพันถัดไป', () => {
+  test('[GameState.processAction] ผู้ท้าใช้ชิปก้อนสุดท้ายจะหมอบทันที', () => {
     const gameState = createGameStateFixture(
       { pot: 600, currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -85,29 +85,8 @@ describe('gameState.show', () => {
     gameState.processAction('challenger', 'SIDESHOW');
 
     expect(gameState.activePlayers[0].chips).toBe(0);
-    expect(gameState.activePlayers[0].status).toBe('ACTIVE');
-    expect(gameState.pendingSideshow).toEqual({
-      challengerId: 'challenger',
-      targetId: 'target',
-    });
-
-    gameState.processAction('target', 'ACCEPT_SIDESHOW');
-
-    expect(gameState.lastSideshow?.winnerId).toBe('challenger');
-    expect(gameState.activePlayers[0].status).toBe('ACTIVE');
-    expect(gameState.activePlayers[2].status).toBe('FOLDED');
-
-    expect(() => gameState.processAction('thirdPlayer', 'CALL')).toThrow(
-      InvalidActionError,
-    );
-    gameState.clearSideshowResult();
-    expect(gameState.lastSideshow).toBeNull();
-
-    gameState.nextTurn();
-    gameState.nextTurn();
-
     expect(gameState.activePlayers[0].status).toBe('FOLDED');
-    expect(gameState.activePlayers[1].status).toBe('ACTIVE');
+    expect(gameState.pendingSideshow).toBeNull();
   });
 
   test.skip('[GameState.executeSideshow] 4.10 [พักไว้หลังเดโม] → ผู้แพ้เปลี่ยนสถานะเป็น FOLDED', () => {

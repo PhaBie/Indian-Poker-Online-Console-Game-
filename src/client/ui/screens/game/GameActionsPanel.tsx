@@ -107,10 +107,8 @@ function EntranceInitializingContent({
 
 function TableWaitingContent({
   status,
-  isBankrupt,
 }: {
   readonly status: ReturnType<typeof getStatusDisplayInfo>;
-  readonly isBankrupt: boolean;
 }) {
   return (
     <Box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center">
@@ -119,11 +117,9 @@ function TableWaitingContent({
       </Text>
       <Box marginTop={2}>
         <Text color="gray">
-          {isBankrupt
-            ? 'YOU ARE NOW SPECTATING'
-            : status.text.includes('WAITING FOR NEW GAME')
-              ? 'SEAT RESERVED FOR NEW GAME'
-              : 'WATCH THE TABLE'}
+          {status.text.includes('WAITING FOR NEW GAME')
+            ? 'SEAT RESERVED FOR NEW GAME'
+            : 'WATCH THE TABLE'}
         </Text>
       </Box>
     </Box>
@@ -180,7 +176,6 @@ interface PanelBodyContentProps {
   readonly onBetSubmit: (value: string) => void;
   readonly entranceDescription?: string;
   readonly status: ReturnType<typeof getStatusDisplayInfo>;
-  readonly isBankrupt: boolean;
 }
 
 function PanelBodyContent({
@@ -195,14 +190,13 @@ function PanelBodyContent({
   onBetSubmit,
   entranceDescription,
   status,
-  isBankrupt,
 }: PanelBodyContentProps) {
   if (isEntranceActive) {
     return <EntranceInitializingContent entranceDescription={entranceDescription} />;
   }
 
   if (!canChooseAction) {
-    return <TableWaitingContent status={status} isBankrupt={isBankrupt} />;
+    return <TableWaitingContent status={status} />;
   }
 
   if (inputMode === 'input_bet') {
@@ -315,7 +309,6 @@ function PanelContentGroup({
         onBetSubmit={props.onBetSubmit}
         entranceDescription={props.entranceDescription}
         status={status}
-        isBankrupt={props.statusContext.isBankrupt}
       />
       <Box flexGrow={1} />
       <NoticeBox notice={props.notice} />

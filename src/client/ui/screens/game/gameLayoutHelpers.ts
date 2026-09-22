@@ -113,27 +113,10 @@ export interface StatusDisplayInfo {
 }
 
 export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplayInfo {
-  if (context.isRoundEnding) {
-    return { text: 'Resolving round...', color: 'yellowBright', bold: true };
-  }
   if (context.isWaitingForNextRound) {
     return {
       text: 'SPECTATING · WAITING FOR NEW GAME',
       color: 'cyanBright',
-      bold: true,
-    };
-  }
-  if (context.isBankrupt) {
-    return {
-      text: 'YOU LOST — BANKRUPT · SPECTATOR MODE',
-      color: 'redBright',
-      bold: true,
-    };
-  }
-  if (context.isAllChipsCommitted) {
-    return {
-      text: 'ALL CHIPS COMMITTED · WAITING FOR OUTCOME',
-      color: 'yellowBright',
       bold: true,
     };
   }

@@ -11,7 +11,6 @@ interface PlayerSeatHeaderProps {
   readonly player: GamePlayerItem;
   readonly isMe: boolean;
   readonly isShowdownRevealed: boolean;
-  readonly isBankrupt: boolean;
   readonly isEntranceActive?: boolean;
   readonly isNameGlowPhase?: boolean;
   readonly nameGlowElapsedMs?: number;
@@ -68,14 +67,13 @@ function PlayerSeatHeader({
   player,
   isMe,
   isShowdownRevealed,
-  isBankrupt,
   isEntranceActive = false,
   isNameGlowPhase = false,
   nameGlowElapsedMs = 0,
 }: PlayerSeatHeaderProps) {
   const displayName = isMe ? 'YOU' : player.name;
-  const shouldShowBlind = !isBankrupt && !isEntranceActive;
-  const shouldSweepName = !isMe && !isBankrupt && isNameGlowPhase;
+  const shouldShowBlind = !isEntranceActive;
+  const shouldSweepName = !isMe && isNameGlowPhase;
 
   return (
     <Box flexDirection="column" alignItems="center" width={26}>
@@ -83,17 +81,11 @@ function PlayerSeatHeader({
         {shouldSweepName ? (
           <SweepingPlayerName name={player.name} elapsedMs={nameGlowElapsedMs} />
         ) : (
-          <Text color={isBankrupt ? 'redBright' : isMe ? 'cyanBright' : 'white'} bold>
+          <Text color={isMe ? 'cyanBright' : 'white'} bold>
             {displayName}
           </Text>
         )}
         <Text color="gray"> </Text>
-        {isBankrupt && (
-          <Text color="redBright" bold>
-            {' '}
-            [BANKRUPT]
-          </Text>
-        )}
         {shouldShowBlind && (
           <HandModeIndicator
             isBlind={player.isBlind}
@@ -132,7 +124,6 @@ interface PlayerCardsPanelProps {
   readonly myCards: readonly Card[];
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
-  readonly isBankrupt: boolean;
   readonly isThisPlayerTurn: boolean;
   readonly visibleCardCount?: number;
   readonly isEntranceDeckPhase?: boolean;
@@ -140,20 +131,6 @@ interface PlayerCardsPanelProps {
   readonly isEntranceActive?: boolean;
   readonly isNameGlowPhase?: boolean;
   readonly nameGlowElapsedMs?: number;
-}
-
-function BankruptCardContent() {
-  return (
-    <Box flexDirection="column" alignItems="center">
-      <Text color="redBright" bold>
-        PLAYER ELIMINATED
-      </Text>
-      <Text color="redBright" bold>
-        BANKRUPT
-      </Text>
-      <Text color="red">OUT OF CHIPS</Text>
-    </Box>
-  );
 }
 
 function PlayerBetAndBadgeRow({
@@ -186,7 +163,6 @@ function PlayerCardsPanel({
   myCards,
   revealedCards,
   cardBorderGlowColors,
-  isBankrupt,
   isThisPlayerTurn,
   visibleCardCount,
   justDealtCardIndex,
@@ -204,27 +180,21 @@ function PlayerCardsPanel({
       justifyContent="center"
       alignItems="center"
     >
-      {isBankrupt ? (
-        <BankruptCardContent />
-      ) : (
-        <>
-          <PlayerCardsRow
-            isMe={isMe}
-            isBlind={player.isBlind}
-            hasFolded={hasFolded}
-            myCards={myCards}
-            revealedCards={revealedCards}
-            cardBorderGlowColors={cardBorderGlowColors}
-            visibleCardCount={visibleCardCount}
-            justDealtCardIndex={justDealtCardIndex}
-          />
-          <PlayerBetAndBadgeRow
-            displayedBet={displayedBet}
-            badge={badge}
-            isThisPlayerTurn={isThisPlayerTurn}
-          />
-        </>
-      )}
+      <PlayerCardsRow
+        isMe={isMe}
+        isBlind={player.isBlind}
+        hasFolded={hasFolded}
+        myCards={myCards}
+        revealedCards={revealedCards}
+        cardBorderGlowColors={cardBorderGlowColors}
+        visibleCardCount={visibleCardCount}
+        justDealtCardIndex={justDealtCardIndex}
+      />
+      <PlayerBetAndBadgeRow
+        displayedBet={displayedBet}
+        badge={badge}
+        isThisPlayerTurn={isThisPlayerTurn}
+      />
     </Box>
   );
 }
@@ -232,20 +202,18 @@ function PlayerCardsPanel({
 function MySeatDetails({
   player,
   isShowdownRevealed,
-  isBankrupt,
   isEntranceActive = false,
-}: Pick<PlayerCardsPanelProps, 'player' | 'isBankrupt'> & {
+}: Pick<PlayerCardsPanelProps, 'player'> & {
   readonly isShowdownRevealed: boolean;
   readonly isEntranceActive?: boolean;
 }) {
   const isWaiting = player.status === 'WAITING';
-  const shouldShowBlind = !isBankrupt && !isWaiting && !isEntranceActive;
+  const shouldShowBlind = !isWaiting && !isEntranceActive;
 
   return (
     <Box flexDirection="column" width={14}>
       <Text color="cyanBright" bold>
-        YOU {isBankrupt && 'SPECTATOR'}
-        {isWaiting && '[WAITING]'}
+        YOU {isWaiting && '[WAITING]'}
         {shouldShowBlind && (
           <HandModeIndicator
             isBlind={player.isBlind}
@@ -258,11 +226,7 @@ function MySeatDetails({
       ) : (
         <Text color="gray">
           STACK{' '}
-          <Text
-            color={isBankrupt ? 'redBright' : isWaiting ? 'yellowBright' : 'cyanBright'}
-          >
-            ${player.chips}
-          </Text>
+          <Text color={isWaiting ? 'yellowBright' : 'cyanBright'}>${player.chips}</Text>
         </Text>
       )}
     </Box>
@@ -303,14 +267,10 @@ function PlayerCardsRow({
 }
 
 function getSeatBadge(
-  isBankrupt: boolean,
   isSideshowParticipant: boolean,
   isEntranceDeckPhase: boolean,
   fallbackBadge: ReturnType<typeof getPlayerBadgeInfo>,
 ) {
-  if (isBankrupt) {
-    return { label: '[OUT]', color: 'redBright' };
-  }
   if (isSideshowParticipant) {
     return { label: '[DUEL]', color: 'cyanBright' };
   }
@@ -321,15 +281,11 @@ function getSeatBadge(
 }
 
 function getSeatBorderColor(
-  isBankrupt: boolean,
   isSideshowParticipant: boolean,
   isPendingSideshowTarget: boolean,
   isThisPlayerTurn: boolean,
   isEntranceDeckPhase: boolean,
 ) {
-  if (isBankrupt) {
-    return 'redBright';
-  }
   if (isSideshowParticipant) {
     return 'cyanBright';
   }
@@ -345,7 +301,6 @@ function getSeatBorderColor(
 function resolvePlayerSeatVisuals(
   player: GamePlayerItem,
   isThisPlayerTurn: boolean,
-  isBankrupt: boolean,
   isPendingSideshowTargetNode: boolean,
   isSideshowParticipantNode: boolean,
   isShowdownRevealed: boolean,
@@ -359,13 +314,11 @@ function resolvePlayerSeatVisuals(
     isShowdownRevealed,
   );
   const badge = getSeatBadge(
-    isBankrupt,
     isSideshowParticipantNode,
     isEntranceDeckPhase,
     fallbackBadge,
   );
   const borderColor = getSeatBorderColor(
-    isBankrupt,
     isSideshowParticipantNode,
     isPendingSideshowTargetNode,
     isThisPlayerTurn,
@@ -387,7 +340,6 @@ function MySeatView(props: SeatNodeRenderProps) {
         <MySeatDetails
           player={props.player}
           isShowdownRevealed={props.isShowdownRevealed}
-          isBankrupt={props.isBankrupt}
           isEntranceActive={props.isEntranceActive}
         />
       </Box>
@@ -402,7 +354,6 @@ function OtherPlayerSeatView(props: SeatNodeRenderProps) {
         player={props.player}
         isMe={props.isMe}
         isShowdownRevealed={props.isShowdownRevealed}
-        isBankrupt={props.isBankrupt}
         isEntranceActive={props.isEntranceActive}
         isNameGlowPhase={props.isNameGlowPhase}
         nameGlowElapsedMs={props.nameGlowElapsedMs}
@@ -420,7 +371,6 @@ export function PlayerSeatNode(props: PlayerSeatNodeProps) {
   const visuals = resolvePlayerSeatVisuals(
     props.player,
     props.isThisPlayerTurn,
-    props.isBankrupt,
     props.isPendingSideshowTargetNode,
     props.isSideshowParticipantNode,
     props.isShowdownRevealed,

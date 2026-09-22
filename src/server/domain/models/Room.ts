@@ -203,8 +203,12 @@ export class Room {
     const connectedPlayers = Array.from(this.players.values()).filter(
       (player) => player.status !== 'DISCONNECTED',
     );
-    const previousDealerId =
-      this.gameState?.activePlayers[this.gameState.dealerIndex]?.id;
+    if (connectedPlayers.length < 2) {
+      throw new GameError(
+        'Need at least 2 connected players for the next game',
+        'NOT_ENOUGH_PLAYERS',
+      );
+    }
 
     // Every deal started from the waiting room is a new game. Never carry a
     // prior deal's wins or losses into it, regardless of whether a new player
@@ -213,30 +217,13 @@ export class Room {
       player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     }
 
-    const eligiblePlayers = connectedPlayers.filter(
-      (player) => player.chips >= this.bootAmount,
-    );
-    if (eligiblePlayers.length < 2) {
-      throw new GameError(
-        'Need at least 2 players with enough chips for the next deal',
-        'NOT_ENOUGH_PLAYERS',
-      );
-    }
-
-    for (const player of eligiblePlayers) {
+    for (const player of connectedPlayers) {
       player.resetForNewRound();
     }
 
-    // Keep the circular seating order. Only the dealer moves, preventing one
-    // player from always receiving the first action.
-    const playersForNextRound = eligiblePlayers;
-    const priorDealerIndex = playersForNextRound.findIndex(
-      (player) => player.id === previousDealerId,
-    );
-    const nextDealerIndex =
-      priorDealerIndex >= 0
-        ? getFirstPlayerIndex(priorDealerIndex, playersForNextRound.length)
-        : randomDealerIndex(playersForNextRound.length);
+    // A queued player starts a fresh game: randomise seating and dealer again.
+    const playersForNextRound = shufflePlayerList(connectedPlayers);
+    const nextDealerIndex = randomDealerIndex(playersForNextRound.length);
     this.gameState = new GameState(playersForNextRound, this.bootAmount, 10000, true);
     this.gameState.dealerIndex = nextDealerIndex;
     this.gameState.startGame(
@@ -260,12 +247,10 @@ export class Room {
     // 2. เคลียร์โต๊ะเกมเดิมทิ้ง
     this.gameState = null;
 
-    // 3. รีเซ็ตไพ่และยอดเดิมพันของผู้เล่นทุกคน เตรียมพร้อมสำหรับรอบใหม่ และเติมชิปให้ผู้เล่นที่ล้มละลาย
+    // 3. ทุกคนกลับ Waiting Room พร้อมทุนเริ่มต้นเท่ากัน
     for (const player of this.players.values()) {
       player.resetForNewRound();
-      if (player.chips < this.bootAmount) {
-        player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
-      }
+      player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     }
   }
   //ดึงข้อมูลผู้เล่นตาม ID จากห้อง

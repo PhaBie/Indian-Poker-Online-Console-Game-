@@ -77,30 +77,18 @@ function buildStatusContext(
   myPlayerId: string | null,
   pendingSideshow: GameStatePayload['pendingSideshow'],
   players: GameStatePayload['players'],
-  isRoundEnding: boolean,
 ): StatusStateContext {
   const me = players.find((player) => player.id === myPlayerId);
   const isWaitingForNextRound = me?.status === 'WAITING';
-  const isBankrupt = me?.status === 'FOLDED' && (me.chips ?? 0) <= 0;
-  const isAllChipsCommitted = me?.status === 'ACTIVE' && me.chips === 0;
   return {
-    isBankrupt,
-    isAllChipsCommitted,
     isWaitingForNextRound,
-    isRoundEnding,
     isMyTurn:
-      !isBankrupt &&
-      !isAllChipsCommitted &&
-      !isWaitingForNextRound &&
-      currentTurnPlayerId === myPlayerId &&
-      !pendingSideshow,
+      !isWaitingForNextRound && currentTurnPlayerId === myPlayerId && !pendingSideshow,
     isPendingSideshowTarget:
-      !isBankrupt && !isWaitingForNextRound && pendingSideshow?.targetId === myPlayerId,
+      !isWaitingForNextRound && pendingSideshow?.targetId === myPlayerId,
     isPendingSideshowChallenger:
-      !isBankrupt &&
-      !isWaitingForNextRound &&
-      pendingSideshow?.challengerId === myPlayerId,
-    hasPendingSideshow: !isBankrupt && !isWaitingForNextRound && Boolean(pendingSideshow),
+      !isWaitingForNextRound && pendingSideshow?.challengerId === myPlayerId,
+    hasPendingSideshow: !isWaitingForNextRound && Boolean(pendingSideshow),
   };
 }
 
@@ -176,8 +164,8 @@ export function GameScreen({
   serverError,
   roundResult,
   roundStartChips,
-  autoAdvanceRound = false,
-  onNextRound,
+  onNextGame,
+  onEndGame,
   onLeave,
 }: GameScreenProps) {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
@@ -201,7 +189,6 @@ export function GameScreen({
     sideshowResult,
     sideshowNotice,
     showdownCards,
-    isRoundEnding = false,
     roundStartedAt,
   } = gameState;
   const sideshowResultKey = sideshowResult
@@ -297,7 +284,6 @@ export function GameScreen({
     myPlayerId,
     effectiveRoundResult ? null : pendingSideshow,
     players,
-    isRoundEnding,
   );
   const actionItems = resolveGameActions(
     players,
@@ -395,7 +381,6 @@ export function GameScreen({
               !roundResultPresentation.shouldShowActions ||
               isExitDialogOpen ||
               Boolean(showdownCards) ||
-              isRoundEnding ||
               isSideshowResultVisible ||
               isSideshowNoticeVisible ||
               isPotBlinking ||
@@ -413,11 +398,9 @@ export function GameScreen({
               result={effectiveRoundResult}
               gameState={gameState}
               roundStartChips={roundStartChips ?? {}}
-              showAutoNextRound={autoAdvanceRound}
-              autoAdvanceLabel={
-                gameState.isRoundEnding ? 'RETURNING TO WAITING ROOM' : undefined
-              }
-              onNextRound={onNextRound}
+              myPlayerId={myPlayerId}
+              onNextGame={onNextGame ?? (() => {})}
+              onEndGame={onEndGame ?? (() => {})}
             />
           )}
           {visibleSideshowResult && isSideshowResultVisible && !effectiveRoundResult && (

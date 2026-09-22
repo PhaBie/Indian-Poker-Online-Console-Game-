@@ -83,7 +83,8 @@ function renderGameplayScreens({
         myPlayerId={state.myPlayerId}
         serverError={state.lastError}
         roundResult={state.latestGameResult}
-        autoAdvanceRound
+        onNextGame={() => socketClient.send({ type: 'NEXT_GAME' })}
+        onEndGame={() => socketClient.send({ type: 'END_GAME' })}
         onLeave={navigation.handleLeaveRoom}
       />
     );
@@ -121,6 +122,7 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
   if (screen === 'onlineConnection') {
     return (
       <OnlineConnectionScreen
+        intent={navigation.intent}
         initialUrl={navigation.onlineServerUrl}
         error={navigation.onlineError}
         isConnecting={navigation.isOnlineConnecting}
