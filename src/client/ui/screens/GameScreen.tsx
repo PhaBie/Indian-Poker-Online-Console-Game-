@@ -15,6 +15,7 @@ import { GameRoundResultDialog } from './game/GameRoundResultDialog';
 import { GameSideshowResultDialog } from './game/GameSideshowResultDialog';
 import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
+import { CompactGameLayout } from './game/CompactGameLayout';
 import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
 import { useDealSequenceTracker } from './game/useDealSequenceTracker';
@@ -25,7 +26,8 @@ import {
 } from './game/sideshowPresentation';
 import { useTerminalSize } from '../hooks/useTerminalSize';
 import {
-  getTerminalSizeStatus,
+  MIN_TERMINAL_COLUMNS,
+  MIN_TERMINAL_ROWS,
   TerminalOutOfRangeScreen,
 } from '../components/ScreenSizeGuard';
 
@@ -36,8 +38,15 @@ export type { GameScreenProps } from './game/types';
 // into a smaller terminal.
 export const GAMEPLAY_WIDTH = 150;
 export const GAMEPLAY_HEIGHT = 45;
-const GAMEPLAY_MIN_COLUMNS = GAMEPLAY_WIDTH;
-const GAMEPLAY_MIN_ROWS = GAMEPLAY_HEIGHT;
+export function getGameplayLayoutMode(
+  columns: number,
+  rows: number,
+): 'desktop' | 'compact' | 'unsupported' {
+  if (columns < MIN_TERMINAL_COLUMNS || rows < MIN_TERMINAL_ROWS) {
+    return 'unsupported';
+  }
+  return columns >= GAMEPLAY_WIDTH && rows >= GAMEPLAY_HEIGHT ? 'desktop' : 'compact';
+}
 const SIDESHOW_CARDS_REVEAL_DELAY_MS = 2_000;
 const SIDESHOW_RESULT_DELAY_MS = 4_000;
 const SIDESHOW_DECLINED_DELAY_MS = 4_000;
@@ -295,10 +304,8 @@ export function GameScreen({
   );
   const notice = actionCtrl.localError ?? serverError;
   const hostName = players.find((player) => player.id === hostId)?.name;
-  const sizeStatus = getTerminalSizeStatus(columns, rows);
-  const isGameplayTooSmall = columns < GAMEPLAY_MIN_COLUMNS || rows < GAMEPLAY_MIN_ROWS;
-  const outOfRangeStatus =
-    isGameplayTooSmall || sizeStatus === 'TOO_SMALL' ? 'TOO_SMALL' : 'TOO_LARGE';
+  const layoutMode = getGameplayLayoutMode(columns, rows);
+  const isCompactLayout = layoutMode === 'compact';
 
   useInput((_, key) => {
     const escapeAction = getGameEscapeAction(
@@ -314,69 +321,36 @@ export function GameScreen({
     }
   });
 
-  if (sizeStatus !== 'OPTIMAL' || isGameplayTooSmall) {
+  if (layoutMode === 'unsupported') {
     return (
       <TerminalOutOfRangeScreen
         currentColumns={columns}
         currentRows={rows}
-        status={outOfRangeStatus}
-        minimumColumns={GAMEPLAY_MIN_COLUMNS}
-        minimumRows={GAMEPLAY_MIN_ROWS}
+        status="TOO_SMALL"
+        minimumColumns={MIN_TERMINAL_COLUMNS}
+        minimumRows={MIN_TERMINAL_ROWS}
       />
     );
   }
 
   return (
     <Box width="100%" height={rows} alignItems="center" justifyContent="center">
-      <Box
-        flexDirection="column"
-        width={GAMEPLAY_WIDTH}
-        height={GAMEPLAY_HEIGHT}
-        alignItems="center"
-      >
-        <GameBrandHeader hostName={hostName} roomId={roomId} width={GAMEPLAY_WIDTH} />
-        <Box flexDirection="row" width={GAMEPLAY_WIDTH} height={38} position="relative">
-          <GameTableLayout
+      {isCompactLayout ? (
+        <Box flexDirection="column" width={76} alignItems="center" position="relative">
+          <CompactGameLayout
+            roomId={roomId}
+            hostName={hostName}
+            players={activeTablePlayers}
+            myPlayerId={myPlayerId}
+            currentTurnPlayerId={activeTurnPlayerId}
             pot={effectivePot}
             currentStake={currentStake}
-            seatPositions={seatPositions}
-            currentTurnPlayerId={activeTurnPlayerId}
-            myPlayerId={myPlayerId}
-            pendingSideshowTargetId={
-              effectiveRoundResult ? undefined : pendingSideshow?.targetId
-            }
             myCards={myCards}
-            sideshowResult={effectiveRoundResult ? null : visibleSideshowResult}
-            sideshowNotice={effectiveRoundResult ? null : visibleSideshowNotice}
-            showdownCards={effectiveRoundResult ? null : showdownCards}
-            isPotAmountVisible={isEffectivePotAmountVisible}
-            entranceVisibleCardCount={entranceAnimation.visibleCardCount}
-            isEntranceDeckPhase={entranceAnimation.isDeckPhase}
-            entranceElapsedMs={entranceAnimation.elapsedMs}
-            justDealtCardIndex={entranceAnimation.justDealtCardIndex}
-            isEntranceActive={entranceAnimation.isEntranceActive}
-            cardGlowStartMs={entranceAnimation.milestones.cardGlowStartMs}
-            cardGlowEndMs={entranceAnimation.milestones.cardGlowEndMs}
-            isNameGlowPhase={entranceAnimation.isNameGlowPhase}
-            nameGlowElapsedMs={Math.max(
-              0,
-              entranceAnimation.elapsedMs - entranceAnimation.milestones.nameGlowStartMs,
-            )}
-            playerCount={activeTablePlayers.length}
-          />
-          <GameSidePanel
-            isMyTurn={statusContext.isMyTurn}
-            inputMode={actionCtrl.inputMode}
-            betAmount={actionCtrl.betAmount}
-            onActionSelect={actionCtrl.handleActionSelect}
-            onBetChange={actionCtrl.setBetAmount}
-            onBetSubmit={actionCtrl.handleBetSubmit}
             statusContext={statusContext}
             actionItems={actionItems}
+            inputMode={actionCtrl.inputMode}
+            betAmount={actionCtrl.betAmount}
             notice={notice ?? null}
-            shouldShowActions={roundResultPresentation.shouldShowActions}
-            isEntranceActive={entranceAnimation.isEntranceActive}
-            entranceDescription={entranceAnimation.phaseDescription}
             isInputDisabled={
               !roundResultPresentation.shouldShowActions ||
               isExitDialogOpen ||
@@ -386,11 +360,16 @@ export function GameScreen({
               isPotBlinking ||
               entranceAnimation.isEntranceActive
             }
+            shouldShowActions={roundResultPresentation.shouldShowActions}
+            onActionSelect={actionCtrl.handleActionSelect}
+            onBetChange={actionCtrl.setBetAmount}
+            onBetSubmit={actionCtrl.handleBetSubmit}
           />
           {isExitDialogOpen && (
             <GameExitConfirmDialog
               onConfirm={onLeave}
               onCancel={() => setIsExitDialogOpen(false)}
+              compact
             />
           )}
           {effectiveRoundResult && (
@@ -401,24 +380,109 @@ export function GameScreen({
               myPlayerId={myPlayerId}
               onNextGame={onNextGame ?? (() => {})}
               onEndGame={onEndGame ?? (() => {})}
-            />
-          )}
-          {visibleSideshowResult && isSideshowResultVisible && !effectiveRoundResult && (
-            <GameSideshowResultDialog result={visibleSideshowResult} players={players} />
-          )}
-          {visibleSideshowNotice && isSideshowNoticeVisible && (
-            <GameSideshowDeclinedDialog
-              notice={visibleSideshowNotice}
-              players={players}
+              compact
             />
           )}
         </Box>
-        <GameBottomStatusBar
-          isEntranceActive={entranceAnimation.isEntranceActive}
-          isRoundEnded={Boolean(effectiveRoundResult)}
-          isWaitingForNextRound={statusContext.isWaitingForNextRound ?? false}
-        />
-      </Box>
+      ) : (
+        <Box
+          flexDirection="column"
+          width={GAMEPLAY_WIDTH}
+          height={GAMEPLAY_HEIGHT}
+          alignItems="center"
+        >
+          <GameBrandHeader hostName={hostName} roomId={roomId} width={GAMEPLAY_WIDTH} />
+          <Box flexDirection="row" width={GAMEPLAY_WIDTH} height={38} position="relative">
+            <GameTableLayout
+              pot={effectivePot}
+              currentStake={currentStake}
+              seatPositions={seatPositions}
+              currentTurnPlayerId={activeTurnPlayerId}
+              myPlayerId={myPlayerId}
+              pendingSideshowTargetId={
+                effectiveRoundResult ? undefined : pendingSideshow?.targetId
+              }
+              myCards={myCards}
+              sideshowResult={effectiveRoundResult ? null : visibleSideshowResult}
+              sideshowNotice={effectiveRoundResult ? null : visibleSideshowNotice}
+              showdownCards={effectiveRoundResult ? null : showdownCards}
+              isPotAmountVisible={isEffectivePotAmountVisible}
+              entranceVisibleCardCount={entranceAnimation.visibleCardCount}
+              isEntranceDeckPhase={entranceAnimation.isDeckPhase}
+              entranceElapsedMs={entranceAnimation.elapsedMs}
+              justDealtCardIndex={entranceAnimation.justDealtCardIndex}
+              isEntranceActive={entranceAnimation.isEntranceActive}
+              cardGlowStartMs={entranceAnimation.milestones.cardGlowStartMs}
+              cardGlowEndMs={entranceAnimation.milestones.cardGlowEndMs}
+              isNameGlowPhase={entranceAnimation.isNameGlowPhase}
+              nameGlowElapsedMs={Math.max(
+                0,
+                entranceAnimation.elapsedMs -
+                  entranceAnimation.milestones.nameGlowStartMs,
+              )}
+              playerCount={activeTablePlayers.length}
+            />
+            <GameSidePanel
+              isMyTurn={statusContext.isMyTurn}
+              inputMode={actionCtrl.inputMode}
+              betAmount={actionCtrl.betAmount}
+              onActionSelect={actionCtrl.handleActionSelect}
+              onBetChange={actionCtrl.setBetAmount}
+              onBetSubmit={actionCtrl.handleBetSubmit}
+              statusContext={statusContext}
+              actionItems={actionItems}
+              notice={notice ?? null}
+              shouldShowActions={roundResultPresentation.shouldShowActions}
+              isEntranceActive={entranceAnimation.isEntranceActive}
+              entranceDescription={entranceAnimation.phaseDescription}
+              isInputDisabled={
+                !roundResultPresentation.shouldShowActions ||
+                isExitDialogOpen ||
+                Boolean(showdownCards) ||
+                isSideshowResultVisible ||
+                isSideshowNoticeVisible ||
+                isPotBlinking ||
+                entranceAnimation.isEntranceActive
+              }
+            />
+            {isExitDialogOpen && (
+              <GameExitConfirmDialog
+                onConfirm={onLeave}
+                onCancel={() => setIsExitDialogOpen(false)}
+              />
+            )}
+            {effectiveRoundResult && (
+              <GameRoundResultDialog
+                result={effectiveRoundResult}
+                gameState={gameState}
+                roundStartChips={roundStartChips ?? {}}
+                myPlayerId={myPlayerId}
+                onNextGame={onNextGame ?? (() => {})}
+                onEndGame={onEndGame ?? (() => {})}
+              />
+            )}
+            {visibleSideshowResult &&
+              isSideshowResultVisible &&
+              !effectiveRoundResult && (
+                <GameSideshowResultDialog
+                  result={visibleSideshowResult}
+                  players={players}
+                />
+              )}
+            {visibleSideshowNotice && isSideshowNoticeVisible && (
+              <GameSideshowDeclinedDialog
+                notice={visibleSideshowNotice}
+                players={players}
+              />
+            )}
+          </Box>
+          <GameBottomStatusBar
+            isEntranceActive={entranceAnimation.isEntranceActive}
+            isRoundEnded={Boolean(effectiveRoundResult)}
+            isWaitingForNextRound={statusContext.isWaitingForNextRound ?? false}
+          />
+        </Box>
+      )}
     </Box>
   );
 }

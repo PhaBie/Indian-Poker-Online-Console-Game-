@@ -4,6 +4,7 @@ import {
   getPlayerBadgeInfo,
   getStatusDisplayInfo,
 } from '../../../src/client/ui/screens/game/gameLayoutHelpers';
+import { getGameplayLayoutMode } from '../../../src/client/ui/screens/GameScreen';
 
 describe('game layout helpers', () => {
   it('places 2, 3, and 4 players in valid seats', () => {
@@ -34,5 +35,12 @@ describe('game layout helpers', () => {
         hasPendingSideshow: false,
       }).text,
     ).toBe('Your turn!');
+  });
+
+  it('uses the compact layout in a normal Windows terminal instead of blocking play', () => {
+    expect(getGameplayLayoutMode(80, 24)).toBe('compact');
+    expect(getGameplayLayoutMode(120, 30)).toBe('compact');
+    expect(getGameplayLayoutMode(150, 45)).toBe('desktop');
+    expect(getGameplayLayoutMode(79, 24)).toBe('unsupported');
   });
 });

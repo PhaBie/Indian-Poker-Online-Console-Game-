@@ -10,6 +10,7 @@ interface GameRoundResultDialogProps {
   readonly myPlayerId: string | null;
   readonly onNextGame: () => void;
   readonly onEndGame: () => void;
+  readonly compact?: boolean;
 }
 
 type ResultPlayer = Pick<
@@ -123,6 +124,7 @@ export function GameRoundResultDialog({
   myPlayerId,
   onNextGame,
   onEndGame,
+  compact = false,
 }: GameRoundResultDialogProps) {
   const winners = result.winnerIds
     .map((id) => gameState.players.find((player) => player.id === id)?.name ?? 'UNKNOWN')
@@ -153,6 +155,68 @@ export function GameRoundResultDialog({
     if (input.toLowerCase() === 'n') onNextGame();
     if (input.toLowerCase() === 'e') onEndGame();
   });
+
+  if (compact) {
+    return (
+      <Box
+        position="absolute"
+        top={0}
+        left={0}
+        width={76}
+        borderStyle="double"
+        borderColor="yellowBright"
+        backgroundColor="black"
+        paddingX={1}
+        flexDirection="column"
+      >
+        <Text color="yellowBright" bold>
+          ROUND COMPLETE
+        </Text>
+        <Text color="gray">
+          WINNER{' '}
+          <Text color="greenBright" bold>
+            {winners}
+          </Text>{' '}
+          · {winningHandLabel}
+        </Text>
+        <Box marginTop={1} flexDirection="column">
+          {resultPlayers.map((player) => {
+            const payout = result.payouts[player.id] ?? 0;
+            const startChips =
+              roundStartChips[player.id] ?? player.chips - payout + player.bet;
+            const net = player.chips - startChips;
+            return (
+              <Text
+                key={player.id}
+                color={result.winnerIds.includes(player.id) ? 'greenBright' : 'white'}
+              >
+                {player.name.slice(0, 14).padEnd(14)} S:${startChips} B:-${player.bet} P:
+                {payout > 0 ? `+$${payout}` : '—'} E:${player.chips} N:
+                {net >= 0 ? '+' : ''}${net}
+              </Text>
+            );
+          })}
+          {departedPlayers.map((player) => (
+            <Text key={`departed-${player.id}`} color="redBright">
+              {player.name.slice(0, 14).padEnd(14)} — DISCONNECTED
+            </Text>
+          ))}
+        </Box>
+        <Box marginTop={1} flexDirection="column">
+          {isHost ? (
+            <>
+              <Text color="yellowBright" bold>
+                HOST: [N] NEXT GAME · [E] RETURN TO WAITING ROOM
+              </Text>
+              <Text color="gray">Auto-starting next game in {secondsRemaining}s</Text>
+            </>
+          ) : (
+            <Text color="gray">Waiting for host decision...</Text>
+          )}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box

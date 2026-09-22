@@ -4,6 +4,7 @@ import { useState } from 'react';
 interface GameExitConfirmDialogProps {
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
+  readonly compact?: boolean;
 }
 
 type ExitChoice = 'leave' | 'stay';
@@ -36,6 +37,7 @@ function ExitChoiceButton({
 export function GameExitConfirmDialog({
   onConfirm,
   onCancel,
+  compact = false,
 }: GameExitConfirmDialogProps) {
   const [choice, setChoice] = useState<ExitChoice>('stay');
 
@@ -62,8 +64,8 @@ export function GameExitConfirmDialog({
   return (
     <Box
       position="absolute"
-      top={9}
-      left={34}
+      top={compact ? 4 : 9}
+      left={compact ? 13 : 34}
       width={50}
       height={11}
       borderStyle="round"
