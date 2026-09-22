@@ -37,10 +37,11 @@ describe('game layout helpers', () => {
     ).toBe('Your turn!');
   });
 
-  it('uses the compact layout in a normal Windows terminal instead of blocking play', () => {
+  it('uses the full table at the normal 150 by 41 terminal size', () => {
     expect(getGameplayLayoutMode(80, 24)).toBe('compact');
     expect(getGameplayLayoutMode(120, 30)).toBe('compact');
-    expect(getGameplayLayoutMode(150, 45)).toBe('desktop');
+    expect(getGameplayLayoutMode(150, 40)).toBe('compact');
+    expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
     expect(getGameplayLayoutMode(79, 24)).toBe('unsupported');
   });
 });

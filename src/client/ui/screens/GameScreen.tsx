@@ -37,7 +37,9 @@ export type { GameScreenProps } from './game/types';
 // hard lower bound checked before rendering, so Ink never squeezes the table
 // into a smaller terminal.
 export const GAMEPLAY_WIDTH = 150;
-export const GAMEPLAY_HEIGHT = 45;
+// Header (2) + table/action canvas (38) + one-line controls (1). Keeping this
+// at 41 lets a normal 1080p Windows Terminal show the same full table.
+export const GAMEPLAY_HEIGHT = 41;
 export function getGameplayLayoutMode(
   columns: number,
   rows: number,
@@ -135,7 +137,7 @@ function GameBottomStatusBar({
 }: GameBottomStatusBarProps) {
   if (isEntranceActive) {
     return (
-      <Box height={3} justifyContent="center" alignItems="center">
+      <Box height={1} justifyContent="center" alignItems="center">
         <Text color="cyanBright" bold>
           ♦ DEALING IN PROGRESS · ALL ACTIONS LOCKED ♦
         </Text>
@@ -143,11 +145,11 @@ function GameBottomStatusBar({
     );
   }
   if (isRoundEnded) {
-    return <Box height={3} />;
+    return <Box height={1} />;
   }
   if (isWaitingForNextRound) {
     return (
-      <Box height={3} justifyContent="center" alignItems="center">
+      <Box height={1} justifyContent="center" alignItems="center">
         <Text color="yellowBright" bold>
           👁 SPECTATING · YOU WILL JOIN THE TABLE IN THE NEW GAME
         </Text>
@@ -155,7 +157,7 @@ function GameBottomStatusBar({
     );
   }
   return (
-    <Box height={3} justifyContent="center" alignItems="center">
+    <Box height={1} justifyContent="center" alignItems="center">
       <Text color="gray">↑ ↓ </Text>
       <Text color="white">CHOOSE</Text>
       <Text color="gray"> · </Text>
