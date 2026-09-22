@@ -4,6 +4,7 @@ import SelectInput from 'ink-select-input';
 import TextInput from 'ink-text-input';
 import type { GameActionsPanelProps } from './types';
 import { getStatusDisplayInfo } from './gameLayoutHelpers';
+import { GAME_TABLE_CANVAS_HEIGHT } from './layoutConstants';
 
 interface BetInputFormProps {
   readonly betAmount: string;
@@ -351,7 +352,7 @@ export function GameActionsPanel(props: GameActionsPanelProps) {
       flexDirection="column"
       paddingX={1}
       width={45}
-      height={38}
+      height={GAME_TABLE_CANVAS_HEIGHT}
       marginLeft={1}
     >
       <PanelHeader

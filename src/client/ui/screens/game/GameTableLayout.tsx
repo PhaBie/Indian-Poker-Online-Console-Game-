@@ -4,6 +4,7 @@ import { PlayerSeatNode } from './PlayerSeatNode';
 import { PotDisplayBox } from './PotDisplayBox';
 import { DealerDeckCenterBox } from './DealerDeckCenterBox';
 import { useCardBorderGlow } from './useCardBorderGlow';
+import { GAME_TABLE_CANVAS_HEIGHT } from './layoutConstants';
 
 interface PlayerSlotProps {
   readonly player: GamePlayerItem | undefined;
@@ -196,7 +197,7 @@ function TableSlotsLayout({
       borderStyle="round"
       borderColor="cyanBright"
       width={104}
-      height={38}
+      height={GAME_TABLE_CANVAS_HEIGHT}
       flexDirection="column"
       position="relative"
     >

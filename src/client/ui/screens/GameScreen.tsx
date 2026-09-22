@@ -16,6 +16,7 @@ import { GameSideshowResultDialog } from './game/GameSideshowResultDialog';
 import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
 import { GameBrandHeader } from './game/GameBrandHeader';
 import { CompactGameLayout } from './game/CompactGameLayout';
+import { GAME_TABLE_CANVAS_HEIGHT } from './game/layoutConstants';
 import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
 import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
 import { useDealSequenceTracker } from './game/useDealSequenceTracker';
@@ -394,7 +395,12 @@ export function GameScreen({
           alignItems="center"
         >
           <GameBrandHeader hostName={hostName} roomId={roomId} width={GAMEPLAY_WIDTH} />
-          <Box flexDirection="row" width={GAMEPLAY_WIDTH} height={38} position="relative">
+          <Box
+            flexDirection="row"
+            width={GAMEPLAY_WIDTH}
+            height={GAME_TABLE_CANVAS_HEIGHT}
+            position="relative"
+          >
             <GameTableLayout
               pot={effectivePot}
               currentStake={currentStake}

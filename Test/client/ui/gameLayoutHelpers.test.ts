@@ -4,7 +4,11 @@ import {
   getPlayerBadgeInfo,
   getStatusDisplayInfo,
 } from '../../../src/client/ui/screens/game/gameLayoutHelpers';
-import { getGameplayLayoutMode } from '../../../src/client/ui/screens/GameScreen';
+import {
+  GAMEPLAY_HEIGHT,
+  getGameplayLayoutMode,
+} from '../../../src/client/ui/screens/GameScreen';
+import { GAME_TABLE_CANVAS_HEIGHT } from '../../../src/client/ui/screens/game/layoutConstants';
 
 describe('game layout helpers', () => {
   it('places 2, 3, and 4 players in valid seats', () => {
@@ -43,5 +47,9 @@ describe('game layout helpers', () => {
     expect(getGameplayLayoutMode(150, 40)).toBe('compact');
     expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
     expect(getGameplayLayoutMode(79, 24)).toBe('unsupported');
+  });
+
+  it('keeps the desktop canvas inside its 41-row height without flex overlap', () => {
+    expect(3 + GAME_TABLE_CANVAS_HEIGHT + 1).toBe(GAMEPLAY_HEIGHT);
   });
 });
