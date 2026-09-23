@@ -691,7 +691,8 @@ function saveGameHistory(
   },
 ): void {
   try {
-    const historyPath = path.join(process.cwd(), 'History.json');
+    const historyPath = path.join(process.cwd(), 'data', 'runtime', 'History.json');
+    fs.mkdirSync(path.dirname(historyPath), { recursive: true });
     let history: Array<{
       timestamp: string;
       roomId: string;

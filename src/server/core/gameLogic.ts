@@ -220,13 +220,16 @@ export function simulateGameAndLog() {
   console.log('🃏 [GameLogic] เริ่มสร้างสำรับไพ่ใหม่...');
   const deck = createDeck();
   console.log(`✅ [GameLogic] สร้างไพ่เสร็จสิ้น จำนวน ${deck.length} ใบ`);
-  console.log('📦 ข้อมูลในสำรับไพ่ (Deck): ดู simulation.json เพื่อตรวจสอบ', '\n');
+  console.log(
+    '📦 ข้อมูลในสำรับไพ่ (Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
+    '\n',
+  );
 
   console.log(`🔀 [GameLogic] กำลังสับไพ่...`);
   const shuffledDeck = shuffleDeck(deck);
   console.log(`✅ [GameLogic] สับไพ่เสร็จสิ้น`);
   console.log(
-    '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู simulation.json เพื่อตรวจสอบ',
+    '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
     '\n',
   );
 
@@ -291,9 +294,17 @@ export function simulateGameAndLog() {
 
   try {
     const fs = require('fs');
-    fs.writeFileSync('simulation.json', JSON.stringify(simulationData, null, 2));
+    const path = require('path');
+    const simulationPath = path.join(
+      process.cwd(),
+      'data',
+      'generated',
+      'simulation.json',
+    );
+    fs.mkdirSync(path.dirname(simulationPath), { recursive: true });
+    fs.writeFileSync(simulationPath, JSON.stringify(simulationData, null, 2));
     console.log(
-      '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ simulation.json เรียบร้อยแล้ว\n',
+      '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ data/generated/simulation.json เรียบร้อยแล้ว\n',
     );
   } catch (err) {
     console.error('ไม่สามารถบันทึกไฟล์ JSON ได้:', err);
