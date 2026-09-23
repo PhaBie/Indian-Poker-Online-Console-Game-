@@ -39,6 +39,22 @@ bun run dev:game
 
 ใช้ `bun run dev:game:2`, `bun run dev:game:3`, หรือ `bun run dev:game:4` เพื่อดู layout ตามจำนวนผู้เล่น
 
+### run server local / Ngrok (Onlie)
+
+`bun run dev` : รัน server local
+
+## ใช้สำหรับตั้ง powershellโดยไปเอา Key ใน Ngrok มาก่อน
+
+`[Environment]::SetEnvironmentVariable(
+  "NGROK_AUTHTOKEN",
+  "TOKEN จากหน้า ngrok dashboard",
+  "User"
+)`
+
+`bun run server:online` : เมื่อตั้งค่าเสร็จแล้ว ก็พิมพ์นี้เพื่อรันเซิฟเวอรื Onlie
+
+มันจะพิมพ์ URL ประมาณนี้: `wss://xxxxx.ngrok-free.app` ให้ส่ง URL นี้ให้เพื่อน แล้วก็รัน `bun run dev` เพื่อเปิดเกมปกติเลย
+
 ---
 
 ## 🛡️ กฎการทำงานร่วมกันของทีม (Git Workflow)
