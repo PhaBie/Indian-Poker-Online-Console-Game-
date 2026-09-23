@@ -414,7 +414,7 @@ export class GameState {
     return null;
   }
 
-  public executeSideshow(challengerId: string, targetId: string): void {
+  private executeSideshow(challengerId: string, targetId: string): void {
     const challenger = this.activePlayers.find((player) => player.id === challengerId);
     const target = this.activePlayers.find((player) => player.id === targetId);
 
@@ -532,31 +532,6 @@ export class GameState {
 
     // ถ้ายังไม่เหลือคนเดียว ให้คืน null
     return null;
-  }
-
-  public handleTie(winners: Player[]): void {
-    // ถ้าไม่มีผู้ชนะ ก็ยังไม่ต้องจ่าย Pot
-    if (winners.length === 0) {
-      return;
-    }
-
-    // แบ่ง Pot ให้ผู้ชนะที่แต้มเท่ากัน
-    const winnerIds = winners.map((winner) => winner.id);
-    const rewards = calculateSplitPot(this.pot, winnerIds);
-
-    for (const winner of winners) {
-      const reward = rewards[winner.id] ?? 0;
-      if (winner.chips + reward > Number.MAX_SAFE_INTEGER) {
-        throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
-      }
-    }
-
-    for (const winner of winners) {
-      winner.addChips(rewards[winner.id] ?? 0);
-    }
-
-    // จ่าย Pot แล้ว จึงเคลียร์ไว้สำหรับรอบถัดไป
-    this.pot = 0;
   }
 
   public rotateDealer(): void {

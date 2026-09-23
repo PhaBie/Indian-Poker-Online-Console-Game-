@@ -210,23 +210,6 @@ export class Validator {
 
     return parseResult.data as ClientEvent;
   }
-
-  /**
-   * ทำความสะอาดข้อความสตริง
-   * - ตัดช่องว่างส่วนเกินที่หัวและท้ายข้อความ (trim)
-   * - ลบแท็ก HTML เพื่อป้องกัน XSS
-   * - ลบ Control Characters และ ANSI Escape Codes ป้องกันการแสดงผลผิดเพี้ยนบน Console
-   */
-  public sanitizeInput(input: string): string {
-    if (typeof input !== 'string') {
-      return '';
-    }
-
-    return input
-      .replace(/<[^>]*>/g, '')
-      .replace(/[\x00-\x1F\x7F]/g, '')
-      .trim();
-  }
 }
 
 export default Validator;

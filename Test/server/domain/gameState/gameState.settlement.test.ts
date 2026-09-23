@@ -37,7 +37,7 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
     expect(gameState.pot).toBe(0);
   });
 
-  test('[GameState.handleTie] 4.72 ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) → โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
+  test('[GameState.evaluateWinner] 4.72 ชิปผู้ชนะเกินขีดจำกัด (Tie แบ่งหลายคน) → โยน INVALID_AMOUNT ห้ามจ่ายบางส่วน', () => {
     const gameState = createGameStateFixture({ pot: 1000 }, [
       {
         id: 'playerOne',
@@ -46,8 +46,8 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
         chips: 1000,
         cards: [
           { rank: 14, suit: 'SPADES' },
-          { rank: 14, suit: 'HEARTS' },
-          { rank: 14, suit: 'DIAMONDS' },
+          { rank: 10, suit: 'HEARTS' },
+          { rank: 8, suit: 'DIAMONDS' },
         ],
       },
       {
@@ -57,16 +57,13 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
         chips: Number.MAX_SAFE_INTEGER - 100,
         cards: [
           { rank: 14, suit: 'CLUBS' },
-          { rank: 13, suit: 'SPADES' },
-          { rank: 13, suit: 'HEARTS' },
+          { rank: 10, suit: 'DIAMONDS' },
+          { rank: 8, suit: 'SPADES' },
         ],
       },
     ]);
 
-    expectGameErrorWithCode(
-      () => gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]),
-      'INVALID_AMOUNT',
-    );
+    expectGameErrorWithCode(() => gameState.evaluateWinner(), 'INVALID_AMOUNT');
 
     expect(gameState.activePlayers[0].chips).toBe(1000);
     expect(gameState.activePlayers[1].chips).toBe(Number.MAX_SAFE_INTEGER - 100);
@@ -105,23 +102,6 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
     expect(gameState.pot).toBe(500);
   });
 
-  test('[GameState.handleTie] 4.74 เรียก handleTie ซ้ำหลัง Pot เป็นศูนย์แล้ว → ชิปทุกคนต้องไม่เพิ่ม', () => {
-    const gameState = createGameStateFixture({ pot: 100 }, [
-      { id: 'p1', name: 'P1', status: 'ACTIVE', chips: 1000 },
-      { id: 'p2', name: 'P2', status: 'ACTIVE', chips: 1000 },
-    ]);
-
-    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-    expect(gameState.activePlayers[0].chips).toBe(1050);
-    expect(gameState.activePlayers[1].chips).toBe(1050);
-    expect(gameState.pot).toBe(0);
-
-    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
-    expect(gameState.activePlayers[0].chips).toBe(1050);
-    expect(gameState.activePlayers[1].chips).toBe(1050);
-    expect(gameState.pot).toBe(0);
-  });
-
   test('[GameState.endGame] 4.11 คนอื่นหมอบหมดเหลือผู้เล่นคนเดียว → จบเกมและโอนเงิน Pot 1500 ให้ผู้เล่นที่เหลือรอด', () => {
     const gameState = createGameStateFixture({ pot: 1500 }, [
       { id: 'survivor', name: 'Survivor', status: 'ACTIVE', chips: 1000 },
@@ -151,25 +131,61 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
     expect(survivor).toBe(gameState.activePlayers[1]);
   });
 
-  test('[GameState.handleTie] 4.27 เสมอ 3 คน → แบ่งกองกลางเท่าๆ กัน และรักษาสมดุลเงินในระบบสมบูรณ์', () => {
+  test('[GameState.evaluateWinner] 4.27 เสมอ 3 คน → แบ่งกองกลางเท่าๆ กัน และรักษาสมดุลเงินในระบบสมบูรณ์', () => {
     const gameState = createGameStateFixture({ pot: 300 }, [
-      { id: 'tiedPlayer1', name: 'Tied Player 1', status: 'ACTIVE', chips: 100 },
-      { id: 'tiedPlayer2', name: 'Tied Player 2', status: 'ACTIVE', chips: 100 },
-      { id: 'tiedPlayer3', name: 'Tied Player 3', status: 'ACTIVE', chips: 100 },
+      {
+        id: 'tiedPlayer1',
+        name: 'Tied Player 1',
+        status: 'ACTIVE',
+        chips: 100,
+        cards: [
+          { rank: 14, suit: 'SPADES' },
+          { rank: 10, suit: 'HEARTS' },
+          { rank: 8, suit: 'DIAMONDS' },
+        ],
+      },
+      {
+        id: 'tiedPlayer2',
+        name: 'Tied Player 2',
+        status: 'ACTIVE',
+        chips: 100,
+        cards: [
+          { rank: 14, suit: 'CLUBS' },
+          { rank: 10, suit: 'DIAMONDS' },
+          { rank: 8, suit: 'SPADES' },
+        ],
+      },
+      {
+        id: 'tiedPlayer3',
+        name: 'Tied Player 3',
+        status: 'ACTIVE',
+        chips: 100,
+        cards: [
+          { rank: 14, suit: 'HEARTS' },
+          { rank: 10, suit: 'CLUBS' },
+          { rank: 8, suit: 'CLUBS' },
+        ],
+      },
     ]);
     const initialSystemWealth = 100 + 100 + 100 + 300;
     const [tiedPlayer1, tiedPlayer2, tiedPlayer3] = gameState.activePlayers;
 
-    gameState.handleTie([tiedPlayer1, tiedPlayer2, tiedPlayer3]);
+    const gameResult = gameState.evaluateWinner();
 
+    expect(gameResult?.winnerIds).toEqual(['tiedPlayer1', 'tiedPlayer2', 'tiedPlayer3']);
+    expect(gameResult?.payouts).toEqual({
+      tiedPlayer1: 100,
+      tiedPlayer2: 100,
+      tiedPlayer3: 100,
+    });
     expect(tiedPlayer1.chips).toBe(200);
     expect(tiedPlayer2.chips).toBe(200);
     expect(tiedPlayer3.chips).toBe(200);
+    expect(gameState.pot).toBe(0);
 
     const finalSystemWealth =
       tiedPlayer1.chips + tiedPlayer2.chips + tiedPlayer3.chips + gameState.pot;
     expect(finalSystemWealth).toBe(initialSystemWealth);
-    expect(gameState.pot).toBe(0);
   });
 
   test('[GameState.checkLastManStanding] 4.44 คืนค่า null เมื่อเหลือผู้เล่น ACTIVE มากกว่า 1 คน', () => {
@@ -403,7 +419,7 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
     expect(gameState.activePlayers[0].chips).toBe(2000);
   });
 
-  test('[GameState.handleTie] 4.69 จัดการเศษชิปเมื่อแบ่งไม่ลงตัว (Pot 101 แบ่ง 2 คน)', () => {
+  test('[GameState.evaluateWinner] 4.69 จัดการเศษชิปเมื่อแบ่งไม่ลงตัว (Pot 101 แบ่ง 2 คน)', () => {
     const gameState = createGameStateFixture({ pot: 101 }, [
       {
         id: 'playerOne',
@@ -412,8 +428,8 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
         chips: 1000,
         cards: [
           { rank: 14, suit: 'SPADES' },
-          { rank: 14, suit: 'HEARTS' },
-          { rank: 14, suit: 'DIAMONDS' },
+          { rank: 10, suit: 'HEARTS' },
+          { rank: 8, suit: 'DIAMONDS' },
         ],
       },
       {
@@ -423,21 +439,24 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
         chips: 1000,
         cards: [
           { rank: 14, suit: 'CLUBS' },
-          { rank: 14, suit: 'SPADES' },
-          { rank: 14, suit: 'HEARTS' },
+          { rank: 10, suit: 'DIAMONDS' },
+          { rank: 8, suit: 'SPADES' },
         ],
       },
     ]);
 
-    gameState.handleTie([gameState.activePlayers[0], gameState.activePlayers[1]]);
+    const initialSystemWealth = 1000 + 1000 + 101;
+    const [playerOne, playerTwo] = gameState.activePlayers;
 
-    const expectedTotalChips = 2101;
-    const actualTotalChips =
-      gameState.activePlayers[0].chips + gameState.activePlayers[1].chips + gameState.pot;
-    expect(actualTotalChips).toBe(expectedTotalChips);
+    const gameResult = gameState.evaluateWinner();
 
-    expect(gameState.activePlayers[0].chips).toBe(1051);
-    expect(gameState.activePlayers[1].chips).toBe(1050);
+    expect(gameResult?.winnerIds).toEqual(['playerOne', 'playerTwo']);
+    expect(gameResult?.payouts).toEqual({ playerOne: 51, playerTwo: 50 });
+    expect(playerOne.chips).toBe(1051);
+    expect(playerTwo.chips).toBe(1050);
     expect(gameState.pot).toBe(0);
+
+    const finalSystemWealth = playerOne.chips + playerTwo.chips + gameState.pot;
+    expect(finalSystemWealth).toBe(initialSystemWealth);
   });
 });
