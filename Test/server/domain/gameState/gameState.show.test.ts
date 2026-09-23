@@ -4,6 +4,7 @@ import {
   WrongTurnError,
   InvalidActionError,
 } from '../../../../src/server/domain/errors/GameError';
+import type { Card } from '../../../../src/shared/types';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
 describe('gameState.show', () => {
@@ -89,37 +90,328 @@ describe('gameState.show', () => {
     expect(gameState.pendingSideshow).toBeNull();
   });
 
-  test.skip('[GameState.executeSideshow] 4.10 [พักไว้หลังเดโม] → ผู้แพ้เปลี่ยนสถานะเป็น FOLDED', () => {
-    const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
-      {
-        id: 'loser',
-        name: 'Loser',
-        status: 'ACTIVE',
-        chips: 1000,
-        cards: [
-          { suit: 'SPADES', rank: 2 },
-          { suit: 'HEARTS', rank: 3 },
-          { suit: 'DIAMONDS', rank: 4 },
-        ],
-      },
-      {
-        id: 'winner',
-        name: 'Winner',
-        status: 'ACTIVE',
-        chips: 1000,
-        cards: [
-          { suit: 'SPADES', rank: 14 },
-          { suit: 'HEARTS', rank: 14 },
-          { suit: 'DIAMONDS', rank: 14 },
-        ],
-      },
-    ]);
-    const [loser, winner] = gameState.activePlayers;
+  const HIGH_TRAIL_CARDS: Card[] = [
+    { suit: 'SPADES', rank: 14 },
+    { suit: 'HEARTS', rank: 14 },
+    { suit: 'DIAMONDS', rank: 14 },
+  ];
 
-    gameState.executeSideshow(loser.id, winner.id);
+  const LOW_CARDS: Card[] = [
+    { suit: 'SPADES', rank: 2 },
+    { suit: 'HEARTS', rank: 3 },
+    { suit: 'DIAMONDS', rank: 4 },
+  ];
 
-    expect(loser.status).toBe('FOLDED');
-    expect(winner.status).toBe('ACTIVE');
+  const TIED_CARDS_A: Card[] = [
+    { suit: 'SPADES', rank: 14 },
+    { suit: 'HEARTS', rank: 13 },
+    { suit: 'DIAMONDS', rank: 5 },
+  ];
+
+  const TIED_CARDS_B: Card[] = [
+    { suit: 'CLUBS', rank: 14 },
+    { suit: 'DIAMONDS', rank: 13 },
+    { suit: 'SPADES', rank: 5 },
+  ];
+
+  const createSideshowTableFixture = (overrides?: {
+    pot?: number;
+    currentStake?: number;
+    targetCards?: Card[];
+    challengerCards?: Card[];
+    thirdPlayerCards?: Card[];
+    targetChips?: number;
+    challengerChips?: number;
+    thirdPlayerChips?: number;
+  }) => {
+    return createGameStateFixture(
+      {
+        pot: overrides?.pot ?? 300,
+        currentPlayerIndex: 1,
+        currentStake: overrides?.currentStake ?? 50,
+      },
+      [
+        {
+          id: 'playerTarget',
+          name: 'Target',
+          status: 'ACTIVE',
+          chips: overrides?.targetChips ?? 1000,
+          isBlind: false,
+          cards: overrides?.targetCards,
+        },
+        {
+          id: 'playerChallenger',
+          name: 'Challenger',
+          status: 'ACTIVE',
+          chips: overrides?.challengerChips ?? 1000,
+          isBlind: false,
+          cards: overrides?.challengerCards,
+        },
+        {
+          id: 'playerThird',
+          name: 'Third Player',
+          status: 'ACTIVE',
+          chips: overrides?.thirdPlayerChips ?? 1000,
+          isBlind: false,
+          cards: overrides?.thirdPlayerCards,
+        },
+      ],
+    );
+  };
+
+  test('[GameState.processAction] 4.10.1 ผู้เล่น Seen ขอ Sideshow สำเร็จ → หักชิป เพิ่ม Pot และบันทึก pendingSideshow ชี้ไปยังผู้เล่นก่อนหน้า', () => {
+    const initialPot = 300;
+    const currentStake = 50;
+    const gameState = createSideshowTableFixture({
+      pot: initialPot,
+      currentStake,
+    });
+
+    const isHandTerminated = gameState.processAction('playerChallenger', 'SIDESHOW');
+
+    expect(isHandTerminated).toBe(false);
+    expect(gameState.activePlayers[1].chips).toBe(900);
+    expect(gameState.pot).toBe(400);
+    expect(gameState.pendingSideshow).toEqual({
+      challengerId: 'playerChallenger',
+      targetId: 'playerTarget',
+    });
+  });
+
+  test.each([
+    [
+      'เป้าหมายไพ่สูงกว่าชนะ → ผู้ขอหมอบ (FOLDED)',
+      LOW_CARDS,
+      HIGH_TRAIL_CARDS,
+      'playerTarget',
+      'playerChallenger',
+    ],
+    [
+      'ผู้ขอไพ่สูงกว่าชนะ → เป้าหมายหมอบ (FOLDED)',
+      HIGH_TRAIL_CARDS,
+      LOW_CARDS,
+      'playerChallenger',
+      'playerTarget',
+    ],
+    [
+      'หน้าไพ่เสมอกันทุกใบ → ผู้ขอเป็นฝ่ายหมอบ (FOLDED) ตามกติกา Teen Patti',
+      TIED_CARDS_A,
+      TIED_CARDS_B,
+      'playerTarget',
+      'playerChallenger',
+    ],
+  ])(
+    '[GameState.processAction] 4.10.2 เป้าหมายยอมรับคำขอ Sideshow (%s)',
+    (_scenario, challengerCards, targetCards, expectedWinnerId, expectedLoserId) => {
+      const gameState = createSideshowTableFixture({
+        challengerCards,
+        targetCards,
+      });
+
+      gameState.processAction('playerChallenger', 'SIDESHOW');
+      const isHandTerminated = gameState.processAction('playerTarget', 'ACCEPT_SIDESHOW');
+
+      expect(isHandTerminated).toBe(false);
+      expect(gameState.pendingSideshow).toBeNull();
+      expect(gameState.lastSideshow?.winnerId).toBe(expectedWinnerId);
+      expect(gameState.lastSideshow?.loserId).toBe(expectedLoserId);
+
+      const winnerPlayer = gameState.activePlayers.find(
+        (player) => player.id === expectedWinnerId,
+      );
+      const loserPlayer = gameState.activePlayers.find(
+        (player) => player.id === expectedLoserId,
+      );
+      expect(winnerPlayer?.status).toBe('ACTIVE');
+      expect(loserPlayer?.status).toBe('FOLDED');
+    },
+  );
+
+  test('[GameState.processAction] 4.10.3 เป้าหมายปฏิเสธคำขอ Sideshow (REJECT_SIDESHOW) → ไม่มีผู้เล่นหมอบและไม่เปิดเผยข้อมูลไพ่', () => {
+    const gameState = createSideshowTableFixture({
+      targetCards: HIGH_TRAIL_CARDS,
+      challengerCards: LOW_CARDS,
+    });
+
+    gameState.processAction('playerChallenger', 'SIDESHOW');
+    const isHandTerminated = gameState.processAction('playerTarget', 'REJECT_SIDESHOW');
+
+    expect(isHandTerminated).toBe(false);
+    expect(gameState.pendingSideshow).toBeNull();
+    expect(gameState.lastSideshow).toBeNull();
+    expect(gameState.lastSideshowNotice).toEqual({
+      challengerId: 'playerChallenger',
+      targetId: 'playerTarget',
+      outcome: 'DECLINED',
+    });
+    expect(gameState.activePlayers[0].status).toBe('ACTIVE');
+    expect(gameState.activePlayers[1].status).toBe('ACTIVE');
+    expect(gameState.activePlayers[2].status).toBe('ACTIVE');
+  });
+
+  test.each([
+    [
+      'ผู้เล่นที่ไม่ใช่เป้าหมายพยายามกด ACCEPT_SIDESHOW → โยน WrongTurnError',
+      'playerThird',
+      'ACCEPT_SIDESHOW' as const,
+      WrongTurnError,
+    ],
+    [
+      'ผู้ขอพยายามกด ACCEPT_SIDESHOW ให้ตนเอง → โยน WrongTurnError',
+      'playerChallenger',
+      'ACCEPT_SIDESHOW' as const,
+      WrongTurnError,
+    ],
+    [
+      'ผู้เล่นเป้าหมายพยายามทำ Action อื่นที่ไม่ใช่การตอบรับ Sideshow เช่น CALL → โยน InvalidActionError',
+      'playerTarget',
+      'CALL' as const,
+      InvalidActionError,
+    ],
+    [
+      'ผู้เล่นคนอื่นพยายาม FOLD ระหว่างมีคำขอค้าง → โยน InvalidActionError',
+      'playerThird',
+      'FOLD' as const,
+      InvalidActionError,
+    ],
+  ])(
+    '[GameState.processAction] 4.10.4 สิทธิ์การตอบรับขณะ Sideshow ค้าง (%s)',
+    (_scenario, actingPlayerId, action, expectedError) => {
+      const gameState = createSideshowTableFixture();
+      gameState.processAction('playerChallenger', 'SIDESHOW');
+      expect(() => {
+        gameState.processAction(actingPlayerId, action);
+      }).toThrow(expectedError);
+    },
+  );
+
+  test.each([
+    [
+      'เหลือผู้เล่น ACTIVE เพียง 2 คน → โยน InvalidActionError',
+      () =>
+        createGameStateFixture({ pot: 300, currentPlayerIndex: 0, currentStake: 50 }, [
+          {
+            id: 'playerA',
+            name: 'Player A',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerB',
+            name: 'Player B',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+        ]),
+      'playerA',
+      InvalidActionError,
+    ],
+    [
+      'ยังมีผู้เล่น ACTIVE ที่เป็น Blind อยู่ในโต๊ะ → โยน InvalidActionError',
+      () =>
+        createGameStateFixture({ pot: 300, currentPlayerIndex: 1, currentStake: 50 }, [
+          {
+            id: 'playerA',
+            name: 'Player A',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: true,
+          },
+          {
+            id: 'playerB',
+            name: 'Player B',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerC',
+            name: 'Player C',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+        ]),
+      'playerB',
+      InvalidActionError,
+    ],
+    [
+      'ไม่ใช่ตาของผู้เล่นที่ขอ Sideshow → โยน WrongTurnError',
+      () =>
+        createGameStateFixture({ pot: 300, currentPlayerIndex: 0, currentStake: 50 }, [
+          {
+            id: 'playerA',
+            name: 'Player A',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerB',
+            name: 'Player B',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+          {
+            id: 'playerC',
+            name: 'Player C',
+            status: 'ACTIVE',
+            chips: 1000,
+            isBlind: false,
+          },
+        ]),
+      'playerB',
+      WrongTurnError,
+    ],
+  ])(
+    '[GameState.processAction] 4.10.5 เงื่อนไขที่ไม่อนุญาตให้ขอ Sideshow (%s)',
+    (_scenario, setup, actingPlayerId, expectedError) => {
+      const gameState = setup();
+      expect(() => {
+        gameState.processAction(actingPlayerId, 'SIDESHOW');
+      }).toThrow(expectedError);
+    },
+  );
+
+  test('[GameState.processAction] 4.10.5 ผู้เล่นมีชิปไม่พอสำหรับ Sideshow (ต้องเท่ากับ currentStake * 2) → โยน INSUFFICIENT_CHIPS', () => {
+    const shortStackGameState = createSideshowTableFixture({
+      challengerChips: 80,
+    });
+    expectGameErrorWithCode(
+      () => shortStackGameState.processAction('playerChallenger', 'SIDESHOW'),
+      'INSUFFICIENT_CHIPS',
+    );
+    expect(shortStackGameState.activePlayers[1].chips).toBe(80);
+    expect(shortStackGameState.pot).toBe(300);
+    expect(shortStackGameState.pendingSideshow).toBeNull();
+  });
+
+  test('[GameState.processAction] 4.10.6 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
+    const initialPot = 500;
+    const gameState = createSideshowTableFixture({
+      pot: initialPot,
+      targetCards: HIGH_TRAIL_CARDS,
+      challengerCards: LOW_CARDS,
+    });
+
+    gameState.processAction('playerChallenger', 'SIDESHOW');
+    gameState.handlePlayerDisconnect('playerThird');
+    const isHandTerminated = gameState.processAction('playerTarget', 'ACCEPT_SIDESHOW');
+
+    expect(isHandTerminated).toBe(true);
+    expect(gameState.checkLastManStanding()?.id).toBe('playerTarget');
+
+    const result = gameState.endGame();
+    expect(result?.winnerIds).toEqual(['playerTarget']);
+    expect(gameState.pot).toBe(0);
+    expect(gameState.activePlayers[0].chips).toBe(1000 + initialPot + 100);
+
+    const secondEndGameResult = gameState.endGame();
+    expect(secondEndGameResult).toBe(result);
+    expect(gameState.activePlayers[0].chips).toBe(1000 + initialPot + 100);
   });
 
   test('[GameState.processAction] 4.12 เหลือผู้เล่น Blind 2 คนและไพ่เสมอ → ผู้ขอจ่ายค่า SHOW และอีกคนรับกองกลางทั้งหมด', () => {

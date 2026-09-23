@@ -106,5 +106,160 @@ describe('13. ระบบควบคุมการกระทำในเก
       const determinedEscapeAction = getGameEscapeAction(true, 'menu', true);
       expect(determinedEscapeAction).toBeNull();
     });
+
+    test('[getGameplayActions] 13.8 ผู้เล่นสถานะ Seen ถึงตาเล่นในโต๊ะที่มีผู้เล่น ACTIVE มากกว่า 2 คนและทุกคนเป็น Seen → แสดงปุ่ม DUEL เพิ่มเติม', () => {
+      const threeSeenActivePlayers = [
+        {
+          id: 'player_me',
+          name: 'Me',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_target',
+          name: 'Target',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_third',
+          name: 'Third',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+      ];
+
+      const availableActionList = getGameplayActions({
+        players: threeSeenActivePlayers,
+        myPlayerId: 'player_me',
+        currentTurnPlayerId: 'player_me',
+        currentStake: 50,
+        pendingSideshow: null,
+      });
+
+      const duelAction = availableActionList.find(
+        (action) => action.value === 'SIDESHOW',
+      );
+      expect(duelAction).toEqual({ label: 'DUEL', value: 'SIDESHOW', hint: 'PREVIOUS' });
+    });
+
+    test('[getGameplayActions] 13.9 โต๊ะเหลือผู้เล่นเพียง 2 คน หรือยังมีผู้เล่นในสถานะ Blind → ซ่อนปุ่ม DUEL', () => {
+      const twoPlayersOnly = [
+        {
+          id: 'player_me',
+          name: 'Me',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_opponent',
+          name: 'Opponent',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+      ];
+      const actionsForTwoPlayers = getGameplayActions({
+        players: twoPlayersOnly,
+        myPlayerId: 'player_me',
+        currentTurnPlayerId: 'player_me',
+        currentStake: 50,
+        pendingSideshow: null,
+      });
+      expect(actionsForTwoPlayers.some((action) => action.value === 'SIDESHOW')).toBe(
+        false,
+      );
+
+      const threePlayersWithOneBlind = [
+        {
+          id: 'player_me',
+          name: 'Me',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_target',
+          name: 'Target',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_blind',
+          name: 'Blind Player',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: true,
+        },
+      ];
+      const actionsWithBlindPlayer = getGameplayActions({
+        players: threePlayersWithOneBlind,
+        myPlayerId: 'player_me',
+        currentTurnPlayerId: 'player_me',
+        currentStake: 50,
+        pendingSideshow: null,
+      });
+      expect(actionsWithBlindPlayer.some((action) => action.value === 'SIDESHOW')).toBe(
+        false,
+      );
+    });
+
+    test('[getGameplayActions] 13.10 ผู้เล่นเป้าหมายของคำขอ Sideshow (Target) → แสดงเฉพาะตัวเลือก ACCEPT และ DECLINE', () => {
+      const threeSeenActivePlayers = [
+        {
+          id: 'player_challenger',
+          name: 'Challenger',
+          chips: 900,
+          bet: 100,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_target',
+          name: 'Target',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+        {
+          id: 'player_third',
+          name: 'Third',
+          chips: 1000,
+          bet: 50,
+          status: 'ACTIVE' as const,
+          isBlind: false,
+        },
+      ];
+
+      const availableActionList = getGameplayActions({
+        players: threeSeenActivePlayers,
+        myPlayerId: 'player_target',
+        currentTurnPlayerId: 'player_challenger',
+        currentStake: 50,
+        pendingSideshow: {
+          challengerId: 'player_challenger',
+          targetId: 'player_target',
+        },
+      });
+
+      expect(availableActionList).toEqual([
+        { label: 'ACCEPT', value: 'ACCEPT_SIDESHOW' },
+        { label: 'DECLINE', value: 'REJECT_SIDESHOW' },
+      ]);
+    });
   });
 });

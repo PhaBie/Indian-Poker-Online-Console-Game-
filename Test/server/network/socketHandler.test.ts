@@ -18,6 +18,23 @@ function client(events: ServerEvent[]): WSWebSocket {
   } as unknown as WSWebSocket;
 }
 
+function getRequiredGameStateUpdate(
+  events: ServerEvent[],
+): Extract<ServerEvent, { type: 'GAME_STATE_UPDATE' }>['payload'] {
+  const latestEvent = [...events]
+    .reverse()
+    .find((event) => event.type === 'GAME_STATE_UPDATE');
+
+  expect(latestEvent).toBeDefined();
+  expect(latestEvent?.type).toBe('GAME_STATE_UPDATE');
+
+  if (!latestEvent || latestEvent.type !== 'GAME_STATE_UPDATE') {
+    throw new Error('Expected GAME_STATE_UPDATE event was not received');
+  }
+
+  return latestEvent.payload;
+}
+
 describe('host-controlled post-round flow', () => {
   let context: NetworkContext;
 
@@ -110,10 +127,7 @@ describe('host-controlled post-round flow', () => {
     room.join(waiting);
     const events: ServerEvent[] = [];
     const hostClient = client(events);
-    context.connectedClients.set(hostClient, {
-      playerId: host.id,
-      roomId: room.roomId,
-    });
+    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
 
     handleClientMessage(hostClient, { type: 'NEXT_GAME' }, context);
 
@@ -248,5 +262,254 @@ describe('host-controlled post-round flow', () => {
     expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
       { id: firstGuest.id, name: firstGuest.name, status: 'DISCONNECTED' },
     ]);
+  });
+});
+
+describe('การรักษาความลับของไพ่ระดับเครือข่าย (Sideshow Network Card Privacy)', () => {
+  let context: NetworkContext;
+  const sessions = new Map<string, string>();
+
+  beforeEach(() => {
+    sessions.clear();
+    context = {
+      roomManager: new RoomManager(),
+      sessionStore: {
+        createSession: (playerId: string) => {
+          const token = `reconnect-token-${playerId}`;
+          sessions.set(token, playerId);
+          return token;
+        },
+        getPlayerId: (token: string) => sessions.get(token) ?? null,
+      },
+      connectedClients: new Map(),
+    };
+  });
+
+  function setupThreePlayerGameForSideshow(roomId: string = 'sideshowRoom') {
+    const challenger = new Player('playerChallenger', 'Challenger');
+    const target = new Player('playerTarget', 'Target');
+    const thirdPlayer = new Player('playerThird', 'Third Player');
+    const room = context.roomManager.createRoom(roomId, challenger, 4);
+    room.join(target);
+    room.join(thirdPlayer);
+
+    const challengerEvents: ServerEvent[] = [];
+    const targetEvents: ServerEvent[] = [];
+    const thirdPlayerEvents: ServerEvent[] = [];
+
+    const challengerClient = client(challengerEvents);
+    const targetClient = client(targetEvents);
+    const thirdPlayerClient = client(thirdPlayerEvents);
+
+    context.connectedClients.set(challengerClient, {
+      playerId: challenger.id,
+      roomId: room.roomId,
+    });
+    context.connectedClients.set(targetClient, {
+      playerId: target.id,
+      roomId: room.roomId,
+    });
+    context.connectedClients.set(thirdPlayerClient, {
+      playerId: thirdPlayer.id,
+      roomId: room.roomId,
+    });
+
+    room.startGame(challenger.id);
+
+    for (const activePlayer of room.gameState!.activePlayers) {
+      activePlayer.isBlind = false;
+    }
+
+    room.gameState!.activePlayers = [target, challenger, thirdPlayer];
+    room.gameState!.currentPlayerIndex = 1;
+
+    challenger.privateCards = [
+      { suit: 'SPADES', rank: 14 },
+      { suit: 'HEARTS', rank: 14 },
+      { suit: 'DIAMONDS', rank: 14 },
+    ];
+    target.privateCards = [
+      { suit: 'SPADES', rank: 2 },
+      { suit: 'HEARTS', rank: 3 },
+      { suit: 'DIAMONDS', rank: 4 },
+    ];
+    thirdPlayer.privateCards = [
+      { suit: 'CLUBS', rank: 7 },
+      { suit: 'DIAMONDS', rank: 8 },
+      { suit: 'HEARTS', rank: 9 },
+    ];
+
+    return {
+      room,
+      challenger,
+      target,
+      thirdPlayer,
+      challengerClient,
+      targetClient,
+      thirdPlayerClient,
+      challengerEvents,
+      targetEvents,
+      thirdPlayerEvents,
+    };
+  }
+
+  test('[NetworkPrivacy] 8.1 คู่ดวลทั้งสองฝ่ายได้รับผลและไพ่ของคู่ดวล ขณะที่ผู้เล่นคนที่สามได้รับ sideshowResult เป็น null', () => {
+    const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-1');
+
+    handleClientMessage(
+      fixture.challengerClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'SIDESHOW' } },
+      context,
+    );
+
+    handleClientMessage(
+      fixture.targetClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'ACCEPT_SIDESHOW' } },
+      context,
+    );
+
+    const challengerPayload = getRequiredGameStateUpdate(fixture.challengerEvents);
+    const targetPayload = getRequiredGameStateUpdate(fixture.targetEvents);
+    const thirdPartyPayload = getRequiredGameStateUpdate(fixture.thirdPlayerEvents);
+
+    expect(challengerPayload.sideshowResult).not.toBeNull();
+    expect(challengerPayload.sideshowResult?.cards).toEqual({
+      playerChallenger: fixture.challenger.privateCards,
+      playerTarget: fixture.target.privateCards,
+    });
+
+    expect(targetPayload.sideshowResult).not.toBeNull();
+    expect(targetPayload.sideshowResult?.cards).toEqual({
+      playerChallenger: fixture.challenger.privateCards,
+      playerTarget: fixture.target.privateCards,
+    });
+
+    expect(thirdPartyPayload.sideshowResult).toBeNull();
+    expect(thirdPartyPayload.showdownCards).toBeNull();
+
+    const serializedThirdPartyPayload = JSON.stringify(thirdPartyPayload);
+    expect(serializedThirdPartyPayload.includes('"rank":14')).toBe(false);
+    expect(serializedThirdPartyPayload.includes('"rank":2')).toBe(false);
+  });
+
+  test('[NetworkPrivacy] 8.2 การปฏิเสธ Sideshow (Decline) ต้องไม่ส่งข้อมูลไพ่ของคู่ดวลให้ผู้เล่นคนใดในห้อง', () => {
+    const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-2');
+
+    handleClientMessage(
+      fixture.challengerClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'SIDESHOW' } },
+      context,
+    );
+
+    handleClientMessage(
+      fixture.targetClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'REJECT_SIDESHOW' } },
+      context,
+    );
+
+    const challengerPayload = getRequiredGameStateUpdate(fixture.challengerEvents);
+    const targetPayload = getRequiredGameStateUpdate(fixture.targetEvents);
+    const thirdPartyPayload = getRequiredGameStateUpdate(fixture.thirdPlayerEvents);
+
+    expect(challengerPayload.sideshowResult).toBeNull();
+    expect(targetPayload.sideshowResult).toBeNull();
+    expect(thirdPartyPayload.sideshowResult).toBeNull();
+
+    expect(challengerPayload.sideshowNotice).toEqual({
+      challengerId: 'playerChallenger',
+      targetId: 'playerTarget',
+      outcome: 'DECLINED',
+    });
+    expect(thirdPartyPayload.sideshowNotice).toEqual({
+      challengerId: 'playerChallenger',
+      targetId: 'playerTarget',
+      outcome: 'DECLINED',
+    });
+  });
+
+  test('[NetworkPrivacy] 8.3 เมื่อครบเวลาแสดงผล (Clear Delay) ข้อมูลไพ่ Sideshow จะถูกล้างและส่งค่า null ให้ทุกคน', () => {
+    jest.useFakeTimers();
+    try {
+      const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-3');
+
+      handleClientMessage(
+        fixture.challengerClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'SIDESHOW' } },
+        context,
+      );
+
+      handleClientMessage(
+        fixture.targetClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'ACCEPT_SIDESHOW' } },
+        context,
+      );
+
+      expect(fixture.room.gameState?.lastSideshow).not.toBeNull();
+
+      jest.advanceTimersByTime(6_000);
+
+      expect(fixture.room.gameState?.lastSideshow).toBeNull();
+
+      const clearedChallengerPayload = getRequiredGameStateUpdate(
+        fixture.challengerEvents,
+      );
+      const clearedTargetPayload = getRequiredGameStateUpdate(fixture.targetEvents);
+
+      expect(clearedChallengerPayload.sideshowResult).toBeNull();
+      expect(clearedTargetPayload.sideshowResult).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('[NetworkPrivacy] 8.4 ผู้เล่นคนที่สามที่เชื่อมต่อใหม่ (Reconnect) ระหว่างช่วงแสดงผล ต้องไม่ได้รับข้อมูลไพ่ของคู่ดวล', () => {
+    const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-4');
+    const thirdPlayerReconnectToken = context.sessionStore.createSession(
+      fixture.thirdPlayer.id,
+    );
+
+    handleClientMessage(
+      fixture.challengerClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'SIDESHOW' } },
+      context,
+    );
+
+    handleClientMessage(
+      fixture.targetClient,
+      { type: 'PLAYER_ACTION', payload: { action: 'ACCEPT_SIDESHOW' } },
+      context,
+    );
+
+    expect(fixture.room.gameState?.lastSideshow).not.toBeNull();
+
+    fixture.thirdPlayer.status = 'DISCONNECTED';
+
+    const thirdPlayerReconnectEvents: ServerEvent[] = [];
+    const thirdPlayerReconnectClient = client(thirdPlayerReconnectEvents);
+
+    handleClientMessage(
+      thirdPlayerReconnectClient,
+      {
+        type: 'JOIN_ROOM',
+        payload: {
+          playerName: fixture.thirdPlayer.name,
+          roomId: fixture.room.roomId,
+          reconnectToken: thirdPlayerReconnectToken,
+        },
+      },
+      context,
+    );
+
+    expect(fixture.room.getPlayer(fixture.thirdPlayer.id)?.status).toBe('WAITING');
+
+    const reconnectedThirdPartyPayload = getRequiredGameStateUpdate(
+      thirdPlayerReconnectEvents,
+    );
+    expect(reconnectedThirdPartyPayload.sideshowResult).toBeNull();
+    expect(reconnectedThirdPartyPayload.showdownCards).toBeNull();
+
+    const serializedPayload = JSON.stringify(reconnectedThirdPartyPayload);
+    expect(serializedPayload.includes('"rank":14')).toBe(false);
+    expect(serializedPayload.includes('"rank":2')).toBe(false);
   });
 });

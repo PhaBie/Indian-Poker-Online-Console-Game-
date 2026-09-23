@@ -44,4 +44,4 @@ bun test ./Test/server/domain/player/player.money.test.ts
 
 - `fixtures/` ใช้เตรียมข้อมูลตั้งต้นสำหรับทดสอบ (Instance จริง ไม่ใช่ Mock) ส่วน `helpers/` ใช้ช่วยตรวจผล
 - การจัดกลุ่มเทสต์: `GameState` ถูกแยกตามพฤติกรรม (`CALL`, `BET`, `RAISE`, `SHOW`), ส่วน `flow` ใช้จำลองหลายคำสั่งต่อเนื่องภายในรอบ และ `player.cards` เน้นทดสอบการรับไพ่ ดูไพ่ และคืนข้อมูลไพ่
-- ข้อกำหนดและเงื่อนไขของ GameState ให้อ่านจาก `Documentation/gameState-contract.md` (โดยฟีเจอร์เปรียบเทียบไพ่ `Sideshow` ปัจจุบันถูกพักหรือ Skip ไว้ทำหลังเดโม)
+- ข้อกำหนดและเงื่อนไขของ GameState ให้อ่านจาก `Documentation/gameState-contract.md` (โดยฟีเจอร์การดวลไพ่ `Sideshow`/`DUEL` ได้รับการตรวจสอบ flow และรักษาความลับของไพ่ Card Privacy ในชุดทดสอบครบถ้วน)
