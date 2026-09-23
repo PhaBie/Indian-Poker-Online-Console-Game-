@@ -134,3 +134,10 @@ export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplay
   }
   return { text: 'Waiting for turn...', color: 'white' };
 }
+
+export function resolveTableParticipants<T extends { readonly status: string }>(
+  players: readonly T[],
+): readonly T[] {
+  const nonWaitingPlayers = players.filter((player) => player.status !== 'WAITING');
+  return nonWaitingPlayers.length > 0 ? nonWaitingPlayers : players;
+}

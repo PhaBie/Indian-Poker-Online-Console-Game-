@@ -4,6 +4,7 @@ import type { GameScreenProps, StatusStateContext, GameStatePayload } from './ga
 import {
   getOrderedPlayersByPerspective,
   determineSeatPositions,
+  resolveTableParticipants,
 } from './game/gameLayoutHelpers';
 import { useGameActionController } from './game/useGameActionController';
 import { getGameEscapeAction } from './game/gameEscapeActions';
@@ -204,8 +205,7 @@ export function GameScreen({
   }, [sideshowNoticeKey, visibleSideshowNotice]);
   const effectiveRoundResult = roundResult ?? gameState.roundResult ?? null;
   const isRoundEnded = Boolean(effectiveRoundResult);
-  const nonWaitingPlayers = players.filter((player) => player.status !== 'WAITING');
-  const activeTablePlayers = nonWaitingPlayers.length > 0 ? nonWaitingPlayers : players;
+  const activeTablePlayers = resolveTableParticipants(players);
   const { dealSequence, isSubsequentRound, isPlayerCountChanged } =
     useDealSequenceTracker(isRoundEnded, activeTablePlayers.length);
   const roundResultPresentation = getRoundResultPresentation(

@@ -49,59 +49,72 @@ function mountNavigation(
   return { getNavigation: () => navigation!, unmount: () => instance.unmount() };
 }
 
-describe('Online navigation', () => {
-  for (const intent of ['create', 'join'] as const) {
-    test(`${intent} connects to Online before sending requests and can switch back to LAN`, async () => {
+describe('16. ระบบนำทางเครือข่ายออนไลน์ (Online Navigation UI)', () => {
+  describe('การเชื่อมต่อออนไลน์และการสลับโหมดเครือข่าย (Online Connection & Network Mode Switching)', () => {
+    for (const [intentMode, intentThaiLabel, expectedDispatchedEvent] of [
+      ['create', 'สร้างห้อง Online', 'CREATE_ROOM'],
+      ['join', 'เข้าร่วมห้อง Online', 'GET_ROOMS'],
+    ] as const) {
+      test(`[onlineNavigation] 16.1 ผู้เล่นเลือกเส้นทาง ${intentThaiLabel} → เชื่อมต่อ WSS ส่งอีเวนต์ ${expectedDispatchedEvent} และสลับกลับเป็น LAN ได้`, async () => {
+        const socket = new SocketClient();
+        const dispatchedClientEvents: ClientEvent[] = [];
+        const connectedSocketAddresses: string[] = [];
+        socket.connectWithTimeout = async (url) => {
+          connectedSocketAddresses.push(url);
+          socket.isConnected = true;
+          return true;
+        };
+        socket.send = (event) => dispatchedClientEvents.push(event);
+        const harness = mountNavigation(socket);
+        try {
+          await waitFor(() => Boolean(harness.getNavigation()));
+          harness.getNavigation().handleInitialUsernameSubmit('Alice');
+          await waitFor(() => harness.getNavigation().playerName === 'Alice');
+          if (intentMode === 'create') {
+            harness.getNavigation().handleCreateRoomModeSelect('INTERNET');
+          } else {
+            harness.getNavigation().handleJoinSubmit('INTERNET', '');
+          }
+          await waitFor(() => harness.getNavigation().screen === 'onlineConnection');
+          await harness
+            .getNavigation()
+            .connectToOnlineServer('https://example.ngrok.app');
+          await waitFor(() => harness.getNavigation().screen === 'tableLounge');
+          expect(connectedSocketAddresses).toEqual([
+            'wss://example.ngrok.app/?mode=INTERNET',
+          ]);
+          expect(dispatchedClientEvents.map((event) => event.type)).toEqual([
+            expectedDispatchedEvent,
+          ]);
+          expect(harness.getNavigation().networkMode).toBe('INTERNET');
+          harness.getNavigation().handleJoinSubmit('LAN', '');
+          await waitFor(() => harness.getNavigation().screen === 'serverConnection');
+          expect(socket.isConnected).toBe(false);
+          expect(harness.getNavigation().currentServerUrl).toBe('ws://127.0.0.1:8080');
+        } finally {
+          harness.unmount();
+        }
+      });
+    }
+  });
+
+  describe('กรณีขาดหายของจุดเชื่อมต่อ (Missing Endpoint Error)', () => {
+    test('[onlineNavigation] 16.2 ป้อน URL ของเซิร์ฟเวอร์ Online ว่างเปล่า → แจ้งเตือนข้อผิดพลาดและไม่สลับไป LAN อัตโนมัติ', async () => {
       const socket = new SocketClient();
-      const messages: ClientEvent[] = [];
-      const addresses: string[] = [];
-      socket.connectWithTimeout = async (url) => {
-        addresses.push(url);
-        socket.isConnected = true;
-        return true;
-      };
-      socket.send = (event) => messages.push(event);
-      const harness = mountNavigation(socket);
+      const dispatchedClientEvents: ClientEvent[] = [];
+      socket.send = (event) => dispatchedClientEvents.push(event);
+      const harness = mountNavigation(socket, '');
       try {
         await waitFor(() => Boolean(harness.getNavigation()));
-        harness.getNavigation().handleInitialUsernameSubmit('Alice');
-        await waitFor(() => harness.getNavigation().playerName === 'Alice');
-        if (intent === 'create')
-          harness.getNavigation().handleCreateRoomModeSelect('INTERNET');
-        else harness.getNavigation().handleJoinSubmit('INTERNET', '');
+        harness.getNavigation().handleJoinSubmit('INTERNET', '');
         await waitFor(() => harness.getNavigation().screen === 'onlineConnection');
-        await harness.getNavigation().connectToOnlineServer('https://example.ngrok.app');
-        await waitFor(() => harness.getNavigation().screen === 'tableLounge');
-        expect(addresses).toEqual(['wss://example.ngrok.app/?mode=INTERNET']);
-        expect(messages.map((event) => event.type)).toEqual([
-          intent === 'create' ? 'CREATE_ROOM' : 'GET_ROOMS',
-        ]);
-        expect(harness.getNavigation().networkMode).toBe('INTERNET');
-        harness.getNavigation().handleJoinSubmit('LAN', '');
-        await waitFor(() => harness.getNavigation().screen === 'serverConnection');
-        expect(socket.isConnected).toBe(false);
-        expect(harness.getNavigation().currentServerUrl).toBe('ws://127.0.0.1:8080');
+        await harness.getNavigation().connectToOnlineServer('');
+        await waitFor(() => Boolean(harness.getNavigation().onlineError));
+        expect(harness.getNavigation().screen).toBe('onlineConnection');
+        expect(dispatchedClientEvents).toEqual([]);
       } finally {
         harness.unmount();
       }
     });
-  }
-
-  test('requires a pasted Online endpoint instead of falling back to LAN', async () => {
-    const socket = new SocketClient();
-    const messages: ClientEvent[] = [];
-    socket.send = (event) => messages.push(event);
-    const harness = mountNavigation(socket, '');
-    try {
-      await waitFor(() => Boolean(harness.getNavigation()));
-      harness.getNavigation().handleJoinSubmit('INTERNET', '');
-      await waitFor(() => harness.getNavigation().screen === 'onlineConnection');
-      await harness.getNavigation().connectToOnlineServer('');
-      await waitFor(() => Boolean(harness.getNavigation().onlineError));
-      expect(harness.getNavigation().screen).toBe('onlineConnection');
-      expect(messages).toEqual([]);
-    } finally {
-      harness.unmount();
-    }
   });
 });
