@@ -103,5 +103,5 @@
 - รัน `bun run test:game-state`
 - รัน `bunx tsc --noEmit`
 - รัน `bun run lint`
-- รัน `bunx prettier --check Test/server/domain/gameState Documentation/gameState-contract.md`
+- รัน `bunx prettier --check Test/server/domain/gameState Documentation/contracts/gameState-contract.md`
 - แยก Commit ระหว่าง อัปเดต Contract กับ การเพิ่มเทสต์ให้ชัดเจน
