@@ -3,7 +3,7 @@ import { PlayerStateError } from '../../../../src/server/domain/errors/GameError
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.lifecycle', () => {
+describe('4. การจัดการสถานะและการเล่น - วงจรชีวิตเกม (GameState.lifecycle)', () => {
   test('[GameState.startGame] 4.1 เริ่มเกม → หักชิปเป็น Boot 50 เข้า Pot 100, ผู้เล่นได้รับไพ่คนละ 3 ใบ และผู้เล่นคนแรกสถานะเป็น ACTIVE', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'firstPlayer', name: 'First Player', status: 'WAITING', chips: 1000 },
@@ -79,7 +79,7 @@ describe('gameState.lifecycle', () => {
     expect(firstPlayer.privateCards.length).toBe(3);
   });
 
-  test('[GameState.startGame] ผู้เล่นคนแรกเป็นคนถัดจาก dealer ที่ Room กำหนด', () => {
+  test('[GameState.startGame] 4.17.1 ผู้เล่นคนแรกเป็นคนถัดจาก dealer ที่ Room กำหนด', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'dealer', name: 'Dealer', status: 'WAITING', chips: 1000 },

@@ -227,11 +227,11 @@ describe('[gameLogic.getWinners] 7. การหาผู้ชนะเชิ�
 });
 
 describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื่อให้ Test เขียว)', () => {
-  describe('9.4 getWinners', () => {
+  describe('9.4 การตรวจสอบความถูกต้องของการค้นหาผู้ชนะ (getWinners Validation Unhappy Paths)', () => {
     const playerOneId = 'player_one_id';
     const playerTwoId = 'player_two_id';
 
-    test('โยน ZodError เมื่อพบรหัสประจำตัวผู้เล่น (ID) ซ้ำซ้อนกันในวง', () => {
+    test('9.4.1 โยน ZodError เมื่อพบรหัสประจำตัวผู้เล่น (ID) ซ้ำซ้อนกันในวง', () => {
       const duplicatedIdPlayers = [
         {
           id: playerOneId,
@@ -255,7 +255,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(duplicatedIdPlayers).toEqual(originalPlayers);
     });
 
-    test('โยน ZodError เมื่อพบว่ามีไพ่ใบเดียวกันถูกถือโดยผู้เล่นหลายคน (ไพ่ซ้ำข้ามผู้เล่น)', () => {
+    test('9.4.2 โยน ZodError เมื่อพบว่ามีไพ่ใบเดียวกันถูกถือโดยผู้เล่นหลายคน (ไพ่ซ้ำข้ามผู้เล่น)', () => {
       const overlappingCardsPlayers = [
         {
           id: playerOneId,
@@ -279,7 +279,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(overlappingCardsPlayers).toEqual(originalPlayers);
     });
 
-    test('โยน ZodError แม้ว่าจะมีผู้เล่นในวงเพียงคนเดียวแต่มือไพ่ของผู้เล่นนั้นมีรูปแบบไม่ถูกต้อง', () => {
+    test('9.4.3 โยน ZodError แม้ว่าจะมีผู้เล่นในวงเพียงคนเดียวแต่มือไพ่ของผู้เล่นนั้นมีรูปแบบไม่ถูกต้อง', () => {
       const singlePlayerWithInvalidHand = [
         { id: playerOneId, cards: [{ suit: 'SPADES', rank: 2 }] as Card[] },
       ];
@@ -327,7 +327,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
           },
         ] as unknown as { id: string; cards: Card[] }[],
       },
-    ])('โยน ZodError เมื่อ $testDescription', ({ players }) => {
+    ])('9.4.4 โยน ZodError เมื่อ $testDescription', ({ players }) => {
       expect(() => getWinners(players)).toThrow(ZodError);
     });
 
@@ -345,13 +345,13 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         players: { id: 'p1' } as unknown as { id: string; cards: Card[] }[],
       },
     ])(
-      'โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
+      '9.4.5 โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
       ({ players }) => {
         expect(() => getWinners(players)).toThrow(ZodError);
       },
     );
 
-    test('โยน ZodError เมื่อผู้เล่นที่มีไพ่ผิดรูปแบบไม่ได้อยู่ตำแหน่งแรก (ตำแหน่งที่สอง)', () => {
+    test('9.4.6 โยน ZodError เมื่อผู้เล่นที่มีไพ่ผิดรูปแบบไม่ได้อยู่ตำแหน่งแรก (ตำแหน่งที่สอง)', () => {
       const invalidSecondPlayer = [
         {
           id: playerOneId,

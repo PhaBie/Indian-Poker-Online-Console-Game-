@@ -7,8 +7,8 @@ import {
 import type { Card } from '../../../../src/shared/types';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
-describe('gameState.show', () => {
-  test('[GameState.endGame] รายงาน rank ไพ่จริงของผู้ชนะ ไม่ใช่ HIGH_CARD ตายตัว', () => {
+describe('4. การจัดการสถานะและการเล่น - SHOW / SIDESHOW (GameState.show)', () => {
+  test('[GameState.endGame] 4.8.1 รายงาน rank ไพ่จริงของผู้ชนะ ไม่ใช่ HIGH_CARD ตายตัว', () => {
     const gameState = createGameStateFixture({ pot: 300 }, [
       {
         id: 'trailWinner',
@@ -40,7 +40,7 @@ describe('gameState.show', () => {
     expect(result?.winningHand).toBe('TRAIL');
   });
 
-  test('[GameState.processAction] ผู้ท้าใช้ชิปก้อนสุดท้ายจะหมอบทันที', () => {
+  test('[GameState.processAction] 4.9.1 ผู้ท้าใช้ชิปก้อนสุดท้ายจะหมอบทันที', () => {
     const gameState = createGameStateFixture(
       { pot: 600, currentPlayerIndex: 0, currentStake: 50 },
       [
@@ -376,7 +376,7 @@ describe('gameState.show', () => {
     },
   );
 
-  test('[GameState.processAction] 4.10.5 ผู้เล่นมีชิปไม่พอสำหรับ Sideshow (ต้องเท่ากับ currentStake * 2) → โยน INSUFFICIENT_CHIPS', () => {
+  test('[GameState.processAction] 4.10.6 ผู้เล่นมีชิปไม่พอสำหรับ Sideshow (ต้องเท่ากับ currentStake * 2) → โยน INSUFFICIENT_CHIPS', () => {
     const shortStackGameState = createSideshowTableFixture({
       challengerChips: 80,
     });
@@ -389,7 +389,7 @@ describe('gameState.show', () => {
     expect(shortStackGameState.pendingSideshow).toBeNull();
   });
 
-  test('[GameState.processAction] 4.10.6 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
+  test('[GameState.processAction] 4.10.7 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
     const initialPot = 500;
     const gameState = createSideshowTableFixture({
       pot: initialPot,
@@ -653,7 +653,7 @@ describe('gameState.show', () => {
     expect(target.chips).toBe(1600);
   });
 
-  test('[GameState.requestShow] 4.46 ผู้ขอ SHOW ชนะด้วยไพ่ที่สูงกว่า → ผู้ขอรับ Pot ทั้งหมด', () => {
+  test('[GameState.requestShow] 4.25.1 ผู้ขอ SHOW ชนะด้วยไพ่ที่สูงกว่า → ผู้ขอรับ Pot ทั้งหมด', () => {
     const gameState = createGameStateFixture(
       { pot: 500, currentPlayerIndex: 0, currentStake: 100 },
       [

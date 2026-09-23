@@ -59,7 +59,7 @@ describe('[gameLogic.calculateSplitPot] 8. การแบ่ง Pot เชิ�
 });
 
 describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื่อให้ Test เขียว)', () => {
-  describe('9.5 calculateSplitPot', () => {
+  describe('9.5 การตรวจสอบความถูกต้องของการคำนวณแบ่ง Pot (calculateSplitPot Validation Unhappy Paths)', () => {
     const playerOneId = 'player_one_id';
 
     test.each([
@@ -139,7 +139,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         potAmount: 100,
         winners: { p1: true } as unknown as string[],
       },
-    ])('โยน ZodError เมื่อ $testDescription', ({ potAmount, winners }) => {
+    ])('9.5.1 โยน ZodError เมื่อ $testDescription', ({ potAmount, winners }) => {
       expect(() => calculateSplitPot(potAmount, winners)).toThrow(ZodError);
     });
   });

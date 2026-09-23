@@ -36,43 +36,48 @@ function requestRooms(
   });
 }
 
-describe('LAN and Online server isolation', () => {
-  test('replacing a pending connection cannot let its timeout disconnect the new one', async () => {
-    const lan = await startServer('LAN');
+describe('การแยกบริบทเซิร์ฟเวอร์ LAN และ Online (Server Mode Isolation)', () => {
+  test('[NetworkIsolation] 7.22 การแทนที่การเชื่อมต่อที่รอดำเนินการจะไม่ยอมให้ timeout ของการเชื่อมต่อเดิมตัดการเชื่อมต่อใหม่', async () => {
+    const lanServer = await startServer('LAN');
     const client = new SocketClient();
     const onConnectionChange = () => undefined;
     client.onConnectionChange = onConnectionChange;
     try {
-      const first = client.connectWithTimeout(lan.url, 40);
-      const second = client.connectWithTimeout(lan.url, 500);
-      expect(await first).toBe(false);
-      expect(await second).toBe(true);
+      const shortTimeoutConnectionPromise = client.connectWithTimeout(lanServer.url, 40);
+      const longTimeoutConnectionPromise = client.connectWithTimeout(lanServer.url, 500);
+      expect(await shortTimeoutConnectionPromise).toBe(false);
+      expect(await longTimeoutConnectionPromise).toBe(true);
       await Bun.sleep(60);
       expect(client.isConnected).toBe(true);
       expect(client.onConnectionChange).toBe(onConnectionChange);
     } finally {
       client.disconnect();
-      lan.server.stop();
+      lanServer.server.stop();
     }
   });
-  test('rooms created online are visible online but absent from LAN', async () => {
-    const lan = await startServer('LAN');
-    const online = await startServer('INTERNET');
-    const host = new WebSocket(online.url);
-    const guest = new WebSocket(online.url);
-    const local = new WebSocket(lan.url);
+
+  test('[NetworkIsolation] 7.23 ห้องที่สร้างในโหมด Online จะแสดงผลเฉพาะในโหมด Online และไม่ปรากฏในโหมด LAN', async () => {
+    const lanServer = await startServer('LAN');
+    const onlineServer = await startServer('INTERNET');
+    const onlineHostSocket = new WebSocket(onlineServer.url);
+    const onlineGuestSocket = new WebSocket(onlineServer.url);
+    const lanClientSocket = new WebSocket(lanServer.url);
     try {
-      await Promise.all([once(host, 'open'), once(guest, 'open'), once(local, 'open')]);
+      await Promise.all([
+        once(onlineHostSocket, 'open'),
+        once(onlineGuestSocket, 'open'),
+        once(lanClientSocket, 'open'),
+      ]);
       await requestRooms(
-        guest,
+        onlineGuestSocket,
         {
           type: 'CREATE_ROOM',
           payload: { playerName: 'Alice', bootAmount: 50, maxPlayers: 4 },
         },
         'ROOM_CREATED',
       );
-      const onlineRooms = await requestRooms(host, { type: 'GET_ROOMS' });
-      const lanRooms = await requestRooms(local, { type: 'GET_ROOMS' });
+      const onlineRooms = await requestRooms(onlineHostSocket, { type: 'GET_ROOMS' });
+      const lanRooms = await requestRooms(lanClientSocket, { type: 'GET_ROOMS' });
       if (onlineRooms.type !== 'ROOM_LIST' || lanRooms.type !== 'ROOM_LIST')
         throw new Error('Unexpected response');
       expect(onlineRooms.payload.rooms).toHaveLength(1);
@@ -80,45 +85,45 @@ describe('LAN and Online server isolation', () => {
       expect(lanRooms.payload.rooms).toEqual([]);
       const roomId = onlineRooms.payload.rooms[0].roomId;
       const joined = await requestRooms(
-        host,
+        onlineHostSocket,
         { type: 'JOIN_ROOM', payload: { playerName: 'Bobby', roomId } },
         'GAME_STATE_UPDATE',
       );
       if (joined.type !== 'GAME_STATE_UPDATE') throw new Error('Missing game state');
       expect(joined.payload.players).toHaveLength(2);
       const rejected = await requestRooms(
-        local,
+        lanClientSocket,
         { type: 'JOIN_ROOM', payload: { playerName: 'Local', roomId } },
         'ERROR',
       );
       expect(rejected.type).toBe('ERROR');
     } finally {
-      host.terminate();
-      guest.terminate();
-      local.terminate();
-      lan.server.stop();
-      online.server.stop();
+      onlineHostSocket.terminate();
+      onlineGuestSocket.terminate();
+      lanClientSocket.terminate();
+      lanServer.server.stop();
+      onlineServer.server.stop();
     }
   });
 
-  test('rejects opposite modes and forwarded traffic on LAN', async () => {
-    const lan = await startServer('LAN');
-    const online = await startServer('INTERNET');
+  test('[NetworkIsolation] 7.24 ปฏิเสธการเชื่อมต่อข้ามโหมดและการส่งต่อทราฟฟิก (Forwarded Traffic) บน LAN', async () => {
+    const lanServer = await startServer('LAN');
+    const onlineServer = await startServer('INTERNET');
     try {
       for (const [url, headers] of [
-        [lan.url.replace('mode=LAN', 'mode=INTERNET'), {}],
-        [online.url.replace('mode=INTERNET', 'mode=LAN'), {}],
-        [lan.url, { 'x-forwarded-for': '203.0.113.1' }],
+        [lanServer.url.replace('mode=LAN', 'mode=INTERNET'), {}],
+        [onlineServer.url.replace('mode=INTERNET', 'mode=LAN'), {}],
+        [lanServer.url, { 'x-forwarded-for': '203.0.113.1' }],
       ] as const) {
-        const ws = new WebSocket(url, { headers });
-        ws.on('error', () => undefined);
-        await new Promise<void>((resolve) => ws.once('close', () => resolve()));
-        expect(ws.readyState).toBe(WebSocket.CLOSED);
-        ws.terminate();
+        const clientSocket = new WebSocket(url, { headers });
+        clientSocket.on('error', () => undefined);
+        await new Promise<void>((resolve) => clientSocket.once('close', () => resolve()));
+        expect(clientSocket.readyState).toBe(WebSocket.CLOSED);
+        clientSocket.terminate();
       }
     } finally {
-      lan.server.stop();
-      online.server.stop();
+      lanServer.server.stop();
+      onlineServer.server.stop();
     }
   });
 });

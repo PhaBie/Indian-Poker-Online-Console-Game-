@@ -7,8 +7,8 @@ import {
 import type { PlayerStatus } from '../../../../src/shared/types';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('Player.payBet', () => {
-  describe('Happy Paths', () => {
+describe('3. การจ่ายเงินเดิมพันของผู้เล่น (Player.payBet)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Player.payBet] 3.1 จ่ายเงินปกติในสถานะ ACTIVE → ชิปลดลงและยอดเดิมพันสะสมเพิ่มขึ้น', () => {
       const player = new Player('id1', 'Player 1');
       player.chips = 1000;
@@ -69,7 +69,7 @@ describe('Player.payBet', () => {
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     test('[Player.payBet] 3.20 ชิปไม่พอจ่าย → โยน InsufficientChipsError และเงินต้องไม่เปลี่ยน', () => {
       const player = new Player('id1', 'Player 1');
       player.chips = 100;
@@ -158,8 +158,8 @@ describe('Player.payBet', () => {
   });
 });
 
-describe('Player.addChips', () => {
-  describe('Happy Paths', () => {
+describe('3. การเพิ่มชิปให้ผู้เล่น (Player.addChips)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     const validAddChipsStates: PlayerStatus[] = [
       'WAITING',
       'ACTIVE',
@@ -203,7 +203,7 @@ describe('Player.addChips', () => {
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     const invalidAddAmounts = [
       { desc: 'ค่าติดลบ', amount: -100 },
       { desc: 'ค่าทศนิยม', amount: 50.5 },

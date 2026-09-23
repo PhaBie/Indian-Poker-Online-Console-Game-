@@ -35,7 +35,7 @@ function getRequiredGameStateUpdate(
   return latestEvent.payload;
 }
 
-describe('host-controlled post-round flow', () => {
+describe('7. ระบบควบคุมการจบรอบและเริ่มรอบใหม่โดย Host (Post-Round Flow)', () => {
   let context: NetworkContext;
 
   beforeEach(() => {
@@ -60,7 +60,7 @@ describe('host-controlled post-round flow', () => {
   }
 
   test.each([2, 3, 4])(
-    'a %i-player hand enters ENDED before the decision timeout',
+    '[PostRoundFlow] 7.2 โต๊ะที่มีผู้เล่น %i คนจะเข้าสู่สถานะ ENDED ก่อนหมดเวลาการตัดสินใจของ Host',
     (count) => {
       const { room } = endedRoom(count as 2 | 3 | 4);
       expect(room.phase).toBe('ENDED');
@@ -68,7 +68,7 @@ describe('host-controlled post-round flow', () => {
     },
   );
 
-  test('starts a new game after 5 seconds when the host does not decide', () => {
+  test('[PostRoundFlow] 7.3 เริ่มเกมใหม่โดยอัตโนมัติหลังผ่านไป 5 วินาทีหาก Host ไม่ได้ส่งคำสั่งตัดสินใจ', () => {
     jest.useFakeTimers();
     try {
       const host = new Player('host', 'Host');
@@ -102,7 +102,7 @@ describe('host-controlled post-round flow', () => {
     }
   });
 
-  test('non-host cannot choose next game or return to waiting room', () => {
+  test('[PostRoundFlow] 7.4 ผู้เล่นที่ไม่ใช่ Host ไม่สามารถสั่งเริ่มเกมใหม่ (NEXT_GAME) หรือกลับห้องรอ (END_GAME) ได้', () => {
     const { room, host, guests } = endedRoom();
     const events: ServerEvent[] = [];
     const guestClient = client(events);
@@ -119,12 +119,12 @@ describe('host-controlled post-round flow', () => {
     expect(events.filter((event) => event.type === 'ERROR')).toHaveLength(2);
   });
 
-  test('Host เลือก NEXT GAME → รักษาชิปสะสมและดึงผู้เล่น WAITING ที่มีชิปเพียงพอเข้ารอบ', () => {
+  test('[PostRoundFlow] 7.5 Host เลือก NEXT GAME → รักษาชิปสะสมและดึงผู้เล่น WAITING ที่มีชิปเพียงพอเข้ารอบ', () => {
     const { room, host, guests } = endedRoom(2);
     const hostChipsBeforeNextGame = host.chips;
     const guestChipsBeforeNextGame = guests[0].chips;
-    const waiting = new Player('waiting', 'Waiting');
-    room.join(waiting);
+    const waitingPlayer = new Player('waiting', 'Waiting');
+    room.join(waitingPlayer);
     const events: ServerEvent[] = [];
     const hostClient = client(events);
     context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
@@ -133,16 +133,16 @@ describe('host-controlled post-round flow', () => {
 
     expect(room.phase).toBe('PLAYING');
     expect(room.gameState?.activePlayers.map((player) => player.id)).toContain(
-      waiting.id,
+      waitingPlayer.id,
     );
-    expect(room.getPlayer(waiting.id)?.chips).toBe(
+    expect(room.getPlayer(waitingPlayer.id)?.chips).toBe(
       GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
     );
     expect(host.chips).toBe(hostChipsBeforeNextGame - room.bootAmount);
     expect(guests[0].chips).toBe(guestChipsBeforeNextGame - room.bootAmount);
   });
 
-  test('host END GAME returns every connected player to the same waiting room', () => {
+  test('[PostRoundFlow] 7.6 Host เลือก END GAME → ส่งผู้เล่นทุกคนที่เชื่อมต่ออยู่กลับห้องรอ (LOBBY) พร้อมรีเซ็ตชิปเริ่มต้น', () => {
     const { room, host, guests } = endedRoom(3);
     const events: ServerEvent[] = [];
     const hostClient = client(events);
@@ -158,7 +158,7 @@ describe('host-controlled post-round flow', () => {
     }
   });
 
-  test('ENDED broadcasts no current turn, so actions stay locked', () => {
+  test('[PostRoundFlow] 7.7 สถานะ ENDED บรอดแคสต์ currentTurnPlayerId เป็น null เพื่อล็อกการกระทำของผู้เล่น', () => {
     const { room, host } = endedRoom();
     const events: ServerEvent[] = [];
     const hostClient = client(events);
@@ -170,7 +170,7 @@ describe('host-controlled post-round flow', () => {
     ).toBeNull();
   });
 
-  test('a non-host disconnect is removed immediately and a lone host returns to waiting room', () => {
+  test('[PostRoundFlow] 7.8 ผู้เล่นที่ไม่ใช่ Host ตัดการเชื่อมต่อจะถูกนำออกทันที และหากเหลือ Host คนเดียวห้องจะกลับสู่ LOBBY', () => {
     const host = new Player('host', 'Host');
     const guest = new Player('guest', 'Thanathon');
     const room = context.roomManager.createRoom('disconnect-lone-host', host, 2);
@@ -194,14 +194,14 @@ describe('host-controlled post-round flow', () => {
     expect(hostEvents.some((event) => event.type === 'GAME_LOG_MESSAGE')).toBe(false);
   });
 
-  test('a departed active player ends the hand only when host plus waiting player can play next', () => {
+  test('[PostRoundFlow] 7.9 ผู้เล่นที่หลุดระหว่างเล่นจะทำให้รอบจบลงเมื่อเหลือ Host และผู้เล่น WAITING รวมกันครบจำนวนเริ่มรอบใหม่ได้', () => {
     const host = new Player('host', 'Host');
     const guest = new Player('guest', 'Thanathon');
-    const waiting = new Player('waiting', 'Waiting');
+    const waitingPlayer = new Player('waiting', 'Waiting');
     const room = context.roomManager.createRoom('disconnect-with-waiting', host, 3);
     room.join(guest);
     room.startGame(host.id);
-    room.join(waiting);
+    room.join(waitingPlayer);
     const hostEvents: ServerEvent[] = [];
     const hostClient = client(hostEvents);
     const guestClient = client([]);
@@ -216,14 +216,14 @@ describe('host-controlled post-round flow', () => {
     expect(room.getPlayer(guest.id)).toBeUndefined();
     expect(room.phase).toBe('ENDED');
     expect(room.getPlayerCount()).toBe(2);
-    expect(room.getPlayer(waiting.id)?.status).toBe('WAITING');
+    expect(room.getPlayer(waitingPlayer.id)?.status).toBe('WAITING');
     const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
     expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
       { id: guest.id, name: guest.name, status: 'DISCONNECTED' },
     ]);
   });
 
-  test('keeps an earlier disconnect in the eventual result table', () => {
+  test('[PostRoundFlow] 7.10 บันทึกข้อมูลผู้เล่นที่ตัดการเชื่อมต่อระหว่างเล่นไว้ในตารางผลสรุปเกม (GAME_RESULT)', () => {
     const host = new Player('host', 'Host');
     const firstGuest = new Player('guest-1', 'Disconnected player');
     const secondGuest = new Player('guest-2', 'Still playing');
@@ -353,7 +353,7 @@ describe('การรักษาความลับของไพ่ระ�
     };
   }
 
-  test('[NetworkPrivacy] 8.1 คู่ดวลทั้งสองฝ่ายได้รับผลและไพ่ของคู่ดวล ขณะที่ผู้เล่นคนที่สามได้รับ sideshowResult เป็น null', () => {
+  test('[NetworkPrivacy] 7.25 คู่ดวลทั้งสองฝ่ายได้รับผลและไพ่ของคู่ดวล ขณะที่ผู้เล่นคนที่สามได้รับ sideshowResult เป็น null', () => {
     const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-1');
 
     handleClientMessage(
@@ -392,7 +392,7 @@ describe('การรักษาความลับของไพ่ระ�
     expect(serializedThirdPartyPayload.includes('"rank":2')).toBe(false);
   });
 
-  test('[NetworkPrivacy] 8.2 การปฏิเสธ Sideshow (Decline) ต้องไม่ส่งข้อมูลไพ่ของคู่ดวลให้ผู้เล่นคนใดในห้อง', () => {
+  test('[NetworkPrivacy] 7.26 การปฏิเสธ Sideshow (Decline) ต้องไม่ส่งข้อมูลไพ่ของคู่ดวลให้ผู้เล่นคนใดในห้อง', () => {
     const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-2');
 
     handleClientMessage(
@@ -427,7 +427,7 @@ describe('การรักษาความลับของไพ่ระ�
     });
   });
 
-  test('[NetworkPrivacy] 8.3 เมื่อครบเวลาแสดงผล (Clear Delay) ข้อมูลไพ่ Sideshow จะถูกล้างและส่งค่า null ให้ทุกคน', () => {
+  test('[NetworkPrivacy] 7.27 เมื่อครบเวลาแสดงผล (Clear Delay) ข้อมูลไพ่ Sideshow จะถูกล้างและส่งค่า null ให้ทุกคน', () => {
     jest.useFakeTimers();
     try {
       const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-3');
@@ -462,7 +462,7 @@ describe('การรักษาความลับของไพ่ระ�
     }
   });
 
-  test('[NetworkPrivacy] 8.4 ผู้เล่นคนที่สามที่เชื่อมต่อใหม่ (Reconnect) ระหว่างช่วงแสดงผล ต้องไม่ได้รับข้อมูลไพ่ของคู่ดวล', () => {
+  test('[NetworkPrivacy] 7.28 ผู้เล่นคนที่สามที่เชื่อมต่อใหม่ (Reconnect) ระหว่างช่วงแสดงผล ต้องไม่ได้รับข้อมูลไพ่ของคู่ดวล', () => {
     const fixture = setupThreePlayerGameForSideshow('sideshow-privacy-8-4');
     const thirdPlayerReconnectToken = context.sessionStore.createSession(
       fixture.thirdPlayer.id,

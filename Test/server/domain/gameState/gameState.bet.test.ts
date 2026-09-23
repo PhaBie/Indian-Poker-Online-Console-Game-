@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.bet', () => {
+describe('4. การจัดการกระบวนการเดิมพัน BET (GameState Bet Operations)', () => {
   test('[GameState.processAction] 4.51 BET ด้วยยอดต่ำกว่า S (Blind) -> โยน INVALID_AMOUNT', () => {
     const gameState = createGameStateFixture(
       { currentPlayerIndex: 0, currentStake: 50, pot: 100 },

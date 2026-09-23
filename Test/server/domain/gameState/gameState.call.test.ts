@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.call', () => {
+describe('4. การจัดการกระบวนการตามเดิมพัน CALL (GameState Call Operations)', () => {
   test('[GameState.processAction] 4.4 ผู้เล่น Blind ขอ CALL → หักชิปเท่า currentStake 50 เข้า Pot 150 และ currentStake คงเดิมที่ 50', () => {
     const gameState = createGameStateFixture({
       currentPlayerIndex: 0,

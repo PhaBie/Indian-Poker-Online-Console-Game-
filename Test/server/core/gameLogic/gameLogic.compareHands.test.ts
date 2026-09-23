@@ -344,7 +344,7 @@ describe('[gameLogic.compareHands] 6. ระบบเปรียบเทีย
 });
 
 describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื่อให้ Test เขียว)', () => {
-  describe('9.3 compareHands', () => {
+  describe('9.3 การตรวจสอบความถูกต้องของการเปรียบเทียบมือไพ่ (compareHands Validation Unhappy Paths)', () => {
     const validHand: Card[] = [
       { suit: 'SPADES', rank: 2 },
       { suit: 'HEARTS', rank: 3 },
@@ -411,7 +411,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         firstHand: invalidHandStructure,
         secondHand: invalidHandStructure,
       },
-    ])('โยน ZodError เมื่อ $testDescription', ({ firstHand, secondHand }) => {
+    ])('9.3.1 โยน ZodError เมื่อ $testDescription', ({ firstHand, secondHand }) => {
       const cloneFirst = structuredClone(firstHand);
       const cloneSecond = structuredClone(secondHand);
       expect(() => compareHands(firstHand, secondHand)).toThrow(ZodError);
@@ -446,7 +446,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         secondHand: undefined as unknown as Card[],
       },
     ])(
-      'โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
+      '9.3.2 โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
       ({ firstHand, secondHand }) => {
         expect(() => compareHands(firstHand, secondHand)).toThrow(ZodError);
       },

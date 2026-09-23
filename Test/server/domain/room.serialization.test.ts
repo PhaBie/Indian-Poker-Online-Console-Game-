@@ -3,8 +3,8 @@ import { Room } from '../../../src/server/domain/models/Room';
 import { Player } from '../../../src/server/domain/models/Player';
 import { expectGameErrorWithCode } from './helpers/expectGameErrorWithCode';
 
-describe('Room.toJSON', () => {
-  describe('Happy Paths', () => {
+describe('1. การแปลงข้อมูลห้องเป็น JSON (Room.toJSON)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Room.toJSON] 1.14 แปลงข้อมูลห้องสถานะ LOBBY ที่มีผู้เล่น 2 คน → ได้ฟิลด์ roomId, phase, hostId, bootAmount ครบถ้วน และ gameState เป็น null', () => {
       const room = new Room('room_lobby_save', 100);
       const hostPlayer = new Player('id_host', 'Host');
@@ -62,8 +62,8 @@ describe('Room.toJSON', () => {
   });
 });
 
-describe('Room.fromJSON', () => {
-  describe('Happy Paths', () => {
+describe('1. การกู้คืนข้อมูลห้องจาก JSON (Room.fromJSON)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Room.fromJSON] 1.16 กู้คืนห้องสถานะ LOBBY จาก Object → ได้อินสแตนซ์ Room พร้อมข้อมูลผู้เล่นครบทุกคน', () => {
       const validLobbyData = {
         roomId: 'room_restored_lobby',
@@ -187,7 +187,7 @@ describe('Room.fromJSON', () => {
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     const invalidDataTypes = [
       { description: 'null', data: null },
       { description: 'undefined', data: undefined },

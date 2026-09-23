@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.raise', () => {
+describe('4. การจัดการกระบวนการเดิมพัน RAISE (GameState Raise Operations)', () => {
   test('[GameState.processAction] 4.5 ผู้เล่น Blind ขอ RAISE ด้วย 100 → หักชิป 100 เข้า Pot 200 และ currentStake เปลี่ยนเป็น 100', () => {
     const gameState = createGameStateFixture({
       currentPlayerIndex: 0,
@@ -50,7 +50,7 @@ describe('gameState.raise', () => {
     { desc: 'เกิน Safe Integer', amount: Number.MAX_SAFE_INTEGER + 1 },
   ];
   invalidActionAmounts.forEach(({ desc, amount }, idx) => {
-    test(`[GameState.processAction] 4.${36 + idx} การเดิมพันยอดเงินผิดรูปแบบ (${desc}) → โยน GameError(INVALID_AMOUNT) และข้อมูลคงเดิม`, () => {
+    test(`[GameState.processAction] 4.36.${idx + 1} การเดิมพันยอดเงินผิดรูปแบบ (${desc}) → โยน GameError(INVALID_AMOUNT) และข้อมูลคงเดิม`, () => {
       const gameState = createGameStateFixture(
         { currentPlayerIndex: 0, pot: 500, currentStake: 50 },
         [

@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'bun:test';
 import { SocketClient } from '../../../src/client/network/socketClient';
 
-describe('SocketClient Connection Epoch & Lifecycle', () => {
-  test('disconnect resets connection state and increments epoch', () => {
+describe('10. ระบบเครือข่ายฝั่งผู้เล่น - วงจรการเชื่อมต่อและ Epoch (SocketClient Lifecycle & Epoch)', () => {
+  test('[SocketClient.disconnect] 10.4 ตัดการเชื่อมต่อ → รีเซ็ตสถานะการเชื่อมต่อและเพิ่มค่า epoch เพื่อยกเลิกคำสั่งเดิม', () => {
     const client = new SocketClient();
     const fakeTransport = {
       onOpen: null as (() => void) | null,
@@ -16,7 +16,7 @@ describe('SocketClient Connection Epoch & Lifecycle', () => {
     expect(client.isConnected).toBe(false);
   });
 
-  test('stale callbacks from previous connection do not mutate current state', () => {
+  test('[SocketClient.connect] 10.5 คอลแบ็กที่ตกค้างจากการเชื่อมต่อครั้งก่อนหน้าจะไม่เปลี่ยนแปลงสถานะปัจจุบัน', () => {
     const client = new SocketClient();
     const firstTransport = {
       onOpen: null as (() => void) | null,
@@ -35,7 +35,7 @@ describe('SocketClient Connection Epoch & Lifecycle', () => {
     expect(client.isConnected).toBe(true);
   });
 
-  test('notifies onConnectionChange when connection state changes', () => {
+  test('[SocketClient.onConnectionChange] 10.6 แจ้งเตือนผ่าน onConnectionChange ทุกครั้งที่สถานะการเชื่อมต่อเปลี่ยนแปลง', () => {
     const client = new SocketClient();
     const connectionStates: boolean[] = [];
 

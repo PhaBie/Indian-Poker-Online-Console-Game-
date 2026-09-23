@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.flow', () => {
+describe('4. วงจรการดำเนินเกมและการเปลี่ยนเทิร์น (GameState Turn Flow)', () => {
   test('[GameState Flow] 4.30 การเล่นต่อเนื่องหลาย Action โดยไม่ผ่าน Server', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'foldingPlayer', name: 'Folding Player', status: 'WAITING', chips: 1000 },
@@ -23,7 +23,7 @@ describe('gameState.flow', () => {
     expect(survivor.chips).toBe(1050);
   });
 
-  test('[Continuous Flow Test] 4.70 เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
+  test('[Continuous Flow Test] 4.77 เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },
@@ -64,7 +64,7 @@ describe('gameState.flow', () => {
     expect(totalChipsInSystem).toBe(3000);
   });
 
-  test('[Error Injection in Flow] 4.71 คำสั่งผิดแทรกกลางเกม -> State คงเดิม -> คำสั่งถูกทำงานต่อได้', () => {
+  test('[Error Injection in Flow] 4.78 คำสั่งผิดแทรกกลางเกม -> State คงเดิม -> คำสั่งถูกทำงานต่อได้', () => {
     const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },

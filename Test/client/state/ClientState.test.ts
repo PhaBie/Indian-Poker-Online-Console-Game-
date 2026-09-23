@@ -2,34 +2,34 @@ import { describe, expect, test } from 'bun:test';
 import type { ServerEvent } from '../../../src/shared/types';
 import { ClientState } from '../../../src/client/state/ClientState';
 
-describe('ClientState lobby error lifecycle', () => {
-  test('clears a stale join error when a refreshed room list arrives', () => {
-    const state = new ClientState();
+describe('19. การจัดการสถานะและข้อผิดพลาดฝั่งไคลเอนต์ (ClientState Lifecycle)', () => {
+  test('[ClientState.updateState] 19.1 ล้างข้อผิดพลาดการเข้าห้องเดิมเมื่อได้รับรายการห้องที่อัปเดตใหม่ (ROOM_LIST)', () => {
+    const clientState = new ClientState();
     const duplicateNameError: ServerEvent = {
       type: 'ERROR',
       message: 'Player name "XDop" is already in use in this room',
       code: 'NAME_TAKEN',
     };
 
-    state.updateState(duplicateNameError);
-    expect(state.getSnapshot().lastError).toBe(duplicateNameError.message);
+    clientState.updateState(duplicateNameError);
+    expect(clientState.getSnapshot().lastError).toBe(duplicateNameError.message);
 
-    state.updateState({
+    clientState.updateState({
       type: 'ROOM_LIST',
       payload: { rooms: [] },
     });
 
-    expect(state.getSnapshot().lastError).toBeNull();
+    expect(clientState.getSnapshot().lastError).toBeNull();
   });
 
-  test('clears a stale lobby error when the game starts', () => {
-    const state = new ClientState();
-    state.updateState({
+  test('[ClientState.updateState] 19.2 ล้างข้อผิดพลาดในห้องเดิมเมื่อเกมเริ่มเข้าสู่สถานะ PLAYING', () => {
+    const clientState = new ClientState();
+    clientState.updateState({
       type: 'ERROR',
       message: 'All players must be READY to start',
     });
 
-    state.updateState({
+    clientState.updateState({
       type: 'GAME_STATE_UPDATE',
       payload: {
         roomId: 'room-1',
@@ -45,12 +45,12 @@ describe('ClientState lobby error lifecycle', () => {
       },
     });
 
-    expect(state.getSnapshot().lastError).toBeNull();
+    expect(clientState.getSnapshot().lastError).toBeNull();
   });
 
-  test('clears the active game and marks the room as closed when its host leaves', () => {
-    const state = new ClientState();
-    state.updateState({
+  test('[ClientState.updateState] 19.3 ล้างสถานะเกมและบันทึกว่าห้องถูกปิดเมื่อ Host ออกจากห้อง (ROOM_CLOSED)', () => {
+    const clientState = new ClientState();
+    clientState.updateState({
       type: 'GAME_STATE_UPDATE',
       payload: {
         roomId: 'room-1',
@@ -66,9 +66,9 @@ describe('ClientState lobby error lifecycle', () => {
       },
     });
 
-    state.updateState({ type: 'ROOM_CLOSED', payload: { roomId: 'room-1' } });
+    clientState.updateState({ type: 'ROOM_CLOSED', payload: { roomId: 'room-1' } });
 
-    expect(state.getSnapshot()).toMatchObject({
+    expect(clientState.getSnapshot()).toMatchObject({
       currentRoomId: null,
       latestGameState: null,
       latestGameResult: null,

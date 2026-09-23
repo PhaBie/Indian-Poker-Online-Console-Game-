@@ -10,7 +10,7 @@ import { RoomManager } from '../../../src/server/domain/models/RoomManager';
 import { Player } from '../../../src/server/domain/models/Player';
 import type { WebSocket as WSWebSocket } from 'ws';
 
-describe('Room Listing & Table Lounge Socket Operations', () => {
+describe('ระบบจัดการรายการห้องและโต๊ะเกมผ่าน Socket (Room Listing & Table Lounge Operations)', () => {
   let mockContext: NetworkContext;
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     };
   });
 
-  test('getRoomSummaryList returns mapped room summaries', () => {
+  test('[RoomListingSocket] 7.15 ฟังก์ชัน getRoomSummaryList คืนค่ารายการสรุปห้องที่แปลงข้อมูลถูกต้องครบถ้วน', () => {
     const hostPlayer = new Player('host_1', 'Alice');
     const createdRoom = mockContext.roomManager.createRoom('room_101', hostPlayer, 4);
     createdRoom.bootAmount = 100;
@@ -46,7 +46,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(summaryList[0].phase).toBe('LOBBY');
   });
 
-  test('handles GET_ROOMS and responds with ROOM_LIST event', () => {
+  test('[RoomListingSocket] 7.16 ประมวลผลเหตุการณ์ GET_ROOMS และตอบกลับด้วยเหตุการณ์ ROOM_LIST', () => {
     const sentEvents: ServerEvent[] = [];
     const mockSocket = {
       readyState: 1,
@@ -70,7 +70,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(roomListEvent.payload.rooms[0].roomId).toBe('room_202');
   });
 
-  test('broadcastRoomList sends updates only to clients in lobby', () => {
+  test('[RoomListingSocket] 7.17 ฟังก์ชัน broadcastRoomList ส่งข้อมูลอัปเดตเฉพาะผู้เล่นที่อยู่ในล็อบบี้ส่วนกลางเท่านั้น', () => {
     const lobbyClientEvents: ServerEvent[] = [];
     const inRoomClientEvents: ServerEvent[] = [];
 
@@ -103,7 +103,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(inRoomClientEvents.some((evt) => evt.type === 'ROOM_LIST')).toBe(false);
   });
 
-  test('rejects new player joining full room with ROOM_FULL error', () => {
+  test('[RoomListingSocket] 7.18 ปฏิเสธผู้เล่นที่พยายามเข้าร่วมห้องที่เต็มแล้วด้วยข้อผิดพลาด ROOM_FULL', () => {
     const hostPlayer = new Player('host_3', 'Dave');
     const fullRoom = mockContext.roomManager.createRoom('full_room', hostPlayer, 2);
     const secondPlayer = new Player('p2', 'Eve');
@@ -132,7 +132,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(errorEvent.code).toBe('ROOM_FULL');
   });
 
-  test('prioritizes ROOM_FULL over duplicate name when a full room is joined', () => {
+  test('[RoomListingSocket] 7.19 ให้ความสำคัญกับข้อผิดพลาด ROOM_FULL ก่อนการตรวจสอบชื่อผู้เล่นซ้ำเมื่อห้องเต็ม', () => {
     const hostPlayer = new Player('host_priority', 'Dave');
     const fullRoom = mockContext.roomManager.createRoom('full_priority', hostPlayer, 2);
     fullRoom.join(new Player('p2_priority', 'Eve'));
@@ -160,7 +160,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(errorEvent.message).toContain('full');
   });
 
-  test('allows new player to join in-progress room as waiting spectator when capacity permits', () => {
+  test('[RoomListingSocket] 7.20 อนุญาตให้ผู้เล่นใหม่เข้าร่วมห้องที่กำลังเล่นอยู่เป็นผู้ชมรอคิวหากยังไม่เกินความจุห้อง', () => {
     const hostPlayer = new Player('host_4', 'Grace');
     const secondPlayer = new Player('p2', 'Heidi');
     const activeRoom = mockContext.roomManager.createRoom('playing_room', hostPlayer, 4);
@@ -191,7 +191,7 @@ describe('Room Listing & Table Lounge Socket Operations', () => {
     expect(sessionCreatedEvent).toBeDefined();
   });
 
-  test('allows existing player with valid token to reconnect into playing room', () => {
+  test('[RoomListingSocket] 7.21 อนุญาตให้ผู้เล่นเดิมที่มี Token ถูกต้องทำการ Reconnect กลับเข้าห้องที่กำลังเล่นอยู่ได้', () => {
     const hostPlayer = new Player('host_5', 'Judy');
     const existingPlayer = new Player('player_reconnect', 'Kevin');
     const activeRoom = mockContext.roomManager.createRoom(

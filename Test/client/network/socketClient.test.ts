@@ -3,7 +3,7 @@ import { SocketClient } from '../../../src/client/network/socketClient';
 import type { ServerEvent, ClientEvent } from '../../../src/shared/types';
 
 describe('10. ระบบเครือข่ายฝั่งผู้เล่น (Client Socket)', () => {
-  describe('Happy Paths', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[SocketClient.connect] 10.1 รับเหตุการณ์เชื่อมต่อสำเร็จ → isConnected เป็น true', () => {
       const client = new SocketClient();
 
@@ -35,7 +35,7 @@ describe('10. ระบบเครือข่ายฝั่งผู้เล
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     test('[SocketClient.send] 10.3 ส่งข้อมูลขณะยังไม่เชื่อมต่อ → โยน Error', () => {
       const client = new SocketClient();
       const mockEvent: ClientEvent = { type: 'START_GAME' };

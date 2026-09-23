@@ -8,7 +8,7 @@ import type { GameActionType } from '../../../../src/shared/types';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('gameState.actions', () => {
+describe('4. การจัดการกระบวนการประมวลผลคำสั่งผู้เล่น (GameState Action Processing)', () => {
   test('[GameState.processAction] 4.23 การทำ FOLD → เปลี่ยนสถานะเป็น FOLDED ไม่คืนชิป', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 200 }, [
       { id: 'foldingPlayer', name: 'Folding Player', status: 'ACTIVE', chips: 900 },

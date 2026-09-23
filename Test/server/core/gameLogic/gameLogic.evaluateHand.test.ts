@@ -255,7 +255,7 @@ describe('[gameLogic.evaluateHand] 1. ระบบประเมินหน้
 });
 
 describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื่อให้ Test เขียว)', () => {
-  describe('9.2 evaluateHand', () => {
+  describe('9.2 การตรวจสอบความถูกต้องของการประเมินไพ่ (evaluateHand Validation Unhappy Paths)', () => {
     test.each([
       { testDescription: 'ไม่มีไพ่ในมือ (อาร์เรย์ว่างเปล่า)', hand: [] as Card[] },
       {
@@ -350,7 +350,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
           { suit: 'DIAMONDS', rank: 5 },
         ] as Card[],
       },
-    ])('โยน ZodError เมื่อ $testDescription', ({ hand }) => {
+    ])('9.2.1 โยน ZodError เมื่อ $testDescription', ({ hand }) => {
       const originalHand = structuredClone(hand);
       expect(() => evaluateHand(hand)).toThrow(ZodError);
       expect(hand).toEqual(originalHand);
@@ -364,7 +364,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         hand: { suit: 'SPADES', rank: 2 } as unknown as Card[],
       },
     ])(
-      'โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
+      '9.2.2 โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
       ({ hand }) => {
         expect(() => evaluateHand(hand)).toThrow(ZodError);
       },

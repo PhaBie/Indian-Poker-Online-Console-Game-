@@ -2,7 +2,7 @@ import { expect, test, describe } from 'bun:test';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 
-describe('gameState.settlement', () => {
+describe('4. การสรุปผลและแจกจ่าย Pot สิ้นสุดรอบ (GameState Round Settlement)', () => {
   test('[GameState.evaluateWinner] 4.9 จบเกมและผู้เล่นคนแรกถือมือดีกว่า → โอนเงินใน Pot 500 ให้ผู้ชนะ', () => {
     const gameState = createGameStateFixture({ pot: 500 }, [
       {
@@ -185,7 +185,7 @@ describe('gameState.settlement', () => {
     expect(gameState.checkLastManStanding()).toBeNull();
   });
 
-  test('[GameState.checkLastManStanding] 4.45 คืนค่า null เมื่อไม่เหลือผู้เล่น ACTIVE เลย', () => {
+  test('[GameState.checkLastManStanding] 4.44.1 คืนค่า null เมื่อไม่เหลือผู้เล่น ACTIVE เลย', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
       {
@@ -198,7 +198,7 @@ describe('gameState.settlement', () => {
     expect(gameState.checkLastManStanding()).toBeNull();
   });
 
-  test('[GameState.evaluateWinner] 4.47 ไม่จ่ายให้คนที่หมอบแม้ไพ่จะดีที่สุดในโต๊ะ', () => {
+  test('[GameState.evaluateWinner] 4.47.1 ไม่จ่ายให้คนที่หมอบแม้ไพ่จะดีที่สุดในโต๊ะ', () => {
     const gameState = createGameStateFixture({ pot: 500 }, [
       {
         id: 'foldedPlayer',

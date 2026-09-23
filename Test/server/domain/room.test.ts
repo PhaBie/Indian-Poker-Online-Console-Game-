@@ -12,7 +12,7 @@ import { expectGameErrorWithCode } from './helpers/expectGameErrorWithCode';
 import { GAME_CONSTANTS } from '../../../src/shared/constants';
 
 describe('1. ระบบการจัดการห้องเล่น (Room Management)', () => {
-  describe('Happy Paths', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Room.join] 1.1 ผู้เล่นคนแรกเข้าห้อง → hostId เป็น ID ของผู้เล่นคนนั้น', () => {
       const room = new Room('room_001');
       const hostPlayer = new Player('id_thanathon', 'Thanathon');
@@ -173,7 +173,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.getPlayer('id_p2')?.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS);
     });
 
-    test('[Room.resetToLobby] 1.9.2 รีเซ็ตห้องที่ผู้เล่นล้มละลายหรือชิปไม่พอ Boot → เติมชิปผู้เล่นนั้นกลับเป็น DEFAULT_STARTING_CHIPS', () => {
+    test('[Room.resetToLobby] 1.9.1 รีเซ็ตห้องที่ผู้เล่นล้มละลายหรือชิปไม่พอ Boot → เติมชิปผู้เล่นนั้นกลับเป็น DEFAULT_STARTING_CHIPS', () => {
       const room = new Room('room_reset_bankrupt');
       const hostPlayer = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'BankruptPlayer');
@@ -198,7 +198,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       );
     });
 
-    test('[Room.startGame] 1.9.3 เริ่มเกมใหม่จาก Lobby โดยมีผู้เล่นที่ชิปไม่พอ Boot → เติมชิปให้อัตโนมัติและเริ่มเกมสำเร็จ', () => {
+    test('[Room.startGame] 1.7.2 เริ่มเกมใหม่จาก Lobby โดยมีผู้เล่นที่ชิปไม่พอ Boot → เติมชิปให้อัตโนมัติและเริ่มเกมสำเร็จ', () => {
       const room = new Room('room_start_bankrupt');
       const hostPlayer = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'BankruptPlayer');
@@ -221,7 +221,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       );
     });
 
-    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่มเกมใหม่ → รักษาชิปเดิมของผู้เล่นและหัก Boot', () => {
+    test('[Room.startNextRound] 1.9.2 จบรอบแล้วเริ่มเกมใหม่ → รักษาชิปเดิมของผู้เล่นและหัก Boot', () => {
       const room = new Room('room_next_round', 50);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player 2');
@@ -242,7 +242,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.gameState?.activePlayers).toHaveLength(2);
     });
 
-    test('[Room.startNextRound] เกมใหม่ดึงผู้เล่น WAITING ที่มีชิปพอเข้าวงและรักษาชิปสะสม', () => {
+    test('[Room.startNextRound] 1.9.3 เริ่มเกมใหม่ดึงผู้เล่น WAITING ที่มีชิปพอเข้าวงและรักษาชิปสะสม', () => {
       const room = new Room('room_next_deal', 50, 3);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player 2');
@@ -268,7 +268,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(waitingPlayer.chips).toBe(950);
     });
 
-    test('[Room.startNextRound] ผู้เล่นที่มีชิปไม่ถึงเกณฑ์คงสถานะ WAITING และไม่ถูกดึงเข้าเล่น', () => {
+    test('[Room.startNextRound] 1.9.4 ผู้เล่นที่มีชิปไม่ถึงเกณฑ์คงสถานะ WAITING และไม่ถูกดึงเข้าเล่น', () => {
       const room = new Room('room_excludes_bankrupt', 50, 3);
       const host = new Player('id_host', 'Host');
       const survivor = new Player('id_survivor', 'Survivor');
@@ -294,7 +294,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(survivor.chips).toBe(150);
     });
 
-    test('[Room.startNextRound] รักษา Atomicity เมื่อผู้เล่นที่มีสิทธิ์เล่นเหลือน้อยกว่า 2 คนและโยน NOT_ENOUGH_PLAYERS', () => {
+    test('[Room.startNextRound] 1.9.5 รักษา Atomicity เมื่อผู้เล่นที่มีสิทธิ์เล่นเหลือน้อยกว่า 2 คนและโยน NOT_ENOUGH_PLAYERS', () => {
       const room = new Room('room_atomicity_check', 50, 3);
       const host = new Player('id_host', 'Host');
       const brokePlayer = new Player('id_broke', 'Broke Player');
@@ -362,7 +362,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(disconnectedPlayer.privateCards).toEqual([]);
     });
 
-    test('[Room.startNextRound] สุ่มโต๊ะและ dealer ใหม่สำหรับเกมที่ดึงคนรอเข้าวง', () => {
+    test('[Room.startNextRound] 1.9.6 สุ่มโต๊ะและ dealer ใหม่สำหรับเกมที่ดึงคนรอเข้าวง', () => {
       const room = new Room('room_rotate_dealer', 50, 3);
       const host = new Player('id_host', 'Host');
       const playerTwo = new Player('id_p2', 'Player 2');
@@ -387,7 +387,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       );
     });
 
-    test('[Room.startNextRound] ผู้เล่นชิปไม่พอเป็น WAITING และคนชิปพอได้เล่น', () => {
+    test('[Room.startNextRound] 1.9.7 ปรับผู้เล่นที่ชิปไม่พอเป็น WAITING และดึงผู้ชมที่มีชิปเข้าเล่นรอบใหม่', () => {
       const room = new Room('room_bankrupt_with_spectator', 50, 3);
       const host = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
@@ -422,7 +422,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(waitingSpectator.chips).toBe(950);
     });
 
-    test('[Room.startNextRound] มีผู้เล่นชิปพอเพียงคนเดียวและไม่มีผู้รอที่มีชิป → โยน NOT_ENOUGH_PLAYERS', () => {
+    test('[Room.startNextRound] 1.9.8 มีผู้เล่นชิปพอเพียงคนเดียวและไม่มีผู้รอที่มีชิป → โยน NOT_ENOUGH_PLAYERS', () => {
       const room = new Room('room_bankrupt_without_spectator', 50, 2);
       const host = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
@@ -441,7 +441,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     test('[Room.join] 1.10 ชื่อซ้ำในห้องเดียวกันแบบไม่สนตัวพิมพ์เล็ก/ใหญ่ → โยน DuplicatePlayerNameError', () => {
       const room = new Room('room_duplicate_name');
       room.join(new Player('id_first', 'Thanathon'));

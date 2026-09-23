@@ -2,8 +2,8 @@ import { expect, test, describe } from 'bun:test';
 import { Player } from '../../../../src/server/domain/models/Player';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
-describe('Player.toJSON', () => {
-  describe('Happy Paths', () => {
+describe('3. การแปลงข้อมูลผู้เล่นเป็น JSON (Player.toJSON)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Player.toJSON] 3.17 ดึงข้อมูล Public DTO → ต้องได้ฟิลด์ครบถ้วนแต่ไม่มีฟิลด์ privateCards', () => {
       const player = new Player('id_test', 'Test Name');
       player.chips = 1000;
@@ -25,8 +25,8 @@ describe('Player.toJSON', () => {
   });
 });
 
-describe('Player.fromJSON', () => {
-  describe('Happy Paths', () => {
+describe('3. การกู้คืนข้อมูลผู้เล่นจาก JSON (Player.fromJSON)', () => {
+  describe('กรณีการทำงานปกติ (Happy Paths)', () => {
     test('[Player.fromJSON] 3.18 กู้ข้อมูลจาก Object ที่มีไพ่หลายใบ → คืนค่าข้อมูลทั้ง 7 ฟิลด์ครบและไพ่ถูกต้องทุกใบ', () => {
       const validJson: Record<string, unknown> = {
         id: 'id_save',
@@ -84,7 +84,7 @@ describe('Player.fromJSON', () => {
     });
   });
 
-  describe('Unhappy Paths', () => {
+  describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
     const invalidDataTypes = [
       { desc: 'null', data: null },
       { desc: 'undefined', data: undefined },

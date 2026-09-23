@@ -175,7 +175,7 @@ describe('3. ระบบจัดการสำรับไพ่และก�
 });
 
 describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื่อให้ Test เขียว)', () => {
-  describe('9.1 dealCards', () => {
+  describe('9.1 การตรวจสอบความถูกต้องของการแจกไพ่ (dealCards Validation Unhappy Paths)', () => {
     test.each([
       {
         testDescription: 'จำนวนผู้เล่นมีค่าน้อยกว่าศูนย์ (ติดลบ)',
@@ -258,7 +258,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         playerCount: 4,
         cardsPerPlayer: '3' as unknown as number,
       },
-    ])('โยน ZodError เมื่อ $testDescription', ({ playerCount, cardsPerPlayer }) => {
+    ])('9.1.1 โยน ZodError เมื่อ $testDescription', ({ playerCount, cardsPerPlayer }) => {
       const standardDeck = createDeck();
       const originalStandardDeck = structuredClone(standardDeck);
       expect(() => dealCards(standardDeck, playerCount, cardsPerPlayer)).toThrow(
@@ -267,14 +267,14 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(standardDeck).toEqual(originalStandardDeck);
     });
 
-    test('โยน ZodError เมื่อสำรับมีไพ่ไม่เพียงพอต่อการแจกให้ผู้เล่นทุกคน', () => {
+    test('9.1.2 โยน ZodError เมื่อสำรับมีไพ่ไม่เพียงพอต่อการแจกให้ผู้เล่นทุกคน', () => {
       const insufficientDeck: Card[] = [{ suit: 'SPADES', rank: 2 }];
       const originalInsufficientDeck = structuredClone(insufficientDeck);
       expect(() => dealCards(insufficientDeck, 2, 3)).toThrow(ZodError);
       expect(insufficientDeck).toEqual(originalInsufficientDeck);
     });
 
-    test('โยน ZodError เมื่อสำรับมีไพ่ที่ซ้ำซ้อนกัน', () => {
+    test('9.1.3 โยน ZodError เมื่อสำรับมีไพ่ที่ซ้ำซ้อนกัน', () => {
       const duplicateDeck: Card[] = [
         { suit: 'SPADES', rank: 2 },
         { suit: 'SPADES', rank: 2 },
@@ -284,7 +284,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(duplicateDeck).toEqual(originalDuplicateDeck);
     });
 
-    test('โยน ZodError เมื่อสำรับมีไพ่ที่ผิดรูปแบบ (Invalid card)', () => {
+    test('9.1.4 โยน ZodError เมื่อสำรับมีไพ่ที่ผิดรูปแบบ (Invalid card)', () => {
       const invalidDeck: Card[] = [{ suit: 'INVALID_SUIT', rank: 2 } as unknown as Card];
       const originalInvalidDeck = structuredClone(invalidDeck);
       expect(() => dealCards(invalidDeck, 1, 1)).toThrow(ZodError);
@@ -317,15 +317,15 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         cardsPerPlayer: undefined as unknown as number,
       },
     ])(
-      'โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
+      '9.1.5 โยน ZodError เมื่อ Input ไม่ใช่โครงสร้างที่ถูกต้อง ($testDescription)',
       ({ deck, playerCount, cardsPerPlayer }) => {
         expect(() => dealCards(deck, playerCount, cardsPerPlayer)).toThrow(ZodError);
       },
     );
   });
 
-  describe('9.6 shuffleDeck', () => {
-    test('โยน ZodError เมื่อตรวจพบว่าสำรับไพ่มีไพ่ที่ซ้ำซ้อนกัน', () => {
+  describe('9.6 การตรวจสอบความถูกต้องของการสับไพ่ (shuffleDeck Validation Unhappy Paths)', () => {
+    test('9.6.1 โยน ZodError เมื่อตรวจพบว่าสำรับไพ่มีไพ่ที่ซ้ำซ้อนกัน', () => {
       const invalidDeck: Card[] = [
         { suit: 'SPADES', rank: 2 },
         { suit: 'SPADES', rank: 2 },
@@ -335,7 +335,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(invalidDeck).toEqual(originalDeck);
     });
 
-    test('โยน ZodError เมื่อ RNG คืนค่านอกขอบเขตตั้งแต่ครั้งแรก และไม่มีการดัดแปลงสำรับไพ่', () => {
+    test('9.6.2 โยน ZodError เมื่อ RNG คืนค่านอกขอบเขตตั้งแต่ครั้งแรก และไม่มีการดัดแปลงสำรับไพ่', () => {
       const validDeck: Card[] = [
         { suit: 'SPADES', rank: 2 },
         { suit: 'HEARTS', rank: 3 },
@@ -347,7 +347,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       expect(validDeck).toEqual(originalDeck);
     });
 
-    test('โยน ZodError เมื่อ RNG คืนค่าที่ถูกต้องในรอบแรกและคืนค่านอกขอบเขตในรอบถัดไป และไม่มีการดัดแปลงสำรับไพ่', () => {
+    test('9.6.3 โยน ZodError เมื่อ RNG คืนค่าที่ถูกต้องในรอบแรกและคืนค่านอกขอบเขตในรอบถัดไป และไม่มีการดัดแปลงสำรับไพ่', () => {
       const validDeck: Card[] = [
         { suit: 'SPADES', rank: 2 },
         { suit: 'HEARTS', rank: 3 },
@@ -372,7 +372,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
       { testDescription: 'RNG เป็น NaN', mockRng: () => NaN },
       { testDescription: 'RNG เป็น String', mockRng: () => '0.5' as unknown as number },
       { testDescription: 'RNG เป็น Infinity', mockRng: () => Infinity },
-    ])('โยน ZodError เมื่อ $testDescription', ({ mockRng }) => {
+    ])('9.6.4 โยน ZodError เมื่อ $testDescription', ({ mockRng }) => {
       const validDeck: Card[] = [
         { suit: 'SPADES', rank: 2 },
         { suit: 'HEARTS', rank: 3 },
@@ -391,7 +391,7 @@ describe('9. Unhappy Paths (รอ Dev เชื่อม Validation เพื�
         testDescription: 'สำรับมีไพ่ที่ผิดรูปแบบ',
         deck: [{ suit: 'INVALID_SUIT', rank: 2 } as unknown as Card] as Card[],
       },
-    ])('โยน ZodError เมื่อสำรับผิดโครงสร้าง ($testDescription)', ({ deck }) => {
+    ])('9.6.5 โยน ZodError เมื่อสำรับผิดโครงสร้าง ($testDescription)', ({ deck }) => {
       expect(() => shuffleDeck(deck, () => 0.5)).toThrow(ZodError);
     });
   });

@@ -51,11 +51,11 @@ function mountNavigation(
 
 describe('16. ระบบนำทางเครือข่ายออนไลน์ (Online Navigation UI)', () => {
   describe('การเชื่อมต่อออนไลน์และการสลับโหมดเครือข่าย (Online Connection & Network Mode Switching)', () => {
-    for (const [intentMode, intentThaiLabel, expectedDispatchedEvent] of [
-      ['create', 'สร้างห้อง Online', 'CREATE_ROOM'],
-      ['join', 'เข้าร่วมห้อง Online', 'GET_ROOMS'],
+    for (const [stepNumber, intentMode, intentThaiLabel, expectedDispatchedEvent] of [
+      [1, 'create', 'สร้างห้อง Online', 'CREATE_ROOM'],
+      [2, 'join', 'เข้าร่วมห้อง Online', 'GET_ROOMS'],
     ] as const) {
-      test(`[onlineNavigation] 16.1 ผู้เล่นเลือกเส้นทาง ${intentThaiLabel} → เชื่อมต่อ WSS ส่งอีเวนต์ ${expectedDispatchedEvent} และสลับกลับเป็น LAN ได้`, async () => {
+      test(`[onlineNavigation] 16.${stepNumber} ผู้เล่นเลือกเส้นทาง ${intentThaiLabel} → เชื่อมต่อ WSS ส่งอีเวนต์ ${expectedDispatchedEvent} และสลับกลับเป็น LAN ได้`, async () => {
         const socket = new SocketClient();
         const dispatchedClientEvents: ClientEvent[] = [];
         const connectedSocketAddresses: string[] = [];
@@ -99,7 +99,7 @@ describe('16. ระบบนำทางเครือข่ายออนไ
   });
 
   describe('กรณีขาดหายของจุดเชื่อมต่อ (Missing Endpoint Error)', () => {
-    test('[onlineNavigation] 16.2 ป้อน URL ของเซิร์ฟเวอร์ Online ว่างเปล่า → แจ้งเตือนข้อผิดพลาดและไม่สลับไป LAN อัตโนมัติ', async () => {
+    test('[onlineNavigation] 16.3 ป้อน URL ของเซิร์ฟเวอร์ Online ว่างเปล่า → แจ้งเตือนข้อผิดพลาดและไม่สลับไป LAN อัตโนมัติ', async () => {
       const socket = new SocketClient();
       const dispatchedClientEvents: ClientEvent[] = [];
       socket.send = (event) => dispatchedClientEvents.push(event);

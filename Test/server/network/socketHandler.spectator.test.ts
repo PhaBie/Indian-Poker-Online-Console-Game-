@@ -9,7 +9,7 @@ import { RoomManager } from '../../../src/server/domain/models/RoomManager';
 import { Player } from '../../../src/server/domain/models/Player';
 import type { WebSocket as WSWebSocket } from 'ws';
 
-describe('Spectator and Queue Operations', () => {
+describe('ระบบจัดการผู้ชมและการรอคิว (Spectator and Queue Operations)', () => {
   let mockNetworkContext: NetworkContext;
 
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe('Spectator and Queue Operations', () => {
     } as unknown as WSWebSocket;
   }
 
-  test('allows spectator to join an active playing room when slots remain', () => {
+  test('[SpectatorQueue] 7.11 ผู้ชมสามารถเข้าร่วมห้องที่กำลังเล่นอยู่ได้หากยังมีที่ว่างเหลือ', () => {
     const hostPlayer = new Player('host_1', 'Alice');
     const guestPlayer = new Player('guest_1', 'Bob');
     const activeRoom = mockNetworkContext.roomManager.createRoom(
@@ -83,7 +83,7 @@ describe('Spectator and Queue Operations', () => {
     expect(summaries[0].maxPlayers).toBe(4);
   });
 
-  test('blocks new spectator when total players and spectators reach room maximum', () => {
+  test('[SpectatorQueue] 7.12 บล็อกผู้ชมใหม่ด้วยข้อผิดพลาด ROOM_FULL เมื่อจำนวนผู้เล่นและผู้ชมรวมกันถึงขีดจำกัดสูงสุดของห้อง', () => {
     const hostPlayer = new Player('host_1', 'Alice');
     const guestPlayer = new Player('guest_1', 'Bob');
     const activeRoom = mockNetworkContext.roomManager.createRoom(
@@ -136,7 +136,7 @@ describe('Spectator and Queue Operations', () => {
     expect(errorEvent.code).toBe('ROOM_FULL');
   });
 
-  test('promotes waiting spectator to active player in next round', () => {
+  test('[SpectatorQueue] 7.13 เลื่อนสถานะผู้ชมที่รอคิวขึ้นเป็นผู้เล่นจริงในรอบถัดไป', () => {
     const hostPlayer = new Player('host_1', 'Alice');
     const guestPlayer = new Player('guest_1', 'Bob');
     const activeRoom = mockNetworkContext.roomManager.createRoom(
@@ -174,7 +174,7 @@ describe('Spectator and Queue Operations', () => {
     expect(charlieInNextRound?.privateCards.length).toBe(3);
   });
 
-  test('broadcasts roundStartedAt timestamp in GAME_STATE_UPDATE after game starts', () => {
+  test('[SpectatorQueue] 7.14 ส่งค่าเวลา roundStartedAt ใน GAME_STATE_UPDATE เมื่อเริ่มเกมเรียบร้อย', () => {
     const hostPlayer = new Player('host_1', 'Alice');
     const guestPlayer = new Player('guest_1', 'Bob');
     const activeRoom = mockNetworkContext.roomManager.createRoom(

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { prepareConnectionUrl } from '../../../src/shared/networkMode';
 
-describe('Network mode boundaries', () => {
-  test('LAN accepts local IPv4 and identifies its mode', () => {
+describe('18. การตรวจสอบขอบเขตและรูปแบบ Network Mode (Network Mode Boundaries)', () => {
+  test('[prepareConnectionUrl] 18.1 โหมด LAN ยอมรับที่อยู่ IPv4 ภายในเครือข่ายและระบุโหมดการเชื่อมต่อถูกต้อง', () => {
     expect(prepareConnectionUrl('192.168.1.20', 'LAN')).toBe(
       'ws://192.168.1.20:8080/?mode=LAN',
     );
@@ -10,17 +10,19 @@ describe('Network mode boundaries', () => {
       'ws://127.0.0.1:9000/?mode=LAN',
     );
   });
-  test('LAN rejects public addresses, domains and tunnels', () => {
-    for (const address of [
+
+  test('[prepareConnectionUrl] 18.2 โหมด LAN ปฏิเสธที่อยู่ Public IP, โดเมนเนม และทันเนลที่ไม่ได้รับอนุญาต', () => {
+    for (const targetAddress of [
       '8.8.8.8',
       'wss://example.ngrok.app',
       'ws://example.com',
       '172.32.1.1',
     ]) {
-      expect(() => prepareConnectionUrl(address, 'LAN')).toThrow();
+      expect(() => prepareConnectionUrl(targetAddress, 'LAN')).toThrow();
     }
   });
-  test('Online requires a configured secure endpoint', () => {
+
+  test('[prepareConnectionUrl] 18.3 โหมด Online กำหนดให้ใช้เฉพาะ URL ปลายทางที่มีความปลอดภัย (Secure Endpoint)', () => {
     expect(prepareConnectionUrl('https://example.ngrok.app', 'INTERNET')).toBe(
       'wss://example.ngrok.app/?mode=INTERNET',
     );
