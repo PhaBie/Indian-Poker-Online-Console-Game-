@@ -42,9 +42,9 @@ describe('game layout helpers', () => {
   });
 
   it('uses the full table at the normal 150 by 41 terminal size', () => {
-    expect(getGameplayLayoutMode(80, 24)).toBe('compact');
-    expect(getGameplayLayoutMode(120, 30)).toBe('compact');
-    expect(getGameplayLayoutMode(150, 40)).toBe('compact');
+    expect(getGameplayLayoutMode(80, 24)).toBe('unsupported');
+    expect(getGameplayLayoutMode(120, 30)).toBe('unsupported');
+    expect(getGameplayLayoutMode(150, 40)).toBe('unsupported');
     expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
     expect(getGameplayLayoutMode(79, 24)).toBe('unsupported');
   });
