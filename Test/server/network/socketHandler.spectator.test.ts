@@ -5,7 +5,7 @@ import {
   getRoomSummaryList,
 } from '../../../src/server/network/socketHandler';
 import type { ServerEvent } from '../../../src/shared/types';
-import { RoomManager } from '../../../src/server/domain/models/RoomManager';
+import { RoomManager } from '../../../src/server/domain/services/RoomManager';
 import { Player } from '../../../src/server/domain/models/Player';
 import type { WebSocket as WSWebSocket } from 'ws';
 

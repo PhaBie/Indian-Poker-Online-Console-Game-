@@ -9,10 +9,10 @@ import type {
   GameActionType,
   RoomSummaryDTO,
 } from '../../shared/types';
-import type { RoomManager } from '../domain/models/RoomManager';
+import type { RoomManager } from '../domain/services/RoomManager';
 import type { Room } from '../domain/models/Room';
 import { Player } from '../domain/models/Player';
-import { generatePlayerId, generateRoomId } from '../utils/helpers';
+import { generatePlayerId, generateRoomId } from './helpers';
 import { GameError } from '../domain/errors/GameError';
 
 const SHOW_REVEAL_DELAY_MS = 4_000;

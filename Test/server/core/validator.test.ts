@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { Validator } from '../../../src/server/utils/validator';
+import { Validator } from '../../../src/server/network/validator';
 import type { ClientEvent } from '../../../src/shared/types';
 
 describe('6. การตรวจสอบ Event ของระบบ (Validator)', () => {

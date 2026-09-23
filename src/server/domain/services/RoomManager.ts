@@ -1,5 +1,5 @@
-import { Room } from './Room';
-import type { Player } from './Player';
+import { Room } from '../models/Room';
+import type { Player } from '../models/Player';
 import { GameError } from '../errors/GameError';
 // class RoomManager จริงๆจะทำแค่ตัวแปรแต่ AI แนะนำให้ใช้ class เวลาเรียกใช้จะได้ไม่มีปัญหาเรื่องการเรียกใช้ตัวแปรผิดที่
 export class RoomManager {

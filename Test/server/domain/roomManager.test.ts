@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test';
-import { RoomManager } from '../../../src/server/domain/models/RoomManager';
+import { RoomManager } from '../../../src/server/domain/services/RoomManager';
 import { Player } from '../../../src/server/domain/models/Player';
 import { GameError } from '../../../src/server/domain/errors/GameError';
 

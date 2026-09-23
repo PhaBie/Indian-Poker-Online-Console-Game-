@@ -3,7 +3,7 @@ import {
   toPublicPlayerDTO,
   generateRoomId,
   generatePlayerId,
-} from '../../../src/server/utils/helpers';
+} from '../../../src/server/network/helpers';
 import type { ServerPlayer } from '../../../src/shared/types';
 
 describe('5. ระบบช่วยเหลือและคัดกรองข้อมูล (Utils & Helpers)', () => {

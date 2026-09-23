@@ -1,8 +1,8 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { RoomManager } from './domain/models/RoomManager';
+import { RoomManager } from './domain/services/RoomManager';
 import { StorageManager } from './infrastructure/StorageManager';
-import { Validator } from './utils/validator';
+import { Validator } from './network/validator';
 import { acceptsConnection, getLanBindAddress } from './network/accessPolicy';
 import { isPrivateIPv4, type NetworkMode } from '../shared/networkMode';
 import {

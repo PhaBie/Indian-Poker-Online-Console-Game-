@@ -9,7 +9,7 @@ import {
 import type { ServerEvent } from '../../../src/shared/types';
 import { GAME_CONSTANTS } from '../../../src/shared/constants';
 import { Player } from '../../../src/server/domain/models/Player';
-import { RoomManager } from '../../../src/server/domain/models/RoomManager';
+import { RoomManager } from '../../../src/server/domain/services/RoomManager';
 
 function client(events: ServerEvent[]): WSWebSocket {
   return {
