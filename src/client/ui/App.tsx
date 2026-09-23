@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Box, useApp } from 'ink';
 import type { ClientState } from '../state/ClientState';
-import { useClientState } from './hooks/useClientState';
-import { useAppNavigation } from './hooks/useAppNavigation';
+import { useClientState } from './shared/hooks/useClientState';
+import { useAppNavigation } from './navigation/useAppNavigation';
 import { GameIntroSplash } from './components/GameIntroSplash';
 import { MainMenuScreen } from './screens/MainMenuScreen';
 import { CreateRoomScreen } from './screens/CreateRoomScreen';
@@ -18,11 +18,11 @@ import {
   clearTerminalScreen,
   hideTerminalCursor,
   showTerminalCursor,
-} from './hooks/useTerminalSize';
+} from './shared/hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from './components/ScreenSizeGuard';
+} from './shared/components/ScreenSizeGuard';
 import type { SocketClient } from '../network/socketClient';
 
 export interface AppProps {

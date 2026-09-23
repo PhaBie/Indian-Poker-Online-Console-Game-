@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 
 interface WaitingRoomCardHeaderProps {
   readonly roomId: string | null;

@@ -1,11 +1,11 @@
 import { Box } from 'ink';
-import { ShimmeringHeader } from '../components/ShimmeringHeader';
-import { useTerminalSize } from '../hooks/useTerminalSize';
-import { getGameContainerWidth } from './MainMenuScreen';
+import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../components/ScreenSizeGuard';
+} from '../shared/components/ScreenSizeGuard';
 import type { ServerConnectionScreenProps } from './server/types';
 import { useServerConnectionController } from './server/useServerConnectionController';
 import { ServerConnectionCard } from './server/ServerConnectionCard';

@@ -4,7 +4,7 @@ import { PassThrough, Writable } from 'stream';
 import { render } from 'ink';
 import { ClientState } from '../../../src/client/state/ClientState';
 import { SocketClient } from '../../../src/client/network/socketClient';
-import { useAppNavigation } from '../../../src/client/ui/hooks/useAppNavigation';
+import { useAppNavigation } from '../../../src/client/ui/navigation/useAppNavigation';
 import type { ClientEvent } from '../../../src/shared/types';
 
 async function waitFor(condition: () => boolean) {

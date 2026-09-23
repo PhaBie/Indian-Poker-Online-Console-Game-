@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
 import type { PublicPlayerDTO } from './types';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import { WaitingRoomSeatRow } from './WaitingRoomSeatRow';
 import {
   buildWaitingRoomBorder,
@@ -16,6 +16,38 @@ interface WaitingRoomPlayerListProps {
   readonly maxPlayers: number;
 }
 
+function WaitingRoomTableHeader() {
+  return (
+    <>
+      <Text color={UI_COLORS.mutedText}>{buildWaitingRoomBorder('┌', '┬', '┐')}</Text>
+      <Box flexDirection="row" width={WAITING_ROOM_TABLE_WIDTH}>
+        <Text color={UI_COLORS.mutedText}>│</Text>
+        <Text bold color={UI_COLORS.inactiveTitle}>
+          {formatWaitingRoomCell('SEAT', WAITING_ROOM_COLUMN_WIDTHS.seat, 'center')}
+        </Text>
+        <Text color={UI_COLORS.mutedText}>│</Text>
+        <Text bold color={UI_COLORS.inactiveTitle}>
+          {formatWaitingRoomCell(
+            'PLAYER NAME',
+            WAITING_ROOM_COLUMN_WIDTHS.player,
+            'center',
+          )}
+        </Text>
+        <Text color={UI_COLORS.mutedText}>│</Text>
+        <Text bold color={UI_COLORS.inactiveTitle}>
+          {formatWaitingRoomCell('ROLE', WAITING_ROOM_COLUMN_WIDTHS.role, 'center')}
+        </Text>
+        <Text color={UI_COLORS.mutedText}>│</Text>
+        <Text bold color={UI_COLORS.inactiveTitle}>
+          {formatWaitingRoomCell('STATUS', WAITING_ROOM_COLUMN_WIDTHS.status, 'center')}
+        </Text>
+        <Text color={UI_COLORS.mutedText}>│</Text>
+      </Box>
+      <Text color={UI_COLORS.mutedText}>{buildWaitingRoomBorder('├', '┼', '┤')}</Text>
+    </>
+  );
+}
+
 export function WaitingRoomPlayerList({
   players,
   hostId,
@@ -25,21 +57,13 @@ export function WaitingRoomPlayerList({
   const seatIndices = Array.from({ length: maxPlayers }, (_, index) => index);
 
   return (
-    <Box flexDirection="column" width={WAITING_ROOM_TABLE_WIDTH} alignSelf="center" marginY={1}>
-      <Text color={UI_COLORS.mutedText}>{buildWaitingRoomBorder('┌', '┬', '┐')}</Text>
-      <Box flexDirection="row" width={WAITING_ROOM_TABLE_WIDTH}>
-        <Text color={UI_COLORS.mutedText}>│</Text>
-        <Text bold color={UI_COLORS.inactiveTitle}>{formatWaitingRoomCell('SEAT', WAITING_ROOM_COLUMN_WIDTHS.seat, 'center')}</Text>
-        <Text color={UI_COLORS.mutedText}>│</Text>
-        <Text bold color={UI_COLORS.inactiveTitle}>{formatWaitingRoomCell('PLAYER NAME', WAITING_ROOM_COLUMN_WIDTHS.player, 'center')}</Text>
-        <Text color={UI_COLORS.mutedText}>│</Text>
-        <Text bold color={UI_COLORS.inactiveTitle}>{formatWaitingRoomCell('ROLE', WAITING_ROOM_COLUMN_WIDTHS.role, 'center')}</Text>
-        <Text color={UI_COLORS.mutedText}>│</Text>
-        <Text bold color={UI_COLORS.inactiveTitle}>{formatWaitingRoomCell('STATUS', WAITING_ROOM_COLUMN_WIDTHS.status, 'center')}</Text>
-        <Text color={UI_COLORS.mutedText}>│</Text>
-      </Box>
-      <Text color={UI_COLORS.mutedText}>{buildWaitingRoomBorder('├', '┼', '┤')}</Text>
-
+    <Box
+      flexDirection="column"
+      width={WAITING_ROOM_TABLE_WIDTH}
+      alignSelf="center"
+      marginY={1}
+    >
+      <WaitingRoomTableHeader />
       {seatIndices.map((index) => {
         const player = players[index];
         return (

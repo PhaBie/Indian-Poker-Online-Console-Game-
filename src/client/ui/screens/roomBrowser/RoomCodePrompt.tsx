@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 
 interface RoomCodePromptProps {
   readonly value: string;
@@ -23,8 +23,15 @@ export function RoomCodePrompt({
   });
 
   return (
-    <Box flexDirection="column" alignItems="center" justifyContent="center" minHeight={12}>
-      <Text bold color={UI_COLORS.goldHighlight}>ENTER ROOM CODE</Text>
+    <Box
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      minHeight={12}
+    >
+      <Text bold color={UI_COLORS.goldHighlight}>
+        ENTER ROOM CODE
+      </Text>
       <Text color={UI_COLORS.mutedText}>Join directly without browsing the list</Text>
       <Box
         width={38}
@@ -33,7 +40,9 @@ export function RoomCodePrompt({
         paddingX={2}
         marginTop={2}
       >
-        <Text bold color={UI_COLORS.goldHighlight}># </Text>
+        <Text bold color={UI_COLORS.goldHighlight}>
+          #{' '}
+        </Text>
         <TextInput value={value} onChange={onChange} onSubmit={onSubmit} />
       </Box>
     </Box>

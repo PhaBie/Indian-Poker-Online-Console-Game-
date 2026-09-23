@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import { ServerStatusBadge } from './ServerStatusBadge';
 import { ServerIpInputField } from './ServerIpInputField';
 import type { ServerConnectionMode } from './types';

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { SocketClient } from '../../network/socketClient';
 import { prepareConnectionUrl } from '../../../shared/networkMode';
-import type { ActiveScreen } from './useAppNavigation';
+import type { ActiveScreen } from '../navigation/useAppNavigation';
 
 interface OnlineConnectionParams {
   intent: 'create' | 'join' | null;

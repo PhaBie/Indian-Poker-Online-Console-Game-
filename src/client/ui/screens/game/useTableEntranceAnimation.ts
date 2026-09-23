@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useInput } from 'ink';
-import { isAnimationEnabled } from '../../components/ShimmeringHeader';
+import { isAnimationEnabled } from '../../shared/components/ShimmeringHeader';
 
 // Leave a little more room between cards so the deal is readable without
 // making the later seat and pot animations any slower.

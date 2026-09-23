@@ -25,8 +25,8 @@ import {
   getSideshowPresentationKey,
   getVisibleSideshowResult,
 } from './game/sideshowPresentation';
-import { useTerminalSize } from '../hooks/useTerminalSize';
-import { TerminalOutOfRangeScreen } from '../components/ScreenSizeGuard';
+import { useTerminalSize } from '../shared/hooks/useTerminalSize';
+import { TerminalOutOfRangeScreen } from '../shared/components/ScreenSizeGuard';
 
 export type { GameScreenProps } from './game/types';
 

@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import { MAX_USERNAME_LENGTH } from '../../hooks/useUsernameInput';
 import type { UsernameInputFieldProps } from './types';
 

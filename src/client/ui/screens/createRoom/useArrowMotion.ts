@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isAnimationEnabled } from '../../components/ShimmeringHeader';
+import { isAnimationEnabled } from '../../shared/components/ShimmeringHeader';
 
 export interface ArrowMotionState {
   readonly glyph: string;

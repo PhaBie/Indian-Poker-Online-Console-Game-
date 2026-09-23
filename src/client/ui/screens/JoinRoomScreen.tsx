@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { ShimmeringHeader } from '../components/ShimmeringHeader';
-import { useTerminalSize } from '../hooks/useTerminalSize';
-import { getGameContainerWidth } from './MainMenuScreen';
+import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../components/ScreenSizeGuard';
-import { UI_COLORS } from '../theme/colors';
+} from '../shared/components/ScreenSizeGuard';
+import { UI_COLORS } from '../shared/theme/colors';
 
 export interface JoinRoomScreenProps {
   onBack: () => void;

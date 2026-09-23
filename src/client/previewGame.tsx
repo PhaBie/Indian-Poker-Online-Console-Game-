@@ -1,7 +1,10 @@
 import React from 'react';
 import { render } from 'ink';
 import { GamePreview } from './ui/GamePreview';
-import { clearTerminalScreen, hideTerminalCursor } from './ui/hooks/useTerminalSize';
+import {
+  clearTerminalScreen,
+  hideTerminalCursor,
+} from './ui/shared/hooks/useTerminalSize';
 import { parsePreviewPlayerCount } from './ui/screens/game/gamePreviewFixture';
 
 clearTerminalScreen({ shouldRestoreCursor: false });

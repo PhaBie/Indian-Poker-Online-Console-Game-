@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import { MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH } from '../../hooks/useUsernameInput';
 import type { UsernameStatusMessageProps } from './types';
 

@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import {
   calculateShimmerColor,
   isAnimationEnabled,
-} from '../../components/ShimmeringHeader';
-import { UI_COLORS } from '../../theme/colors';
+} from '../../shared/components/ShimmeringHeader';
+import { UI_COLORS } from '../../shared/theme/colors';
 
 const SHIMMER_INTERVAL_MS = 55;
 const SHIMMER_REST_STEPS = 20;

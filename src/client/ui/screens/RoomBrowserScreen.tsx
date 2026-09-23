@@ -1,12 +1,12 @@
 import { Box } from 'ink';
 import { useEffect, useState } from 'react';
-import { ShimmeringHeader } from '../components/ShimmeringHeader';
-import { useTerminalSize } from '../hooks/useTerminalSize';
+import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../shared/hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../components/ScreenSizeGuard';
-import { UI_COLORS } from '../theme/colors';
+} from '../shared/components/ScreenSizeGuard';
+import { UI_COLORS } from '../shared/theme/colors';
 import type { RoomBrowserScreenProps } from './roomBrowser/types';
 import { useRoomBrowserController } from './roomBrowser/useRoomBrowserController';
 import { RoomBrowserHeader } from './roomBrowser/RoomBrowserHeader';

@@ -6,11 +6,11 @@ import { SocketClient } from '../../../src/client/network/socketClient';
 import {
   resolveLeaveRoomScreen,
   resolveRoomClosedScreen,
-} from '../../../src/client/ui/hooks/navigationActions';
+} from '../../../src/client/ui/navigation/navigationActions';
 import {
   isPlayerPresentInRoom,
   useAppNavigation,
-} from '../../../src/client/ui/hooks/useAppNavigation';
+} from '../../../src/client/ui/navigation/useAppNavigation';
 
 type NavigationInstance = ReturnType<typeof useAppNavigation>;
 

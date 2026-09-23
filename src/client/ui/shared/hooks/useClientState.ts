@@ -1,5 +1,5 @@
 import { useSyncExternalStore, useMemo } from 'react';
-import type { ClientState, ClientStateSnapshot } from '../../state/ClientState';
+import type { ClientState, ClientStateSnapshot } from '../../../state/ClientState';
 
 export type { ClientStateSnapshot };
 

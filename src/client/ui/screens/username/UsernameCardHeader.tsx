@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import type { UsernameCardHeaderProps } from './types';
 
 export function UsernameCardHeader({
@@ -10,7 +10,9 @@ export function UsernameCardHeader({
   if (intent === null) {
     return (
       <Box flexDirection="column" alignItems="center" marginBottom={1}>
-        <Text bold color={UI_COLORS.goldHighlight}>PLAYER PROFILE</Text>
+        <Text bold color={UI_COLORS.goldHighlight}>
+          PLAYER PROFILE
+        </Text>
         <Text color={UI_COLORS.mutedText}>Set your player name</Text>
       </Box>
     );

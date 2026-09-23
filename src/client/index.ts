@@ -5,7 +5,10 @@ import { SocketClient } from './network/socketClient';
 import { ClientState } from './state/ClientState';
 import type { ServerEvent } from '../shared/types';
 import { App } from './ui/App';
-import { clearTerminalScreen, hideTerminalCursor } from './ui/hooks/useTerminalSize';
+import {
+  clearTerminalScreen,
+  hideTerminalCursor,
+} from './ui/shared/hooks/useTerminalSize';
 import { isPrivateIPv4, prepareConnectionUrl } from '../shared/networkMode';
 
 /**

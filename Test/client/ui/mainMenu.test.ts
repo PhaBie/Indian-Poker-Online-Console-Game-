@@ -2,14 +2,14 @@ import { describe, expect, test } from 'bun:test';
 import {
   parseMainMenuChoice,
   determineNextFocus,
-  getGameContainerWidth,
   type MainMenuOption,
 } from '../../../src/client/ui/screens/MainMenuScreen';
+import { getGameContainerWidth } from '../../../src/client/ui/shared/layout/gameContainerLayout';
 import {
   isTerminalSizeSufficient,
   isTerminalSizeOptimal,
   getTerminalSizeStatus,
-} from '../../../src/client/ui/components/ScreenSizeGuard';
+} from '../../../src/client/ui/shared/components/ScreenSizeGuard';
 
 describe('11. ระบบเมนูหลัก (Main Menu UI)', () => {
   describe('กรณีการทำงานปกติ (Happy Paths)', () => {

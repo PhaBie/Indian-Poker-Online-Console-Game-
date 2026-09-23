@@ -1,5 +1,5 @@
 import { Box } from 'ink';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import type { UsernameCardProps } from './types';
 import { UsernameCardHeader } from './UsernameCardHeader';
 import { UsernameInputField } from './UsernameInputField';

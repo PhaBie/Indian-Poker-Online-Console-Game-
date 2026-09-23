@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
 import type { RoomSummaryDTO } from './types';
-import { UI_COLORS } from '../../theme/colors';
+import { UI_COLORS } from '../../shared/theme/colors';
 import {
   COLUMN_WIDTHS,
   formatGridCell,

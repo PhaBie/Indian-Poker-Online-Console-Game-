@@ -1,45 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
-import { ShimmeringHeader } from '../components/ShimmeringHeader';
+import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
 import { MainMenuCards, MENU_CARD_DEFINITIONS } from '../components/MainMenuCards';
-import { useTerminalSize, clearTerminalScreen } from '../hooks/useTerminalSize';
+import { useTerminalSize, clearTerminalScreen } from '../shared/hooks/useTerminalSize';
 import { useMainMenuInput } from '../hooks/useMainMenuInput';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../components/ScreenSizeGuard';
-
-import { UI_COLORS } from '../theme/colors';
-
-const CONTAINER_BREAKPOINTS = {
-  small: { maxColumns: 120, baseWidth: 66 },
-  medium: { maxColumns: 160, baseWidth: 66, growthRate: 0.1 },
-  large: { maxColumns: 200, baseWidth: 70, growthRate: 0.45 },
-  extraLarge: { baseWidth: 88, growthRate: 0.2, maxWidth: 92 },
-} as const;
-
-export function getGameContainerWidth(terminalColumns: number): number {
-  const { small, medium, large, extraLarge } = CONTAINER_BREAKPOINTS;
-  if (terminalColumns <= small.maxColumns) {
-    return small.baseWidth;
-  }
-  if (terminalColumns <= medium.maxColumns) {
-    return Math.round(
-      medium.baseWidth + (terminalColumns - small.maxColumns) * medium.growthRate,
-    );
-  }
-  if (terminalColumns <= large.maxColumns) {
-    return Math.round(
-      large.baseWidth + (terminalColumns - medium.maxColumns) * large.growthRate,
-    );
-  }
-  return Math.min(
-    extraLarge.maxWidth,
-    Math.round(
-      extraLarge.baseWidth + (terminalColumns - large.maxColumns) * extraLarge.growthRate,
-    ),
-  );
-}
+} from '../shared/components/ScreenSizeGuard';
+import { UI_COLORS } from '../shared/theme/colors';
+import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
 
 export type MainMenuOption = 'CREATE_ROOM' | 'JOIN_ROOM' | 'EXIT';
 
