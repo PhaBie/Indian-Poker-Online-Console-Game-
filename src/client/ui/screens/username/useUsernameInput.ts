@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useInput } from 'ink';
-import { GAME_CONSTANTS } from '../../../shared/constants';
+import { GAME_CONSTANTS } from '../../../../shared/constants';
 
 export const MIN_USERNAME_LENGTH = GAME_CONSTANTS.MIN_USERNAME_LENGTH;
 export const MAX_USERNAME_LENGTH = GAME_CONSTANTS.MAX_USERNAME_LENGTH;
@@ -67,7 +67,11 @@ function resolveSubmitError(submitError: unknown): string {
   return 'Failed to connect to server';
 }
 
-export function useUsernameInput({ onSubmit, onBack, initialValue = '' }: UseUsernameInputParams) {
+export function useUsernameInput({
+  onSubmit,
+  onBack,
+  initialValue = '',
+}: UseUsernameInputParams) {
   const [rawInput, setRawInput] = useState<string>(initialValue);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

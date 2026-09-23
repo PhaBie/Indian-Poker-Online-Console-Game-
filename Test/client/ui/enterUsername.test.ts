@@ -5,7 +5,7 @@ import {
   clampUsernameInput,
   MIN_USERNAME_LENGTH,
   MAX_USERNAME_LENGTH,
-} from '../../../src/client/ui/hooks/useUsernameInput';
+} from '../../../src/client/ui/screens/username/useUsernameInput';
 
 describe('12. ระบบป้อนชื่อผู้เล่น (Username Input UI)', () => {
   describe('กรณีการทำงานปกติ (Happy Paths)', () => {

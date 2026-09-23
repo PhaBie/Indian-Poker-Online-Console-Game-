@@ -1,14 +1,14 @@
 import { useApp } from 'ink';
 import { useEffect, useMemo, useState } from 'react';
-import { SocketClient } from '../network/socketClient';
-import type { Transport } from '../network/socketClient';
-import { GameScreen } from './screens/GameScreen';
+import { SocketClient } from '../../../network/socketClient';
+import type { Transport } from '../../../network/socketClient';
+import { GameScreen } from './GameScreen';
 import {
   GAME_PREVIEW_PLAYER_ID,
   GamePreviewSession,
   type GamePreviewPlayerCount,
-} from './screens/game/gamePreviewFixture';
-import type { ServerEvent } from '../../shared/types';
+} from './gamePreviewFixture';
+import type { ServerEvent } from '../../../../shared/types';
 
 type GameResultPayload = Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
 // Keep every bot action visible: seeing cards, calling, betting, folding, and

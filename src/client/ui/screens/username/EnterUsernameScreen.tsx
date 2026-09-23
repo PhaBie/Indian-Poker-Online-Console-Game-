@@ -1,14 +1,14 @@
 import { Box } from 'ink';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import { useUsernameInput } from '../hooks/useUsernameInput';
-import { UsernameCard } from './username/UsernameCard';
-import { UsernameHelpFooter } from './username/UsernameHelpFooter';
+} from '../../shared/components/ScreenSizeGuard';
+import { useUsernameInput } from './useUsernameInput';
+import { UsernameCard } from './UsernameCard';
+import { UsernameHelpFooter } from './UsernameHelpFooter';
 
 export interface EnterUsernameScreenProps {
   readonly onSubmit: (username: string) => void;

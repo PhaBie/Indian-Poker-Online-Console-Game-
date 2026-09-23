@@ -1,16 +1,16 @@
 import { Box } from 'ink';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import type { CreateRoomScreenProps } from './createRoom/types';
-import { useCreateRoomController } from './createRoom/useCreateRoomController';
-import { CreateRoomCard, CreateRoomHelpFooter } from './createRoom/CreateRoomCard';
+} from '../../shared/components/ScreenSizeGuard';
+import type { CreateRoomScreenProps } from './types';
+import { useCreateRoomController } from './useCreateRoomController';
+import { CreateRoomCard, CreateRoomHelpFooter } from './CreateRoomCard';
 
-export type { CreateRoomScreenProps } from './createRoom/types';
+export type { CreateRoomScreenProps } from './types';
 
 export function CreateRoomScreen({
   socketClient,

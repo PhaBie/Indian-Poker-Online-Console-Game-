@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { MainMenuCards, MENU_CARD_DEFINITIONS } from '../components/MainMenuCards';
-import { useTerminalSize, clearTerminalScreen } from '../shared/hooks/useTerminalSize';
-import { useMainMenuInput } from '../hooks/useMainMenuInput';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { MainMenuCards, MENU_CARD_DEFINITIONS } from './MainMenuCards';
+import { useTerminalSize, clearTerminalScreen } from '../../shared/hooks/useTerminalSize';
+import { useMainMenuInput } from './useMainMenuInput';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import { UI_COLORS } from '../shared/theme/colors';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+} from '../../shared/components/ScreenSizeGuard';
+import { UI_COLORS } from '../../shared/theme/colors';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 
 export type MainMenuOption = 'CREATE_ROOM' | 'JOIN_ROOM' | 'EXIT';
 

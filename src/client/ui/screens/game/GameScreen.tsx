@@ -1,34 +1,34 @@
 import { Box, useInput } from 'ink';
 import { useEffect, useState } from 'react';
-import type { GameScreenProps, StatusStateContext, GameStatePayload } from './game/types';
+import type { GameScreenProps, StatusStateContext, GameStatePayload } from './types';
 import {
   getOrderedPlayersByPerspective,
   determineSeatPositions,
   resolveTableParticipants,
-} from './game/gameLayoutHelpers';
-import { useGameActionController } from './game/useGameActionController';
-import { getGameEscapeAction } from './game/gameEscapeActions';
-import { GameTableLayout } from './game/GameTableLayout';
-import { GameActionsPanel } from './game/GameActionsPanel';
-import { getGameplayActions } from './game/gameActionHelpers';
-import { GameExitConfirmDialog } from './game/GameExitConfirmDialog';
-import { GameRoundResultDialog } from './game/GameRoundResultDialog';
-import { GameSideshowResultDialog } from './game/GameSideshowResultDialog';
-import { GameSideshowDeclinedDialog } from './game/GameSideshowDeclinedDialog';
-import { GameBrandHeader } from './game/GameBrandHeader';
-import { GAME_TABLE_CANVAS_HEIGHT } from './game/layoutConstants';
-import { usePotPaymentAnimation } from './game/usePotPaymentAnimation';
-import { useTableEntranceAnimation } from './game/useTableEntranceAnimation';
-import { useDealSequenceTracker } from './game/useDealSequenceTracker';
-import { resolveSeatPositionsForEntrance } from './game/useSeatSpinAnimation';
+} from './gameLayoutHelpers';
+import { useGameActionController } from './useGameActionController';
+import { getGameEscapeAction } from './gameEscapeActions';
+import { GameTableLayout } from './GameTableLayout';
+import { GameActionsPanel } from './GameActionsPanel';
+import { getGameplayActions } from './gameActionHelpers';
+import { GameExitConfirmDialog } from './GameExitConfirmDialog';
+import { GameRoundResultDialog } from './GameRoundResultDialog';
+import { GameSideshowResultDialog } from './GameSideshowResultDialog';
+import { GameSideshowDeclinedDialog } from './GameSideshowDeclinedDialog';
+import { GameBrandHeader } from './GameBrandHeader';
+import { GAME_TABLE_CANVAS_HEIGHT } from './layoutConstants';
+import { usePotPaymentAnimation } from './usePotPaymentAnimation';
+import { useTableEntranceAnimation } from './useTableEntranceAnimation';
+import { useDealSequenceTracker } from './useDealSequenceTracker';
+import { resolveSeatPositionsForEntrance } from './useSeatSpinAnimation';
 import {
   getSideshowPresentationKey,
   getVisibleSideshowResult,
-} from './game/sideshowPresentation';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { TerminalOutOfRangeScreen } from '../shared/components/ScreenSizeGuard';
+} from './sideshowPresentation';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { TerminalOutOfRangeScreen } from '../../shared/components/ScreenSizeGuard';
 
-export type { GameScreenProps } from './game/types';
+export type { GameScreenProps } from './types';
 
 // Keep the game at a desktop-sized canvas.  The same dimensions are also the
 // hard lower bound checked before rendering, so Ink never squeezes the table

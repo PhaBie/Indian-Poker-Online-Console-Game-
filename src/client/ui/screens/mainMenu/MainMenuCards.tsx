@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import { UI_COLORS } from '../shared/theme/colors';
-import { isAnimationEnabled } from '../shared/components/ShimmeringHeader';
+import { UI_COLORS } from '../../shared/theme/colors';
+import { isAnimationEnabled } from '../../shared/components/ShimmeringHeader';
 
 export interface MenuItemDefinition {
   readonly optionId: 'CREATE_ROOM' | 'JOIN_ROOM' | 'EXIT';

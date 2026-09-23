@@ -1,8 +1,8 @@
 import { useInput } from 'ink';
 import type { Key } from 'ink';
-import type { MainMenuOption } from '../screens/MainMenuScreen';
-import { determineNextFocus } from '../screens/MainMenuScreen';
-import { MENU_CARD_DEFINITIONS } from '../components/MainMenuCards';
+import type { MainMenuOption } from './MainMenuScreen';
+import { determineNextFocus } from './MainMenuScreen';
+import { MENU_CARD_DEFINITIONS } from './MainMenuCards';
 
 const EXIT_MENU_INDEX = MENU_CARD_DEFINITIONS.findIndex(
   (item) => item.optionId === 'EXIT',

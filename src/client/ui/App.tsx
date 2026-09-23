@@ -3,16 +3,16 @@ import { Box, useApp } from 'ink';
 import type { ClientState } from '../state/ClientState';
 import { useClientState } from './shared/hooks/useClientState';
 import { useAppNavigation } from './navigation/useAppNavigation';
-import { GameIntroSplash } from './components/GameIntroSplash';
-import { MainMenuScreen } from './screens/MainMenuScreen';
-import { CreateRoomScreen } from './screens/CreateRoomScreen';
-import { JoinRoomScreen } from './screens/JoinRoomScreen';
-import { EnterUsernameScreen } from './screens/EnterUsernameScreen';
-import { ServerConnectionScreen } from './screens/ServerConnectionScreen';
-import { OnlineConnectionScreen } from './screens/OnlineConnectionScreen';
-import { RoomBrowserScreen } from './screens/RoomBrowserScreen';
-import { WaitingRoomScreen } from './screens/WaitingRoomScreen';
-import { GameScreen } from './screens/GameScreen';
+import { GameIntroSplash } from './screens/intro/GameIntroSplash';
+import { MainMenuScreen } from './screens/mainMenu/MainMenuScreen';
+import { CreateRoomScreen } from './screens/createRoom/CreateRoomScreen';
+import { JoinRoomScreen } from './screens/joinRoom/JoinRoomScreen';
+import { EnterUsernameScreen } from './screens/username/EnterUsernameScreen';
+import { ServerConnectionScreen } from './screens/server/ServerConnectionScreen';
+import { OnlineConnectionScreen } from './screens/onlineConnection/OnlineConnectionScreen';
+import { RoomBrowserScreen } from './screens/roomBrowser/RoomBrowserScreen';
+import { WaitingRoomScreen } from './screens/waitingRoom/WaitingRoomScreen';
+import { GameScreen } from './screens/game/GameScreen';
 import {
   useTerminalSize,
   clearTerminalScreen,

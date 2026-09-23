@@ -1,17 +1,17 @@
 import { Box } from 'ink';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import type { WaitingRoomScreenProps } from './waitingRoom/types';
-import { useWaitingRoomController } from './waitingRoom/useWaitingRoomController';
-import { WaitingRoomCard } from './waitingRoom/WaitingRoomCard';
-import { WaitingRoomHelpFooter } from './waitingRoom/WaitingRoomHelpFooter';
+} from '../../shared/components/ScreenSizeGuard';
+import type { WaitingRoomScreenProps } from './types';
+import { useWaitingRoomController } from './useWaitingRoomController';
+import { WaitingRoomCard } from './WaitingRoomCard';
+import { WaitingRoomHelpFooter } from './WaitingRoomHelpFooter';
 
-export type { WaitingRoomScreenProps } from './waitingRoom/types';
+export type { WaitingRoomScreenProps } from './types';
 
 export function WaitingRoomScreen(props: WaitingRoomScreenProps) {
   const { columns, rows } = useTerminalSize();

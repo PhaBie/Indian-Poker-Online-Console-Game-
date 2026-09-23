@@ -1,18 +1,18 @@
 import { Box } from 'ink';
 import { useEffect, useState } from 'react';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import { UI_COLORS } from '../shared/theme/colors';
-import type { RoomBrowserScreenProps } from './roomBrowser/types';
-import { useRoomBrowserController } from './roomBrowser/useRoomBrowserController';
-import { RoomBrowserHeader } from './roomBrowser/RoomBrowserHeader';
-import { RoomBrowserTable } from './roomBrowser/RoomBrowserTable';
-import { RoomBrowserHelpFooter } from './roomBrowser/RoomBrowserHelpFooter';
-import { RoomCodePrompt } from './roomBrowser/RoomCodePrompt';
+} from '../../shared/components/ScreenSizeGuard';
+import { UI_COLORS } from '../../shared/theme/colors';
+import type { RoomBrowserScreenProps } from './types';
+import { useRoomBrowserController } from './useRoomBrowserController';
+import { RoomBrowserHeader } from './RoomBrowserHeader';
+import { RoomBrowserTable } from './RoomBrowserTable';
+import { RoomBrowserHelpFooter } from './RoomBrowserHelpFooter';
+import { RoomCodePrompt } from './RoomCodePrompt';
 
 function getLobbyContainerWidth(terminalColumns: number): number {
   if (terminalColumns <= 90) return 78;

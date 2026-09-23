@@ -9,7 +9,7 @@ import {
   resolveRoomClosedScreen,
 } from './navigationActions';
 import { useNavigationHandlers } from './useNavigationHandlers';
-import { useOnlineConnection } from '../hooks/useOnlineConnection';
+import { useOnlineConnection } from '../screens/onlineConnection/useOnlineConnection';
 import { getOnlineServerUrl } from '../../config';
 import type { RoomMaxPlayers } from '../screens/createRoom/types';
 

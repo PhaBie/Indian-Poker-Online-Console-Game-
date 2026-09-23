@@ -1,7 +1,7 @@
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { UI_COLORS } from '../../shared/theme/colors';
-import { MAX_USERNAME_LENGTH } from '../../hooks/useUsernameInput';
+import { MAX_USERNAME_LENGTH } from './useUsernameInput';
 import type { UsernameInputFieldProps } from './types';
 
 export function UsernameInputField({

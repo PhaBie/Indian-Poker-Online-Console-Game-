@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from 'ink';
-import { GamePreview } from './ui/GamePreview';
+import { GamePreview } from './ui/screens/game/GamePreview';
 import {
   clearTerminalScreen,
   hideTerminalCursor,

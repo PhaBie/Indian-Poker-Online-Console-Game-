@@ -3,7 +3,7 @@ import {
   parseMainMenuChoice,
   determineNextFocus,
   type MainMenuOption,
-} from '../../../src/client/ui/screens/MainMenuScreen';
+} from '../../../src/client/ui/screens/mainMenu/MainMenuScreen';
 import { getGameContainerWidth } from '../../../src/client/ui/shared/layout/gameContainerLayout';
 import {
   isTerminalSizeSufficient,

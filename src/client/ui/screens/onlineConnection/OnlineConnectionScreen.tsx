@@ -2,14 +2,14 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import Spinner from 'ink-spinner';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
-import { UI_COLORS } from '../shared/theme/colors';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
+import { UI_COLORS } from '../../shared/theme/colors';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
+} from '../../shared/components/ScreenSizeGuard';
 
 interface OnlineConnectionScreenProps {
   readonly intent: 'create' | 'join' | null;

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { UI_COLORS } from '../shared/theme/colors';
-import { isAnimationEnabled } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+import { UI_COLORS } from '../../shared/theme/colors';
+import { isAnimationEnabled } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 
 export interface PlayingCardDefinition {
   readonly rank: string;

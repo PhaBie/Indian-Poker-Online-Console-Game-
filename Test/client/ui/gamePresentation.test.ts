@@ -9,7 +9,7 @@ import {
 import {
   GAMEPLAY_HEIGHT,
   getGameplayLayoutMode,
-} from '../../../src/client/ui/screens/GameScreen';
+} from '../../../src/client/ui/screens/game/GameScreen';
 import { GAME_TABLE_CANVAS_HEIGHT } from '../../../src/client/ui/screens/game/layoutConstants';
 import {
   getRoundParticipants,

@@ -1,15 +1,15 @@
 import { Box } from 'ink';
-import { ShimmeringHeader } from '../shared/components/ShimmeringHeader';
-import { useTerminalSize } from '../shared/hooks/useTerminalSize';
-import { getGameContainerWidth } from '../shared/layout/gameContainerLayout';
+import { ShimmeringHeader } from '../../shared/components/ShimmeringHeader';
+import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
+import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 import {
   getTerminalSizeStatus,
   TerminalOutOfRangeScreen,
-} from '../shared/components/ScreenSizeGuard';
-import type { ServerConnectionScreenProps } from './server/types';
-import { useServerConnectionController } from './server/useServerConnectionController';
-import { ServerConnectionCard } from './server/ServerConnectionCard';
-import { ServerHelpFooter } from './server/ServerHelpFooter';
+} from '../../shared/components/ScreenSizeGuard';
+import type { ServerConnectionScreenProps } from './types';
+import { useServerConnectionController } from './useServerConnectionController';
+import { ServerConnectionCard } from './ServerConnectionCard';
+import { ServerHelpFooter } from './ServerHelpFooter';
 
 export function ServerConnectionScreen(props: ServerConnectionScreenProps) {
   const { columns, rows } = useTerminalSize();
