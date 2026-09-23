@@ -201,7 +201,7 @@ export class GamePreviewSession {
     this.roundStartChips = Object.fromEntries(
       this.players.map((player) => [player.id, player.chips]),
     );
-    const round = new GameState(this.players, PREVIEW_BET, 10000, true);
+    const round = new GameState(this.players, PREVIEW_BET, true);
     round.startGame();
     return round;
   }

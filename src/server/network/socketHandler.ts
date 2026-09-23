@@ -378,9 +378,7 @@ function handlePlayerAction(
 
     if (!isGameOver && payload.action !== 'SEEN' && payload.action !== 'SIDESHOW') {
       room.gameState.nextTurn();
-      isGameOver =
-        room.gameState.checkLastManStanding() !== null ||
-        room.gameState.checkPotLimitReached();
+      isGameOver = room.gameState.checkLastManStanding() !== null;
     }
 
     if (isGameOver) {

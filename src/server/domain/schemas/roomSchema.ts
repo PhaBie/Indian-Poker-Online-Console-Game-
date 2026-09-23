@@ -27,9 +27,6 @@ export const gameStateSaveSchema = z.object({
   // ค่าชิปตั้งต้นสำหรับเปิดโต๊ะเกม (Boot Amount)
   bootAmount: z.number().int().nonnegative().optional(),
 
-  // ขีดจำกัดเงินเดิมพันกองกลางสูงสุด (Max Pot Limit) ค่าเริ่มต้น 10,000
-  maxPotLimit: z.number().int().positive().default(10000),
-
   // ลำดับ Index ของตำแหน่งคนแจกไพ่ (Dealer Index)
   dealerIndex: z.number().int().nonnegative().default(0),
 

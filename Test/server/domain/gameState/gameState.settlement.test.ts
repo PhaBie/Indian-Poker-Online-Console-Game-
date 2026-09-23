@@ -172,19 +172,6 @@ describe('gameState.settlement', () => {
     expect(gameState.pot).toBe(0);
   });
 
-  test('[GameState.checkPotLimitReached] 4.28 ตรวจ Pot Limit กรณีที่กำหนดขอบเขตมา', () => {
-    const gameState = createGameStateFixture({ maxPotLimit: 10000 });
-
-    gameState.pot = 9999;
-    expect(gameState.checkPotLimitReached()).toBe(false);
-
-    gameState.pot = 10000;
-    expect(gameState.checkPotLimitReached()).toBe(true);
-
-    gameState.pot = 10001;
-    expect(gameState.checkPotLimitReached()).toBe(true);
-  });
-
   test('[GameState.checkLastManStanding] 4.44 คืนค่า null เมื่อเหลือผู้เล่น ACTIVE มากกว่า 1 คน', () => {
     const gameState = createGameStateFixture({}, [
       { id: 'firstActivePlayer', name: 'First Active', status: 'ACTIVE', chips: 1000 },
@@ -381,14 +368,6 @@ describe('gameState.settlement', () => {
 
     const emptyGame = createGameStateFixture({}, []);
     expect(emptyGame.checkLastManStanding()).toBeNull();
-  });
-
-  test('[GameState.checkPotLimitReached] 4.67 Pot Limit ใช้ค่าอื่นที่ไม่ใช่ 10000 และเรียกตรวจแล้ว State ไม่เปลี่ยน', () => {
-    const gameState = createGameStateFixture({ pot: 5000 });
-    gameState.maxPotLimit = 5000;
-    const isReached = gameState.checkPotLimitReached();
-    expect(isReached).toBe(true);
-    expect(gameState.pot).toBe(5000);
   });
 
   test('[GameState.evaluateWinner] 4.68 เรียก evaluateWinner() ซ้ำแล้วไม่จ่ายเงินซ้ำ', () => {

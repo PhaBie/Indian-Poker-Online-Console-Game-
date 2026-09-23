@@ -105,7 +105,7 @@ describe('Room.fromJSON', () => {
       expect(restoredRoom.gameState).toBeNull();
     });
 
-    test('[Room.fromJSON] 1.17 กู้คืนห้องสถานะ PLAYING ที่มี GameState → ได้อินสแตนซ์ Room และ GameState ครบถ้วน', () => {
+    test('[Room.fromJSON] 1.17 กู้คืนห้องสถานะ PLAYING ที่มี GameState (รองรับข้อมูลเก่าที่มี maxPotLimit โดยตัดฟิลด์ทิ้ง) → ได้อินสแตนซ์ Room และ GameState ครบถ้วน', () => {
       const validPlayingData = {
         roomId: 'room_restored_playing',
         phase: 'PLAYING',

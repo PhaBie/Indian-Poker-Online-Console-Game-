@@ -150,7 +150,7 @@ export class Room {
     const playersList =
       this.players.size > 2 ? shufflePlayerList(rawPlayersList) : rawPlayersList;
     this.players = new Map(playersList.map((player) => [player.id, player]));
-    this.gameState = new GameState(playersList, this.bootAmount, 10000, true);
+    this.gameState = new GameState(playersList, this.bootAmount, true);
     this.gameState.dealerIndex = randomDealerIndex(playersList.length);
 
     // 4. สั่งให้ GameState เริ่มเกม (หักค่า Boot คนละเท่าๆ กันเข้า Pot, สับและแจกไพ่)
@@ -189,8 +189,8 @@ export class Room {
   }
 
   /**
-   * เริ่มเกมใหม่รอบถัดไปที่โต๊ะเดิม โดยผู้เล่นที่ยังเชื่อมต่อทุกคน
-   * ได้รับทุนตั้งต้นใหม่ก่อนหัก Boot
+   * เริ่มเกมใหม่รอบถัดไปที่โต๊ะเดิม โดยรักษาชิปสะสมของผู้เล่นเดิม
+   * และตรวจสอบเกณฑ์ชิปขั้นต่ำ (อย่างน้อย bootAmount * 2)
    */
   public startNextRound(requestingPlayerId: string): void {
     if (requestingPlayerId !== this.hostId) {
@@ -203,28 +203,25 @@ export class Room {
     const connectedPlayers = Array.from(this.players.values()).filter(
       (player) => player.status !== 'DISCONNECTED',
     );
-    if (connectedPlayers.length < 2) {
+    const minRequiredChips = this.bootAmount * 2;
+    const eligiblePlayers = connectedPlayers.filter(
+      (player) => player.chips >= minRequiredChips,
+    );
+
+    if (eligiblePlayers.length < 2) {
       throw new GameError(
-        'Need at least 2 connected players for the next game',
+        'Need at least 2 eligible players for the next round',
         'NOT_ENOUGH_PLAYERS',
       );
-    }
-
-    // Every deal started from the waiting room is a new game. Never carry a
-    // prior deal's wins or losses into it, regardless of whether a new player
-    // joined the room in between.
-    for (const player of connectedPlayers) {
-      player.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     }
 
     for (const player of connectedPlayers) {
       player.resetForNewRound();
     }
 
-    // A queued player starts a fresh game: randomise seating and dealer again.
-    const playersForNextRound = shufflePlayerList(connectedPlayers);
+    const playersForNextRound = shufflePlayerList(eligiblePlayers);
     const nextDealerIndex = randomDealerIndex(playersForNextRound.length);
-    this.gameState = new GameState(playersForNextRound, this.bootAmount, 10000, true);
+    this.gameState = new GameState(playersForNextRound, this.bootAmount, true);
     this.gameState.dealerIndex = nextDealerIndex;
     this.gameState.startGame(
       getFirstPlayerIndex(nextDealerIndex, playersForNextRound.length),
@@ -238,7 +235,7 @@ export class Room {
    * การทำงาน:
    * 1. ปรับสถานะห้อง (phase) กลับเป็น 'LOBBY'
    * 2. ล้างอ็อบเจกต์ gameState ให้เป็น null (เคลียร์กระดานเกมเดิมทิ้ง)
-   * 3. รีเซ็ตข้อมูลประจำรอบของผู้เล่นทุกคนในห้อง (เคลียร์ไพ่, ยอดเดิมพัน) แต่ยังคงรักษาจำนวนชิปและสถานะการอยู่ในห้องไว้
+   * 3. รีเซ็ตข้อมูลประจำรอบและคืนจำนวนชิปของผู้เล่นทุกคนกลับเป็นค่าเริ่มต้น (1,000 ชิป) เพื่อเตรียมพร้อมสำหรับการเริ่มแมตช์ใหม่
    */
   public resetToLobby(): void {
     // 1. เปลี่ยนสถานะห้องกลับเป็น LOBBY เพื่อรอเริ่มรอบใหม่
@@ -327,7 +324,6 @@ export class Room {
               isBlind: player.isBlind,
             })),
             bootAmount: this.gameState.bootAmount,
-            maxPotLimit: this.gameState.maxPotLimit,
             dealerIndex: this.gameState.dealerIndex,
             roundStartedAt: this.gameState.roundStartedAt,
           }
@@ -434,7 +430,6 @@ export class Room {
     const restoredGameState = new GameState(
       restoredActivePlayers,
       gameStateData.bootAmount ?? defaultBootAmount,
-      gameStateData.maxPotLimit,
     );
 
     // กำหนดค่าสถานะเดิมของโต๊ะเกม: กองกลาง, เงินเดิมพันปัจจุบัน, ลำดับผู้เล่น, กองไพ่ และตำแหน่งคนแจกไพ่

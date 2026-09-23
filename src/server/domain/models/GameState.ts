@@ -30,7 +30,6 @@ export class GameState {
   public deck: Card[];
   public activePlayers: Player[];
   public bootAmount: number;
-  public maxPotLimit: number;
   public dealerIndex: number;
   public pendingSideshow: { challengerId: string; targetId: string } | null;
   public lastSideshow: {
@@ -59,7 +58,6 @@ export class GameState {
   constructor(
     players: Player[],
     bootAmount: number = 50,
-    maxPotLimit: number = 10000,
     deferShowSettlement: boolean = false,
   ) {
     this.pot = 0;
@@ -68,7 +66,6 @@ export class GameState {
     this.deck = [];
     this.activePlayers = players;
     this.bootAmount = bootAmount;
-    this.maxPotLimit = maxPotLimit;
     this.dealerIndex = 0;
     this.pendingSideshow = null;
     this.lastSideshow = null;
@@ -195,7 +192,7 @@ export class GameState {
       }
       this.pendingSideshow = null;
 
-      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+      return this.checkLastManStanding() !== null;
     }
 
     if (player !== this.activePlayers[this.currentPlayerIndex]) {
@@ -242,16 +239,13 @@ export class GameState {
         break;
       case 'FOLD':
         player.fold();
-        return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+        return this.checkLastManStanding() !== null;
       case 'SEEN':
         player.seeCards();
         return false;
       case 'SHOW':
         this.requestShow(playerId);
-        return (
-          !this.deferShowSettlement &&
-          (this.checkLastManStanding() !== null || this.checkPotLimitReached())
-        );
+        return !this.deferShowSettlement && this.checkLastManStanding() !== null;
       case 'SIDESHOW':
         // Pagat: Sideshow ทำได้เมื่อยังเหลืออย่างน้อย 3 คน และทุกคนที่อยู่ใน
         // รอบเป็น Seen; ผู้ท้าจ่ายขั้นต่ำของ Seen แล้วท้าคนที่ลงก่อนหน้าตนเอง
@@ -288,7 +282,7 @@ export class GameState {
     // unusable seat.
     if (player.chips === 0) {
       player.fold();
-      return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+      return this.checkLastManStanding() !== null;
     }
 
     // Pagat Sideshow ท้าได้เฉพาะคนที่ลงเดิมพันก่อนหน้าซึ่งยัง ACTIVE อยู่
@@ -316,7 +310,7 @@ export class GameState {
     }
 
     // After action, check if only 1 player remains
-    return this.checkLastManStanding() !== null || this.checkPotLimitReached();
+    return this.checkLastManStanding() !== null;
   }
 
   public evaluateWinner(): GameResult | null {
@@ -540,11 +534,6 @@ export class GameState {
     return null;
   }
 
-  public checkPotLimitReached(): boolean {
-    // Pot ถึงหรือเกินจำนวนสูงสุดที่กำหนดแล้วหรือยัง
-    return this.pot >= this.maxPotLimit;
-  }
-
   public handleTie(winners: Player[]): void {
     // ถ้าไม่มีผู้ชนะ ก็ยังไม่ต้องจ่าย Pot
     if (winners.length === 0) {
@@ -578,11 +567,6 @@ export class GameState {
 
     // เลื่อนไปยังผู้เล่นคนถัดไป และวนกลับไปคนแรกเมื่อถึงคนสุดท้าย
     this.dealerIndex = (this.dealerIndex + 1) % this.activePlayers.length;
-  }
-
-  public rejectSideshow(): void {
-    // ปฏิเสธ Sideshow โดยไม่เปลี่ยนสถานะผู้เล่นหรือ Pot
-    return;
   }
 
   public handlePlayerDisconnect(playerId: string): boolean {

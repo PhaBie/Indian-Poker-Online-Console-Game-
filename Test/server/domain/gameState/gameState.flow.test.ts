@@ -24,7 +24,7 @@ describe('gameState.flow', () => {
   });
 
   test('[Continuous Flow Test] 4.70 เริ่มรอบ -> CALL -> RAISE -> CALL -> FOLD -> จ่ายรางวัล', () => {
-    const gameState = createGameStateFixture({ bootAmount: 50, maxPotLimit: 10000 }, [
+    const gameState = createGameStateFixture({ bootAmount: 50 }, [
       { id: 'playerOne', name: 'Player One', status: 'WAITING', chips: 1000 },
       { id: 'playerTwo', name: 'Player Two', status: 'WAITING', chips: 1000 },
       { id: 'playerThree', name: 'Player Three', status: 'WAITING', chips: 1000 },

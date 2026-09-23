@@ -102,13 +102,18 @@ describe('host-controlled post-round flow', () => {
     expect(events.filter((event) => event.type === 'ERROR')).toHaveLength(2);
   });
 
-  test('host NEXT GAME resets all chips and admits waiting spectators', () => {
-    const { room, host } = endedRoom(2);
+  test('Host เลือก NEXT GAME → รักษาชิปสะสมและดึงผู้เล่น WAITING ที่มีชิปเพียงพอเข้ารอบ', () => {
+    const { room, host, guests } = endedRoom(2);
+    const hostChipsBeforeNextGame = host.chips;
+    const guestChipsBeforeNextGame = guests[0].chips;
     const waiting = new Player('waiting', 'Waiting');
     room.join(waiting);
     const events: ServerEvent[] = [];
     const hostClient = client(events);
-    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
+    context.connectedClients.set(hostClient, {
+      playerId: host.id,
+      roomId: room.roomId,
+    });
 
     handleClientMessage(hostClient, { type: 'NEXT_GAME' }, context);
 
@@ -119,6 +124,8 @@ describe('host-controlled post-round flow', () => {
     expect(room.getPlayer(waiting.id)?.chips).toBe(
       GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
     );
+    expect(host.chips).toBe(hostChipsBeforeNextGame - room.bootAmount);
+    expect(guests[0].chips).toBe(guestChipsBeforeNextGame - room.bootAmount);
   });
 
   test('host END GAME returns every connected player to the same waiting room', () => {

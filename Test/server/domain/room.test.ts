@@ -8,6 +8,7 @@ import {
   GameError,
   DuplicatePlayerNameError,
 } from '../../../src/server/domain/errors/GameError';
+import { expectGameErrorWithCode } from './helpers/expectGameErrorWithCode';
 import { GAME_CONSTANTS } from '../../../src/shared/constants';
 
 describe('1. ระบบการจัดการห้องเล่น (Room Management)', () => {
@@ -220,7 +221,7 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       );
     });
 
-    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่มเกมใหม่ → รีชิปทุกคนแม้ไม่มีคนรอ', () => {
+    test('[Room.startNextRound] 1.9.1 จบรอบแล้วเริ่มเกมใหม่ → รักษาชิปเดิมของผู้เล่นและหัก Boot', () => {
       const room = new Room('room_next_round', 50);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player 2');
@@ -236,16 +237,12 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
 
       expect(room.phase as string).toBe('PLAYING');
       expect(room.gameState?.pot).toBe(100);
-      expect(room.getPlayer('id_host')?.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
-      expect(room.getPlayer('id_p2')?.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
+      expect(room.getPlayer('id_host')?.chips).toBe(1050);
+      expect(room.getPlayer('id_p2')?.chips).toBe(850);
       expect(room.gameState?.activePlayers).toHaveLength(2);
     });
 
-    test('[Room.startNextRound] เกมใหม่ดึงผู้เล่น WAITING เข้าวงและรีเซ็ตชิป', () => {
+    test('[Room.startNextRound] เกมใหม่ดึงผู้เล่น WAITING ที่มีชิปพอเข้าวงและรักษาชิปสะสม', () => {
       const room = new Room('room_next_deal', 50, 3);
       const host = new Player('id_host', 'Host');
       const secondPlayer = new Player('id_p2', 'Player 2');
@@ -265,17 +262,13 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       expect(room.gameState?.activePlayers.map((player) => player.id).sort()).toEqual(
         [host.id, secondPlayer.id, waitingPlayer.id].sort(),
       );
-      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount);
-      expect(secondPlayer.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
+      expect(host.chips).toBe(350);
+      expect(secondPlayer.chips).toBe(150);
       expect(waitingPlayer.status as string).toBe('ACTIVE');
-      expect(waitingPlayer.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
+      expect(waitingPlayer.chips).toBe(950);
     });
 
-    test('[Room.startNextRound] เกมใหม่คืนชิปให้ผู้เล่นที่ชิปหมด', () => {
+    test('[Room.startNextRound] ผู้เล่นที่มีชิปไม่ถึงเกณฑ์คงสถานะ WAITING และไม่ถูกดึงเข้าเล่น', () => {
       const room = new Room('room_excludes_bankrupt', 50, 3);
       const host = new Player('id_host', 'Host');
       const survivor = new Player('id_survivor', 'Survivor');
@@ -293,12 +286,80 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       room.startNextRound(host.id);
 
       expect(room.gameState?.activePlayers.map((player) => player.id).sort()).toEqual(
-        [host.id, survivor.id, bankrupt.id].sort(),
+        [host.id, survivor.id].sort(),
       );
-      expect(bankrupt.status as string).toBe('ACTIVE');
-      expect(bankrupt.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
+      expect(bankrupt.status as string).toBe('WAITING');
+      expect(bankrupt.chips).toBe(0);
+      expect(host.chips).toBe(350);
+      expect(survivor.chips).toBe(150);
+    });
+
+    test('[Room.startNextRound] รักษา Atomicity เมื่อผู้เล่นที่มีสิทธิ์เล่นเหลือน้อยกว่า 2 คนและโยน NOT_ENOUGH_PLAYERS', () => {
+      const room = new Room('room_atomicity_check', 50, 3);
+      const host = new Player('id_host', 'Host');
+      const brokePlayer = new Player('id_broke', 'Broke Player');
+      const disconnectedPlayer = new Player('id_disconnected', 'Disconnected Player');
+
+      room.join(host);
+      room.join(brokePlayer);
+      room.join(disconnectedPlayer);
+
+      host.chips = 500;
+      host.status = 'ACTIVE';
+      host.bet = 50;
+      host.isBlind = false;
+      host.privateCards = [{ suit: 'SPADES', rank: 14 }];
+
+      brokePlayer.chips = 40;
+      brokePlayer.status = 'FOLDED';
+      brokePlayer.bet = 50;
+      brokePlayer.isBlind = false;
+      brokePlayer.privateCards = [{ suit: 'HEARTS', rank: 10 }];
+
+      disconnectedPlayer.chips = 500;
+      disconnectedPlayer.status = 'DISCONNECTED';
+      disconnectedPlayer.bet = 0;
+      disconnectedPlayer.isBlind = true;
+      disconnectedPlayer.privateCards = [];
+
+      room.phase = 'ENDED';
+      const initialGameState = room.gameState;
+      const initialPlayerKeys = Array.from(room.players.keys());
+
+      let thrownError: unknown;
+      try {
+        room.startNextRound(host.id);
+      } catch (error) {
+        thrownError = error;
+      }
+
+      expect(thrownError).toBeInstanceOf(GameError);
+      expect((thrownError as GameError).code).toBe('NOT_ENOUGH_PLAYERS');
+      expect((thrownError as GameError).message).toBe(
+        'Need at least 2 eligible players for the next round',
       );
+
+      expect(room.phase).toBe('ENDED');
+      expect(room.gameState).toBe(initialGameState);
+      expect(Array.from(room.players.keys())).toEqual(initialPlayerKeys);
+
+      expect(host.chips).toBe(500);
+      expect(host.status).toBe('ACTIVE');
+      expect(host.bet).toBe(50);
+      expect(host.isBlind).toBe(false);
+      expect(host.privateCards).toEqual([{ suit: 'SPADES', rank: 14 }]);
+
+      expect(brokePlayer.chips).toBe(40);
+      expect(brokePlayer.status).toBe('FOLDED');
+      expect(brokePlayer.bet).toBe(50);
+      expect(brokePlayer.isBlind).toBe(false);
+      expect(brokePlayer.privateCards).toEqual([{ suit: 'HEARTS', rank: 10 }]);
+
+      expect(disconnectedPlayer.chips).toBe(500);
+      expect(disconnectedPlayer.status).toBe('DISCONNECTED');
+      expect(disconnectedPlayer.bet).toBe(0);
+      expect(disconnectedPlayer.isBlind).toBe(true);
+      expect(disconnectedPlayer.privateCards).toEqual([]);
     });
 
     test('[Room.startNextRound] สุ่มโต๊ะและ dealer ใหม่สำหรับเกมที่ดึงคนรอเข้าวง', () => {
@@ -326,19 +387,21 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       );
     });
 
-    test('[Room.startNextRound] เหลือชิปเท่า Boot และมีคนรอ → เริ่มเกมใหม่ให้ทุกคนพร้อมชิปใหม่', () => {
+    test('[Room.startNextRound] ผู้เล่นชิปไม่พอเป็น WAITING และคนชิปพอได้เล่น', () => {
       const room = new Room('room_bankrupt_with_spectator', 50, 3);
       const host = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
       const waitingSpectator = new Player('id_waiting', 'Waiting Spectator');
-      host.chips = 900;
-      bankruptPlayer.chips = 0;
-      host.status = 'ACTIVE';
-      bankruptPlayer.status = 'FOLDED';
 
       room.join(host);
       room.join(bankruptPlayer);
       room.join(waitingSpectator);
+
+      host.chips = 900;
+      bankruptPlayer.chips = 0;
+      bankruptPlayer.bet = 50;
+      bankruptPlayer.isBlind = false;
+      bankruptPlayer.privateCards = [{ suit: 'SPADES', rank: 14 }];
       host.status = 'ACTIVE';
       bankruptPlayer.status = 'FOLDED';
       room.phase = 'ENDED';
@@ -346,39 +409,35 @@ describe('1. ระบบการจัดการห้องเล่น (Ro
       room.startNextRound(host.id);
 
       expect(room.phase as string).toBe('PLAYING');
-      expect(room.gameState?.activePlayers).toHaveLength(3);
+      expect(room.gameState?.activePlayers).toHaveLength(2);
       expect(room.gameState?.activePlayers.map((player) => player.id).sort()).toEqual(
-        [host.id, bankruptPlayer.id, waitingSpectator.id].sort(),
+        [host.id, waitingSpectator.id].sort(),
       );
-      expect(bankruptPlayer.status as string).toBe('ACTIVE');
-      expect(bankruptPlayer.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
-      expect(host.chips).toBe(GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount);
-      expect(waitingSpectator.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
+      expect(bankruptPlayer.status as string).toBe('WAITING');
+      expect(bankruptPlayer.chips).toBe(0);
+      expect(bankruptPlayer.bet).toBe(0);
+      expect(bankruptPlayer.isBlind).toBe(true);
+      expect(bankruptPlayer.privateCards).toEqual([]);
+      expect(host.chips).toBe(850);
+      expect(waitingSpectator.chips).toBe(950);
     });
 
-    test('[Room.startNextRound] ผู้เล่นชิปหมดได้ชิปใหม่ในเกมถัดไป', () => {
+    test('[Room.startNextRound] มีผู้เล่นชิปพอเพียงคนเดียวและไม่มีผู้รอที่มีชิป → โยน NOT_ENOUGH_PLAYERS', () => {
       const room = new Room('room_bankrupt_without_spectator', 50, 2);
       const host = new Player('id_host', 'Host');
       const bankruptPlayer = new Player('id_bankrupt', 'Bankrupt Player');
-      bankruptPlayer.chips = 0;
-      host.status = 'ACTIVE';
-      bankruptPlayer.status = 'FOLDED';
 
       room.join(host);
       room.join(bankruptPlayer);
+
+      host.chips = 1000;
+      bankruptPlayer.chips = 0;
       host.status = 'ACTIVE';
       bankruptPlayer.status = 'FOLDED';
       room.phase = 'ENDED';
 
-      room.startNextRound(host.id);
-      expect(room.phase as string).toBe('PLAYING');
-      expect(bankruptPlayer.chips).toBe(
-        GAME_CONSTANTS.DEFAULT_STARTING_CHIPS - room.bootAmount,
-      );
+      expectGameErrorWithCode(() => room.startNextRound(host.id), 'NOT_ENOUGH_PLAYERS');
+      expect(room.phase as string).toBe('ENDED');
     });
   });
 

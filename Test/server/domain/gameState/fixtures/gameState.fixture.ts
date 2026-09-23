@@ -52,8 +52,7 @@ export function createGameStateFixture(
     return playerInstance;
   });
 
-  // สร้าง GameState โดยกำหนดค่า Boot = 50 และ MaxPotLimit = 10000 พื้นฐาน
-  const gameState = new GameState(mockPlayers, 50, 10000);
+  const gameState = new GameState(mockPlayers, 50);
 
   // เขียนทับด้วย State ที่ต้องการทดสอบ (เช่น ยอด pot, turn ปัจจุบัน)
   Object.assign(gameState, stateOverrides);
