@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { prepareConnectionUrl } from '../../../src/shared/networkMode';
+import { prepareConnectionUrl } from '../../src/shared/networkMode';
 
 describe('18. การตรวจสอบขอบเขตและรูปแบบ Network Mode (Network Mode Boundaries)', () => {
   test('[prepareConnectionUrl] 18.1 โหมด LAN ยอมรับที่อยู่ IPv4 ภายในเครือข่ายและระบุโหมดการเชื่อมต่อถูกต้อง', () => {
