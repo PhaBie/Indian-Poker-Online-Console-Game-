@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, jest, test } from 'bun:test';
 import {
   determineSeatPositions,
   getCardSuitColor,
@@ -6,13 +6,29 @@ import {
   getPlayerBadgeInfo,
   getStatusDisplayInfo,
   resolveTableParticipants,
+  shouldHidePlayerCards,
 } from '../../../src/client/ui/screens/game/gameLayoutHelpers';
+import {
+  GAME_PREVIEW_PLAYER_ID,
+  GamePreviewSession,
+} from '../../../src/client/ui/screens/game/gamePreviewFixture';
+import {
+  HIDDEN_SIDESHOW_PAUSE_MS,
+  scheduleSideshowResume,
+} from '../../../src/client/ui/screens/game/GamePreview';
 import {
   GAMEPLAY_HEIGHT,
   getGameplayLayoutMode,
 } from '../../../src/client/ui/screens/game/GameScreen';
-import { GAME_TABLE_CANVAS_HEIGHT } from '../../../src/client/ui/screens/game/layoutConstants';
+import { getGameControlsFooterMode } from '../../../src/client/ui/screens/game/GameControlsFooter';
 import {
+  GAME_CONTROLS_FOOTER_HEIGHT,
+  GAME_HEADER_HEIGHT,
+  GAME_TABLE_CANVAS_HEIGHT,
+} from '../../../src/client/ui/screens/game/layoutConstants';
+import {
+  ROUND_RESULT_DIALOG_HEIGHT,
+  ROUND_RESULT_DIALOG_TOP,
   getRoundParticipants,
   getWinningHandLabel,
   sortPlayersForResult,
@@ -272,8 +288,27 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
       expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
     });
 
-    test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header, Canvas และ Control พอดี 41 แถว', () => {
-      expect(3 + GAME_TABLE_CANVAS_HEIGHT + 1).toBe(GAMEPLAY_HEIGHT);
+    test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header 3 แถว, Canvas 36 แถว และ Footer 2 แถว พอดี 41 แถว', () => {
+      expect(
+        GAME_HEADER_HEIGHT + GAME_TABLE_CANVAS_HEIGHT + GAME_CONTROLS_FOOTER_HEIGHT,
+      ).toBe(GAMEPLAY_HEIGHT);
+      expect(GAME_HEADER_HEIGHT).toBe(3);
+      expect(GAME_TABLE_CANVAS_HEIGHT).toBe(36);
+      expect(GAME_CONTROLS_FOOTER_HEIGHT).toBe(2);
+    });
+
+    test('[getGameControlsFooterMode] 14.11.1 แสดงคำสั่งด้านล่างเฉพาะช่วงที่ผู้เล่นควบคุม Action ได้ → คืนโหมด Action, Bet หรือซ่อนอย่างถูกต้อง', () => {
+      expect(getGameControlsFooterMode(true, false, 'menu')).toBe('action_menu');
+      expect(getGameControlsFooterMode(true, false, 'input_bet')).toBe('bet_input');
+      expect(getGameControlsFooterMode(false, false, 'menu')).toBe('hidden');
+      expect(getGameControlsFooterMode(true, true, 'menu')).toBe('hidden');
+    });
+
+    test('[ROUND_RESULT_DIALOG] 14.11.2 กล่องสรุปผลรอบจัดวางในแนวตั้งให้อยู่กึ่งกลางแคนวาสและไม่ล้นขอบเขตโต๊ะเกม 36 แถว', () => {
+      expect(ROUND_RESULT_DIALOG_TOP + ROUND_RESULT_DIALOG_HEIGHT).toBeLessThanOrEqual(
+        GAME_TABLE_CANVAS_HEIGHT,
+      );
+      expect(ROUND_RESULT_DIALOG_TOP).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -308,6 +343,323 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
           expect(allowedGlowColors.has(color)).toBe(true);
           expect(color.toLowerCase().includes('magenta')).toBe(false);
         }
+      }
+    });
+  });
+
+  function withDeterministicSeed<T>(executeAction: () => T, seedValue = 42): T {
+    const originalMathRandom = Math.random;
+    const seedBuffer = new Uint32Array([seedValue]);
+    Math.random = () => {
+      seedBuffer[0] = (seedBuffer[0] * 1664525 + 1013904223) >>> 0;
+      return seedBuffer[0] / 4294967296;
+    };
+    try {
+      return executeAction();
+    } finally {
+      Math.random = originalMathRandom;
+    }
+  }
+
+  function handlePreviewPlayerTurn(
+    session: GamePreviewSession,
+    currentState: ReturnType<GamePreviewSession['getState']>,
+  ): void {
+    const action = currentState.players[0].isBlind ? 'SEEN' : 'CALL';
+    session.handleEvent({
+      type: 'PLAYER_ACTION',
+      payload: { action },
+    });
+  }
+
+  function advanceDeterministicTurn(
+    session: GamePreviewSession,
+    currentState: ReturnType<GamePreviewSession['getState']>,
+  ): void {
+    if (currentState.pendingSideshow?.targetId === GAME_PREVIEW_PLAYER_ID) {
+      session.handleEvent({
+        type: 'PLAYER_ACTION',
+        payload: { action: 'ACCEPT_SIDESHOW' },
+      });
+      return;
+    }
+
+    if (currentState.currentTurnPlayerId === GAME_PREVIEW_PLAYER_ID) {
+      handlePreviewPlayerTurn(session, currentState);
+      return;
+    }
+
+    const didBotPlay = session.playNextBot();
+    if (!didBotPlay && session.getState().showdownCards) {
+      session.resolveShowdown();
+    }
+  }
+
+  function runDeterministicGameToCompletion(playerCount: 2 | 3 | 4, seedValue = 42) {
+    return withDeterministicSeed(() => {
+      const session = new GamePreviewSession(playerCount);
+      const startChips = session.getRoundStartChips();
+      const totalStartChips = Object.values(startChips).reduce(
+        (runningTotal, playerChips) => runningTotal + playerChips,
+        0,
+      );
+      let sideshowOccurredCount = 0;
+
+      for (let moveIndex = 0; moveIndex < 200; moveIndex++) {
+        if (session.getRoundResult()) {
+          break;
+        }
+        if (session.hasActiveSideshow()) {
+          sideshowOccurredCount++;
+          session.clearSideshowPresentation();
+        }
+        const currentState = session.getState();
+        if (currentState.showdownCards) {
+          session.resolveShowdown();
+          break;
+        }
+        advanceDeterministicTurn(session, currentState);
+      }
+      return { session, startChips, totalStartChips, sideshowOccurredCount };
+    }, seedValue);
+  }
+
+  function assertDeterministicGameSettlement(
+    outcome: ReturnType<typeof runDeterministicGameToCompletion>,
+  ): void {
+    const endState = outcome.session.getState();
+    const roundResult = outcome.session.getRoundResult();
+    if (!roundResult) {
+      throw new Error('Expected preview round to complete');
+    }
+
+    expect(endState.pot).toBe(0);
+    const totalEndChips = endState.players.reduce(
+      (runningTotal, player) => runningTotal + player.chips,
+      0,
+    );
+    expect(totalEndChips).toBe(outcome.totalStartChips);
+
+    for (const winnerId of roundResult.winnerIds) {
+      const winner = endState.players.find((player) => player.id === winnerId);
+      if (!winner) {
+        throw new Error(`Winner ${winnerId} not found in players`);
+      }
+      const expectedChips =
+        outcome.startChips[winnerId] - winner.bet + roundResult.payouts[winnerId];
+      expect(winner.chips).toBe(expectedChips);
+    }
+  }
+
+  describe('ความเป็นส่วนตัวของไพ่และการแสดงผลหลังหมอบ (Card Privacy & Fold Visibility)', () => {
+    test('[GamePreviewSession] 14.16 ผู้เล่นตนเองสถานะ BLIND ทำการหมอบ (FOLD) จริง → status เป็น FOLDED, isBlind เป็น true, myCards ว่าง และไพ่ต้องถูกซ่อน', () => {
+      const previewSession = new GamePreviewSession(2);
+      expect(previewSession.getState().players[0].isBlind).toBe(true);
+
+      previewSession.handleEvent({
+        type: 'PLAYER_ACTION',
+        payload: { action: 'FOLD' },
+      });
+
+      const foldedState = previewSession.getState();
+      expect(foldedState.players[0].status).toBe('FOLDED');
+      expect(foldedState.players[0].isBlind).toBe(true);
+      expect(foldedState.myCards).toEqual([]);
+      expect(
+        shouldHidePlayerCards({
+          isMe: true,
+          isBlind: foldedState.players[0].isBlind,
+          hasRevealedCards: false,
+        }),
+      ).toBe(true);
+    });
+
+    test('[GamePreviewSession] 14.17 ผู้เล่นตนเองสถานะ SEEN ทำการหมอบ (FOLD) จริง → status เป็น FOLDED, isBlind เป็น false, myCards มีไพ่ 3 ใบ และไพ่ต้องไม่ถูกซ่อน', () => {
+      const previewSession = new GamePreviewSession(2);
+      previewSession.handleEvent({
+        type: 'PLAYER_ACTION',
+        payload: { action: 'SEEN' },
+      });
+
+      const seenState = previewSession.getState();
+      expect(seenState.players[0].isBlind).toBe(false);
+      expect(seenState.myCards.length).toBe(3);
+
+      previewSession.handleEvent({
+        type: 'PLAYER_ACTION',
+        payload: { action: 'FOLD' },
+      });
+
+      const foldedState = previewSession.getState();
+      expect(foldedState.players[0].status).toBe('FOLDED');
+      expect(foldedState.players[0].isBlind).toBe(false);
+      expect(foldedState.myCards.length).toBe(3);
+      expect(
+        shouldHidePlayerCards({
+          isMe: true,
+          isBlind: foldedState.players[0].isBlind,
+          hasRevealedCards: false,
+        }),
+      ).toBe(false);
+    });
+
+    test('[shouldHidePlayerCards] 14.18 ไพ่ของผู้เล่นฝ่ายตรงข้าม (isMe เป็น false) → ไพ่ต้องถูกซ่อนเสมอไม่ว่าคู่แข่งจะ Blind หรือ Seen', () => {
+      const isBlindOpponentCardHidden = shouldHidePlayerCards({
+        isMe: false,
+        isBlind: true,
+        hasRevealedCards: false,
+      });
+      const isSeenOpponentCardHidden = shouldHidePlayerCards({
+        isMe: false,
+        isBlind: false,
+        hasRevealedCards: false,
+      });
+      expect(isBlindOpponentCardHidden).toBe(true);
+      expect(isSeenOpponentCardHidden).toBe(true);
+    });
+
+    test('[shouldHidePlayerCards] 14.19 การเปิดไพ่จาก SHOW หรือ DUEL (hasRevealedCards เป็น true) → ไพ่ต้องไม่ถูกซ่อนเพื่อเปิดเผยข้อมูลตามสิทธิ์', () => {
+      const isShowdownCardHiddenForMe = shouldHidePlayerCards({
+        isMe: true,
+        isBlind: true,
+        hasRevealedCards: true,
+      });
+      const isShowdownCardHiddenForOpponent = shouldHidePlayerCards({
+        isMe: false,
+        isBlind: true,
+        hasRevealedCards: true,
+      });
+      expect(isShowdownCardHiddenForMe).toBe(false);
+      expect(isShowdownCardHiddenForOpponent).toBe(false);
+    });
+
+    test.each([
+      { playerCount: 2 as const, seedValue: 42, expectSideshow: false },
+      { playerCount: 3 as const, seedValue: 100, expectSideshow: true },
+      { playerCount: 4 as const, seedValue: 200, expectSideshow: true },
+    ])(
+      '[GamePreviewSession] 14.20 จำลองเกมโหมด $playerCount คนแบบ Deterministic → ดำเนินเกมจนจบ Pot เป็นศูนย์, ชิปถูกอนุรักษ์ และ Winner ได้รับ Payout ถูกต้อง',
+      ({ playerCount, seedValue, expectSideshow }) => {
+        const outcome = runDeterministicGameToCompletion(playerCount, seedValue);
+        if (expectSideshow) {
+          expect(outcome.sideshowOccurredCount).toBeGreaterThan(0);
+        }
+        assertDeterministicGameSettlement(outcome);
+      },
+    );
+
+    test('[GamePreviewSession] 14.21 ตรวจสอบ Bot–Bot DUEL ซ่อนไพ่จากผู้เล่น (sideshowResult เป็น null) แต่ session รับรู้ และเกมดำเนินต่อได้หลังล้าง presentation', () => {
+      withDeterministicSeed(() => {
+        const session = new GamePreviewSession(3);
+        let didFindBotBotSideshow = false;
+
+        for (let moveIndex = 0; moveIndex < 50; moveIndex++) {
+          if (session.getRoundResult()) {
+            break;
+          }
+          if (session.hasActiveSideshow()) {
+            const state = session.getState();
+            if (state.sideshowResult === null && state.sideshowNotice === null) {
+              didFindBotBotSideshow = true;
+              expect(session.hasActiveSideshow()).toBe(true);
+              expect(state.sideshowResult).toBeNull();
+              session.clearSideshowPresentation();
+              expect(session.hasActiveSideshow()).toBe(false);
+              expect(session.getState().sideshowResult).toBeNull();
+              expect(() => {
+                advanceDeterministicTurn(session, session.getState());
+              }).not.toThrow();
+              break;
+            }
+            session.clearSideshowPresentation();
+          }
+          advanceDeterministicTurn(session, session.getState());
+        }
+
+        expect(didFindBotBotSideshow).toBe(true);
+      }, 2);
+    });
+
+    test('[GamePreviewSession] 14.22 ตรวจสอบการล้าง Declined Notice ใน clearSideshowPresentation → sideshowNotice และ lastSideshow ถูกล้างเป็น null', () => {
+      withDeterministicSeed(() => {
+        const session = new GamePreviewSession(3);
+        let didFindDeclinedNotice = false;
+
+        for (let moveIndex = 0; moveIndex < 50; moveIndex++) {
+          if (session.getRoundResult()) {
+            break;
+          }
+          if (session.hasActiveSideshow()) {
+            const state = session.getState();
+            if (state.sideshowNotice) {
+              didFindDeclinedNotice = true;
+              expect(session.hasActiveSideshow()).toBe(true);
+              expect(state.sideshowNotice.outcome).toBe('DECLINED');
+              session.clearSideshowPresentation();
+              expect(session.hasActiveSideshow()).toBe(false);
+              expect(session.getState().sideshowNotice).toBeNull();
+              break;
+            }
+            session.clearSideshowPresentation();
+          }
+          advanceDeterministicTurn(session, session.getState());
+        }
+
+        expect(didFindDeclinedNotice).toBe(true);
+      }, 1);
+    });
+
+    test('[GamePreviewSession] 14.23 ตรวจสอบ scheduleSideshowResume ว่า Action ถัดไปเกิดทันทีหลัง Presentation delay สิ้นสุดเพียงครั้งเดียวโดยไม่รอสองรอบ', () => {
+      jest.useFakeTimers();
+      try {
+        withDeterministicSeed(() => {
+          const session = new GamePreviewSession(3);
+          for (let moveIndex = 0; moveIndex < 50; moveIndex++) {
+            if (session.hasActiveSideshow()) {
+              break;
+            }
+            advanceDeterministicTurn(session, session.getState());
+          }
+
+          expect(session.hasActiveSideshow()).toBe(true);
+          const stateBeforeClear = session.getState();
+          const turnBeforeClear = stateBeforeClear.currentTurnPlayerId;
+
+          let didCallbackFire = false;
+          let resolvedState: ReturnType<GamePreviewSession['getState']> | null = null;
+          const cancelResume = scheduleSideshowResume(
+            session,
+            stateBeforeClear,
+            (nextState) => {
+              didCallbackFire = true;
+              resolvedState = nextState;
+            },
+          );
+
+          jest.advanceTimersByTime(HIDDEN_SIDESHOW_PAUSE_MS - 1);
+          expect(didCallbackFire).toBe(false);
+          expect(session.hasActiveSideshow()).toBe(true);
+
+          jest.advanceTimersByTime(1);
+          expect(didCallbackFire).toBe(true);
+          expect(session.hasActiveSideshow()).toBe(false);
+          const finalResolvedState = resolvedState as GameStatePayload | null;
+          if (!finalResolvedState) {
+            throw new Error('Expected resolvedState to be present');
+          }
+          expect(finalResolvedState.currentTurnPlayerId).toBe(GAME_PREVIEW_PLAYER_ID);
+          expect(() => {
+            session.handleEvent({
+              type: 'PLAYER_ACTION',
+              payload: { action: 'CALL' },
+            });
+          }).not.toThrow();
+          expect(session.getState().currentTurnPlayerId).not.toBe(turnBeforeClear);
+
+          cancelResume();
+        }, 2);
+      } finally {
+        jest.useRealTimers();
       }
     });
   });

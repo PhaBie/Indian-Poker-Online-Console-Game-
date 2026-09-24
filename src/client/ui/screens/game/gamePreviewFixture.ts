@@ -90,7 +90,7 @@ export class GamePreviewSession {
         status,
         isBlind,
       })),
-      myCards: this.players[0].privateCards,
+      myCards: this.players[0].isBlind ? [] : this.players[0].privateCards,
       pendingSideshow: this.gameState.pendingSideshow,
       // Match the authoritative server's privacy rule: the comparison cards
       // exist only in the challenger and target's client payloads.
@@ -126,14 +126,20 @@ export class GamePreviewSession {
     this.gameState = this.createRound();
   }
 
+  public hasActiveSideshow(): boolean {
+    return Boolean(this.gameState.lastSideshow || this.gameState.lastSideshowNotice);
+  }
+
   /** Clears a completed Sideshow's short-lived UI snapshot after its pause. */
   public clearSideshowPresentation(): void {
-    this.gameState.lastSideshow = null;
+    this.gameState.clearSideshowResult();
     this.gameState.lastSideshowNotice = null;
   }
 
   /** Plays one bot turn. The UI calls this on a short timer so bot moves are visible. */
   public playNextBot(): boolean {
+    if (this.hasActiveSideshow()) return false;
+
     const pending = this.gameState.pendingSideshow;
     if (pending) {
       if (pending.targetId === GAME_PREVIEW_PLAYER_ID) return false;

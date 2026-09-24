@@ -9,6 +9,7 @@ import {
   type GamePreviewPlayerCount,
 } from './gamePreviewFixture';
 import type { ServerEvent } from '../../../../shared/types';
+import type { GameStatePayload } from './types';
 
 type GameResultPayload = Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
 // Keep every bot action visible: seeing cards, calling, betting, folding, and
@@ -17,8 +18,32 @@ const BOT_ACTION_DELAY_MS = 6_000;
 const SIDESHOW_CARDS_REVEAL_DELAY_MS = 2_000;
 const SIDESHOW_RESULT_DELAY_MS = 4_000;
 const SIDESHOW_DECLINED_DELAY_MS = 4_000;
+export const HIDDEN_SIDESHOW_PAUSE_MS = 1_200;
 const SHOWDOWN_REVEAL_DELAY_MS = 4_000;
 const ROUND_RESULT_DELAY_MS = 6_000;
+
+export function scheduleSideshowResume(
+  session: GamePreviewSession,
+  gameState: GameStatePayload,
+  onResolved: (
+    nextState: GameStatePayload,
+    nextRoundResult: GameResultPayload | null,
+  ) => void,
+): () => void {
+  const pauseDuration = gameState.sideshowResult
+    ? SIDESHOW_CARDS_REVEAL_DELAY_MS + SIDESHOW_RESULT_DELAY_MS
+    : gameState.sideshowNotice
+      ? SIDESHOW_DECLINED_DELAY_MS
+      : HIDDEN_SIDESHOW_PAUSE_MS;
+
+  const timer = setTimeout(() => {
+    session.clearSideshowPresentation();
+    session.playNextBot();
+    onResolved(session.getState(), session.getRoundResult());
+  }, pauseDuration);
+
+  return () => clearTimeout(timer);
+}
 
 interface GamePreviewProps {
   readonly playerCount: GamePreviewPlayerCount;
@@ -57,22 +82,13 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
   }, [session]);
 
   useEffect(() => {
-    const pauseDuration = gameState.sideshowResult
-      ? SIDESHOW_CARDS_REVEAL_DELAY_MS + SIDESHOW_RESULT_DELAY_MS
-      : gameState.sideshowNotice
-        ? SIDESHOW_DECLINED_DELAY_MS
-        : null;
-    if (pauseDuration === null) return;
+    if (!session.hasActiveSideshow()) return;
 
-    // This must not depend on a later player action: that player may be the
-    // human, so the old Sideshow snapshot would otherwise keep its [DUEL]
-    // highlight forever after the popup disappears.
-    const timer = setTimeout(() => {
-      session.clearSideshowPresentation();
-      setGameState(session.getState());
-    }, pauseDuration);
-    return () => clearTimeout(timer);
-  }, [gameState.sideshowNotice, gameState.sideshowResult, session]);
+    return scheduleSideshowResume(session, gameState, (nextState, nextRoundResult) => {
+      setGameState(nextState);
+      setRoundResult(nextRoundResult);
+    });
+  }, [gameState, session]);
 
   useEffect(() => {
     if (!gameState.showdownCards || resolvedRoundResult) return;
@@ -88,6 +104,7 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
   useEffect(() => {
     if (resolvedRoundResult) return;
     if (gameState.showdownCards) return;
+    if (session.hasActiveSideshow()) return;
     const pendingSideshow = gameState.pendingSideshow;
     if (
       pendingSideshow?.targetId === GAME_PREVIEW_PLAYER_ID ||
@@ -96,18 +113,11 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
       return;
     }
 
-    const timer = setTimeout(
-      () => {
-        session.playNextBot();
-        setGameState(session.getState());
-        setRoundResult(session.getRoundResult());
-      },
-      gameState.sideshowResult
-        ? SIDESHOW_CARDS_REVEAL_DELAY_MS + SIDESHOW_RESULT_DELAY_MS
-        : gameState.sideshowNotice
-          ? SIDESHOW_DECLINED_DELAY_MS
-          : BOT_ACTION_DELAY_MS,
-    );
+    const timer = setTimeout(() => {
+      session.playNextBot();
+      setGameState(session.getState());
+      setRoundResult(session.getRoundResult());
+    }, BOT_ACTION_DELAY_MS);
     return () => clearTimeout(timer);
   }, [gameState, resolvedRoundResult, session]);
 
