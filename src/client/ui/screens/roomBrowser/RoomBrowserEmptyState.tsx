@@ -5,13 +5,13 @@ export function RoomBrowserEmptyState() {
   return (
     <Box flexDirection="column" alignItems="center" justifyContent="center" width="100%">
       <Box marginBottom={1}>
-        <Text color={UI_COLORS.suitSpade}>♠</Text>
+        <Text color={UI_COLORS.cardDarkSuitForeground}>♠</Text>
         <Text> </Text>
-        <Text color={UI_COLORS.suitHeart}>♥</Text>
+        <Text color={UI_COLORS.cardRedSuit}>♥</Text>
         <Text> </Text>
-        <Text color={UI_COLORS.suitDiamond}>♦</Text>
+        <Text color={UI_COLORS.cardRedSuit}>♦</Text>
         <Text> </Text>
-        <Text color={UI_COLORS.suitClub}>♣</Text>
+        <Text color={UI_COLORS.cardDarkSuitForeground}>♣</Text>
       </Box>
 
       <Text bold color={UI_COLORS.primaryText}>

@@ -15,11 +15,14 @@ export const UI_COLORS = {
   logoDash: '#888888',
   logoMain: '#29B6F6',
   logoMenu: '#29B6F6',
-
-  suitSpade: '#29B6F6',
-  suitHeart: '#EF5350',
-  suitDiamond: '#D8AD4A',
-  suitClub: '#4CAF50',
+  // Card Palette (Single Source of Truth)
+  cardRedSuit: '#FF5252',
+  cardDarkSuitForeground: '#FFFFFF',
+  cardBackDim: '#1976D2',
+  cardBack: '#29B6F6',
+  cardBackBright: '#4FC3F7',
+  cardGlowHighlight: '#FFD54F',
+  cardEmpty: '#777777',
 
   errorRed: '#FF5252',
 

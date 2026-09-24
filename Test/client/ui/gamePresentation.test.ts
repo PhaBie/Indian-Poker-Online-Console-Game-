@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   determineSeatPositions,
+  getCardSuitColor,
   getOrderedPlayersByPerspective,
   getPlayerBadgeInfo,
   getStatusDisplayInfo,
@@ -20,6 +21,11 @@ import {
   getSideshowPresentationKey,
   getVisibleSideshowResult,
 } from '../../../src/client/ui/screens/game/sideshowPresentation';
+import {
+  CARD_BORDER_GLOW_ACTIVE_FRAMES,
+  DEFAULT_CARD_BORDER_COLORS,
+} from '../../../src/client/ui/screens/game/useCardBorderGlow';
+import { UI_COLORS } from '../../../src/client/ui/shared/theme/colors';
 import type { GameStatePayload } from '../../../src/client/ui/screens/game/types';
 
 describe('14. ระบบแสดงผลโต๊ะเกมและผลการเล่น (Game Presentation UI)', () => {
@@ -268,6 +274,41 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
 
     test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header, Canvas และ Control พอดี 41 แถว', () => {
       expect(3 + GAME_TABLE_CANVAS_HEIGHT + 1).toBe(GAMEPLAY_HEIGHT);
+    });
+  });
+
+  describe('ชุดสีไพ่และแอนิเมชันขอบไพ่ (Card Visual Palette & Border Glow)', () => {
+    test('[getCardSuitColor] 14.12 กำหนดสีไพ่ตามดอก → HEARTS และ DIAMONDS คืนค่า UI_COLORS.cardRedSuit', () => {
+      expect(getCardSuitColor('HEARTS')).toBe(UI_COLORS.cardRedSuit);
+      expect(getCardSuitColor('DIAMONDS')).toBe(UI_COLORS.cardRedSuit);
+    });
+
+    test('[getCardSuitColor] 14.13 กำหนดสีไพ่ตามดอก → SPADES และ CLUBS คืนค่า UI_COLORS.cardDarkSuitForeground', () => {
+      expect(getCardSuitColor('SPADES')).toBe(UI_COLORS.cardDarkSuitForeground);
+      expect(getCardSuitColor('CLUBS')).toBe(UI_COLORS.cardDarkSuitForeground);
+    });
+
+    test('[DEFAULT_CARD_BORDER_COLORS] 14.14 สีเริ่มต้นของขอบไพ่ทั้ง 3 ใบ → ใช้ UI_COLORS.cardBack', () => {
+      expect(DEFAULT_CARD_BORDER_COLORS).toEqual([
+        UI_COLORS.cardBack,
+        UI_COLORS.cardBack,
+        UI_COLORS.cardBack,
+      ]);
+    });
+
+    test('[CARD_BORDER_GLOW_ACTIVE_FRAMES] 14.15 สีในแต่ละเฟรมของแอนิเมชันขอบไพ่เรืองแสง → ทุกสีต้องอยู่ในชุดสีการ์ดที่กำหนดและไม่มีสี magenta', () => {
+      const allowedGlowColors = new Set<string>([
+        UI_COLORS.cardBackDim,
+        UI_COLORS.cardBack,
+        UI_COLORS.cardBackBright,
+        UI_COLORS.cardGlowHighlight,
+      ]);
+      for (const frame of CARD_BORDER_GLOW_ACTIVE_FRAMES) {
+        for (const color of frame) {
+          expect(allowedGlowColors.has(color)).toBe(true);
+          expect(color.toLowerCase().includes('magenta')).toBe(false);
+        }
+      }
     });
   });
 });

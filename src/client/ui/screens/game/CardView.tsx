@@ -1,12 +1,13 @@
 import { Box, Text } from 'ink';
 import type { CardViewProps } from './types';
 import { formatCardRank, getCardSuitSymbol, getCardSuitColor } from './gameLayoutHelpers';
+import { UI_COLORS } from '../../shared/theme/colors';
 
 export const CARD_WIDTH = 7;
 export const CARD_HEIGHT = 3;
 
 function HiddenCardBox({
-  hiddenBorderColor = 'magenta',
+  hiddenBorderColor = UI_COLORS.cardBack,
 }: Pick<CardViewProps, 'hiddenBorderColor'>) {
   return (
     <Box
@@ -17,7 +18,7 @@ function HiddenCardBox({
       justifyContent="center"
       alignItems="center"
     >
-      <Text color="magenta">♠</Text>
+      <Text color={UI_COLORS.cardBack}>♠</Text>
     </Box>
   );
 }
@@ -31,14 +32,14 @@ export function CardView({ card, isHidden = false, hiddenBorderColor }: CardView
     return (
       <Box
         borderStyle="single"
-        borderColor="gray"
+        borderColor={UI_COLORS.cardEmpty}
         paddingX={0}
         width={CARD_WIDTH}
         height={CARD_HEIGHT}
         justifyContent="center"
         alignItems="center"
       >
-        <Text color="gray">·</Text>
+        <Text color={UI_COLORS.cardEmpty}>·</Text>
       </Box>
     );
   }
