@@ -6,15 +6,15 @@ export type CardBorderColorTriple = readonly [string, string, string];
 export const CARD_BORDER_GLOW_INTERVAL_MS = 140;
 export const CARD_BORDER_GLOW_PAUSE_MS = 7_000;
 
-const { cardBackDim, cardBack, cardBackBright, cardGlowHighlight } = UI_COLORS;
+const { cardBack, cardBackBright, cardGlowHighlight } = UI_COLORS;
 
 export const CARD_BORDER_GLOW_ACTIVE_FRAMES: readonly CardBorderColorTriple[] = [
-  [cardBackBright, cardBack, cardBack],
-  [cardBackDim, cardBackBright, cardBack],
+  [cardGlowHighlight, cardBack, cardBack],
   [cardGlowHighlight, cardBackBright, cardBack],
-  [cardGlowHighlight, cardGlowHighlight, cardBackBright],
-  [cardBackBright, cardGlowHighlight, cardGlowHighlight],
+  [cardBackBright, cardGlowHighlight, cardBack],
+  [cardBack, cardGlowHighlight, cardBackBright],
   [cardBack, cardBackBright, cardGlowHighlight],
+  [cardBack, cardBack, cardGlowHighlight],
   [cardBack, cardBack, cardBackBright],
 ];
 
