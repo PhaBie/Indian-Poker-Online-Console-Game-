@@ -7,7 +7,7 @@ import {
   getWinners,
   shuffleDeck,
 } from '../../core/gameLogic';
-import type { Card, GameActionType, HandRank } from '../../../shared/types';
+import type { Card, GameActionType, HandRank, RoundResult } from '../../../shared/types';
 import {
   GameError,
   InvalidActionError,
@@ -16,12 +16,7 @@ import {
 } from '../errors/GameError';
 import type { Player } from './Player';
 
-type GameResult = {
-  winnerIds: string[];
-  winningHand: HandRank;
-  payouts: Record<string, number>;
-  exposedCards: Record<string, Card[]>;
-};
+type GameResult = RoundResult;
 
 export class GameState {
   public pot: number;
@@ -47,6 +42,7 @@ export class GameState {
   public pendingShow: {
     requesterId: string;
     opponentId: string;
+    isTie: boolean;
     cards: Record<string, Card[]>;
   } | null;
   public readonly deferShowSettlement: boolean;
@@ -327,14 +323,14 @@ export class GameState {
     const winnerIds = getWinners(players);
     const rewards = calculateSplitPot(this.pot, winnerIds);
 
-    // Evaluate the winning hand (from the first winner since they have the same hand rank if tie)
-    // In our simplified setup, we can just compute hand rank directly or just hardcode 'HIGH_CARD' for now if we don't have evaluateHand.
-    // Actually getWinners uses compareHands which evaluates the hand internally but doesn't return the rank directly. Let's just say it's HIGH_CARD for now unless we import evaluateHand.
-    // Wait, gameLogic.ts might export evaluateHand. I'll just use a generic 'HIGH_CARD' if evaluateHand is missing, but let's check gameLogic.ts later.
     const winningPlayer = players.find((player) => player.id === winnerIds[0]);
-    const winningHand: HandRank = winningPlayer
-      ? evaluateHand(winningPlayer.cards).rank
-      : 'HIGH_CARD';
+    if (!winningPlayer || winningPlayer.cards.length !== 3) {
+      throw new GameError(
+        'Winning player must have exactly 3 cards to evaluate hand rank',
+        'INVALID_HAND',
+      );
+    }
+    const winningHand: HandRank = evaluateHand(winningPlayer.cards).rank;
 
     for (const player of this.activePlayers) {
       const reward = rewards[player.id];
@@ -363,9 +359,43 @@ export class GameState {
 
     return {
       winnerIds,
+      winReason: 'FORCED_SHOWDOWN',
       winningHand,
       payouts: rewards,
       exposedCards,
+    };
+  }
+
+  private createSoleWinnerResult(winner: Player, payout: number): RoundResult {
+    const payouts: Record<string, number> = { [winner.id]: payout };
+    const hasPendingShow = Boolean(this.pendingShow);
+    const isTie = Boolean(this.pendingShow?.isTie);
+    const exposedCards = this.pendingShow?.cards ?? {};
+
+    if (hasPendingShow) {
+      if (winner.privateCards.length !== 3) {
+        throw new GameError(
+          'Winning player must have exactly 3 cards to evaluate SHOW hand rank',
+          'INVALID_HAND',
+        );
+      }
+      const winningHand: HandRank = evaluateHand(winner.privateCards).rank;
+
+      return {
+        winnerIds: [winner.id],
+        winReason: isTie ? 'SHOW_TIE' : 'SHOW',
+        winningHand,
+        payouts,
+        exposedCards,
+      };
+    }
+
+    return {
+      winnerIds: [winner.id],
+      winReason: 'LAST_PLAYER_STANDING',
+      winningHand: null,
+      payouts,
+      exposedCards: {},
     };
   }
 
@@ -388,20 +418,18 @@ export class GameState {
     if (remainingPlayers.length === 1) {
       const winner = remainingPlayers[0];
       const payout = this.pot;
+
+      const result = this.createSoleWinnerResult(winner, payout);
+
+      if (winner.chips + payout > Number.MAX_SAFE_INTEGER) {
+        throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
+      }
+
       winner.addChips(payout);
       this.pot = 0;
-
-      const payouts: Record<string, number> = {};
-      payouts[winner.id] = payout;
-
-      const exposedCards = this.pendingShow?.cards ?? {};
       this.pendingShow = null;
-      this.lastGameResult = {
-        winnerIds: [winner.id],
-        winningHand: 'HIGH_CARD', // Not shown on fold win
-        payouts,
-        exposedCards,
-      };
+      this.lastGameResult = result;
+
       return this.lastGameResult;
     }
 
@@ -489,8 +517,11 @@ export class GameState {
     player.payBet(showCost);
     this.pot += showCost;
 
+    const compareResult = compareHands(player.privateCards, opponent.privateCards);
+    const isTie = compareResult === 0;
+
     // ถ้าแต้มเสมอ ผู้ขอ Show เป็นฝ่ายแพ้
-    if (compareHands(player.privateCards, opponent.privateCards) <= 0) {
+    if (compareResult <= 0) {
       player.fold();
     } else {
       opponent.fold();
@@ -499,6 +530,7 @@ export class GameState {
     this.pendingShow = {
       requesterId: player.id,
       opponentId: opponent.id,
+      isTie,
       cards: {
         [player.id]: player.showCards(),
         [opponent.id]: opponent.showCards(),

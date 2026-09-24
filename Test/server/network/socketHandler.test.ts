@@ -512,4 +512,77 @@ describe('การรักษาความลับของไพ่ระ�
     expect(serializedPayload.includes('"rank":14')).toBe(false);
     expect(serializedPayload.includes('"rank":2')).toBe(false);
   });
+
+  test('[NetworkShowdown] 7.29 SHOW ส่ง showdownCards ก่อน และส่ง GAME_RESULT พร้อม winReason และ winningHand จริงหลัง 4 วินาที', () => {
+    jest.useFakeTimers();
+    try {
+      const requester = new Player('playerRequester', 'Requester');
+      const opponent = new Player('playerOpponent', 'Opponent');
+      const room = context.roomManager.createRoom('showdown-reveal-room', requester, 2);
+      room.join(opponent);
+
+      const requesterEvents: ServerEvent[] = [];
+      const opponentEvents: ServerEvent[] = [];
+
+      const requesterClient = client(requesterEvents);
+      const opponentClient = client(opponentEvents);
+
+      context.connectedClients.set(requesterClient, {
+        playerId: requester.id,
+        roomId: room.roomId,
+      });
+      context.connectedClients.set(opponentClient, {
+        playerId: opponent.id,
+        roomId: room.roomId,
+      });
+
+      room.startGame(requester.id);
+
+      requester.isBlind = false;
+      opponent.isBlind = false;
+
+      requester.privateCards = [
+        { suit: 'SPADES', rank: 14 },
+        { suit: 'HEARTS', rank: 14 },
+        { suit: 'DIAMONDS', rank: 14 },
+      ];
+      opponent.privateCards = [
+        { suit: 'SPADES', rank: 13 },
+        { suit: 'HEARTS', rank: 8 },
+        { suit: 'DIAMONDS', rank: 3 },
+      ];
+
+      room.gameState!.activePlayers = [requester, opponent];
+      room.gameState!.currentPlayerIndex = 0;
+
+      handleClientMessage(
+        requesterClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'SHOW' } },
+        context,
+      );
+
+      const updatePayload = getRequiredGameStateUpdate(requesterEvents);
+      expect(updatePayload.showdownCards).not.toBeNull();
+      expect(updatePayload.showdownCards?.playerRequester).toHaveLength(3);
+      expect(updatePayload.showdownCards?.playerOpponent).toHaveLength(3);
+
+      const gameResultsBeforeDelay = requesterEvents.filter(
+        (event) => event.type === 'GAME_RESULT',
+      );
+      expect(gameResultsBeforeDelay).toHaveLength(0);
+
+      jest.advanceTimersByTime(4_000);
+
+      const gameResultsAfterDelay = requesterEvents.filter(
+        (event): event is Extract<ServerEvent, { type: 'GAME_RESULT' }> =>
+          event.type === 'GAME_RESULT',
+      );
+      expect(gameResultsAfterDelay).toHaveLength(1);
+      expect(gameResultsAfterDelay[0].payload.winnerIds).toEqual(['playerRequester']);
+      expect(gameResultsAfterDelay[0].payload.winReason).toBe('SHOW');
+      expect(gameResultsAfterDelay[0].payload.winningHand).toBe('TRAIL');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

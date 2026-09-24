@@ -1,5 +1,14 @@
-import type { Card } from '../../../../shared/types';
+import type { Card, HandRank } from '../../../../shared/types';
 import type { TableSeatPositions, PlayerBadgeInfo, StatusStateContext } from './types';
+
+export const HAND_RANK_LABELS: Readonly<Record<HandRank, string>> = {
+  TRAIL: 'TRAIL — THREE OF A KIND',
+  PURE_SEQUENCE: 'PURE SEQUENCE — SAME-SUIT RUN',
+  SEQUENCE: 'SEQUENCE — THREE-CARD RUN',
+  COLOR: 'COLOR — SAME SUIT',
+  PAIR: 'PAIR — TWO OF A KIND',
+  HIGH_CARD: 'HIGH CARD',
+};
 
 export function getOrderedPlayersByPerspective<T extends { readonly id: string }>(
   players: readonly T[],

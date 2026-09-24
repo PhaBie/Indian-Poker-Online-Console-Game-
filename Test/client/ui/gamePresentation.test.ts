@@ -122,14 +122,68 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
   });
 
   describe('การสรุปผลรอบและการดวลการ์ด (Round Result & Sideshow Presentation)', () => {
-    test('[getWinningHandLabel] 14.6 ผู้เล่นคนอื่นหมอบหมดจนเหลือกองกลางไม่ถูกแข่ง → แสดงผลเป็น WON BY FOLD', () => {
+    test('[getWinningHandLabel] 14.6 ผู้เล่นคนอื่นหมอบหมดจนเหลือกองกลางไม่ถูกแข่ง → แสดงผลเป็น LAST PLAYER STANDING', () => {
       const winningLabel = getWinningHandLabel({
+        winReason: 'LAST_PLAYER_STANDING',
+        winningHand: null,
         winnerIds: ['winner_player'],
-        winningHand: 'HIGH_CARD',
         payouts: { winner_player: 100 },
         exposedCards: {},
       });
-      expect(winningLabel).toBe('WON BY FOLD');
+      expect(winningLabel).toBe('LAST PLAYER STANDING');
+    });
+
+    test('[getWinningHandLabel] 14.6.1 ชนะด้วย SHOW และได้ TRAIL → แสดงผลเป็น WON BY SHOW · TRAIL — THREE OF A KIND', () => {
+      const winningLabel = getWinningHandLabel({
+        winReason: 'SHOW',
+        winningHand: 'TRAIL',
+        winnerIds: ['winner_player'],
+        payouts: { winner_player: 300 },
+        exposedCards: {
+          winner_player: [
+            { rank: 14, suit: 'SPADES' },
+            { rank: 14, suit: 'HEARTS' },
+            { rank: 14, suit: 'DIAMONDS' },
+          ],
+        },
+      });
+      expect(winningLabel).toBe('WON BY SHOW · TRAIL — THREE OF A KIND');
+    });
+
+    test('[getWinningHandLabel] 14.6.2 ชนะด้วย SHOW แบบไพ่เสมอ → แสดงผลพร้อมข้อความระบุ TIE RULE', () => {
+      const winningLabel = getWinningHandLabel({
+        winReason: 'SHOW_TIE',
+        winningHand: 'PAIR',
+        winnerIds: ['winner_player'],
+        payouts: { winner_player: 200 },
+        exposedCards: {
+          winner_player: [
+            { rank: 13, suit: 'SPADES' },
+            { rank: 13, suit: 'HEARTS' },
+            { rank: 2, suit: 'DIAMONDS' },
+          ],
+        },
+      });
+      expect(winningLabel).toBe(
+        'WON BY SHOW · PAIR — TWO OF A KIND (TIE RULE — NON-REQUESTER WINS)',
+      );
+    });
+
+    test('[getWinningHandLabel] 14.6.3 บังคับตัดสินผู้เล่นหลายคน → แสดงผลเป็น FORCED SHOWDOWN', () => {
+      const winningLabel = getWinningHandLabel({
+        winReason: 'FORCED_SHOWDOWN',
+        winningHand: 'SEQUENCE',
+        winnerIds: ['winner_player'],
+        payouts: { winner_player: 500 },
+        exposedCards: {
+          winner_player: [
+            { rank: 10, suit: 'SPADES' },
+            { rank: 9, suit: 'HEARTS' },
+            { rank: 8, suit: 'DIAMONDS' },
+          ],
+        },
+      });
+      expect(winningLabel).toBe('FORCED SHOWDOWN · SEQUENCE — THREE-CARD RUN');
     });
 
     test('[sortPlayersForResult] 14.7 จัดอันดับผู้เล่นในหน้าต่างสรุปผลรอบ → ผู้ชนะอยู่อันดับแรก ตามด้วยยอดชิปคงเหลือ', () => {
@@ -139,8 +193,9 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
         { id: 'player_second', name: 'Second', chips: 1_000, bet: 100 },
       ];
       const roundResultPayload = {
+        winReason: 'LAST_PLAYER_STANDING' as const,
         winnerIds: ['player_winner'],
-        winningHand: 'HIGH_CARD' as const,
+        winningHand: null,
         payouts: { player_winner: 150 },
         exposedCards: {},
       };

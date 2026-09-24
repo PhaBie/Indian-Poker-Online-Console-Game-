@@ -8,6 +8,9 @@ import type {
   Card,
   GameActionType,
   RoomSummaryDTO,
+  RoundResult,
+  RoundWinReason,
+  DepartedPlayerResult,
 } from '../../shared/types';
 import type { RoomManager } from '../domain/services/RoomManager';
 import type { Room } from '../domain/models/Room';
@@ -21,7 +24,7 @@ const HOST_DECISION_TIMEOUT_MS = 5_000;
 const showRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const sideshowRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const autoNextGameTimers = new Map<string, ReturnType<typeof setTimeout>>();
-type DepartedPlayer = { id: string; name: string; status: 'DISCONNECTED' | 'LEFT' };
+type DepartedPlayer = DepartedPlayerResult;
 // A player can leave before the action that actually ends a hand. Keep that
 // information at room scope so the eventual result still tells the table who
 // left, rather than showing an unrelated Action-panel notification.
@@ -387,10 +390,7 @@ function handlePlayerAction(
         saveGameHistory(room, result);
         broadcastGameResult(
           session.roomId,
-          result.winnerIds,
-          result.winningHand,
-          result.payouts,
-          result.exposedCards,
+          result,
           context,
           consumeDepartedPlayers(session.roomId),
         );
@@ -413,15 +413,7 @@ function scheduleShowSettlement(roomId: string, context: NetworkContext): void {
     const result = room.endGame(true);
     if (result) {
       saveGameHistory(room, result);
-      broadcastGameResult(
-        roomId,
-        result.winnerIds,
-        result.winningHand,
-        result.payouts,
-        result.exposedCards,
-        context,
-        consumeDepartedPlayers(roomId),
-      );
+      broadcastGameResult(roomId, result, context, consumeDepartedPlayers(roomId));
       scheduleAutoNextGame(roomId, context);
     }
     broadcastGameStateUpdate(roomId, context);
@@ -539,10 +531,7 @@ function removeNonHostPlayer(
       saveGameHistory(room, result);
       broadcastGameResult(
         room.roomId,
-        result.winnerIds,
-        result.winningHand,
-        result.payouts,
-        result.exposedCards,
+        result,
         context,
         consumeDepartedPlayers(room.roomId),
       );
@@ -644,23 +633,17 @@ export function broadcastGameStateUpdate(roomId: string, context: NetworkContext
 
 export function broadcastGameResult(
   roomId: string,
-  winnerIds: string[],
-  winningHand: HandRank,
-  payouts: Record<string, number>,
-  exposedCards: Record<string, Card[]>,
+  result: RoundResult,
   context: NetworkContext,
-  departedPlayers: DepartedPlayer[] = [],
+  departedPlayers: readonly DepartedPlayer[] = [],
 ): void {
   for (const [client, session] of context.connectedClients.entries()) {
     if (session.roomId === roomId) {
       sendEvent(client, {
         type: 'GAME_RESULT',
         payload: {
-          winnerIds,
-          winningHand,
-          payouts,
-          departedPlayers,
-          exposedCards,
+          ...result,
+          departedPlayers: [...departedPlayers],
         },
       });
     }
@@ -681,15 +664,7 @@ function sendError(wsClient: WebSocket, message: string, code?: string): void {
   sendEvent(wsClient, { type: 'ERROR', message, code });
 }
 
-function saveGameHistory(
-  room: Room,
-  result: {
-    winnerIds: string[];
-    winningHand: HandRank;
-    payouts: Record<string, number>;
-    exposedCards: Record<string, Card[]>;
-  },
-): void {
+function saveGameHistory(room: Room, result: RoundResult): void {
   try {
     const historyPath = path.join(process.cwd(), 'data', 'runtime', 'History.json');
     fs.mkdirSync(path.dirname(historyPath), { recursive: true });
@@ -697,8 +672,9 @@ function saveGameHistory(
       timestamp: string;
       roomId: string;
       pot: number;
-      winners: string[];
-      winningHand: HandRank;
+      winners: readonly string[];
+      winReason?: RoundWinReason;
+      winningHand: HandRank | null;
       players: Array<{
         playerName: string;
         chips: number;
@@ -724,6 +700,7 @@ function saveGameHistory(
       roomId: room.roomId,
       pot: totalPot,
       winners: result.winnerIds,
+      winReason: result.winReason,
       winningHand: result.winningHand,
       players: Array.from(room.players.values()).map((p) => ({
         playerName: p.name,

@@ -2,6 +2,7 @@ import { Box, Text, useInput } from 'ink';
 import { useEffect, useState } from 'react';
 import type { ServerEvent } from '../../../../shared/types';
 import type { GameStatePayload } from './types';
+import { HAND_RANK_LABELS } from './gameLayoutHelpers';
 
 interface GameRoundResultDialogProps {
   readonly result: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
@@ -27,9 +28,20 @@ export function getRoundParticipants<T extends { readonly status?: string }>(
 }
 
 export function getWinningHandLabel(result: GameResult): string {
-  return Object.keys(result.exposedCards).length === 0
-    ? 'WON BY FOLD'
-    : result.winningHand;
+  if (result.winReason === 'LAST_PLAYER_STANDING') {
+    return 'LAST PLAYER STANDING';
+  }
+
+  const handDescription = HAND_RANK_LABELS[result.winningHand] ?? result.winningHand;
+
+  if (result.winReason === 'SHOW_TIE') {
+    return `WON BY SHOW · ${handDescription} (TIE RULE — NON-REQUESTER WINS)`;
+  }
+  if (result.winReason === 'FORCED_SHOWDOWN') {
+    return `FORCED SHOWDOWN · ${handDescription}`;
+  }
+
+  return `WON BY SHOW · ${handDescription}`;
 }
 
 export function sortPlayersForResult(
