@@ -345,6 +345,21 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
         }
       }
     });
+
+    test('[CARD_BORDER_GLOW_ACTIVE_FRAMES] 14.15.1 แสงวิ่งเริ่มด้วยหัวแสงสีขาวอมฟ้าและเคลื่อนผ่านไพ่ตามลำดับ → แต่ละช่องได้รับสี Highlight จากซ้ายไปขวา', () => {
+      expect(CARD_BORDER_GLOW_ACTIVE_FRAMES[0]).toEqual([
+        UI_COLORS.cardGlowHighlight,
+        UI_COLORS.cardBack,
+        UI_COLORS.cardBack,
+      ]);
+
+      const firstHighlightFrameByCard = [0, 1, 2].map((cardIndex) =>
+        CARD_BORDER_GLOW_ACTIVE_FRAMES.findIndex(
+          (frame) => frame[cardIndex] === UI_COLORS.cardGlowHighlight,
+        ),
+      );
+      expect(firstHighlightFrameByCard).toEqual([0, 2, 4]);
+    });
   });
 
   function withDeterministicSeed<T>(executeAction: () => T, seedValue = 42): T {
