@@ -29,6 +29,20 @@ const ACTION_COLORS: Readonly<Record<string, string>> = {
   DECLINE: 'redBright',
 };
 
+export function canChooseGameAction({
+  isEntranceActive,
+  shouldShowActions,
+  isMyTurn,
+  isPendingSideshowTarget,
+}: {
+  readonly isEntranceActive: boolean;
+  readonly shouldShowActions: boolean;
+  readonly isMyTurn: boolean;
+  readonly isPendingSideshowTarget: boolean;
+}): boolean {
+  return !isEntranceActive && shouldShowActions && (isMyTurn || isPendingSideshowTarget);
+}
+
 function ActionButton({ isSelected, label }: ActionButtonProps) {
   const [action, amount] = label.split('|');
   const actionColor = ACTION_COLORS[action] ?? 'white';
@@ -76,9 +90,6 @@ function BetInputForm({
           onSubmit={onBetSubmit}
           focus={!isInputDisabled}
         />
-      </Box>
-      <Box marginTop={1}>
-        <Text color="gray">ENTER CONFIRM · ESC BACK</Text>
       </Box>
     </Box>
   );
@@ -222,37 +233,6 @@ function PanelBodyContent({
   );
 }
 
-function PanelControlsFooter({
-  canChooseAction,
-  isEntranceActive,
-}: {
-  readonly canChooseAction: boolean;
-  readonly isEntranceActive: boolean;
-}) {
-  return (
-    <Box
-      borderStyle="single"
-      borderBottom={false}
-      borderLeft={false}
-      borderRight={false}
-      borderColor="gray"
-      paddingTop={1}
-      flexDirection="column"
-    >
-      <Text color={isEntranceActive ? 'yellowBright' : 'gray'}>
-        {canChooseAction ? 'KEYBOARD CONTROLS' : 'ACTIONS LOCKED'}
-      </Text>
-      <Text color="gray">
-        {canChooseAction
-          ? '↑↓ Navigate · Enter select'
-          : isEntranceActive
-            ? 'Please wait for dealing to finish...'
-            : 'Controls disabled'}
-      </Text>
-    </Box>
-  );
-}
-
 function useActionPulse(canChooseAction: boolean): boolean {
   const [isPulseOn, setIsPulseOn] = useState(false);
 
@@ -313,10 +293,6 @@ function PanelContentGroup({
       />
       <Box flexGrow={1} />
       <NoticeBox notice={props.notice} />
-      <PanelControlsFooter
-        canChooseAction={canChooseAction}
-        isEntranceActive={props.isEntranceActive ?? false}
-      />
     </>
   );
 }
@@ -329,10 +305,12 @@ export function GameActionsPanel(props: GameActionsPanelProps) {
     isEntranceActive = false,
   } = props;
 
-  const canChooseAction =
-    !isEntranceActive &&
-    shouldShowActions &&
-    (isMyTurn || statusContext.isPendingSideshowTarget);
+  const canChooseAction = canChooseGameAction({
+    isEntranceActive,
+    shouldShowActions,
+    isMyTurn,
+    isPendingSideshowTarget: statusContext.isPendingSideshowTarget,
+  });
   const isPulseOn = useActionPulse(canChooseAction);
   const status = getStatusDisplayInfo(statusContext);
   const panelTitle = statusContext.isPendingSideshowTarget

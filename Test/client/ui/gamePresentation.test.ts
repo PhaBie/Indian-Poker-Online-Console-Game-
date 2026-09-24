@@ -11,8 +11,15 @@ import {
   GAMEPLAY_HEIGHT,
   getGameplayLayoutMode,
 } from '../../../src/client/ui/screens/game/GameScreen';
-import { GAME_TABLE_CANVAS_HEIGHT } from '../../../src/client/ui/screens/game/layoutConstants';
+import { getGameControlsFooterMode } from '../../../src/client/ui/screens/game/GameControlsFooter';
 import {
+  GAME_CONTROLS_FOOTER_HEIGHT,
+  GAME_HEADER_HEIGHT,
+  GAME_TABLE_CANVAS_HEIGHT,
+} from '../../../src/client/ui/screens/game/layoutConstants';
+import {
+  ROUND_RESULT_DIALOG_HEIGHT,
+  ROUND_RESULT_DIALOG_TOP,
   getRoundParticipants,
   getWinningHandLabel,
   sortPlayersForResult,
@@ -272,8 +279,27 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
       expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
     });
 
-    test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header, Canvas และ Control พอดี 41 แถว', () => {
-      expect(3 + GAME_TABLE_CANVAS_HEIGHT + 1).toBe(GAMEPLAY_HEIGHT);
+    test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header 3 แถว, Canvas 36 แถว และ Footer 2 แถว พอดี 41 แถว', () => {
+      expect(
+        GAME_HEADER_HEIGHT + GAME_TABLE_CANVAS_HEIGHT + GAME_CONTROLS_FOOTER_HEIGHT,
+      ).toBe(GAMEPLAY_HEIGHT);
+      expect(GAME_HEADER_HEIGHT).toBe(3);
+      expect(GAME_TABLE_CANVAS_HEIGHT).toBe(36);
+      expect(GAME_CONTROLS_FOOTER_HEIGHT).toBe(2);
+    });
+
+    test('[getGameControlsFooterMode] 14.11.1 แสดงคำสั่งด้านล่างเฉพาะช่วงที่ผู้เล่นควบคุม Action ได้ → คืนโหมด Action, Bet หรือซ่อนอย่างถูกต้อง', () => {
+      expect(getGameControlsFooterMode(true, false, 'menu')).toBe('action_menu');
+      expect(getGameControlsFooterMode(true, false, 'input_bet')).toBe('bet_input');
+      expect(getGameControlsFooterMode(false, false, 'menu')).toBe('hidden');
+      expect(getGameControlsFooterMode(true, true, 'menu')).toBe('hidden');
+    });
+
+    test('[ROUND_RESULT_DIALOG] 14.11.2 กล่องสรุปผลรอบจัดวางในแนวตั้งให้อยู่กึ่งกลางแคนวาสและไม่ล้นขอบเขตโต๊ะเกม 36 แถว', () => {
+      expect(ROUND_RESULT_DIALOG_TOP + ROUND_RESULT_DIALOG_HEIGHT).toBeLessThanOrEqual(
+        GAME_TABLE_CANVAS_HEIGHT,
+      );
+      expect(ROUND_RESULT_DIALOG_TOP).toBeGreaterThanOrEqual(1);
     });
   });
 

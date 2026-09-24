@@ -3,6 +3,13 @@ import { useEffect, useState } from 'react';
 import type { ServerEvent } from '../../../../shared/types';
 import type { GameStatePayload } from './types';
 import { HAND_RANK_LABELS } from './gameLayoutHelpers';
+import { GAME_TABLE_CANVAS_HEIGHT } from './layoutConstants';
+
+export const ROUND_RESULT_DIALOG_HEIGHT = 30;
+export const ROUND_RESULT_DIALOG_TOP = Math.max(
+  1,
+  Math.floor((GAME_TABLE_CANVAS_HEIGHT - ROUND_RESULT_DIALOG_HEIGHT) / 2),
+);
 
 interface GameRoundResultDialogProps {
   readonly result: Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
@@ -169,10 +176,10 @@ export function GameRoundResultDialog({
   return (
     <Box
       position="absolute"
-      top={7}
+      top={ROUND_RESULT_DIALOG_TOP}
       left={35}
       width={74}
-      height={30}
+      height={ROUND_RESULT_DIALOG_HEIGHT}
       borderStyle="double"
       borderColor="yellowBright"
       backgroundColor="black"
