@@ -70,7 +70,7 @@ export function RoundResultScreen({
         </Box>
         <Box marginBottom={2}>
           <Text color="gray">Winning Hand: </Text>
-          <Text color="white">{winningHand}</Text>
+          <Text color="white">{winningHand ?? result.winReason}</Text>
         </Box>
 
         <Box marginBottom={1}>

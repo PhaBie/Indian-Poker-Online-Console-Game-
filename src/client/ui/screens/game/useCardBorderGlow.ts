@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
+import { UI_COLORS } from '../../shared/theme/colors';
 
 export type CardBorderColorTriple = readonly [string, string, string];
 
 export const CARD_BORDER_GLOW_INTERVAL_MS = 140;
 export const CARD_BORDER_GLOW_PAUSE_MS = 7_000;
 
+const { cardBackDim, cardBack, cardBackBright, cardGlowHighlight } = UI_COLORS;
+
 export const CARD_BORDER_GLOW_ACTIVE_FRAMES: readonly CardBorderColorTriple[] = [
-  ['magentaBright', 'magenta', 'magenta'],
-  ['yellow', 'magentaBright', 'magenta'],
-  ['yellowBright', 'yellow', 'magentaBright'],
-  ['yellow', 'yellowBright', 'yellow'],
-  ['magentaBright', 'yellow', 'yellowBright'],
-  ['magenta', 'magentaBright', 'yellow'],
-  ['magenta', 'magenta', 'magentaBright'],
+  [cardBackBright, cardBack, cardBack],
+  [cardBackDim, cardBackBright, cardBack],
+  [cardGlowHighlight, cardBackBright, cardBack],
+  [cardGlowHighlight, cardGlowHighlight, cardBackBright],
+  [cardBackBright, cardGlowHighlight, cardGlowHighlight],
+  [cardBack, cardBackBright, cardGlowHighlight],
+  [cardBack, cardBack, cardBackBright],
 ];
 
 export const CARD_BORDER_GLOW_PAUSE_FRAMES = Math.ceil(
@@ -23,9 +26,9 @@ export const CARD_BORDER_GLOW_CYCLE_FRAMES =
   CARD_BORDER_GLOW_ACTIVE_FRAMES.length + CARD_BORDER_GLOW_PAUSE_FRAMES;
 
 export const DEFAULT_CARD_BORDER_COLORS: CardBorderColorTriple = [
-  'magenta',
-  'magenta',
-  'magenta',
+  cardBack,
+  cardBack,
+  cardBack,
 ];
 
 export function calculateEntranceBorderGlowColors(

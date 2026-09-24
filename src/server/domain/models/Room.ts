@@ -1,5 +1,10 @@
 import { Player } from './Player';
-import type { RoomPhase, PublicPlayerDTO, Card, HandRank } from '../../../shared/types';
+import type {
+  RoomPhase,
+  PublicPlayerDTO,
+  Card,
+  RoundResult,
+} from '../../../shared/types';
 import { roomSaveSchema, type GameStateSerializedData } from '../schemas/roomSchema';
 import { GameState } from './GameState';
 import {
@@ -169,13 +174,8 @@ export class Room {
    * 1. สั่งให้ gameState ทำการจบรอบ (เคลียร์เงินกองกลาง Pot จ่ายให้ผู้ชนะ) หากมี gameState กำลังทำงานอยู่
    * 2. เปลี่ยนสถานะของห้อง (phase) จาก PLAYING เป็น 'ENDED' เพื่อรอผลสรุปหรือเตรียมรีเซ็ตกลับ LOBBY
    */
-  public endGame(forceShowdown: boolean = false): {
-    winnerIds: string[];
-    winningHand: HandRank;
-    payouts: Record<string, number>;
-    exposedCards: Record<string, Card[]>;
-  } | null {
-    let result = null;
+  public endGame(forceShowdown: boolean = false): RoundResult | null {
+    let result: RoundResult | null = null;
     // 1. สั่งให้ GameState ทำการจบรอบเกมและสรุปผล (ถ้ามีโต๊ะเกมอยู่)
     if (this.gameState) {
       result = this.gameState.endGame(forceShowdown);

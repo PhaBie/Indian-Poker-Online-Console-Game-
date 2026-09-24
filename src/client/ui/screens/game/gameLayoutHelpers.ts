@@ -1,5 +1,15 @@
-import type { Card } from '../../../../shared/types';
+import type { Card, HandRank } from '../../../../shared/types';
 import type { TableSeatPositions, PlayerBadgeInfo, StatusStateContext } from './types';
+import { UI_COLORS } from '../../shared/theme/colors';
+
+export const HAND_RANK_LABELS: Readonly<Record<HandRank, string>> = {
+  TRAIL: 'TRAIL — THREE OF A KIND',
+  PURE_SEQUENCE: 'PURE SEQUENCE — SAME-SUIT RUN',
+  SEQUENCE: 'SEQUENCE — THREE-CARD RUN',
+  COLOR: 'COLOR — SAME SUIT',
+  PAIR: 'PAIR — TWO OF A KIND',
+  HIGH_CARD: 'HIGH CARD',
+};
 
 export function getOrderedPlayersByPerspective<T extends { readonly id: string }>(
   players: readonly T[],
@@ -78,8 +88,10 @@ export function getCardSuitSymbol(suit: Card['suit']): string {
   return SUIT_SYMBOLS[suit] ?? '?';
 }
 
-export function getCardSuitColor(suit: Card['suit']): 'red' | 'white' {
-  return suit === 'HEARTS' || suit === 'DIAMONDS' ? 'red' : 'white';
+export function getCardSuitColor(suit: Card['suit']): string {
+  return suit === 'HEARTS' || suit === 'DIAMONDS'
+    ? UI_COLORS.cardRedSuit
+    : UI_COLORS.cardDarkSuitForeground;
 }
 
 export function getPlayerBadgeInfo(

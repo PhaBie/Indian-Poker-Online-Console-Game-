@@ -87,6 +87,35 @@ export interface RoomSummaryDTO {
   readonly bootAmount: number;
 }
 
+export type RoundWinReason =
+  'SHOW' | 'SHOW_TIE' | 'LAST_PLAYER_STANDING' | 'FORCED_SHOWDOWN';
+
+export type RoundResult =
+  | {
+      readonly winReason: 'LAST_PLAYER_STANDING';
+      readonly winningHand: null;
+      readonly winnerIds: readonly string[];
+      readonly payouts: Readonly<Record<string, number>>;
+      readonly exposedCards: Readonly<Record<string, Card[]>>;
+    }
+  | {
+      readonly winReason: 'SHOW' | 'SHOW_TIE' | 'FORCED_SHOWDOWN';
+      readonly winningHand: HandRank;
+      readonly winnerIds: readonly string[];
+      readonly payouts: Readonly<Record<string, number>>;
+      readonly exposedCards: Readonly<Record<string, Card[]>>;
+    };
+
+export interface DepartedPlayerResult {
+  readonly id: string;
+  readonly name: string;
+  readonly status: 'DISCONNECTED' | 'LEFT';
+}
+
+export type GameResultPayload = RoundResult & {
+  readonly departedPlayers?: readonly DepartedPlayerResult[];
+};
+
 // ==========================================
 // 3. Network Contracts (WebSocket Payload)
 // ==========================================
@@ -168,29 +197,12 @@ export type ServerEvent =
         /** Preview: ไพ่ที่เปิดบนโต๊ะระหว่างรอแสดงผล SHOW */
         showdownCards?: Record<string, Card[]> | null;
         /** ผลรอบสำหรับ client ที่ต้องวาด table และผลลัพธ์จาก snapshot เดียวกัน */
-        roundResult?: {
-          winnerIds: string[];
-          winningHand: HandRank;
-          payouts: Record<string, number>;
-          exposedCards: Record<string, Card[]>;
-        } | null;
+        roundResult?: RoundResult | null;
         /** ไพ่ส่วนตัว จะถูกส่งให้ตรงกับ session ของ Client เท่านั้น (ถ้าอยู่ใน Lobby จะเป็น array ว่าง) */
         myCards: Card[];
       };
     }
   | {
       type: 'GAME_RESULT';
-      payload: {
-        winnerIds: string[];
-        winningHand: HandRank;
-        payouts: Record<string, number>;
-        /** Players who left during this hand; shown in the result table only. */
-        departedPlayers?: Array<{
-          id: string;
-          name: string;
-          status: 'DISCONNECTED' | 'LEFT';
-        }>;
-        /** ข้อมูลไพ่ที่ถูกเปิดเผยเมื่อจบเกม Key คือ Player ID */
-        exposedCards: Record<string, Card[]>;
-      };
+      payload: GameResultPayload;
     };

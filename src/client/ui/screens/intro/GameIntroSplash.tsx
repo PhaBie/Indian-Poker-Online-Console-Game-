@@ -12,9 +12,9 @@ export interface PlayingCardDefinition {
 }
 
 export const ROYAL_TRAIL_CARDS: readonly PlayingCardDefinition[] = [
-  { rank: 'A', suit: '♠', color: UI_COLORS.suitSpade },
-  { rank: 'K', suit: '♥', color: UI_COLORS.suitHeart },
-  { rank: 'Q', suit: '♦', color: UI_COLORS.suitDiamond },
+  { rank: 'A', suit: '♠', color: UI_COLORS.cardDarkSuitForeground },
+  { rank: 'K', suit: '♥', color: UI_COLORS.cardRedSuit },
+  { rank: 'Q', suit: '♦', color: UI_COLORS.cardRedSuit },
 ];
 
 export const INTRO_DEAL_DELAY_MS = 1200;

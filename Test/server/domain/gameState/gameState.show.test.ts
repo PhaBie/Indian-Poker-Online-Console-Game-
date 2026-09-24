@@ -40,6 +40,251 @@ describe('4. การจัดการสถานะและการเล�
     expect(result?.winningHand).toBe('TRAIL');
   });
 
+  test('[GameState.requestShow] 4.8.2 Deferred SHOW ผู้ขอชนะด้วย TRAIL → คืน winReason เป็น SHOW และ winningHand เป็น TRAIL', () => {
+    const gameState = createGameStateFixture(
+      { deferShowSettlement: true, pot: 300, currentStake: 50, currentPlayerIndex: 0 },
+      [
+        {
+          id: 'trailWinner',
+          name: 'Trail Winner',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 14 },
+            { suit: 'HEARTS', rank: 14 },
+            { suit: 'DIAMONDS', rank: 14 },
+          ],
+        },
+        {
+          id: 'highCardLoser',
+          name: 'High Card Loser',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 8 },
+            { suit: 'DIAMONDS', rank: 3 },
+          ],
+        },
+      ],
+    );
+
+    gameState.requestShow('trailWinner');
+
+    expect(gameState.pendingShow).not.toBeNull();
+    expect(gameState.pendingShow?.isTie).toBe(false);
+
+    const result = gameState.endGame(true);
+
+    expect(result?.winnerIds).toEqual(['trailWinner']);
+    expect(result?.winReason).toBe('SHOW');
+    expect(result?.winningHand).toBe('TRAIL');
+    expect(result?.exposedCards['trailWinner']).toHaveLength(3);
+    expect(result?.exposedCards['highCardLoser']).toHaveLength(3);
+  });
+
+  test('[GameState.requestShow] 4.8.3 Deferred SHOW ผู้ขอเป็นฝ่ายแพ้ → คืน winReason เป็น SHOW และ winningHand เป็นมือจริงของคู่แข่ง (PAIR)', () => {
+    const gameState = createGameStateFixture(
+      { deferShowSettlement: true, pot: 300, currentStake: 50, currentPlayerIndex: 0 },
+      [
+        {
+          id: 'requesterLoser',
+          name: 'Requester Loser',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 10 },
+            { suit: 'HEARTS', rank: 8 },
+            { suit: 'DIAMONDS', rank: 3 },
+          ],
+        },
+        {
+          id: 'pairWinner',
+          name: 'Pair Winner',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 13 },
+            { suit: 'DIAMONDS', rank: 2 },
+          ],
+        },
+      ],
+    );
+
+    gameState.requestShow('requesterLoser');
+
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+    expect(gameState.pendingShow?.isTie).toBe(false);
+
+    const result = gameState.endGame(true);
+
+    expect(result?.winnerIds).toEqual(['pairWinner']);
+    expect(result?.winReason).toBe('SHOW');
+    expect(result?.winningHand).toBe('PAIR');
+  });
+
+  test('[GameState.requestShow] 4.8.4 Deferred SHOW ไพ่เสมอกันทุกใบ → คืน winReason เป็น SHOW_TIE ผู้ขอเป็นฝ่ายหมอบ และ winningHand ถูกต้อง', () => {
+    const gameState = createGameStateFixture(
+      { deferShowSettlement: true, pot: 300, currentStake: 50, currentPlayerIndex: 0 },
+      [
+        {
+          id: 'requesterTied',
+          name: 'Requester Tied',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 13 },
+            { suit: 'HEARTS', rank: 10 },
+            { suit: 'DIAMONDS', rank: 2 },
+          ],
+        },
+        {
+          id: 'opponentTied',
+          name: 'Opponent Tied',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'CLUBS', rank: 13 },
+            { suit: 'DIAMONDS', rank: 10 },
+            { suit: 'HEARTS', rank: 2 },
+          ],
+        },
+      ],
+    );
+
+    gameState.requestShow('requesterTied');
+
+    expect(gameState.pendingShow?.isTie).toBe(true);
+    expect(gameState.activePlayers[0].status).toBe('FOLDED');
+
+    const result = gameState.endGame(true);
+
+    expect(result?.winnerIds).toEqual(['opponentTied']);
+    expect(result?.winReason).toBe('SHOW_TIE');
+    expect(result?.winningHand).toBe('HIGH_CARD');
+  });
+
+  test('[GameState.endGame] 4.8.5 จบรอบแบบเหลือผู้เล่นคนเดียวโดยไม่มี SHOW → คืน winReason เป็น LAST_PLAYER_STANDING และ winningHand เป็น null', () => {
+    const gameState = createGameStateFixture({ pot: 300 }, [
+      {
+        id: 'soleSurvivor',
+        name: 'Sole Survivor',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { suit: 'SPADES', rank: 14 },
+          { suit: 'HEARTS', rank: 14 },
+          { suit: 'DIAMONDS', rank: 14 },
+        ],
+      },
+      {
+        id: 'foldedOpponent',
+        name: 'Folded Opponent',
+        status: 'FOLDED',
+        chips: 900,
+        cards: [
+          { suit: 'SPADES', rank: 2 },
+          { suit: 'HEARTS', rank: 3 },
+          { suit: 'DIAMONDS', rank: 4 },
+        ],
+      },
+    ]);
+
+    const result = gameState.endGame();
+
+    expect(result?.winnerIds).toEqual(['soleSurvivor']);
+    expect(result?.winReason).toBe('LAST_PLAYER_STANDING');
+    expect(result?.winningHand).toBeNull();
+    expect(result?.exposedCards).toEqual({});
+  });
+
+  test('[GameState.evaluateWinner] 4.8.6 บังคับตัดสินผู้เล่นหลายคนด้วย evaluateWinner() → คืน winReason เป็น FORCED_SHOWDOWN', () => {
+    const gameState = createGameStateFixture({ pot: 600 }, [
+      {
+        id: 'playerAlpha',
+        name: 'Player Alpha',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { suit: 'SPADES', rank: 12 },
+          { suit: 'HEARTS', rank: 12 },
+          { suit: 'DIAMONDS', rank: 12 },
+        ],
+      },
+      {
+        id: 'playerBeta',
+        name: 'Player Beta',
+        status: 'ACTIVE',
+        chips: 1000,
+        cards: [
+          { suit: 'SPADES', rank: 5 },
+          { suit: 'HEARTS', rank: 5 },
+          { suit: 'DIAMONDS', rank: 2 },
+        ],
+      },
+    ]);
+
+    const result = gameState.evaluateWinner();
+
+    expect(result?.winnerIds).toEqual(['playerAlpha']);
+    expect(result?.winReason).toBe('FORCED_SHOWDOWN');
+    expect(result?.winningHand).toBe('TRAIL');
+  });
+
+  test('[GameState.endGame] 4.8.7 ผู้ชนะมีไพ่ไม่ครบ 3 ใบในสถานะ SHOW → โยน GameError รหัส INVALID_HAND และรักษาสถานะแบบ Atomic', () => {
+    const gameState = createGameStateFixture(
+      { deferShowSettlement: true, pot: 300, currentStake: 50, currentPlayerIndex: 0 },
+      [
+        {
+          id: 'requesterPlayer',
+          name: 'Requester',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 14 },
+            { suit: 'HEARTS', rank: 14 },
+            { suit: 'DIAMONDS', rank: 14 },
+          ],
+        },
+        {
+          id: 'opponentPlayer',
+          name: 'Opponent',
+          status: 'ACTIVE',
+          chips: 1000,
+          isBlind: false,
+          cards: [
+            { suit: 'SPADES', rank: 2 },
+            { suit: 'HEARTS', rank: 3 },
+            { suit: 'DIAMONDS', rank: 4 },
+          ],
+        },
+      ],
+    );
+
+    gameState.requestShow('requesterPlayer');
+    gameState.activePlayers[0].privateCards = [{ suit: 'SPADES', rank: 14 }];
+
+    const initialWinnerChips = gameState.activePlayers[0].chips;
+    const initialPot = gameState.pot;
+    const initialPendingShow = gameState.pendingShow;
+    const initialLastGameResult = gameState.lastGameResult;
+
+    expectGameErrorWithCode(() => gameState.endGame(true), 'INVALID_HAND');
+
+    expect(gameState.activePlayers[0].chips).toBe(initialWinnerChips);
+    expect(gameState.pot).toBe(initialPot);
+    expect(gameState.pendingShow).toBe(initialPendingShow);
+    expect(gameState.lastGameResult).toBe(initialLastGameResult);
+  });
+
   test('[GameState.processAction] 4.9.1 ผู้ท้าใช้ชิปก้อนสุดท้ายจะหมอบทันที', () => {
     const gameState = createGameStateFixture(
       { pot: 600, currentPlayerIndex: 0, currentStake: 50 },
