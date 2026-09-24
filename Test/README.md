@@ -12,15 +12,19 @@ Test/
 │   ├── domain/
 │   │   ├── gameState/    # การดำเนินเกมและจ่ายรางวัล
 │   │   ├── player/       # เงิน ไพ่ และสถานะผู้เล่น
+│   │   ├── services/     # บริการโดเมน (roomManager.test.ts)
 │   │   └── helpers/      # ฟังก์ชันช่วยตรวจผลร่วมกัน
 │   ├── infrastructure/   # บันทึกและโหลดไฟล์ JSON
-│   ├── network/          # การจัดการข้อความฝั่ง Server
-│   └── utils/            # ฟังก์ชันทั่วไป
-└── client/
-    └── network/          # การเชื่อมต่อฝั่ง Client
+│   └── network/          # การจัดการข้อความฝั่ง Server, Validator และ Network Helpers
+├── client/
+│   ├── network/          # การเชื่อมต่อฝั่ง Client (SocketClient)
+│   ├── state/            # ทดสอบการจัดการสถานะ ClientState
+│   └── ui/               # ทดสอบหน้าจอ เมนู และการนำทาง UI
+└── shared/
+    └── networkMode.test.ts # ทดสอบการกำหนด URL และโหมดเครือข่าย
 ```
 
-_เทสต์ Room และ RoomManager อยู่ใน `server/domain/` ส่วนเทสต์เริ่มและหยุด Server อยู่ที่ `server/server.test.ts`_
+_เทสต์ Room อยู่ใน `server/domain/room.test.ts` และ RoomManager อยู่ใน `server/domain/services/roomManager.test.ts` ส่วนเทสต์เริ่มและหยุด Server อยู่ที่ `server/server.test.ts`_
 
 ## 2. วิธีรันการทดสอบ
 

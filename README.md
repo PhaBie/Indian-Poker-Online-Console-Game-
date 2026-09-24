@@ -74,11 +74,63 @@ bun run dev:game
 
 ## 📂 โครงสร้างโฟลเดอร์หลัก (Project Structure)
 
-- `src/shared/` - เก็บ Type และกติกาที่ต้องรู้ตรงกันทั้ง Server และ Client (เช่น ข้อมูลไพ่)
-- `src/server/core/` - ระบบกติกาเกม (Game Logic) เหมาะสำหรับเขียน Unit Test (TDD)
-- `src/server/domain/` - ระบบจำลองสถานะเกม (GameState, Room, Player)
-- `src/server/network/` - ระบบ WebSocket รับส่งข้อมูล
-- `src/server/infrastructure/` - ระบบบันทึกและจัดการข้อมูล
-- `src/client/` - ระบบจัดการการเชื่อมต่อฝั่งคลายเอนต์และหน้าจอ (React + Ink)
-- `Test/` - ชุดทดสอบครอบคลุมการทำงาน (Unit Tests)
-- `Documentation/` - เอกสารการออกแบบและ TDD
+```text
+├── .github/                           # CI/CD Workflows และ GitHub Configurations
+├── .husky/                            # Git Hooks สำหรับตรวจสอบโค้ดก่อน Commit
+├── .prettierignore                    # รายการยกเว้นการจัดรูปแบบของ Prettier
+├── .prettierrc                        # การตั้งค่า Prettier Code Formatter
+├── Documentation/
+│   ├── archive/                       # เอกสารบันทึกประวัติการพัฒนาเดิม
+│   ├── contracts/                     # ข้อตกลงสถานะและกติกาเกม (GameState Contract)
+│   └── guides/                        # คู่มือการพัฒนาและแบ่งงาน
+├── Demo/                              # [deferred to dead-code audit]
+├── Music/                             # [deferred to dead-code audit]
+├── data/
+│   ├── generated/                     # ข้อมูลจำลองที่สร้างโดย GameLogic (simulation.json, gitignored)
+│   └── runtime/                       # ประวัติเกมขณะรันระบบ (History.json, gitignored)
+├── src/
+│   ├── client/
+│   │   ├── index.ts                   # Entry point ฝั่งไคลเอนต์
+│   │   ├── previewGame.tsx            # โหมดพรีวิว UI เดี่ยว
+│   │   ├── config.ts                  # กำหนดค่าการเชื่อมต่อเริ่มต้นของไคลเอนต์
+│   │   ├── network/                   # SocketClient จัดการ WebSocket
+│   │   ├── state/                     # ClientState จัดการสถานะในไคลเอนต์
+│   │   └── ui/
+│   │       ├── App.tsx                # Ink Root Component
+│   │       ├── GameUI.ts              # [deferred to dead-code audit]
+│   │       ├── LobbyUI.ts             # [deferred to dead-code audit]
+│   │       ├── navigation/            # ระบบสลับหน้าจอ (useAppNavigation, actions)
+│   │       ├── screens/               # หน้าจอเกมแยกตามฟีเจอร์ (Colocated Screens)
+│   │       │   ├── intro/
+│   │       │   ├── mainMenu/
+│   │       │   ├── createRoom/
+│   │       │   ├── joinRoom/
+│   │       │   ├── username/
+│   │       │   ├── server/
+│   │       │   ├── onlineConnection/
+│   │       │   ├── roomBrowser/
+│   │       │   ├── waitingRoom/
+│   │       │   ├── game/
+│   │       │   └── RoundResultScreen.tsx  # [deferred to dead-code audit]
+│   │       └── shared/                # Layout, components, hooks และ theme ส่วนกลางของ UI
+│   ├── server/
+│   │   ├── index.ts                   # Entry point เซิร์ฟเวอร์ Local
+│   │   ├── online.ts                  # Entry point เซิร์ฟเวอร์ Online (Ngrok)
+│   │   ├── core/                      # ระบบกติกาเกม (Game Logic) และ Zod Validation
+│   │   ├── domain/                    # โดเมนหลัก (Models, Errors, Services: RoomManager)
+│   │   ├── network/                   # WebSocket Handlers, Validator, Helpers, AccessPolicy
+│   │   ├── infrastructure/            # ระบบบันทึกข้อมูล (StorageManager)
+│   │   └── utils/
+│   │       └── logger.ts              # [deferred to dead-code audit]
+│   └── shared/                        # ค่าคงที่, Types และโมดูลที่ใช้ร่วมกัน (networkMode)
+├── Test/                              # ชุดทดสอบครอบคลุมการทำงาน (Unit & Integration Tests)
+│   ├── client/                        # ทดสอบฝั่ง Client (network, state, ui)
+│   ├── server/                        # ทดสอบฝั่ง Server (core, domain, infrastructure, network)
+│   └── shared/                        # ทดสอบโมดูลส่วนกลาง (networkMode)
+├── .gitignore                         # รายการไฟล์และโฟลเดอร์ที่ละเว้นจาก Git
+├── bun.lock                           # Lockfile สำหรับการติดตั้ง Dependencies ด้วย Bun
+├── eslint.config.mjs                  # การตั้งค่า ESLint (Flat Config)
+├── package.json                       # รายการ dependencies และ scripts ของโครงการ
+├── server.ts                          # [deferred to dead-code audit]
+└── tsconfig.json                      # การตั้งค่า TypeScript Compiler
+```
