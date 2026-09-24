@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Card } from '../../../../shared/types';
 import type { PlayerSeatNodeProps, GamePlayerItem } from './types';
 import { CardView } from './CardView';
-import { getPlayerBadgeInfo } from './gameLayoutHelpers';
+import { getPlayerBadgeInfo, shouldHidePlayerCards } from './gameLayoutHelpers';
 import { PlayerBadgeIndicator } from './PlayerBadgeIndicator';
 import { SweepingPlayerName } from './SweepingPlayerName';
 
@@ -107,7 +107,6 @@ function PlayerSeatHeader({
 interface PlayerCardsRowProps {
   readonly isMe: boolean;
   readonly isBlind: boolean;
-  readonly hasFolded: boolean;
   readonly myCards: readonly Card[];
   readonly revealedCards?: readonly Card[];
   readonly cardBorderGlowColors: readonly string[];
@@ -157,7 +156,6 @@ function PlayerBetAndBadgeRow({
 function PlayerCardsPanel({
   player,
   isMe,
-  hasFolded,
   badge,
   borderColor,
   myCards,
@@ -183,7 +181,6 @@ function PlayerCardsPanel({
       <PlayerCardsRow
         isMe={isMe}
         isBlind={player.isBlind}
-        hasFolded={hasFolded}
         myCards={myCards}
         revealedCards={revealedCards}
         cardBorderGlowColors={cardBorderGlowColors}
@@ -236,7 +233,6 @@ function MySeatDetails({
 function PlayerCardsRow({
   isMe,
   isBlind,
-  hasFolded,
   myCards,
   revealedCards,
   cardBorderGlowColors,
@@ -244,7 +240,11 @@ function PlayerCardsRow({
   justDealtCardIndex = -1,
 }: PlayerCardsRowProps) {
   const cards = revealedCards ?? (isMe ? myCards : undefined);
-  const shouldHideCards = !cards || (isMe && isBlind && !hasFolded && !revealedCards);
+  const hasRevealedCards = Boolean(revealedCards && revealedCards.length > 0);
+  const shouldHideCards =
+    !cards ||
+    cards.length === 0 ||
+    shouldHidePlayerCards({ isMe, isBlind, hasRevealedCards });
   return (
     <Box flexDirection="row" justifyContent="center">
       {[0, 1, 2].map((cardIndex) => {

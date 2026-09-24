@@ -94,6 +94,24 @@ export function getCardSuitColor(suit: Card['suit']): string {
     : UI_COLORS.cardDarkSuitForeground;
 }
 
+export function shouldHidePlayerCards({
+  isMe,
+  isBlind,
+  hasRevealedCards = false,
+}: {
+  readonly isMe: boolean;
+  readonly isBlind: boolean;
+  readonly hasRevealedCards?: boolean;
+}): boolean {
+  if (hasRevealedCards) {
+    return false;
+  }
+  if (!isMe) {
+    return true;
+  }
+  return isBlind;
+}
+
 export function getPlayerBadgeInfo(
   hasFolded: boolean,
   isThisPlayerTurn: boolean,
