@@ -1,87 +1,74 @@
-# รายชื่อฟังก์ชันหลักสำหรับระบบ Indian Poker Online (Teen Patti)
-เอกสารนี้รวบรวมฟังก์ชันหลักที่จำเป็นต้องพัฒนา เพื่อใช้สำหรับการทำ TDD (Test-Driven Development) และการแบ่งงานให้คนในทีมนำไป Implement ต่อ
+ฟังก์ชันหลักสำหรับระบบ Indian Poker Online (Teen Patti)
+เอกสารนี้จัดทำขึ้นเพื่อรวบรวมฟังก์ชันหลักๆที่ต้องใช้ในการพัฒนาระบบ Indian Poker Online (Teen Patti) 
+โดยจะแบ่งฟังก์ชันออกมาเป็นส่วนต่างๆ เพื่อให้ง่ายต่อการแบ่งงานให้เพื่อนในทีมได้นำไปพัฒนากันต่อ และนำไปใช้สำหรับการทำ TDD (Test-Driven Development) 
 
----
+1. Core Game Logic (กติกาของเกม)
 
-## 1. Core Game Logic (ตรรกะเกมไพ่ - แนะนำสำหรับการเริ่มทำ TDD)
-กลุ่มฟังก์ชันนี้ไม่มี side effect เกี่ยวข้องกับ Network หรือ State ภายนอก เหมาะสำหรับการเขียน Unit Test เป็นอย่างยิ่ง
+- createDeck() => Card[]
+  สร้างไพ่ 1 สำรับ 52 ใบ ไม่รวม Joker
 
-- `createDeck() => Card[]`
-  สร้างสำรับไพ่มาตรฐาน 52 ใบ (ไม่รวม Joker)
+- shuffleDeck(deck: Card[]) => Card[]
+  สับไพ่แบบสุ่ม โดยควรคืนค่าสำรับไพ่ใหม่มา
 
-- `shuffleDeck(deck: Card[]) => Card[]`
-  สับไพ่แบบสุ่ม (Randomize)
+- dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number) => { hands: Card[][], remainingDeck: Card[] }
+  ดึงไพ่ออกจากสำรับและแจกไพ่ให้ผู้เล่น โดยในเกมนี้ผู้เล่นจะได้ได้รับไพ่คนละ 3 ใบ
 
-- `dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number) => { hands: Card[][], remainingDeck: Card[] }`
-  ดึงไพ่ออกจากสำรับและแจกไพ่ให้ผู้เล่นตามจำนวนที่กำหนด (สำหรับเกมนี้คือคนละ 3 ใบ)
+- evaluateHand(cards: Card[]) => { rank: HandRank, rankValue: number }
+  ตรวจสอบไพ่ 3 ใบของผู้เล่นว่าเป็นรูปแบบไหน พร้อมคำนวณคะแนนสำหรับเปรียบเทียบในกรณีที่ผู้เล่นได้ไพ่รูปแบบเดียวกัน
 
-- `evaluateHand(cards: Card[]) => { rank: HandRank, rankValue: number }`
-  ประเมินผลลัพธ์ของไพ่ 3 ใบ ว่าได้รูปแบบใด (TRAIL, PURE_SEQUENCE, SEQUENCE, COLOR, PAIR, HIGH_CARD) พร้อมคำนวณคะแนนย่อยเพื่อใช้ตัดสินตอนแต้มชนกัน
+- compareHands(handA: Card[], handB: Card[]) => number
+  เปรียบเทียบไพ่ 2 ชุด ว่าใครชนะ โดยจะคืนค่า 1 ถ้า A ชนะ , คืนค่า -1 ถ้า B ชนะ และคืนค่า 0 ถ้าเสมอ
 
-- `compareHands(handA: Card[], handB: Card[]) => number`
-  เปรียบเทียบไพ่ 2 ชุด ว่าใครชนะ (คืนค่า 1 ถ้า A ชนะ, -1 ถ้า B ชนะ, 0 ถ้าเสมอ)
+- determineWinners(players: ServerPlayer[]) => ServerPlayer[]
+  คำนวณหาผู้ชนะจากกลุ่มผู้เล่นที่ยังอยู่ในเกม ไม่รวมผู้เล่นที่มีสถานะเป็น FOLDED/DISCONNECTED
 
-- `determineWinners(players: ServerPlayer[]) => ServerPlayer[]`
-  คำนวณหาผู้ชนะจากกลุ่มผู้เล่นที่ยังอยู่ในเกม (สถานะไม่เป็น FOLDED)
+2. Room & Match Management (ระบบจัดการห้องเกม)
 
----
+- createRoom(host: ServerPlayer) => string
+  สร้างห้องใหม่ สร้าง Room ID เพิ่ม Host เข้าไปในห้อง และกำหนด (RoomPhase) เริ่มต้นเป็น (LOBBY)
 
-## 2. Room & Match Management (ระบบจัดการห้องเกม)
-รับผิดชอบเรื่องการสร้างห้อง รับคนเข้าห้อง และเปลี่ยนสถานะห้อง (Phase)
+- joinRoom(roomId: string, player: ServerPlayer) => boolean
+  ตรวจสอบว่าห้องมีอยู่จริง ห้องยังไม่เต็ม และห้องอยู่ในสถานะที่สามารถเข้าร่วมได้ จากนั้นเพิ่มผู้เล่นเข้าไปในห้อง ในห้องสามารถมีผู้เล่นได้สูงสุด 4 คน
 
-- `createRoom(host: ServerPlayer) => string`
-  สร้างห้องใหม่, สร้าง Room ID, เพิ่ม Host เข้าไป และกำหนด `RoomPhase` เริ่มต้นเป็น 'LOBBY'
+- leaveRoom(roomId: string, playerId: string) => void
+  นำผู้เล่นออกจากห้อง หากผู้เล่นที่ออกเป็น Host จะต้องเปลี่ยนสิทธิ์ Host ให้ผู้เล่นคนอื่น หรือทำลายห้องหากไม่มีผู้เล่นเหลืออยู่
 
-- `joinRoom(roomId: string, player: ServerPlayer) => boolean`
-  ตรวจสอบว่าห้องมีอยู่จริง ห้องยังไม่เต็ม และห้องอยู่ในสถานะที่เข้าได้ จากนั้นเพิ่มผู้เล่นเข้าไปในห้อง
+- startGame(roomId: string) => void
+  ตรวจสอบเงื่อนไขก่อนเริ่มเกม เช่น ต้องมีผู้เล่นอย่างน้อย 2 คนขึ้นไป 
+    เปลี่ยน (RoomPhase) เป็น (PLAYING), ล้างเงินใน Pot, แจกไพ่, และสุ่มผู้เล่นที่จะได้เล่นเป็นคนแรก
 
-- `leaveRoom(roomId: string, playerId: string) => void`
-  นำผู้เล่นออกจากห้อง หากเป็น Host ที่ออกไป อาจจะต้องเปลี่ยนสิทธิ์ Host ให้คนอื่น หรือทำลายห้องหากไม่เหลือผู้เล่น
+3. Game State & Turn Management (ระบบจัดการเทิร์นและการเดิมพัน)
 
-- `startGame(roomId: string) => void`
-  ตรวจสอบเงื่อนไขก่อนเริ่ม (เช่น มีผู้เล่น 2 คนขึ้นไป), เปลี่ยน `RoomPhase` เป็น 'PLAYING', ล้างเงินใน Pot, แจกไพ่ (`dealCards`), และสุ่มคนที่จะได้เล่นเทิร์นแรก
+- processPlayerAction(roomId: string, playerId: string, action: GameActionType, amount?: number) => void
+  ฟังก์ชันหลักที่รับ Action (BET, CALL, RAISE, FOLD, SHOW) จากผู้เล่น ตรวจสอบว่าถึงคิวของผู้เล่นคนนั้นจริงหรือไม่ และ Action ที่ส่งมาสามารถทำได้หรือไม่
 
----
+- processBet(player: ServerPlayer, amount: number) => void
+  ตรวจสอบว่าผู้เล่นมี chip พอต่อการเดิมพันไหม จากนั้นหัก chip ตามเงินที่เดิมพพัน และอัปเดตเงินเดิมพัน 
 
-## 3. Game State & Turn Management (ระบบจัดการเทิร์นและการเดิมพัน)
-จัดการ Action ของผู้เล่นในระหว่างรอบการเล่น
+- moveToNextTurn(roomId: string) => void
+  เปลี่ยนคิวไปยังผู้เล่นคนถัดไปตามลำดับ โดยข้ามคนที่มีสถานะเป็น FOLDED/DISCONNECTED
 
-- `processPlayerAction(roomId: string, playerId: string, action: GameActionType, amount?: number) => void`
-  ฟังก์ชันหลักที่รับ Action (BET, CALL, RAISE, FOLD, SHOW) จากผู้เล่น ตรวจสอบว่าเป็นเทิร์นของผู้เล่นคนนั้นจริงหรือไม่ และ Action ถูกต้องหรือไม่
+- checkEndCondition(roomId: string) => boolean
+  ตรวจสอบว่ารอบเกมปัจจุบันจบหรือยัง เช่น มีคน FOLD จนเหลือผู้เล่นคนเดียว หรือมีผู้เล่นกด SHOW ในกรณีที่เหลือผู้เล่น 2 คน
 
-- `processBet(player: ServerPlayer, amount: number) => void`
-  หักชิปจากผู้เล่นและนำไปทบในเงินกองกลาง (Pot) ของห้อง
+- endGame(roomId: string) => void
+  จัดการเมื่อเกมจบ โดยค้นหาผู้ชนะด้วย (determineWinners), โอนเงินใน Pot ให้ผู้ชนะ, รวบรวมข้อมูลไพ่ของทุกคน (exposedCards) และเปลี่ยน (RoomPhase) เป็น (ENDED) 
 
-- `moveToNextTurn(roomId: string) => void`
-  เปลี่ยนเทิร์นไปยังผู้เล่นคนถัดไปตามลำดับ ที่มีสถานะเป็น 'ACTIVE' (ข้ามคนที่ FOLDED หรือ DISCONNECTED)
+4. Utilities & Data Transformers (การจัดการข้อมูลและสร้างIDต่างๆของระบบ)
 
-- `checkEndCondition(roomId: string) => boolean`
-  ตรวจสอบว่ารอบเกมปัจจุบันจบหรือยัง เงื่อนไขการจบเช่น: มีคน FOLD จนเหลือคนเดียว หรือมีคนกด SHOW ในกรณีที่เหลือ 2 คน
+- toPublicPlayerDTO(player: ServerPlayer) => PublicPlayerDTO
+  แปลงข้อมูลฝั่ง Server เป็น DTO โดยตัดข้อมูลที่ไม่ควรเปิดเผยออก เช่น (privateCards) เพื่อไม่ให้ผู้เล่นคนอื่นเห็นไพ่ในมือ
 
-- `endGame(roomId: string) => void`
-  จัดการจบรอบ ค้นหาผู้ชนะ (`determineWinners`), โอนเงินกองกลาง (Pot) ให้ผู้ชนะ, รวบรวมข้อมูลไพ่ของทุกคน (exposedCards) และเปลี่ยน `RoomPhase` กลับเป็น 'ENDED' 
+- generateRoomId() => string
+  สร้างรหัสห้องแบบสุ่มให้จำง่ายและไม่ซ้ำกัน เช่น ตัวอักษรปนกับตัวเลข
+  
+-  generatePlayerId() => string
+  สร้าง ID แบบสุ่มสำหรับผู้เล่นแต่ละคนตอนเชื่อมต่อเข้าระบบมาใหม่
 
----
+5. Network / Socket Interface (ส่วนเชื่อมต่อ WebSocket)
 
-## 4. Utilities & Data Transformers (ฟังก์ชันช่วยเหลือและแปลงข้อมูล)
+- handleClientMessage(wsClient, message: ClientEvent) => void
+  รับคำสั่งจาก Client เช่น (CREATE_ROOM) จากนั้นตรวจสอบความถูกต้องและเรียกใช้งานฟังก์ชันที่เกี่ยวข้อง
 
-- `toPublicPlayerDTO(player: ServerPlayer) => PublicPlayerDTO`
-  แปลงข้อมูล Entity ของผู้เล่น (ฝั่ง Server) เป็น DTO โดยตัดข้อมูลที่ละเอียดอ่อนออก (เช่น `privateCards`) เพื่อส่งไปแสดงผลให้ทุกคนเห็นได้
-
-- `generateRoomId() => string`
-  สุ่มรหัสห้องให้จำง่าย/ไม่ซ้ำกัน (เช่น ตัวอักษรปนตัวเลข 6 หลัก)
-
-- `generatePlayerId() => string`
-  สุ่ม ID สำหรับผู้เล่นตอนเชื่อมต่อเข้ามาใหม่
-
----
-
-## 5. Network / Socket Interface (ส่วนเชื่อมต่อ WebSocket)
-เหมาะสำหรับให้คนที่ดูแลฝั่ง Server / Network นำไปเชื่อมต่อกับฟังก์ชันด้านบน
-
-- `handleClientMessage(wsClient, message: ClientEvent) => void`
-  ตัวรับ Message (Events) จาก Client (เช่น `CREATE_ROOM`, `PLAYER_ACTION`) ตรวจสอบความถูกต้องและเรียกใช้งานฟังก์ชันในหมวดที่ 2 และ 3
-
-- `broadcastGameStateUpdate(roomId: string) => void`
-  สร้าง Event ประเภท `GAME_STATE_UPDATE` และลูปส่งให้ผู้เล่นทุกคนในห้อง 
-  *ข้อควรระวัง:* ต้องส่ง `myCards` ให้ตรงกับ Client ของผู้เล่นแต่ละคนเท่านั้น ส่วนไพ่คนอื่นไม่ควรส่งไปจนกว่าจะจบเกม
+- broadcastGameStateUpdate(roomId: string) => void
+  ส่งสถานะล่าสุดของเกมให้ผู้เล่นในห้อง ต้องส่งไพ่ (myCards) ให้แค่เจ้าของไพ่ และไม่เปิดเผยไพ่ของผู้เล่นคนอื่นก่อนจบเกม 

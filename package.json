@@ -49,6 +49,7 @@
     "test:game-state": "bun test ./02-Tests/server/domain/gameState",
     "test:player": "bun test ./02-Tests/server/domain/player",
     "test:schema": "bun test ./02-Tests/server/core/gameSchema.test.ts",
+    "test:validator": "bun test ./02-Tests/server/network/validator.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
