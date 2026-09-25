@@ -7,9 +7,6 @@ export function useGameActionController(socketClient: SocketClient) {
   const [inputMode, setInputMode] = useState<'menu' | 'input_bet'>('menu');
   const [betAmount, setBetAmount] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<GameActionType | null>(null);
-  const handleBetChange = useCallback((value: string) => {
-    setBetAmount(value.replace(/\D/g, ''));
-  }, []);
 
   const handleActionSelect = useCallback(
     (item: { label: string; value: string }) => {
@@ -56,7 +53,7 @@ export function useGameActionController(socketClient: SocketClient) {
     localError,
     inputMode,
     betAmount,
-    handleBetChange,
+    setBetAmount,
     handleActionSelect,
     handleBetSubmit,
     cancelBetInput,

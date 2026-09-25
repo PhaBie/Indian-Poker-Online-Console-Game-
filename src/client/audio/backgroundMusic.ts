@@ -8,38 +8,21 @@ const TRACK_PATH = fileURLToPath(
 );
 const DEFAULT_VOLUME = 20;
 
-export interface BackgroundMusicPlayer {
-  readonly getPosition: () => number;
-  readonly setMuted: (isMuted: boolean) => void;
-  readonly stop: () => void;
-}
-
-interface BackgroundMusicOptions {
-  readonly onError?: (message: string) => void;
-  readonly getIsMuted?: () => boolean;
-}
-
-const SILENT_PLAYER: BackgroundMusicPlayer = {
-  getPosition: () => 0,
-  setMuted: () => {},
-  stop: () => {},
-};
-
 export function getMusicVolume(value = process.env.POKER_MUSIC_VOLUME): number {
   if (value === undefined) return DEFAULT_VOLUME;
   const volume = Number(value);
   return Number.isFinite(volume) ? Math.max(0, Math.min(100, volume)) : DEFAULT_VOLUME;
 }
 
-export async function startBackgroundMusic({
-  onError = (message) => process.stderr.write(`[Music] ${message}\n`),
-  getIsMuted = () => false,
-}: BackgroundMusicOptions = {}): Promise<BackgroundMusicPlayer> {
+export async function startBackgroundMusic(
+  onError: (message: string) => void = (message) =>
+    process.stderr.write(`[Music] ${message}\n`),
+): Promise<() => void> {
   const volume = getMusicVolume();
-  if (volume === 0) return SILENT_PLAYER;
+  if (volume === 0) return () => {};
   if (!existsSync(TRACK_PATH)) {
     onError(`ไม่พบไฟล์ ${TRACK_PATH}`);
-    return SILENT_PLAYER;
+    return () => {};
   }
 
   try {
@@ -50,32 +33,20 @@ export async function startBackgroundMusic({
 
     const track = audio(TRACK_PATH);
     await track.ready;
-    let isStopped = false;
     track.on('error', (error: unknown) => {
-      if (!isStopped) {
-        onError(error instanceof Error ? error.message : String(error));
-      }
+      onError(error instanceof Error ? error.message : String(error));
     });
-    track.muted = getIsMuted();
     track.play({ volume: volume / 100, loop: true });
     await track.played;
 
     const stop = () => {
-      if (isStopped) return;
-      isStopped = true;
       track.stop();
       process.off('exit', stop);
     };
     process.once('exit', stop);
-    return {
-      getPosition: () => track.currentTime,
-      setMuted: (isMuted) => {
-        track.muted = isMuted;
-      },
-      stop,
-    };
+    return stop;
   } catch (error) {
     onError(`เล่นเพลงไม่ได้: ${error instanceof Error ? error.message : String(error)}`);
-    return SILENT_PLAYER;
+    return () => {};
   }
 }
