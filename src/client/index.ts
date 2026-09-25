@@ -5,7 +5,6 @@ import { SocketClient } from './network/socketClient';
 import { ClientState } from './state/ClientState';
 import type { ServerEvent } from '../shared/types';
 import { App } from './ui/App';
-import { startBackgroundMusic } from './audio/backgroundMusic';
 import {
   clearTerminalScreen,
   hideTerminalCursor,
@@ -124,7 +123,6 @@ if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
   });
 
   const { clientState, connectionTarget, socketClient } = startClient();
-  const stopMusic = await startBackgroundMusic();
   const appInstance = render(
     React.createElement(App, {
       clientState,
@@ -137,7 +135,6 @@ if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
   );
 
   appInstance.waitUntilExit().then(() => {
-    stopMusic();
     clearTerminalScreen({ shouldRestoreCursor: true });
   });
 }
