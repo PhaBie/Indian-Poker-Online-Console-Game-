@@ -8,6 +8,7 @@ import { App } from './ui/App';
 import {
   clearTerminalScreen,
   hideTerminalCursor,
+  requestPlayableTerminalSize,
 } from './ui/shared/hooks/useTerminalSize';
 import { isPrivateIPv4, prepareConnectionUrl } from '../shared/networkMode';
 
@@ -110,6 +111,7 @@ export function startClient(customTarget?: string): {
 }
 
 if (process.argv[1]?.includes('client') && !process.argv[1]?.includes('test')) {
+  requestPlayableTerminalSize();
   clearTerminalScreen({ shouldRestoreCursor: false });
   hideTerminalCursor();
 
