@@ -1,0 +1,110 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - demo
+  push:
+    branches:
+      - main
+      - demo
+
+jobs:
+  # 1. Job สำหรับตรวจคุณภาพโค้ด (บังคับให้ผ่าน)
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Prettier Check
+        run: bunx prettier --check .
+
+      - name: Run ESLint
+        run: bun run lint
+
+      - name: Run Type Check (TypeScript)
+        run: bunx tsc --noEmit
+
+  # 2. ขั้นตอนค้นหาไฟล์ Test ทั้งหมดเพื่อเตรียมสร้าง Matrix
+  discover-tests:
+    name: Discover Tests
+    runs-on: ubuntu-latest
+    outputs:
+      test_files: ${{ steps.set-matrix.outputs.test_files }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find test files
+        id: set-matrix
+        run: |
+          # ค้นหาไฟล์ .test.ts และ .test.tsx ในโฟลเดอร์ Test และเรียงลำดับ
+          FILES=$(find Test -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) | sort)
+          if [ -z "$FILES" ]; then
+            echo "Error: No test files found in Test/ directory!"
+            exit 1
+          fi
+          # แปลงลิสต์บรรทัดเป็น JSON Array
+          JSON=$(echo "$FILES" | jq -R -s -c 'split("\n")[:-1]')
+          echo "Found test files: $JSON"
+          echo "test_files=$JSON" >> $GITHUB_OUTPUT
+
+  # 3. รัน Test แบบ Matrix แตก Job ออกมา 1 ไฟล์ต่อ 1 Job
+  run-tests:
+    name: Tests — ${{ matrix.test_file }}
+    needs: discover-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false # หากไฟล์ไหนพัง ไฟล์อื่นจะยังคงทำงานต่อจนจบ ไม่ยกเลิกกลางคัน
+      matrix:
+        test_file: ${{ fromJson(needs.discover-tests.outputs.test_files) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Test for ${{ matrix.test_file }}
+        env:
+          TEST_FILE: ${{ matrix.test_file }}
+        run: bun test "./$TEST_FILE"
+
+  # 4. Job รวบรวมผลลัพธ์ทั้งหมดสำหรับตั้งเป็น Required Status Check ใน Branch Protection
+  all-checks-passed:
+    name: All Checks Passed
+    needs: [lint-and-typecheck, discover-tests, run-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate check statuses
+        run: |
+          echo "Lint & Typecheck status: ${{ needs.lint-and-typecheck.result }}"
+          echo "Discover Tests status: ${{ needs.discover-tests.result }}"
+          echo "Run Tests status: ${{ needs.run-tests.result }}"
+
+          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
+             [ "${{ needs.discover-tests.result }}" != "success" ] || \
+             [ "${{ needs.run-tests.result }}" != "success" ]; then
+            echo "❌ Required checks did not succeed. Blocking merge."
+            exit 1
+          fi
+
+          echo "✅ All checks passed successfully."

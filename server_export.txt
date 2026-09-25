@@ -1,0 +1,501 @@
+================================================================================
+File: src/server/core/gameLogic.ts
+================================================================================
+import type { Card, HandRank } from '../../shared/types';
+
+export function createDeck(): Card[] {
+    const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
+    const ranks: Card['rank'][] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    return suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
+}
+
+export function shuffleDeck(_deck: Card[], _rng?: () => number): Card[] {
+    // รอคนเลือก
+    return [];
+}
+
+export function dealCards(_deck: Card[], _playerCount: number, _cardsPerPlayer: number): { hands: Card[][], remainingDeck: Card[] } {
+    // รอคนเลือก
+    return { hands: [], remainingDeck: [] };
+}
+
+export function evaluateHand(_cards: Card[]): { rank: HandRank, rankValue: number, kickers: number[] } {
+    // รอคนเลือก
+    return { rank: 'HIGH_CARD', rankValue: 0, kickers: [] };
+}
+
+export function compareHands(_handA: Card[], _handB: Card[]): number {
+    // รอคนเลือก
+    return 0;
+}
+
+export function getWinners(_players: { id: string, cards: Card[] }[]): string[] {
+    // รอคนเลือก
+    return [];
+}
+
+export function calculateSplitPot(_pot: number, _winnerIds: string[]): Record<string, number> {
+    // รอคนเลือก
+    return {};
+}
+
+================================================================================
+File: src/server/domain/errors/GameError.ts
+================================================================================
+export class GameError extends Error {
+    public code: string;
+
+    constructor(message: string, code: string = "GAME_ERROR") {
+        super(message);
+        this.name = "GameError";
+        this.code = code;
+    }
+}
+
+export class RoomNotFoundError extends GameError {
+    constructor(roomId: string) {
+        super(`Room with ID ${roomId} not found`, "ROOM_NOT_FOUND");
+    }
+}
+
+export class InvalidActionError extends GameError {
+    constructor(action: string) {
+        super(`Action ${action} is invalid in current state`, "INVALID_ACTION");
+    }
+}
+
+export class InsufficientChipsError extends GameError {
+    constructor(playerName: string) {
+        super(`Player ${playerName} has insufficient chips`, "INSUFFICIENT_CHIPS");
+    }
+}
+
+export class RoomFullError extends GameError {
+    constructor(roomId: string) {
+        super(`Room ${roomId} is already full`, "ROOM_FULL");
+    }
+}
+
+export class WrongTurnError extends GameError {
+    constructor(playerId: string) {
+        super(`It is not player ${playerId}'s turn`, "WRONG_TURN");
+    }
+}
+
+export class NotHostError extends GameError {
+    constructor(playerId: string) {
+        super(`Player ${playerId} is not the host`, "NOT_HOST");
+    }
+}
+
+export class InvalidTokenError extends GameError {
+    constructor() {
+        super(`Invalid or missing reconnect token`, "INVALID_TOKEN");
+    }
+}
+
+export class PlayerStateError extends GameError {
+    constructor(playerId: string, state: string) {
+        super(`Player ${playerId} cannot perform this action in state: ${state}`, "INVALID_PLAYER_STATE");
+    }
+}
+
+================================================================================
+File: src/server/domain/models/GameState.ts
+================================================================================
+import type { Card, GameActionType } from '../../../shared/types';
+import type { Player } from './Player';
+
+export class GameState {
+    public pot: number;
+    public currentStake: number;
+    public currentPlayerIndex: number;
+    public deck: Card[];
+    public activePlayers: Player[];
+    public bootAmount: number;
+    public maxPotLimit: number;
+    public dealerIndex: number;
+
+    constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
+        this.pot = 0;
+        this.currentStake = 0;
+        this.currentPlayerIndex = 0;
+        this.deck = [];
+        this.activePlayers = players;
+        this.bootAmount = bootAmount;
+        this.maxPotLimit = maxPotLimit;
+        this.dealerIndex = 0;
+    }
+
+    public startGame(): void {
+        // รอคนเลือก
+    }
+
+    public nextTurn(): void {
+        // รอคนเลือก
+    }
+
+    public processAction(_playerId: string, _action: GameActionType, _amount?: number): void {
+        // รอคนเลือก
+    }
+
+    public evaluateWinner(): void {
+        // รอคนเลือก
+    }
+
+    public endGame(): void {
+        // รอคนเลือก
+    }
+
+    public executeSideshow(_challengerId: string, _targetId: string): void {
+        // รอคนเลือก
+    }
+
+    public requestShow(_playerId: string): void {
+        // รอคนเลือก
+    }
+
+    public canForceShow(): boolean {
+        // รอคนเลือก
+        return false;
+    }
+
+    public checkLastManStanding(): Player | null {
+        // รอคนเลือก
+        return null;
+    }
+
+    public checkPotLimitReached(): boolean {
+        // รอคนเลือก
+        return false;
+    }
+
+    public handleTie(_winners: Player[]): void {
+        // รอคนเลือก
+    }
+
+    public rotateDealer(): void {
+        // รอคนเลือก
+    }
+
+    public rejectSideshow(): void {
+        // รอคนเลือก
+    }
+
+    public handlePlayerDisconnect(_playerId: string): void {
+        // รอคนเลือก
+    }
+
+    public autoFoldTimeout(): void {
+        // รอคนเลือก
+    }
+}
+
+================================================================================
+File: src/server/domain/models/Player.ts
+================================================================================
+import type { ServerPlayer, PlayerStatus, Card} from '../../../shared/types';
+
+export abstract class BaseUser {
+    public id: string;
+    public name: string;
+
+    constructor(id: string, name: string) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public abstract getRole(): string;
+}
+
+export class Player extends BaseUser implements ServerPlayer {
+    public chips: number;
+    public bet: number;
+    public status: PlayerStatus;
+    public privateCards: Card[];
+    public isBlind: boolean;
+
+    constructor(id: string, name: string) {
+        super(id, name);
+        this.chips = 1000;
+        this.bet = 0;
+        this.status = 'WAITING';
+        this.privateCards = [];
+        this.isBlind = true;
+    }
+
+    public getRole(): string {
+        return "PLAYER";
+    }
+
+    public receiveCards(_cards: Card[]): void {
+        // รอคนเลือก
+    }
+
+    public payBet(_amount: number): void {
+        // รอคนเลือก
+    }
+
+    public fold(): void {
+        // รอคนเลือก
+    }
+
+    public showCards(): Card[] {
+        // รอคนเลือก
+        return [];
+    }
+
+    public addChips(_amount: number): void {
+        // รอคนเลือก
+    }
+
+    public resetForNewRound(): void {
+        // รอคนเลือก
+    }
+
+    public seeCards(): void {
+        // รอคนเลือก
+    }
+
+    public toJSON(): object {
+        // รอคนเลือก
+        return {};
+    }
+
+    public static fromJSON(_json: unknown): Player {
+        // รอคนเลือก
+        return new Player("dummy", "dummy");
+    }
+}
+
+================================================================================
+File: src/server/domain/models/Room.ts
+================================================================================
+import type { Player } from './Player';
+import type { RoomPhase, PublicPlayerDTO } from '../../../shared/types';
+import type { GameState } from './GameState';
+
+export class Room {
+    public roomId: string;
+    public phase: RoomPhase;
+    public hostId: string | null;
+    public players: Map<string, Player>;
+    public bootAmount: number;
+    public gameState: GameState | null;
+    private readonly MAX_PLAYERS = 4;
+
+    constructor(roomId: string, bootAmount: number = 50) {
+        this.roomId = roomId;
+        this.phase = 'LOBBY';
+        this.hostId = null;
+        this.players = new Map();
+        this.bootAmount = bootAmount;
+        this.gameState = null;
+    }
+
+    public join(_player: Player): void {
+        // รอคนเลือก
+    }
+
+    public reconnect(_playerId: string): void {
+        // รอคนเลือก
+    }
+
+    public leave(_playerId: string): void {
+        // รอคนเลือก
+    }
+
+    public startGame(_requestingPlayerId: string): void {
+        // รอคนเลือก
+    }
+
+    public endGame(): void {
+        // รอคนเลือก
+    }
+
+    public resetToLobby(): void {
+        // รอคนเลือก
+    }
+    
+    public getPlayer(_playerId: string): Player | undefined {
+        // รอคนเลือก
+        return undefined;
+    }
+    
+    public getPlayerCount(): number {
+        // รอคนเลือก
+        return 0;
+    }
+
+    public getPublicState(): PublicPlayerDTO[] {
+        // รอคนเลือก
+        return [];
+    }
+
+    public toJSON(): object {
+        // รอคนเลือก
+        return {};
+    }
+
+    public static fromJSON(_json: unknown): Room {
+        // รอคนเลือก
+        return new Room("dummy");
+    }
+}
+
+================================================================================
+File: src/server/domain/models/RoomManager.ts
+================================================================================
+import { Room } from "./Room";
+import type { Player } from "./Player";
+
+export class RoomManager {
+    public createRoom(roomId: string, _host: Player): Room {
+        // รอคนเลือก
+        return new Room(roomId);
+    }
+
+    public getRoom(_roomId: string): Room | undefined {
+        // รอคนเลือก
+        return undefined;
+    }
+
+    public deleteRoom(_roomId: string): void {
+        // รอคนเลือก
+    }
+
+    public getAllRooms(): Room[] {
+        // รอคนเลือก
+        return [];
+    }
+}
+
+================================================================================
+File: src/server/infrastructure/StorageManager.ts
+================================================================================
+import type { Room } from '../domain/models/Room';
+
+export class StorageManager {
+    public basePath: string;
+
+    constructor(basePath: string = './data') {
+        this.basePath = basePath;
+    }
+
+    public saveRoomState(_room: Room): void {
+        // รอคนเลือก
+    }
+
+    public loadRoomState(_roomId: string): Room | null {
+        // รอคนเลือก
+        return null;
+    }
+
+    public checkSaveExists(_roomId: string): boolean {
+        // รอคนเลือก
+        return false;
+    }
+
+    public deleteSavedRoom(_roomId: string): void {
+        // รอคนเลือก
+    }
+
+    public getAllSavedRoomIds(): string[] {
+        // รอคนเลือก
+        return [];
+    }
+}
+
+================================================================================
+File: src/server/network/socketHandler.ts
+================================================================================
+import type { WebSocket } from 'ws';
+import type { ClientEvent, HandRank, Card } from '../../shared/types';
+import type { RoomManager } from '../domain/models/RoomManager';
+
+export interface SocketSession {
+    playerId: string;
+    roomId: string | null;
+}
+
+export interface NetworkContext {
+    roomManager: RoomManager;
+    sessionStore: {
+        createSession: (playerId: string) => string;
+        getPlayerId: (token: string) => string | null;
+    };
+    connectedClients: Map<WebSocket, SocketSession>;
+}
+
+export function handleClientMessage(_wsClient: WebSocket, _message: ClientEvent, _context: NetworkContext): void {
+    // รอคนเลือก
+}
+
+export function handleClientDisconnect(_wsClient: WebSocket, _context: NetworkContext): void {
+    // รอคนเลือก
+}
+
+export function broadcastGameStateUpdate(_roomId: string, _context: NetworkContext): void {
+    // รอคนเลือก
+}
+
+export function broadcastGameResult(_roomId: string, _winnerIds: string[], _winningHand: HandRank, _payouts: Record<string, number>, _exposedCards: Record<string, Card[]>, _context: NetworkContext): void {
+    // รอคนเลือก
+}
+
+================================================================================
+File: src/server/utils/helpers.ts
+================================================================================
+import type { PublicPlayerDTO, ServerPlayer } from '../../shared/types';
+
+export function toPublicPlayerDTO(player: ServerPlayer): PublicPlayerDTO {
+    // รอคนเลือก
+    return {
+        id: player.id,
+        name: player.name,
+        chips: player.chips,
+        bet: player.bet,
+        status: player.status,
+        isBlind: player.isBlind !== undefined ? player.isBlind : true
+    };
+}
+
+export function generateRoomId(): string {
+    // รอคนเลือก
+    return '';
+}
+
+export function generatePlayerId(): string {
+    // รอคนเลือก
+    return '';
+}
+
+================================================================================
+File: src/server/utils/logger.ts
+================================================================================
+export class Logger {
+    public info(_message: string, _context?: unknown): void {
+        // รอคนเลือก
+    }
+
+    public error(_message: string, _error?: Error): void {
+        // รอคนเลือก
+    }
+}
+
+================================================================================
+File: src/server/utils/validator.ts
+================================================================================
+import type { ClientEvent } from '../../shared/types';
+
+export class Validator {
+    public validateClientEvent(_event: unknown): ClientEvent | null {
+        // รอคนเลือก
+        return null;
+    }
+
+    public sanitizeInput(_input: string): string {
+        // รอคนเลือก
+        return "";
+    }
+}
