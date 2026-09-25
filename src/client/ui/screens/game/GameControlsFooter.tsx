@@ -14,7 +14,13 @@ export function getGameControlsFooterMode(
   return inputMode === 'input_bet' ? 'bet_input' : 'action_menu';
 }
 
-export function GameControlsFooter({ mode }: { readonly mode: GameControlsFooterMode }) {
+export function GameControlsFooter({
+  mode,
+  isMusicMuted,
+}: {
+  readonly mode: GameControlsFooterMode;
+  readonly isMusicMuted: boolean;
+}) {
   return (
     <Box
       width="100%"
@@ -41,6 +47,9 @@ export function GameControlsFooter({ mode }: { readonly mode: GameControlsFooter
           <Text color="gray"> · ESC BACK</Text>
         </>
       )}
+      {mode !== 'hidden' && <Text color="gray"> · </Text>}
+      <Text color="yellow">M</Text>
+      <Text color="white"> MUSIC {isMusicMuted ? 'OFF' : 'ON'}</Text>
     </Box>
   );
 }
