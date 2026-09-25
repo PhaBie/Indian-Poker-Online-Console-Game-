@@ -26,7 +26,10 @@ import {
   getVisibleSideshowResult,
 } from './sideshowPresentation';
 import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
-import { TerminalOutOfRangeScreen } from '../../shared/components/ScreenSizeGuard';
+import {
+  getTerminalSizeStatus,
+  TerminalOutOfRangeScreen,
+} from '../../shared/components/ScreenSizeGuard';
 import { GameControlsFooter, getGameControlsFooterMode } from './GameControlsFooter';
 import { useGameMusic } from './useGameMusic';
 import {
@@ -44,10 +47,7 @@ export function getGameplayLayoutMode(
   columns: number,
   rows: number,
 ): 'desktop' | 'unsupported' {
-  if (columns < GAMEPLAY_WIDTH || rows < GAMEPLAY_HEIGHT) {
-    return 'unsupported';
-  }
-  return 'desktop';
+  return getTerminalSizeStatus(columns, rows) === 'OPTIMAL' ? 'desktop' : 'unsupported';
 }
 const SIDESHOW_CARDS_REVEAL_DELAY_MS = 2_000;
 const SIDESHOW_RESULT_DELAY_MS = 4_000;
@@ -263,6 +263,7 @@ export function GameScreen({
   const notice = actionCtrl.localError ?? serverError;
   const hostName = players.find((player) => player.id === hostId)?.name;
   const layoutMode = getGameplayLayoutMode(columns, rows);
+  const sizeStatus = getTerminalSizeStatus(columns, rows);
   const canChooseAction = canChooseGameAction({
     isEntranceActive: entranceAnimation.isEntranceActive,
     shouldShowActions: roundResultPresentation.shouldShowActions,
@@ -302,7 +303,7 @@ export function GameScreen({
       <TerminalOutOfRangeScreen
         currentColumns={columns}
         currentRows={rows}
-        status="TOO_SMALL"
+        status={sizeStatus === 'TOO_LARGE' ? 'TOO_LARGE' : 'TOO_SMALL'}
         minimumColumns={GAMEPLAY_WIDTH}
         minimumRows={GAMEPLAY_HEIGHT}
       />

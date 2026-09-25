@@ -1,11 +1,6 @@
 import fs from 'fs';
 import { useState, useEffect } from 'react';
-import {
-  GAMEPLAY_WIDTH,
-  GAMEPLAY_HEIGHT,
-  MAX_TERMINAL_COLUMNS,
-  MAX_TERMINAL_ROWS,
-} from '../layout/terminalRequirements';
+import { GAMEPLAY_WIDTH, GAMEPLAY_HEIGHT } from '../layout/terminalRequirements';
 
 export interface TerminalDimensions {
   readonly columns: number;
@@ -21,9 +16,90 @@ export const SHOW_CURSOR_SEQUENCE = '\x1b[?25h';
 
 interface ResizableTerminalOutput {
   readonly isTTY?: boolean;
-  readonly columns?: number;
-  readonly rows?: number;
+  columns?: number;
+  rows?: number;
   write(value: string): unknown;
+}
+
+export interface TerminalWindowController {
+  maximize(): boolean;
+  reduceFont(): boolean;
+  close(): void;
+}
+
+const MAX_FONT_ADJUSTMENTS = 12;
+const waitForResize = () => new Promise<void>((resolve) => setTimeout(resolve, 150));
+type ReadTerminalSize = () => { columns: number; rows: number } | null;
+
+function refreshTerminalSize(
+  output: ResizableTerminalOutput,
+  readSize?: ReadTerminalSize,
+): void {
+  const size = readSize?.();
+  if (!size) return;
+  output.columns = size.columns;
+  output.rows = size.rows;
+}
+
+export async function preparePlayableTerminal(
+  output: ResizableTerminalOutput = process.stdout,
+  controller?: TerminalWindowController | null,
+  settle: () => Promise<void> = waitForResize,
+  readSize?: ReadTerminalSize,
+): Promise<void> {
+  if (!output.isTTY) return;
+
+  try {
+    requestPlayableTerminalSize(output);
+    await settle();
+    refreshTerminalSize(output, readSize);
+    if (!controller) return;
+
+    controller.maximize();
+    await settle();
+    refreshTerminalSize(output, readSize);
+
+    let unchangedAttempts = 0;
+    for (let attempt = 0; attempt < MAX_FONT_ADJUSTMENTS; attempt++) {
+      if (
+        (output.columns ?? 0) >= GAMEPLAY_WIDTH &&
+        (output.rows ?? 0) >= GAMEPLAY_HEIGHT
+      ) {
+        break;
+      }
+      const previousColumns = output.columns;
+      const previousRows = output.rows;
+      if (!controller.reduceFont()) break;
+      await settle();
+      refreshTerminalSize(output, readSize);
+      unchangedAttempts =
+        output.columns === previousColumns && output.rows === previousRows
+          ? unchangedAttempts + 1
+          : 0;
+      if (unchangedAttempts >= 2) break;
+    }
+  } finally {
+    controller?.close();
+  }
+}
+
+export async function initializePlayableTerminal(): Promise<void> {
+  if (!process.stdout.isTTY) return;
+
+  let controller: TerminalWindowController | null = null;
+  let readSize: ReadTerminalSize | undefined;
+  if (process.platform === 'win32') {
+    try {
+      const { openWindowsTerminalWindow, getWindowsConsoleDimensions } =
+        await import('../windows/windowsTerminalWindow');
+      controller = openWindowsTerminalWindow();
+      readSize = getWindowsConsoleDimensions;
+    } catch {
+      // Terminals that do not expose a controllable window still get a resize request.
+    }
+  }
+
+  await preparePlayableTerminal(process.stdout, controller, waitForResize, readSize);
 }
 
 export function requestPlayableTerminalSize(
@@ -35,12 +111,7 @@ export function requestPlayableTerminalSize(
 
   const columns = output.columns ?? 0;
   const rows = output.rows ?? 0;
-  if (
-    columns >= GAMEPLAY_WIDTH &&
-    columns <= MAX_TERMINAL_COLUMNS &&
-    rows >= GAMEPLAY_HEIGHT &&
-    rows <= MAX_TERMINAL_ROWS
-  ) {
+  if (columns >= GAMEPLAY_WIDTH && rows >= GAMEPLAY_HEIGHT) {
     return false;
   }
 

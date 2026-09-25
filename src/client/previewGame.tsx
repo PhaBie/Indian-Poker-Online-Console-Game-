@@ -4,11 +4,11 @@ import { GamePreview } from './ui/screens/game/GamePreview';
 import {
   clearTerminalScreen,
   hideTerminalCursor,
-  requestPlayableTerminalSize,
+  initializePlayableTerminal,
 } from './ui/shared/hooks/useTerminalSize';
 import { parsePreviewPlayerCount } from './ui/screens/game/gamePreviewFixture';
 
-requestPlayableTerminalSize();
+await initializePlayableTerminal();
 clearTerminalScreen({ shouldRestoreCursor: false });
 hideTerminalCursor();
 
