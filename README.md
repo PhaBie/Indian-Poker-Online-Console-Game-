@@ -39,6 +39,19 @@ bun run dev:game
 
 ใช้ `bun run dev:game:2`, `bun run dev:game:3`, หรือ `bun run dev:game:4` เพื่อดู layout ตามจำนวนผู้เล่น
 
+### เพลงประกอบระหว่างเล่น
+
+เมื่อเปิดเกมจริงหรือพรีวิว ไคลเอนต์จะเล่น `Music/Illslick_M_Leg_Indian.mp3` วนที่ระดับเสียงเริ่มต้น 20% และหยุดเมื่อปิดเกม ตัวเล่นเสียงและตัวถอดรหัส MP3 ติดตั้งพร้อม `bun install` โดยไม่ต้องลง `ffplay` เอง มี binary สำเร็จรูปสำหรับ Windows x64, macOS x64/arm64 และ Linux x64/arm64 ที่มีอุปกรณ์เสียง หากเปิดเสียงไม่ได้ เกมยังเล่นได้และจะแสดงข้อผิดพลาด `[Music]`
+
+ปรับเสียงด้วยตัวแปร `POKER_MUSIC_VOLUME` ค่า 0–100 โดย `0` คือปิดเพลง เช่นใน PowerShell:
+
+```powershell
+$env:POKER_MUSIC_VOLUME = 8
+bun run dev
+```
+
+ใช้ `bun run music:check` เพื่อทดลองฟังเพลง 5 วินาทีก่อนเปิดเกม หากคำสั่งนี้ไม่มีเสียง ให้ตรวจอุปกรณ์เสียงและระดับเสียงของระบบ
+
 ### run server local / Ngrok (Onlie)
 
 `bun run dev` : รัน server local
@@ -84,7 +97,7 @@ bun run dev:game
 │   ├── contracts/                     # ข้อตกลงสถานะและกติกาเกม (GameState Contract)
 │   └── guides/                        # คู่มือการพัฒนาและแบ่งงาน
 ├── Demo/                              # [deferred to dead-code audit]
-├── Music/                             # [deferred to dead-code audit]
+├── Music/                             # เพลงประกอบฝั่งไคลเอนต์
 ├── data/
 │   ├── generated/                     # ข้อมูลจำลองที่สร้างโดย GameLogic (simulation.json, gitignored)
 │   └── runtime/                       # ประวัติเกมขณะรันระบบ (History.json, gitignored)
