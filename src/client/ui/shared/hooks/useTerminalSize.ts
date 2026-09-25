@@ -1,5 +1,11 @@
 import fs from 'fs';
 import { useState, useEffect } from 'react';
+import {
+  GAMEPLAY_WIDTH,
+  GAMEPLAY_HEIGHT,
+  MAX_TERMINAL_COLUMNS,
+  MAX_TERMINAL_ROWS,
+} from '../layout/terminalRequirements';
 
 export interface TerminalDimensions {
   readonly columns: number;
@@ -12,6 +18,40 @@ const WIDE_SCREEN_COLUMN_THRESHOLD = 85;
 export const TERMINAL_CLEAR_SEQUENCE = '\x1b[2J\x1b[3J\x1b[H\x1b[0m';
 export const HIDE_CURSOR_SEQUENCE = '\x1b[?25l';
 export const SHOW_CURSOR_SEQUENCE = '\x1b[?25h';
+
+interface ResizableTerminalOutput {
+  readonly isTTY?: boolean;
+  readonly columns?: number;
+  readonly rows?: number;
+  write(value: string): unknown;
+}
+
+export function requestPlayableTerminalSize(
+  output: ResizableTerminalOutput = process.stdout,
+): boolean {
+  if (!output.isTTY) {
+    return false;
+  }
+
+  const columns = output.columns ?? 0;
+  const rows = output.rows ?? 0;
+  if (
+    columns >= GAMEPLAY_WIDTH &&
+    columns <= MAX_TERMINAL_COLUMNS &&
+    rows >= GAMEPLAY_HEIGHT &&
+    rows <= MAX_TERMINAL_ROWS
+  ) {
+    return false;
+  }
+
+  try {
+    // XTWINOPS asks supported terminals to resize the window in character cells.
+    output.write(`\x1b[8;${GAMEPLAY_HEIGHT};${GAMEPLAY_WIDTH}t`);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function writeEscapeSequence(sequence: string): void {
   try {

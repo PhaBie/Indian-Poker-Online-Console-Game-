@@ -47,10 +47,10 @@ describe('11. ระบบเมนูหลัก (Main Menu UI)', () => {
       },
     );
 
-    test('[ScreenSizeGuard] 11.4 ตรวจสอบขนาดจอ Terminal ในช่วงที่เหมาะสม (120 × 30) → สถานะเป็น OPTIMAL และผ่านเกณฑ์', () => {
-      expect(isTerminalSizeSufficient(120, 30)).toBe(true);
-      expect(getTerminalSizeStatus(120, 30)).toBe('OPTIMAL');
-      expect(isTerminalSizeOptimal(120, 30)).toBe(true);
+    test('[ScreenSizeGuard] 11.4 ตรวจสอบขนาดจอที่พร้อมเล่นเกม (150 × 41) → สถานะเป็น OPTIMAL และผ่านเกณฑ์', () => {
+      expect(isTerminalSizeSufficient(150, 41)).toBe(true);
+      expect(getTerminalSizeStatus(150, 41)).toBe('OPTIMAL');
+      expect(isTerminalSizeOptimal(150, 41)).toBe(true);
     });
   });
 
@@ -63,20 +63,20 @@ describe('11. ระบบเมนูหลัก (Main Menu UI)', () => {
       expect(parseMainMenuChoice('   ')).toBeNull();
     });
 
-    test('[ScreenSizeGuard] 11.6 ตรวจสอบขนาดจอ Terminal ที่เล็กกว่าขอบเขตขั้นต่ำ (79 × 24 หรือ 80 × 23) → สถานะเป็น TOO_SMALL และไม่ผ่านเกณฑ์', () => {
-      expect(isTerminalSizeSufficient(79, 24)).toBe(false);
-      expect(getTerminalSizeStatus(79, 24)).toBe('TOO_SMALL');
-      expect(isTerminalSizeOptimal(79, 24)).toBe(false);
+    test('[ScreenSizeGuard] 11.6 ตรวจสอบขนาดจอ Terminal ที่เล็กกว่าขอบเขตขั้นต่ำ (149 × 41 หรือ 150 × 40) → สถานะเป็น TOO_SMALL และไม่ผ่านเกณฑ์', () => {
+      expect(isTerminalSizeSufficient(149, 41)).toBe(false);
+      expect(getTerminalSizeStatus(149, 41)).toBe('TOO_SMALL');
+      expect(isTerminalSizeOptimal(149, 41)).toBe(false);
 
-      expect(isTerminalSizeSufficient(80, 23)).toBe(false);
-      expect(getTerminalSizeStatus(80, 23)).toBe('TOO_SMALL');
-      expect(isTerminalSizeOptimal(80, 23)).toBe(false);
+      expect(isTerminalSizeSufficient(150, 40)).toBe(false);
+      expect(getTerminalSizeStatus(150, 40)).toBe('TOO_SMALL');
+      expect(isTerminalSizeOptimal(150, 40)).toBe(false);
     });
 
-    test('[ScreenSizeGuard] 11.7 ตรวจสอบขนาดจอ Terminal ที่ใหญ่เกินขอบเขตสูงสุด (221 × 30) → สถานะเป็น TOO_LARGE และไม่ผ่านเกณฑ์ Optimal', () => {
-      expect(isTerminalSizeSufficient(221, 30)).toBe(true);
-      expect(getTerminalSizeStatus(221, 30)).toBe('TOO_LARGE');
-      expect(isTerminalSizeOptimal(221, 30)).toBe(false);
+    test('[ScreenSizeGuard] 11.7 ตรวจสอบขนาดจอ Terminal ที่ใหญ่เกินขอบเขตสูงสุด (221 × 41) → สถานะเป็น TOO_LARGE และไม่ผ่านเกณฑ์ Optimal', () => {
+      expect(isTerminalSizeSufficient(221, 41)).toBe(true);
+      expect(getTerminalSizeStatus(221, 41)).toBe('TOO_LARGE');
+      expect(isTerminalSizeOptimal(221, 41)).toBe(false);
     });
   });
 });

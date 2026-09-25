@@ -1,10 +1,15 @@
 import { Box, Text, useInput } from 'ink';
 import { UI_COLORS } from '../theme/colors';
+import {
+  GAMEPLAY_WIDTH,
+  GAMEPLAY_HEIGHT,
+  MAX_TERMINAL_COLUMNS,
+  MAX_TERMINAL_ROWS,
+} from '../layout/terminalRequirements';
 
-export const MIN_TERMINAL_COLUMNS = 80;
-export const MIN_TERMINAL_ROWS = 24;
-export const MAX_TERMINAL_COLUMNS = 220;
-export const MAX_TERMINAL_ROWS = 55;
+export const MIN_TERMINAL_COLUMNS = GAMEPLAY_WIDTH;
+export const MIN_TERMINAL_ROWS = GAMEPLAY_HEIGHT;
+export { MAX_TERMINAL_COLUMNS, MAX_TERMINAL_ROWS } from '../layout/terminalRequirements';
 
 export type TerminalSizeStatus = 'OPTIMAL' | 'TOO_SMALL' | 'TOO_LARGE';
 
@@ -88,7 +93,9 @@ function TerminalOutOfRangeContent({
       <Text color={UI_COLORS.goldHighlight}>
         Tip: Press Ctrl+0 to reset terminal zoom to default (100%)
       </Text>
-      <Text color={UI_COLORS.mutedText}>Press ESC to exit</Text>
+      <Text color={UI_COLORS.mutedText}>
+        Resize now to continue automatically. Press ESC to exit.
+      </Text>
     </Box>
   );
 }

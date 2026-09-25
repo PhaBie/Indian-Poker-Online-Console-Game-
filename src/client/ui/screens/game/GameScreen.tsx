@@ -29,16 +29,17 @@ import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
 import { TerminalOutOfRangeScreen } from '../../shared/components/ScreenSizeGuard';
 import { GameControlsFooter, getGameControlsFooterMode } from './GameControlsFooter';
 import { useGameMusic } from './useGameMusic';
+import {
+  GAMEPLAY_WIDTH,
+  GAMEPLAY_HEIGHT,
+} from '../../shared/layout/terminalRequirements';
 
 export type { GameScreenProps } from './types';
+export {
+  GAMEPLAY_WIDTH,
+  GAMEPLAY_HEIGHT,
+} from '../../shared/layout/terminalRequirements';
 
-// Keep the game at a desktop-sized canvas.  The same dimensions are also the
-// hard lower bound checked before rendering, so Ink never squeezes the table
-// into a smaller terminal.
-export const GAMEPLAY_WIDTH = 150;
-// Header (3) + table/action canvas (36) + controls footer (2). Keeping this
-// at 41 lets a normal 1080p Windows Terminal show the same full table.
-export const GAMEPLAY_HEIGHT = 41;
 export function getGameplayLayoutMode(
   columns: number,
   rows: number,
