@@ -119,8 +119,8 @@ export function TerminalOutOfRangeScreen({
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      width="100%"
-      height={currentRows}
+      width={Math.min(currentColumns, MAX_TERMINAL_COLUMNS)}
+      height={Math.min(currentRows, MAX_TERMINAL_ROWS)}
     >
       <TerminalOutOfRangeContent
         currentColumns={currentColumns}
