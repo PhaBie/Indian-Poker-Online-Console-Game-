@@ -29,4 +29,15 @@ export const UI_COLORS = {
   white: '#FFFFFF',
   dimText: '#888888',
   warningYellow: '#FFD54F',
+
+  roundResultShow: '#40C4FF',
+  roundResultShowTie: '#FFAB40',
+  roundResultForcedShowdown: '#69F0AE',
+  roundResultLastPlayerStanding: '#FFD54F',
+  handRankTrail: '#FFE082',
+  handRankPureSequence: '#64FFDA',
+  handRankSequence: '#82B1FF',
+  handRankColor: '#FF80AB',
+  handRankPair: '#FF8A65',
+  handRankHighCard: '#E1F5FE',
 } as const;

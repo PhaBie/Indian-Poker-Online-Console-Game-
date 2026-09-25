@@ -30,6 +30,7 @@ import {
   ROUND_RESULT_DIALOG_HEIGHT,
   ROUND_RESULT_DIALOG_TOP,
   getRoundParticipants,
+  getRoundResultPresentation,
   getWinningHandLabel,
   sortPlayersForResult,
 } from '../../../src/client/ui/screens/game/GameRoundResultDialog';
@@ -43,6 +44,25 @@ import {
 } from '../../../src/client/ui/screens/game/useCardBorderGlow';
 import { UI_COLORS } from '../../../src/client/ui/shared/theme/colors';
 import type { GameStatePayload } from '../../../src/client/ui/screens/game/types';
+import type {
+  GameResultPayload,
+  HandRank,
+  RoundWinReason,
+} from '../../../src/shared/types';
+
+function createRoundResultForPresentation(
+  winReason: RoundWinReason,
+  winningHand: HandRank = 'HIGH_CARD',
+): GameResultPayload {
+  const sharedResult = {
+    winnerIds: ['winner_player'],
+    payouts: { winner_player: 100 },
+    exposedCards: {},
+  };
+  return winReason === 'LAST_PLAYER_STANDING'
+    ? { ...sharedResult, winReason, winningHand: null }
+    : { ...sharedResult, winReason, winningHand };
+}
 
 describe('14. ระบบแสดงผลโต๊ะเกมและผลการเล่น (Game Presentation UI)', () => {
   describe('การจัดสรรที่นั่งและมุมมองโต๊ะเกม (Seating & Perspective Layout)', () => {
@@ -206,6 +226,113 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
         },
       });
       expect(winningLabel).toBe('FORCED SHOWDOWN · SEQUENCE — THREE-CARD RUN');
+    });
+
+    test.each([
+      {
+        caseId: '14.6.4.1',
+        result: createRoundResultForPresentation('SHOW'),
+        expectedReasonLabel: 'WON BY SHOW',
+        expectedReasonColor: UI_COLORS.roundResultShow,
+        expectedDetailLabel: null,
+      },
+      {
+        caseId: '14.6.4.2',
+        result: createRoundResultForPresentation('SHOW_TIE'),
+        expectedReasonLabel: 'WON BY SHOW',
+        expectedReasonColor: UI_COLORS.roundResultShowTie,
+        expectedDetailLabel: 'TIE RULE — NON-REQUESTER WINS',
+      },
+      {
+        caseId: '14.6.4.3',
+        result: createRoundResultForPresentation('FORCED_SHOWDOWN'),
+        expectedReasonLabel: 'FORCED SHOWDOWN',
+        expectedReasonColor: UI_COLORS.roundResultForcedShowdown,
+        expectedDetailLabel: null,
+      },
+      {
+        caseId: '14.6.4.4',
+        result: createRoundResultForPresentation('LAST_PLAYER_STANDING'),
+        expectedReasonLabel: 'LAST PLAYER STANDING',
+        expectedReasonColor: UI_COLORS.roundResultLastPlayerStanding,
+        expectedDetailLabel: null,
+      },
+    ])(
+      '[getRoundResultPresentation] $caseId เหตุผลการชนะ $expectedReasonLabel → ใช้ข้อความและสีเฉพาะสถานะอย่างถูกต้อง',
+      ({ result, expectedReasonLabel, expectedReasonColor, expectedDetailLabel }) => {
+        const presentation = getRoundResultPresentation(result);
+        expect(presentation.reasonLabel).toBe(expectedReasonLabel);
+        expect(presentation.reasonColor).toBe(expectedReasonColor);
+        expect(presentation.detailLabel).toBe(expectedDetailLabel);
+      },
+    );
+
+    test.each([
+      {
+        caseId: '14.6.5.1',
+        handRank: 'TRAIL' as const,
+        expectedLabel: 'TRAIL — THREE OF A KIND',
+        expectedColor: UI_COLORS.handRankTrail,
+      },
+      {
+        caseId: '14.6.5.2',
+        handRank: 'PURE_SEQUENCE' as const,
+        expectedLabel: 'PURE SEQUENCE — SAME-SUIT RUN',
+        expectedColor: UI_COLORS.handRankPureSequence,
+      },
+      {
+        caseId: '14.6.5.3',
+        handRank: 'SEQUENCE' as const,
+        expectedLabel: 'SEQUENCE — THREE-CARD RUN',
+        expectedColor: UI_COLORS.handRankSequence,
+      },
+      {
+        caseId: '14.6.5.4',
+        handRank: 'COLOR' as const,
+        expectedLabel: 'COLOR — SAME SUIT',
+        expectedColor: UI_COLORS.handRankColor,
+      },
+      {
+        caseId: '14.6.5.5',
+        handRank: 'PAIR' as const,
+        expectedLabel: 'PAIR — TWO OF A KIND',
+        expectedColor: UI_COLORS.handRankPair,
+      },
+      {
+        caseId: '14.6.5.6',
+        handRank: 'HIGH_CARD' as const,
+        expectedLabel: 'HIGH CARD',
+        expectedColor: UI_COLORS.handRankHighCard,
+      },
+    ])(
+      '[getRoundResultPresentation] $caseId มือไพ่ $handRank → ใช้สีเฉพาะประเภทมือไพ่จาก Theme กลาง',
+      ({ handRank, expectedLabel, expectedColor }) => {
+        const presentation = getRoundResultPresentation(
+          createRoundResultForPresentation('SHOW', handRank),
+        );
+        expect(presentation.handLabel).toBe(expectedLabel);
+        expect(presentation.handColor).toBe(expectedColor);
+      },
+    );
+
+    test('[getRoundResultPresentation] 14.6.6 ชุดสีสถานะและประเภทมือไพ่ → แต่ละรายการมีสีเฉพาะตัวและไม่ใช้สีซ้ำภายในกลุ่ม', () => {
+      const reasonColors = [
+        UI_COLORS.roundResultShow,
+        UI_COLORS.roundResultShowTie,
+        UI_COLORS.roundResultForcedShowdown,
+        UI_COLORS.roundResultLastPlayerStanding,
+      ];
+      const handRankColors = [
+        UI_COLORS.handRankTrail,
+        UI_COLORS.handRankPureSequence,
+        UI_COLORS.handRankSequence,
+        UI_COLORS.handRankColor,
+        UI_COLORS.handRankPair,
+        UI_COLORS.handRankHighCard,
+      ];
+
+      expect(new Set(reasonColors).size).toBe(reasonColors.length);
+      expect(new Set(handRankColors).size).toBe(handRankColors.length);
     });
 
     test('[sortPlayersForResult] 14.7 จัดอันดับผู้เล่นในหน้าต่างสรุปผลรอบ → ผู้ชนะอยู่อันดับแรก ตามด้วยยอดชิปคงเหลือ', () => {
