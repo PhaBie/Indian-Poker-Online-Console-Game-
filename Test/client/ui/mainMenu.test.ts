@@ -51,6 +51,7 @@ describe('11. ระบบเมนูหลัก (Main Menu UI)', () => {
       expect(isTerminalSizeSufficient(150, 41)).toBe(true);
       expect(getTerminalSizeStatus(150, 41)).toBe('OPTIMAL');
       expect(isTerminalSizeOptimal(150, 41)).toBe(true);
+      expect(getTerminalSizeStatus(320, 90)).toBe('OPTIMAL');
     });
   });
 
@@ -73,10 +74,10 @@ describe('11. ระบบเมนูหลัก (Main Menu UI)', () => {
       expect(isTerminalSizeOptimal(150, 40)).toBe(false);
     });
 
-    test('[ScreenSizeGuard] 11.7 ตรวจสอบขนาดจอ Terminal ที่ใหญ่เกินขอบเขตสูงสุด (221 × 41) → สถานะเป็น TOO_LARGE และไม่ผ่านเกณฑ์ Optimal', () => {
-      expect(isTerminalSizeSufficient(221, 41)).toBe(true);
-      expect(getTerminalSizeStatus(221, 41)).toBe('TOO_LARGE');
-      expect(isTerminalSizeOptimal(221, 41)).toBe(false);
+    test('[ScreenSizeGuard] 11.7 ตรวจสอบขนาดจอ Terminal ที่ใหญ่เกินขอบเขตสูงสุด (1001 × 41) → สถานะเป็น TOO_LARGE และไม่ผ่านเกณฑ์ Optimal', () => {
+      expect(isTerminalSizeSufficient(1001, 41)).toBe(true);
+      expect(getTerminalSizeStatus(1001, 41)).toBe('TOO_LARGE');
+      expect(isTerminalSizeOptimal(1001, 41)).toBe(false);
     });
   });
 });

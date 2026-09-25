@@ -413,7 +413,7 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
       expect(getGameplayLayoutMode(149, 41)).toBe('unsupported');
       expect(getGameplayLayoutMode(150, 40)).toBe('unsupported');
       expect(getGameplayLayoutMode(150, 41)).toBe('desktop');
-      expect(getGameplayLayoutMode(221, 56)).toBe('unsupported');
+      expect(getGameplayLayoutMode(1001, 301)).toBe('unsupported');
     });
 
     test('[GAMEPLAY_HEIGHT] 14.11 ตรวจสอบความสูงแคนวาสโต๊ะเกม → รวมความสูง Header 3 แถว, Canvas 36 แถว และ Footer 2 แถว พอดี 41 แถว', () => {

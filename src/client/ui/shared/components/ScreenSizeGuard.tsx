@@ -10,6 +10,8 @@ import {
 export const MIN_TERMINAL_COLUMNS = GAMEPLAY_WIDTH;
 export const MIN_TERMINAL_ROWS = GAMEPLAY_HEIGHT;
 export { MAX_TERMINAL_COLUMNS, MAX_TERMINAL_ROWS } from '../layout/terminalRequirements';
+const MAX_WARNING_COLUMNS = 220;
+const MAX_WARNING_ROWS = 55;
 
 export type TerminalSizeStatus = 'OPTIMAL' | 'TOO_SMALL' | 'TOO_LARGE';
 
@@ -62,7 +64,7 @@ function TerminalOutOfRangeContent({
 }: OutOfRangeContentProps) {
   const isTooSmall = status === 'TOO_SMALL';
   const headerText = isTooSmall
-    ? '[!] TERMINAL WINDOW TOO SMALL (ZOOMED IN)'
+    ? '[!] TERMINAL WINDOW TOO SMALL'
     : '[!] TERMINAL WINDOW TOO LARGE (ZOOMED OUT)';
   const tipText = isTooSmall
     ? 'Please zoom out (Ctrl -) or expand your terminal window.'
@@ -119,8 +121,8 @@ export function TerminalOutOfRangeScreen({
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      width={Math.min(currentColumns, MAX_TERMINAL_COLUMNS)}
-      height={Math.min(currentRows, MAX_TERMINAL_ROWS)}
+      width={Math.min(currentColumns, MAX_WARNING_COLUMNS)}
+      height={Math.min(currentRows, MAX_WARNING_ROWS)}
     >
       <TerminalOutOfRangeContent
         currentColumns={currentColumns}

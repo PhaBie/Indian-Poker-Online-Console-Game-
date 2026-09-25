@@ -1,11 +1,6 @@
 import fs from 'fs';
 import { useState, useEffect } from 'react';
-import {
-  GAMEPLAY_WIDTH,
-  GAMEPLAY_HEIGHT,
-  MAX_TERMINAL_COLUMNS,
-  MAX_TERMINAL_ROWS,
-} from '../layout/terminalRequirements';
+import { GAMEPLAY_WIDTH, GAMEPLAY_HEIGHT } from '../layout/terminalRequirements';
 
 export interface TerminalDimensions {
   readonly columns: number;
@@ -26,6 +21,70 @@ interface ResizableTerminalOutput {
   write(value: string): unknown;
 }
 
+export interface TerminalWindowController {
+  maximize(): boolean;
+  reduceFont(): boolean;
+  close(): void;
+}
+
+const MAX_FONT_ADJUSTMENTS = 12;
+const waitForResize = () => new Promise<void>((resolve) => setTimeout(resolve, 150));
+
+export async function preparePlayableTerminal(
+  output: ResizableTerminalOutput = process.stdout,
+  controller?: TerminalWindowController | null,
+  settle: () => Promise<void> = waitForResize,
+): Promise<void> {
+  if (!output.isTTY) return;
+
+  try {
+    requestPlayableTerminalSize(output);
+    if (!controller) return;
+
+    await settle();
+    controller.maximize();
+    await settle();
+
+    let unchangedAttempts = 0;
+    for (let attempt = 0; attempt < MAX_FONT_ADJUSTMENTS; attempt++) {
+      if (
+        (output.columns ?? 0) >= GAMEPLAY_WIDTH &&
+        (output.rows ?? 0) >= GAMEPLAY_HEIGHT
+      ) {
+        break;
+      }
+      const previousColumns = output.columns;
+      const previousRows = output.rows;
+      if (!controller.reduceFont()) break;
+      await settle();
+      unchangedAttempts =
+        output.columns === previousColumns && output.rows === previousRows
+          ? unchangedAttempts + 1
+          : 0;
+      if (unchangedAttempts >= 2) break;
+    }
+  } finally {
+    controller?.close();
+  }
+}
+
+export async function initializePlayableTerminal(): Promise<void> {
+  if (!process.stdout.isTTY) return;
+
+  let controller: TerminalWindowController | null = null;
+  if (process.platform === 'win32') {
+    try {
+      const { openWindowsTerminalWindow } =
+        await import('../windows/windowsTerminalWindow');
+      controller = openWindowsTerminalWindow();
+    } catch {
+      // Terminals that do not expose a controllable window still get a resize request.
+    }
+  }
+
+  await preparePlayableTerminal(process.stdout, controller);
+}
+
 export function requestPlayableTerminalSize(
   output: ResizableTerminalOutput = process.stdout,
 ): boolean {
@@ -35,12 +94,7 @@ export function requestPlayableTerminalSize(
 
   const columns = output.columns ?? 0;
   const rows = output.rows ?? 0;
-  if (
-    columns >= GAMEPLAY_WIDTH &&
-    columns <= MAX_TERMINAL_COLUMNS &&
-    rows >= GAMEPLAY_HEIGHT &&
-    rows <= MAX_TERMINAL_ROWS
-  ) {
+  if (columns >= GAMEPLAY_WIDTH && rows >= GAMEPLAY_HEIGHT) {
     return false;
   }
 
