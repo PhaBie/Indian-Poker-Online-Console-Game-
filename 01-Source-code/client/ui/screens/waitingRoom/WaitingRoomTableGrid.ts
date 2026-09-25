@@ -6,7 +6,8 @@ export const WAITING_ROOM_COLUMN_WIDTHS = {
 } as const;
 
 export const WAITING_ROOM_TABLE_WIDTH =
-  Object.values(WAITING_ROOM_COLUMN_WIDTHS).reduce((total, width) => total + width, 0) + 5;
+  Object.values(WAITING_ROOM_COLUMN_WIDTHS).reduce((total, width) => total + width, 0) +
+  5;
 
 function isWideTerminalCharacter(codePoint: number): boolean {
   return (
@@ -62,7 +63,13 @@ export function formatWaitingRoomCell(
   return ` ${truncated}${' '.repeat(remaining)} `;
 }
 
-export function buildWaitingRoomBorder(left: string, junction: string, right: string): string {
-  const segments = Object.values(WAITING_ROOM_COLUMN_WIDTHS).map((width) => '─'.repeat(width));
+export function buildWaitingRoomBorder(
+  left: string,
+  junction: string,
+  right: string,
+): string {
+  const segments = Object.values(WAITING_ROOM_COLUMN_WIDTHS).map((width) =>
+    '─'.repeat(width),
+  );
   return `${left}${segments.join(junction)}${right}`;
 }
