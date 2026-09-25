@@ -11,6 +11,7 @@ const INPUT_KEYBOARD = 1;
 const INPUT_SIZE = 40;
 const KEYSTROKE_COUNT = 4;
 const CONSOLE_FONT_INFOEX_SIZE = 84;
+const CONSOLE_SCREEN_BUFFER_INFO_SIZE = 22;
 
 const user32Symbols = {
   GetForegroundWindow: { args: [], returns: FFIType.ptr },
@@ -38,6 +39,10 @@ const kernel32Symbols = {
   CloseHandle: { args: [FFIType.ptr], returns: FFIType.bool },
   GetConsoleWindow: { args: [], returns: FFIType.ptr },
   GetStdHandle: { args: [FFIType.i32], returns: FFIType.ptr },
+  GetConsoleScreenBufferInfo: {
+    args: [FFIType.ptr, FFIType.ptr],
+    returns: FFIType.bool,
+  },
   GetCurrentConsoleFontEx: {
     args: [FFIType.ptr, FFIType.bool, FFIType.ptr],
     returns: FFIType.bool,
@@ -47,6 +52,27 @@ const kernel32Symbols = {
     returns: FFIType.bool,
   },
 } as const;
+
+// Bun can keep stdout.columns/rows at the old ConPTY size until stdin enters raw mode.
+// Query the console buffer directly while the window is being prepared.
+export function getWindowsConsoleDimensions(): { columns: number; rows: number } | null {
+  const kernel32 = dlopen('kernel32.dll', kernel32Symbols);
+  try {
+    const outputHandle = kernel32.symbols.GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!outputHandle) return null;
+
+    const info = new Uint8Array(CONSOLE_SCREEN_BUFFER_INFO_SIZE);
+    if (!kernel32.symbols.GetConsoleScreenBufferInfo(outputHandle, ptr(info)))
+      return null;
+
+    const view = new DataView(info.buffer);
+    const columns = view.getInt16(14, true) - view.getInt16(10, true) + 1;
+    const rows = view.getInt16(16, true) - view.getInt16(12, true) + 1;
+    return columns > 0 && rows > 0 ? { columns, rows } : null;
+  } finally {
+    kernel32.close();
+  }
+}
 
 function getWindowProcessName(
   windowHandle: bigint | Pointer,
