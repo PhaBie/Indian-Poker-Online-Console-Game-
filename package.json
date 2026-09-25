@@ -1,9 +1,11 @@
 {
   "dependencies": {
+    "@audio/speaker": "2.3.3",
     "@ngrok/ngrok": "^1.7.0",
     "@types/ink-big-text": "^1.2.4",
     "@types/ink-gradient": "^2.0.4",
     "@types/ink-spinner": "^3.0.5",
+    "audio": "2.6.10",
     "ink": "^7.1.1",
     "ink-big-text": "^2.0.0",
     "ink-gradient": "^4.0.1",
@@ -32,6 +34,7 @@
   },
   "scripts": {
     "dev": "bun src/client/index.ts",
+    "music:check": "bun src/client/audio/checkMusic.ts",
     "dev:game": "bun src/client/previewGame.tsx",
     "dev:game:2": "bun src/client/previewGame.tsx 2",
     "dev:game:3": "bun src/client/previewGame.tsx 3",

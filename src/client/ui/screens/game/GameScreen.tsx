@@ -28,6 +28,7 @@ import {
 import { useTerminalSize } from '../../shared/hooks/useTerminalSize';
 import { TerminalOutOfRangeScreen } from '../../shared/components/ScreenSizeGuard';
 import { GameControlsFooter, getGameControlsFooterMode } from './GameControlsFooter';
+import { useGameMusic } from './useGameMusic';
 
 export type { GameScreenProps } from './types';
 
@@ -133,6 +134,7 @@ export function GameScreen({
   onEndGame,
   onLeave,
 }: GameScreenProps) {
+  const isMusicMuted = useGameMusic();
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [dismissedSideshowResultKey, setDismissedSideshowResultKey] = useState<
     string | null
@@ -354,7 +356,7 @@ export function GameScreen({
             inputMode={actionCtrl.inputMode}
             betAmount={actionCtrl.betAmount}
             onActionSelect={actionCtrl.handleActionSelect}
-            onBetChange={actionCtrl.setBetAmount}
+            onBetChange={actionCtrl.handleBetChange}
             onBetSubmit={actionCtrl.handleBetSubmit}
             statusContext={statusContext}
             actionItems={actionItems}
@@ -390,7 +392,7 @@ export function GameScreen({
             />
           )}
         </Box>
-        <GameControlsFooter mode={controlsFooterMode} />
+        <GameControlsFooter mode={controlsFooterMode} isMusicMuted={isMusicMuted} />
       </Box>
     </Box>
   );
