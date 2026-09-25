@@ -1,15 +1,12 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "dependencies": {
-        "@audio/speaker": "2.3.3",
         "@ngrok/ngrok": "^1.7.0",
         "@types/ink-big-text": "^1.2.4",
         "@types/ink-gradient": "^2.0.4",
         "@types/ink-spinner": "^3.0.5",
-        "audio": "2.6.10",
         "ink": "^7.1.1",
         "ink-big-text": "^2.0.0",
         "ink-gradient": "^4.0.1",
@@ -40,264 +37,6 @@
   },
   "packages": {
     "@alcalzone/ansi-tokenize": ["@alcalzone/ansi-tokenize@0.3.0", "", { "dependencies": { "ansi-styles": "^6.2.1", "is-fullwidth-code-point": "^5.0.0" } }, "sha512-p+CMKJ93HFmLkjXKlXiVGlMQEuRb6H0MokBSwUsX+S6BRX8eV5naFZpQJFfJHjRZY0Hmnqy1/r6UWl3x+19zYA=="],
-
-    "@audio/beat": ["@audio/beat@2.1.3", "", { "dependencies": { "@audio/beat-detect": "^1.0.0", "@audio/beat-onset": "^1.0.0", "@audio/beat-tempo": "^1.0.0", "@audio/beat-track": "^1.0.0", "@audio/onset": "^1.0.0" } }, "sha512-Ds1xVbC069ja8bJcUi0Cd9jQRXB7SY09GpKlnuvixKoMrh3rPLVI/nH6AoBYykA0dqX6kC9caz+jKoggBY+I3w=="],
-
-    "@audio/beat-detect": ["@audio/beat-detect@1.0.3", "", { "dependencies": { "@audio/beat-tempo": "^1.0.0", "@audio/onset": "^1.0.0" } }, "sha512-XY3oQe/kszx5Cmv6DEMrF5y9TSML692me271ZxEAS+lmd4sE2Ctpqs0UonXmCz9GkNrAuXrCKqe5DO2nhkoXKA=="],
-
-    "@audio/beat-onset": ["@audio/beat-onset@1.0.3", "", { "dependencies": { "@audio/onset": "^1.0.0", "fourier-transform": "^2.2.0", "window-function": "^3.0.0" } }, "sha512-CU3QhLD/pwelkkFk9tTZT9BefQ7BQnjJFvdMKEGKZu31OE1QN/e6s95RZXtIWkRjr3TFSCowSzNP+mT3GslFWA=="],
-
-    "@audio/beat-tempo": ["@audio/beat-tempo@1.0.3", "", { "dependencies": { "@audio/onset": "^1.0.0" } }, "sha512-nMdE0j90AGliDaYGql1h29RhWbotjsKEfHzwEBbjPACDGuXB6NKAxJTsQii8f1Jhd+iF+Ohvt6RLu8BjYGnsJA=="],
-
-    "@audio/beat-track": ["@audio/beat-track@1.0.3", "", { "dependencies": { "@audio/beat-tempo": "^1.0.0", "@audio/onset": "^1.0.0" } }, "sha512-XkU9w+EJvigkm/p01UIGU0JvrwKURPIBvW7HPnEKQtce/5zjMZvnTEc2T3OzTyS40FSCIfnCyeKoZ305P/qWdw=="],
-
-    "@audio/biquad": ["@audio/biquad@1.2.1", "", {}, "sha512-VgTZPE/dcp379GhwFSvko/+OBDmZyTw+aPB7hPjblDWRWWEWda38eATObEzRJvHYGlICe/kohgTRxRCxNUB2CQ=="],
-
-    "@audio/decode": ["@audio/decode@3.15.0", "", { "dependencies": { "@audio/decode-aac": "^1.5.0", "@audio/decode-ac3": "^1.0.0", "@audio/decode-aiff": "^1.3.0", "@audio/decode-amr": "^1.3.0", "@audio/decode-avi": "^1.1.0", "@audio/decode-caf": "^1.4.0", "@audio/decode-dsd": "^1.0.0", "@audio/decode-dts": "^1.0.0", "@audio/decode-flac": "^1.3.0", "@audio/decode-mod": "^1.0.0", "@audio/decode-mp3": "^1.3.0", "@audio/decode-mp4": "^1.1.1", "@audio/decode-mpc": "^1.0.0", "@audio/decode-opus": "^1.3.0", "@audio/decode-qoa": "^1.2.0", "@audio/decode-tta": "^1.0.0", "@audio/decode-vorbis": "^1.3.0", "@audio/decode-wav": "^1.5.0", "@audio/decode-wavpack": "^1.0.0", "@audio/decode-webm": "^1.6.1", "@audio/decode-wma": "^1.3.0", "audio-type": "^2.7.0" } }, "sha512-XWPAstA8BRmxSHjJhbvazCqLWDlBAPtmnxgys72oDs+kmmBpwH2P/0f9GnydvxpEIN9RStbx726qYE7FNTSP4A=="],
-
-    "@audio/decode-aac": ["@audio/decode-aac@1.5.0", "", {}, "sha512-MMFWCdBvhsa0K4wUsO1Aqe/YKOWHmoI53HjCXRH8lCnukPRLZZ1dRLK5RHMvFq0YleFyMW3a5cT7rKtHTxNEzg=="],
-
-    "@audio/decode-ac3": ["@audio/decode-ac3@1.0.0", "", {}, "sha512-GR2PLqxxrybNRwdA3/ZazB4ZWz7yQNihYtjuigGfEpSqKt95FnUgjIVfE7aJmznvxa6voq8Mou6NvSoTqH104g=="],
-
-    "@audio/decode-aiff": ["@audio/decode-aiff@1.3.0", "", {}, "sha512-GgCNYZMmma5Xol8lxqDZQ7qFYsIpfWn8LXKPZ8ZR6IaVOs1O+nCge/Bli1tNZSEucgG6mWh4Jvw+/XL6eXbwWw=="],
-
-    "@audio/decode-amr": ["@audio/decode-amr@1.3.1", "", {}, "sha512-rYwY8HpmAwptaQDeNAoccbzbcYteHmL4s+KWVW8Y+NgJugQFhApsFeqs0ljVmuI2TvOmZRivMJwvg6++MdsUaA=="],
-
-    "@audio/decode-avi": ["@audio/decode-avi@1.1.0", "", { "dependencies": { "@audio/decode-aac": "^1.5.0", "@audio/decode-ac3": "^1.0.0", "@audio/decode-dts": "^1.0.0", "@audio/decode-mp3": "^1.3.0" } }, "sha512-/EczjSR5RG1ZfRZ3aJy1XD82/g54wfqpq+CCo3tooiEvumGpAhUSmAMnQtdJrmE1cY+iximJYwpvjQhJKNDmdg=="],
-
-    "@audio/decode-caf": ["@audio/decode-caf@1.4.0", "", {}, "sha512-pNhc7gX+HSzbaRD8x4P77aE8+08EfC2+TREjVDCgke2aguEPAAKh4sbzgL0IGx34ghUX6BNJPkDutAB8HaC9vw=="],
-
-    "@audio/decode-dsd": ["@audio/decode-dsd@1.0.0", "", { "dependencies": { "@audio/decode-mp3": "^1.3.0" } }, "sha512-CRO0jS1M7DAeePn8cSDxw41xHDRLe79bZkOGYdCvZkjpdkrMHXR2eVJ6YIge3NX21wM+RLrJuMCmoHVikQcgnA=="],
-
-    "@audio/decode-dts": ["@audio/decode-dts@1.0.0", "", {}, "sha512-WApeOndo8C+3IzncPFg7vwRm9/ZbWjCzB93mx86en/+4/IWpUVz0W/wRINzg5gKGQa23xz5ZwGMGNC0X7i8nJw=="],
-
-    "@audio/decode-eac3": ["@audio/decode-eac3@1.0.0", "", {}, "sha512-2UFpJUhI6MBouhP7Dztby5xfTem38Ql1QYxDnqqJAINI65O6xjqGqlxQgpWIwH/oZ2imaRislsTu0X0IrPe3+A=="],
-
-    "@audio/decode-flac": ["@audio/decode-flac@1.3.3", "", { "dependencies": { "@wasm-audio-decoders/flac": "~0.2.10", "codec-parser": "~2.5.0" } }, "sha512-1Kp279VMMRa9C0VdYtspj8BknXqaKsde5WJGRwar+ybLf6hnYn1kjsbMu0fvnZtJZk7XmQKb93Ye87REXlMwmg=="],
-
-    "@audio/decode-mod": ["@audio/decode-mod@1.0.0", "", {}, "sha512-tqLhIFdVgokthJjE6UIwFG/LERqBqpp6iYD5wfRFl5g7AppRJMYNHVOQL8SBEfz79lZdmlmOii+KXGvbym2TNg=="],
-
-    "@audio/decode-mp3": ["@audio/decode-mp3@1.3.1", "", { "dependencies": { "mpg123-decoder": "^1.0.3" } }, "sha512-GhGm6C2hwngU+t5uEpUc94jZGCrCIXrgfneDURfK9/2tgFAWHVeckFNsSRmL4+Vd7u32uv8wQamjTnBSlrkVGA=="],
-
-    "@audio/decode-mp4": ["@audio/decode-mp4@1.1.1", "", { "dependencies": { "@audio/decode-aac": "^1.5.0", "@audio/decode-ac3": "^1.0.0", "@audio/decode-amr": "^1.3.0", "@audio/decode-dts": "^1.0.0", "@audio/decode-eac3": "^1.0.0", "@audio/decode-flac": "^1.3.0", "@audio/decode-mp3": "^1.3.0", "@audio/decode-opus": "^1.3.0" } }, "sha512-K7bAJslbTAXQd6W2t9VlePTrP5ePqIUI1kHKLXdroFRkyDmf861FYow2ICMNEo2Yh+Lyrx13vfk2pAFo6DXWFQ=="],
-
-    "@audio/decode-mpc": ["@audio/decode-mpc@1.0.0", "", {}, "sha512-oRHDBSHNW8sDjz0QvqlF6gHRh4Gz0zgwqLxc0MBE9hLOBlwshiJ4LuA7XKasRxF3V/zPgYTLOQHhUaWwor7e4w=="],
-
-    "@audio/decode-opus": ["@audio/decode-opus@1.3.1", "", { "dependencies": { "codec-parser": "~2.5.0" } }, "sha512-DUjHfzqVCPSM4Pt7h/Ua6rjve69weU0pgLS5Oso/o+HA+GdTOXVhAnN6BAOUv09dZKN7nqVt7L3owdYcjXyyYQ=="],
-
-    "@audio/decode-qoa": ["@audio/decode-qoa@1.2.0", "", { "dependencies": { "qoa-format": "^1.0.1" } }, "sha512-GjbAUXzvW9PnjkgTi42Z8+rUwC5D4QkaDNgFWHzBUIhF6E4LRcHW3T3mtJVUqE1rRRyjIGmnH4dL6y3LgcEzVQ=="],
-
-    "@audio/decode-tta": ["@audio/decode-tta@1.0.0", "", {}, "sha512-aTEoPkZmh1BUJ7ewqKhPT3Sk3OSKzoaUxDFp4AJSQLQDE+Bapc3MRTldoxp8VHu2YZSuiJgcfDutz96uGQV41w=="],
-
-    "@audio/decode-vorbis": ["@audio/decode-vorbis@1.3.2", "", { "dependencies": { "@wasm-audio-decoders/ogg-vorbis": "~0.1.20", "codec-parser": "~2.5.0" } }, "sha512-UF2kbP07OV0HAuKu9rZEJIq6g7kaZjHHPOavs5TNwMW6s2bVZSbvof+zTev3s8pcqeYDtpQGpX3qhKpPK3HOWA=="],
-
-    "@audio/decode-wav": ["@audio/decode-wav@1.5.0", "", {}, "sha512-gxCPRF9A/nBwdnMCJ4N5tDaLBWlfZaNKWbsqDZTMt7A5gN7w+a7HGikiN1dInAb5L0bcj6ByQuU1acfL7p5pcA=="],
-
-    "@audio/decode-wavpack": ["@audio/decode-wavpack@1.0.0", "", {}, "sha512-yUY2fCABNluzRipAmxGO/FL6MGwx3fZm5RynWtYn2mhBtoqWxa/UycEYLOuZiwgrc8E9u203OeAvBD4E4rlDEw=="],
-
-    "@audio/decode-webm": ["@audio/decode-webm@1.6.1", "", { "dependencies": { "@audio/decode-aac": "^1.5.0", "@audio/decode-ac3": "^1.0.0", "@audio/decode-dts": "^1.0.0", "@audio/decode-eac3": "^1.0.0", "@audio/decode-flac": "^1.3.0", "@audio/decode-mp3": "^1.3.0", "@audio/decode-opus": "^1.3.0", "@audio/decode-vorbis": "^1.3.0" } }, "sha512-Te5A7MOUKV2Eb0y3iIFQMhg0dT8IC2I/8Hwc8BZlsHjU9Ka1qoH+LpWiFPrImOCvRcMDr6hd3qilkvBy3PJRDw=="],
-
-    "@audio/decode-wma": ["@audio/decode-wma@1.3.1", "", {}, "sha512-8lCzy2C4HQ+CuiCnSLH8MfyNiPwQEfH4PBwq0iWovtrwoQfwIfgZnXj9NBXku3bvSpVnmSboPQjk1Ku4Nka+PA=="],
-
-    "@audio/encode": ["@audio/encode@1.6.5", "", { "dependencies": { "@audio/encode-aac": "^1.1.3", "@audio/encode-aiff": "^1.1.0", "@audio/encode-alac": "^1.0.0", "@audio/encode-caf": "^1.0.0", "@audio/encode-flac": "^1.1.0", "@audio/encode-mp3": "^1.1.0", "@audio/encode-mp4": "^1.0.0", "@audio/encode-ogg": "^1.1.0", "@audio/encode-opus": "^1.3.0", "@audio/encode-qoa": "^1.0.0", "@audio/encode-wav": "^1.2.0", "@audio/encode-wavpack": "^1.0.0", "@audio/encode-webm": "^1.3.0" } }, "sha512-kEnF1QfF9sfZNlq1taM0bzrWHYucJWxCyBfkLs7oLvp9j0231YA4ayDuKQjjCzlu8yAZ2Mwt3tgQMje90yD0Aw=="],
-
-    "@audio/encode-aac": ["@audio/encode-aac@1.1.3", "", {}, "sha512-n2PtMZzte7kbuRfhZqr+0euF45aT59mFTg3zmZvOaBnoYvz05eFDmKCyL+3MhOl+vIaRd1juCNDlw8usIpLASw=="],
-
-    "@audio/encode-aiff": ["@audio/encode-aiff@1.2.2", "", {}, "sha512-oMreaIXMWNR1MnndYkDCixwdFY/E+sqTV4GgiwNOkAIyl5IrCoCXBID3kAIdJ6/F/RIojpla187C9dOEKYYtlg=="],
-
-    "@audio/encode-alac": ["@audio/encode-alac@1.0.0", "", { "dependencies": { "@audio/encode-mp4": "^1.0.0" } }, "sha512-OQO6wX3bc/CJUM0skps8zihevaan6wHY6qZt3NlULKqhbQ79liK0UYc0Mbr08vRROMEqUt6mYtWlDqtEK/TXww=="],
-
-    "@audio/encode-caf": ["@audio/encode-caf@1.1.2", "", {}, "sha512-rXrqOfCgV2nLsVqDkMvfJnVucSMJVCUETcE+mzabDQwPlgQRma5p2qBxOPqDk0MnAMeuMEzxmb8nBJsgtu+nsw=="],
-
-    "@audio/encode-flac": ["@audio/encode-flac@1.2.2", "", { "dependencies": { "libflacjs": "^5.4.0" } }, "sha512-W5psQzSeqsHzTHiyS+Tn7DiSSOMV8NbGS53J+ZJQl+JJh4gxnugD7B3oAYnMIj7+egmlJMGZJ/HWdOSUusjuJQ=="],
-
-    "@audio/encode-mp3": ["@audio/encode-mp3@1.2.2", "", { "dependencies": { "wasm-media-encoders": "^0.7.0" } }, "sha512-24tI04E6g3Z8vZy8mgWDrRGntyiPHIRoLM5D/5iFvKDdqut7Si6OGeL7odhSXXf5tyCOjJ/zZKLmFrmeJp8uzA=="],
-
-    "@audio/encode-mp4": ["@audio/encode-mp4@1.0.0", "", { "dependencies": { "@audio/encode-aac": "^1.1.2", "@audio/encode-flac": "^1.2.2", "@audio/encode-mp3": "^1.2.2", "@audio/encode-opus": "^1.3.0" } }, "sha512-tsKAJqeaa0iYOkST+v5kAc/mQe7PhRug7x3/ml9lbE9tC0sXbE2+qELZrMktjn4y3f3aNE2z1HgIdLKk7TbvyQ=="],
-
-    "@audio/encode-ogg": ["@audio/encode-ogg@1.2.2", "", { "dependencies": { "wasm-media-encoders": "^0.7.0" } }, "sha512-yhJBrhzGzQ95HeyJGeCZNB+U9G4aNY8cazJh4Jqf3OyAwBpkpIPYqMJ4RioifurflZxm8YQd2Q4nmKTUzDWusg=="],
-
-    "@audio/encode-opus": ["@audio/encode-opus@1.3.0", "", {}, "sha512-Bh93rd4V9KMXBsjcss3VVUOOtXdw4/IHK3/I/U9H1EnMmgYqmNFfiVLl2Q3aNJdJu9n6/1PURVnKkqdmMEc8AA=="],
-
-    "@audio/encode-qoa": ["@audio/encode-qoa@1.1.2", "", { "dependencies": { "qoa-format": "^1.0.1" } }, "sha512-B+MdlV+eXdCL9faMpt9EPWmUmGiQRvu3SbxumkbHFmt+vfng8CNddxfF8Qj8tmnMm2pgaAwbUfYK5KOx0XkIDA=="],
-
-    "@audio/encode-wav": ["@audio/encode-wav@1.3.2", "", {}, "sha512-J/XSv2SNtlBTN4WKKMLpAB74wEFIQPOKNQ0MXaShwk9ah0Kh/AlBs7ijI3bc0LC9gjKFCaW49erw3KrMwDt1XQ=="],
-
-    "@audio/encode-wavpack": ["@audio/encode-wavpack@1.0.0", "", {}, "sha512-gAZoFiZ5a/rPmCODtBUA0PINVW21wYWTChlFXCFsd5KqZ0v3uF+Y9Mx1CdswUA8/VhnoGDfkn/UStd+XscNfCA=="],
-
-    "@audio/encode-webm": ["@audio/encode-webm@1.3.0", "", { "dependencies": { "@audio/encode-opus": "^1.3.0" } }, "sha512-iTZyUGMTcNJ3yCvAe6r/n0C4zLNyQkzEuSALdp7Hs7amtMv5wMQAqaUFxl7DIt0y1vU/cFx5y9aGOR9Tbg9WUw=="],
-
-    "@audio/eq": ["@audio/eq@1.0.3", "", { "dependencies": { "@audio/eq-baxandall": "^1.0.0", "@audio/eq-crossover": "^1.0.0", "@audio/eq-dynamic": "^1.0.0", "@audio/eq-fir": "^1.0.0", "@audio/eq-fit": "^0.1.0", "@audio/eq-graphic": "^1.0.0", "@audio/eq-highshelf": "^1.0.0", "@audio/eq-lowshelf": "^1.0.0", "@audio/eq-parametric": "^1.0.0", "@audio/eq-tilt": "^1.0.0" } }, "sha512-h1y1rzr2Axb8WEAX95azwXbx5Q814bBtQI5YFWbhlFuTvK4g44kIQxTSBwwIky6HHzyUqsdrnnUZxGt3d8iuhA=="],
-
-    "@audio/eq-baxandall": ["@audio/eq-baxandall@1.2.3", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-F4jaPUNz8ILUEHQ9qOZ4TEr7o8xepckUYNkcRYNEjlRmjbdBaD9BDUpzQ8buNWFjFEez7uf1kpWcFue6lyWY6Q=="],
-
-    "@audio/eq-crossover": ["@audio/eq-crossover@1.0.1", "", { "dependencies": { "digital-filter": "^2.0.0" } }, "sha512-rSgExtlTu+xN6gaofXSMnC+zGGBDVrrL75aootz7XAmXkOYuGMywlvcv4D19CuqSYJ3WlPHISirIJ56qZSOIdA=="],
-
-    "@audio/eq-dynamic": ["@audio/eq-dynamic@1.2.3", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-DhVsTvdqcm+aNmVtl5BaLrPG+lsEmtgHeEG+gn6RO4FeeL94zzX3egxD/liXkesDaARLCeBhKiU3YJ2/b646HQ=="],
-
-    "@audio/eq-fir": ["@audio/eq-fir@1.0.1", "", {}, "sha512-yhUTLRMcyhqwC5DlYg3ZwslfQXGNUxQFWsEZUUXsO0CTxGy1fAGXDf44cQ3ad7Tk7ZhrZEk64tiSGAb+V1bPLQ=="],
-
-    "@audio/eq-fit": ["@audio/eq-fit@0.1.0", "", { "dependencies": { "@audio/biquad": "^1.2.1" } }, "sha512-QKWTGjzbgvpbSZe/TElD+6bmK3kdpClkKXnHtno7B0bKKQeMvU1y94f+5WDunE/LOA8YM8yVTFP8yF0ZofL+nQ=="],
-
-    "@audio/eq-graphic": ["@audio/eq-graphic@1.2.3", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-1DAIRkvG1ZcoaY20cvWyxgZUbeM7cvjks3xZq5Gh1lppC6ncCsjLUcxs0rFLEk9ygUF8O6/cIYF5H85kAlH2aQ=="],
-
-    "@audio/eq-highshelf": ["@audio/eq-highshelf@1.1.1", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-SZw/rsISWqt9+v14HMMYsgs8p0zBBrU/zVvmsOKLQGcRNgojubVDnkpj3Dx/HzuFMe8IqbECqL5mGdRz1Vu/dA=="],
-
-    "@audio/eq-lowshelf": ["@audio/eq-lowshelf@1.1.1", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-mOnQOZKbtdad1FdigTozxWbbdTTwPFOgWMK+DSRGq+EYIo9llyG+dbfPHdudLO5XxqaH+WvlkFQW9oJg9LozMw=="],
-
-    "@audio/eq-parametric": ["@audio/eq-parametric@1.1.1", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-l+P16+WlkRwkTIzTqNJvrDWAJLTxf8sxWlmdarZtNnM2UOjTU2caqQrUKocm+q0WLpRQGv0aqoY1AovomJeGNA=="],
-
-    "@audio/eq-tilt": ["@audio/eq-tilt@1.2.3", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-V6frxNUk9YuEpm7sxonp4e1xLeQfPLmpyKvXbOS/dnzvL5ZGubJIU3vNfHawrs/ZoRXlM+3b382wd5eLTxU4Ng=="],
-
-    "@audio/filter": ["@audio/filter@3.2.1", "", { "dependencies": { "@audio/filter-biquad": "^2.0.0", "@audio/filter-comb": "^1.0.0", "@audio/filter-dcblocker": "^1.0.0", "@audio/filter-derivative": "^1.0.0", "@audio/filter-diode-ladder": "^1.0.0", "@audio/filter-korg35": "^1.0.0", "@audio/filter-moog-ladder": "^1.0.0", "@audio/filter-oberheim": "^1.0.0", "@audio/filter-preemphasis": "^1.0.0", "@audio/filter-resonator": "^1.0.0", "@audio/filter-spectral-tilt": "^1.0.0", "@audio/filter-variable": "^1.0.0" } }, "sha512-BsuqMg6VgU2V+4fyw740tcECsXhity/4UCt595BFxAYXJgq68k5OFwtrvdiu+3H8/gO8KNb/+I0Majg7QQGR+Q=="],
-
-    "@audio/filter-biquad": ["@audio/filter-biquad@2.0.1", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-19c6FAZYClANINrsVsqu5N71v1jB3dCIjxqJRsX5WmBNSC3aROPROLyoBatMaJSzOGVplZqIFFi7XPO57W+lRg=="],
-
-    "@audio/filter-comb": ["@audio/filter-comb@1.1.3", "", {}, "sha512-HJg1yRjqbEPnLlAO9G1EghxF8VsTjD65hXD4SJ5aeVnA9hU7Jqy0ZP8I4jutPX4K/Ot1U5n89+3uLuPWdAPS/Q=="],
-
-    "@audio/filter-dcblocker": ["@audio/filter-dcblocker@1.1.3", "", {}, "sha512-4nEypTYNCwo+JFCooMQtkM3DRQjD1cOxj0I9ykFTGdE1zqQjt8xdEOpnNco6jq/lOdzabIt3hScF9NEZP3o2DQ=="],
-
-    "@audio/filter-derivative": ["@audio/filter-derivative@1.0.2", "", {}, "sha512-YHSM760GP3MJnPz4wScPjokAXdUNZA50XEayQGCcKVyxV3a/GMjyClxv7x3BwPXKj8SYfxcrEfybV0GQ5vlfng=="],
-
-    "@audio/filter-diode-ladder": ["@audio/filter-diode-ladder@1.2.1", "", {}, "sha512-MIcH5PpnIPg4/JGV8eKku4dYP9L1177Pf/TOhFNRdJiytkLTXFlv3p0ABzh1TbIqJqE9AKxddzcOtrFBs/QZew=="],
-
-    "@audio/filter-korg35": ["@audio/filter-korg35@1.2.1", "", {}, "sha512-BVnyPPNU3izXWbtWubInx2OPIscoCaHR1HQgNRwIjdJPkbM9m0tFXNokfrv8aCc2c3dlZR5NvgD/Hdlqwwmfag=="],
-
-    "@audio/filter-moog-ladder": ["@audio/filter-moog-ladder@1.1.3", "", {}, "sha512-z/qosWgJsvCDWsrJOBdF6A6vJ6CAnABIDNtLkQcnLaN3EqumD0OxCYLeGalX3yCo2KjQSLwbPt7RPUv+/cbzNA=="],
-
-    "@audio/filter-oberheim": ["@audio/filter-oberheim@1.2.1", "", {}, "sha512-M5KXeM74pWaU4C79403h3WZFwnXwIMn+Aqsou7V94gmx6+IpFzslXxl5vUbEqNoKyphK7iGvXgFaZuDffNAJwg=="],
-
-    "@audio/filter-preemphasis": ["@audio/filter-preemphasis@1.1.3", "", {}, "sha512-hMX9z3eycbKyCOLTP2SvI9Z7YiZwDL7Cw4gc3TBef+YoB+yVJbonjoRq9fRJKIUJ5ii7spgUzTncQTgu/yItBw=="],
-
-    "@audio/filter-resonator": ["@audio/filter-resonator@1.2.1", "", {}, "sha512-5MA1NGPYh49s1UFNbiVkVyFkt0SQPf0Y1LF0RmPHUkfAdKPs6j8OWkkR4ABzGLSVZrN3ty6193E8fBqVOz36aA=="],
-
-    "@audio/filter-spectral-tilt": ["@audio/filter-spectral-tilt@1.2.1", "", {}, "sha512-UmqtR217Na2MoSsEIgKRENlsQey72Gb8I0IFIkeYTPHkMuX7J1ZVTExK89GDwDjizjVGXv4qpgeMDxNyttxnYw=="],
-
-    "@audio/filter-variable": ["@audio/filter-variable@1.2.3", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-TpmvMnIux9rX/n6iXGptqVR0XmA6HhfFr73NYaduqpdZvcLUuhkr/AHpkeLaMzzFJmKBsdeJVjMxS9i9j/eGhw=="],
-
-    "@audio/mic": ["@audio/mic@1.1.3", "", { "optionalDependencies": { "@audio/mic-darwin-arm64": ">=0.0.0", "@audio/mic-darwin-x64": ">=0.0.0", "@audio/mic-linux-arm64": ">=0.0.0", "@audio/mic-linux-x64": ">=0.0.0", "@audio/mic-win32-x64": ">=0.0.0" } }, "sha512-XS0DahF/5UKVNv1fLs+RI6eVylLXcuDTn+0BDmu3vQ1tgr6HVyjtAB/PwY9zemf1lVffhQIubSmbilhTukX7sg=="],
-
-    "@audio/mic-darwin-arm64": ["@audio/mic-darwin-arm64@1.1.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-dyFgkb//8I03yVDdHyT1Lirv/XD+hMKOaqkcjz1mPic9WgPBeV057/h/nTEs4m1iNbVduX5Qs4CqFy0kB6daQA=="],
-
-    "@audio/mic-darwin-x64": ["@audio/mic-darwin-x64@1.1.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-FBgY8zxTZKU7U97rJliJnUSYzNpujQZhY7IqKAGI9chw/5zHS2/xE5IobFPKMyAWc+DYI+Huj/PmWZTUak9acA=="],
-
-    "@audio/mic-linux-arm64": ["@audio/mic-linux-arm64@1.1.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-lYvvWKqJwr0tGmRNtm4AAJGH06PoD9/PprIs5VqJkJS8LFDUHIPlx0jECn3nrVLBrKmAxrU/2QwhRPJg/olX4Q=="],
-
-    "@audio/mic-linux-x64": ["@audio/mic-linux-x64@1.1.0", "", { "os": "linux", "cpu": "x64" }, "sha512-SXxiOdDNompQDkgONJT4wwwbXHQpzQW0EeQMMAraXYMiHAkuxwMkZIbylXIMIx698UcOnHUMc/LvJ5q/zfQ9Eg=="],
-
-    "@audio/mic-win32-x64": ["@audio/mic-win32-x64@1.1.0", "", { "os": "win32", "cpu": "x64" }, "sha512-05vnPsgcWGM1RZ1Yh93cCY/FKTCCtThvb7x1iiexa6zlphhEUN8yPpcSSTKxq1ufaHG6gmCJLSkyhNf5Exbiqg=="],
-
-    "@audio/mir": ["@audio/mir@1.1.3", "", { "dependencies": { "@audio/mir-chord": "^1.0.0", "@audio/mir-chroma": "^1.0.0", "@audio/mir-coversong": "^1.0.0", "@audio/mir-downbeat": "^1.0.0", "@audio/mir-drums": "^1.0.0", "@audio/mir-fingerprint": "^1.0.0", "@audio/mir-key": "^1.0.0", "@audio/mir-melody": "^1.0.0", "@audio/mir-multif0": "^1.0.0", "@audio/mir-similarity": "^1.0.0", "@audio/mir-structure": "^1.0.0", "@audio/mir-tempogram": "^1.0.0", "@audio/mir-tonnetz": "^1.0.0", "@audio/mir-transcribe": "^1.0.0" } }, "sha512-qqwoBRLE61SKpIc9lcsv+6Yhr7fIRGSNU860cVWiMnL9vzdjtZ1ZfeU+aPjBrTi8ZK/WMFE3Bv1QJs9X01F/8A=="],
-
-    "@audio/mir-chord": ["@audio/mir-chord@1.0.1", "", {}, "sha512-9UZ2eA2pDZVNOCfpoBcC+bSyCghriez0l+5QDWAvzQqBVLpfzxA/71H2hURaNZFDIuelfxZOaXzGCtvHdAAJDQ=="],
-
-    "@audio/mir-chroma": ["@audio/mir-chroma@1.1.2", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-Yc4yV8qEOo3AhKiM5b1xUVWmBfRxhyxKQnUN+cQYLAPiDkjJZzXE9Cy4tCspncX2KyWj3+GTV3t02E1uaHABew=="],
-
-    "@audio/mir-coversong": ["@audio/mir-coversong@1.1.4", "", { "dependencies": { "@audio/mir-chroma": "^1.0.0" } }, "sha512-4wId7eTyvkp9KdRy0cJXSv7Ed7Alc76FiF/5gA7c9r06R8zR7XWPM7m4+/YgMmMPsR7tnIjJFWQb0wSLSLKJ0Q=="],
-
-    "@audio/mir-downbeat": ["@audio/mir-downbeat@1.1.4", "", { "dependencies": { "@audio/mir-chroma": "^1.0.0", "fourier-transform": "^2.3.0" } }, "sha512-X09QskLUNbNi3ADoI4NSfS2CGTmUYVFPYX8r8S9k50sb1A/UnhAx2s9YLpRPQdcvgXEv0ZngCi8RNi4LkwPpZw=="],
-
-    "@audio/mir-drums": ["@audio/mir-drums@1.1.5", "", { "dependencies": { "@audio/onset": "^1.0.0", "fourier-transform": "^2.3.0" } }, "sha512-RC9rSEzWobBTsstB+el8a72Jrz7Knoxtydd8HN+Ri+KVNWxWAFXjy8V+J7QtVUIj5aCnk7eJ9jynv0HVV9Fczw=="],
-
-    "@audio/mir-fingerprint": ["@audio/mir-fingerprint@1.1.3", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-yoE3Lm0xa1eqaY+7aUmUAsKEYZWx/7FOEwXoZ32o3Aj7iJnAFi1psexioyuEVTNjO2D8NjZECR3R50g0XSt15Q=="],
-
-    "@audio/mir-key": ["@audio/mir-key@1.0.1", "", {}, "sha512-3q/venTXYSj9r7YmkV6fxbiuo5uYG3n2bWi1OawAbZaxeykSoG+yL3cboC+LGj4wQHsGCR09kOG2FtZ/wllh9w=="],
-
-    "@audio/mir-melody": ["@audio/mir-melody@1.1.3", "", { "dependencies": { "@audio/pitch-yin": "^1.0.0" } }, "sha512-xRmtD4tRq74a7kBpKM9B55KS99e7YXIpleQ3yhYyqXPYbQtEw/Tao1SKKHqWxA0Fju5ouw1Qu1EED9aFkFnUOA=="],
-
-    "@audio/mir-multif0": ["@audio/mir-multif0@1.1.4", "", { "dependencies": { "fourier-transform": "^2.3.0" } }, "sha512-kMYCvTCBfoxktWCHK2K4jZJ3Bu1W76TVnkm7VcZMyO8uYqFyoSLu6ubpDdzjIaC39QYTxwjC+BpQUBXiAO8GpQ=="],
-
-    "@audio/mir-similarity": ["@audio/mir-similarity@1.1.4", "", { "dependencies": { "@audio/mir-chroma": "^1.0.0", "@audio/spectral-mfcc": "^1.0.0" } }, "sha512-EzqYfevOkv9oCW/c0p4zCjKZgOLjBiTAaQ4qVqQJXY72jDiO/QPSL8WzYPQXE0X4nME168d3/tJQU7cW8MAeYw=="],
-
-    "@audio/mir-structure": ["@audio/mir-structure@1.1.3", "", { "dependencies": { "@audio/spectral-mfcc": "^1.0.0" } }, "sha512-NWGveNqNvQDqsoAT/PsDdqPFcNDBAi1TYKHrAHPeGBIXZxUlYwiMkHk0rSnwsaDmBlFR/Ch8l5q6NhEeZKK3UQ=="],
-
-    "@audio/mir-tempogram": ["@audio/mir-tempogram@1.1.4", "", { "dependencies": { "@audio/onset": "^1.0.0" } }, "sha512-v52DGp740sxuz734Jk0DXKYBakEnU1Cjwpf0IP4wT5FORZ6t6fcSOYrrklD4yNWL2LHCCEj+3IZUDD7/CKK31g=="],
-
-    "@audio/mir-tonnetz": ["@audio/mir-tonnetz@1.1.2", "", { "dependencies": { "@audio/mir-chroma": "^1.0.0" } }, "sha512-MNwWV8pM/WX+EJAkXheBeMivK8Mt8+gQoDLYAh+RlGdHTnE6wIVw9J/g3/y+e0hZeo/PFyOi7bSIVbH1j37Sww=="],
-
-    "@audio/mir-transcribe": ["@audio/mir-transcribe@1.1.4", "", { "dependencies": { "@audio/mir-multif0": "^1.0.0", "@audio/note": "^1.0.0" } }, "sha512-KDFs6yE+5ouEThSi6FC7OFwsnjSj1TsrNjOltB59Coj146WtaSfvT1fJOXYPR2NkTUh3jHvnpmBvMBJxQPswDw=="],
-
-    "@audio/note": ["@audio/note@1.0.2", "", {}, "sha512-T0Rbalc7+g+L4C9hhMT9+EfsHbh6CD+qW8vWc755ea0enT3oMKYYL7ALRCC5OKU4IhD8KwJ7zcjjpf7dHzxXHw=="],
-
-    "@audio/onset": ["@audio/onset@1.0.1", "", { "dependencies": { "fourier-transform": "^2.2.0", "window-function": "^3.0.0" } }, "sha512-uO9RLWHNCMpbeIQszlc+J8ggZGT03nnfWT8++Ll25VhcJdKN3hIfAgwxAxjWbSgcXyKS17N7ba4HSVP7Wcxtag=="],
-
-    "@audio/pitch": ["@audio/pitch@2.0.4", "", { "dependencies": { "@audio/pitch-amdf": "^1.0.0", "@audio/pitch-autocorrelation": "^1.0.0", "@audio/pitch-cepstrum": "^1.0.0", "@audio/pitch-hps": "^1.0.0", "@audio/pitch-mcleod": "^1.0.0", "@audio/pitch-pyin": "^1.0.0", "@audio/pitch-swipe": "^1.0.0", "@audio/pitch-yin": "^1.0.0" } }, "sha512-xRuLjIFyrIvmhG/zE1hJyLZqOxPITJVuln+KGGwrfr9cjJMHG8vZJLUAqOJut6XLCXpgNJB5q/sJrDCVIHkUvw=="],
-
-    "@audio/pitch-amdf": ["@audio/pitch-amdf@1.0.1", "", {}, "sha512-GMHOQTF0O02CGY7uhK3Fuh/45W2Pklbjm34i2GmEXLpAaK8BrixtOuEAExpkLvv35WyUptwjMAsqfLq4o9ZcDQ=="],
-
-    "@audio/pitch-autocorrelation": ["@audio/pitch-autocorrelation@1.0.1", "", {}, "sha512-vFhXC9T6OqGYFsCMmASug/njJ4ZGIWihv6PDqr0jxv/Zm74Op47DJsc/xgcYzzMrwR6CRt+lpb+9O7oNqeBFrw=="],
-
-    "@audio/pitch-cepstrum": ["@audio/pitch-cepstrum@1.0.1", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-zYWuFoi94JJm/fN78cxx+cFfC+OvkvKk02sS3oOmnTh7mlmz9ddmcMiM2rh4MEyIMsjK0gZ73XDyIeHG7SnK5w=="],
-
-    "@audio/pitch-hps": ["@audio/pitch-hps@1.0.1", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-yYruCm0FfHFgKiqqKAVv0aPCiQvU1XPxGDJuSFx10jvcSs+rujIEr5Tg5+Hadmp0F1YnU2GyXONUvAXBCuOz2g=="],
-
-    "@audio/pitch-mcleod": ["@audio/pitch-mcleod@1.0.1", "", {}, "sha512-WAVlPhNxI37jl0YQK4debmr9zcWATsWAwnGY6U4ETXn7walSPNExpPSyTD04e999aGsEkw5UaBmypQjfNShiJQ=="],
-
-    "@audio/pitch-pyin": ["@audio/pitch-pyin@1.0.1", "", {}, "sha512-ecBicUx+arjwggUy/p0EbHRB9b28zoU5n3ESp0RRy/udvAT6c1bqCyqxFpaobDPG4oPVFLFEcVfmrOMFHgixqw=="],
-
-    "@audio/pitch-swipe": ["@audio/pitch-swipe@1.0.1", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-AvqYhig/MJK105MMFHynu2us1ycLVlLs3MYo6r1yRU8QQWexHmKnZW3MMRNxdRF0QL94SW3X3YzuqaBBgrxQKw=="],
-
-    "@audio/pitch-yin": ["@audio/pitch-yin@1.0.5", "", {}, "sha512-qYtpfznWJ0fEhBV1o/qC2YA0RCYS8AQFA/uNkhS6ul5irsFKYY+r65kPPm/kT82YD8mCZoHu+vuG6Yby6D/kfA=="],
-
-    "@audio/resample-polyphase": ["@audio/resample-polyphase@1.0.2", "", {}, "sha512-9QAFe/g0kTlprzUVZFyh37vxWeeyOW40tXPlHfbL3p1hN3WPZiaauAUwsoXUiEl9mlbtqYfM47EoN7SsZfQhTg=="],
-
-    "@audio/spatial-midside": ["@audio/spatial-midside@1.1.3", "", {}, "sha512-y5571hFB5LRGP1U915/YZyWOzQrI6P+1NAW1yxX7BeCf3uod4NHtU6m68fAnQDdGh0IbQTJmik69MYaFab0flQ=="],
-
-    "@audio/speaker": ["@audio/speaker@2.3.3", "", { "optionalDependencies": { "@audio/speaker-darwin-arm64": ">=2.0.0", "@audio/speaker-darwin-x64": ">=2.0.0", "@audio/speaker-linux-arm64": ">=2.0.0", "@audio/speaker-linux-x64": ">=2.0.0", "@audio/speaker-win32-x64": ">=2.0.0" } }, "sha512-+NcuJjKig+2tluEtxiP5keSEmqf/dtVWjdqlBy585GKxhZLAj2jrTgrWBUUtk9OFt4uD6A0qlmzMwJVhF7NgCQ=="],
-
-    "@audio/speaker-darwin-arm64": ["@audio/speaker-darwin-arm64@2.3.3", "", { "os": "darwin", "cpu": "arm64" }, "sha512-0uTpyhB1K1Z9ecf1s58IjgiMZgDZ99nmIaayPHQ0hXoKJeFsb4CIr5M8O/ZH9+sg70folxdhmyryXxxmsQvwtg=="],
-
-    "@audio/speaker-darwin-x64": ["@audio/speaker-darwin-x64@2.3.3", "", { "os": "darwin", "cpu": "x64" }, "sha512-q3WgBvvxiqjvAK1gCTJXWY6FTk1og38H809I6JTFMdBvDvvjw9Cc2AVNraktY5+40ZexmN7oYaMZ2n2pgvC7cw=="],
-
-    "@audio/speaker-linux-arm64": ["@audio/speaker-linux-arm64@2.3.3", "", { "os": "linux", "cpu": "arm64" }, "sha512-VTvmK92KatC0KOzAEj96rLb6MfXzNOKK4sRDEveXmtS1mlPbXzAK9XoZgOc0UDN4IwU9agIxDFBIcDmbrL1GCg=="],
-
-    "@audio/speaker-linux-x64": ["@audio/speaker-linux-x64@2.3.3", "", { "os": "linux", "cpu": "x64" }, "sha512-UqKtHm+EvgGuruA57/1O8ZhU6xgN6C0yFOfVBXFbBb4kkqBa1yiX65bNwKxONpjt24nL/Yv03rUaWaDp2XX00w=="],
-
-    "@audio/speaker-win32-x64": ["@audio/speaker-win32-x64@2.3.3", "", { "os": "win32", "cpu": "x64" }, "sha512-fD7E3otk2kZjaCC1d5iBOcqvnS6xTrdQRYm0J7FyGnByVFZzol2oG+RSSxUYT2rolMCQvBMWif7vJAyLBcXX9w=="],
-
-    "@audio/spectral-mfcc": ["@audio/spectral-mfcc@1.0.2", "", { "dependencies": { "fourier-transform": "^2.2.0" } }, "sha512-V39TXQBc+9Ezbr95Y5sVl6vhcf8z3DxLHpGYLt0lb17SWoaxu9ypGrtkHmJx3SjDpElSBV+ioVduaKKGbcAk/Q=="],
-
-    "@audio/spectral-pvoc": ["@audio/spectral-pvoc@1.0.1", "", {}, "sha512-YydFYjgewYTwgRcRGrsZ4gZsHjZt9U35Bl/7Y99nEriK1F3lVdQqgVuZAY2KWsr3J6XllVSdDffpd18bKzuQBQ=="],
-
-    "@audio/stretch": ["@audio/stretch@2.0.5", "", { "dependencies": { "@audio/stretch-hybrid": "^1.0.0", "@audio/stretch-paulstretch": "^1.0.0", "@audio/stretch-pghi": "^1.0.0", "@audio/stretch-psola": "^1.0.0", "@audio/stretch-pvoc": "^1.0.0", "@audio/stretch-pvoc-lock": "^1.0.0", "@audio/stretch-sms": "^1.0.0", "@audio/stretch-transient": "^1.0.0", "@audio/stretch-wsola": "^1.0.0" } }, "sha512-dUwsVr3pKO1vEyrmGCo/DsKcuV/M+nmbl0QyJ0LNqhZnyWe0WQjhL4LPuAiYrCHpKo4rKIXattUAtDhY32T+LQ=="],
-
-    "@audio/stretch-hybrid": ["@audio/stretch-hybrid@1.2.2", "", { "dependencies": { "@audio/stretch-pvoc-lock": "^1.0.0", "@audio/stretch-wsola": "^1.2.2", "fourier-transform": "^2.3.0" } }, "sha512-+KJR72+BOZOXuomGTgzEycrsIXy/qTkVtQDZl5Jb7Me6fnpQ9nLtsktnHz9fOUoq8mZH7TJR0eSF5AEDUQEmng=="],
-
-    "@audio/stretch-paulstretch": ["@audio/stretch-paulstretch@1.2.2", "", { "dependencies": { "fourier-transform": "^2.4.2" } }, "sha512-fQphMJ2VOU3WkR+DF7RSaiJ4Sx2f7hq/Sbksh0OT3/+PwHAMF++HQygPmLO9wJEjgJgUpMv5jRxTh4nYXUR6KA=="],
-
-    "@audio/stretch-pghi": ["@audio/stretch-pghi@1.2.2", "", { "dependencies": { "fourier-transform": "^2.4.2" } }, "sha512-kWASWXg/LR12GBF/WmKbrj1zsWLB6xUl7IBr5Anf090VyXlI+J71W7lLKctNn+vWkJhMOvpD9203IdZWWVSZ/g=="],
-
-    "@audio/stretch-psola": ["@audio/stretch-psola@1.2.2", "", { "dependencies": { "@audio/stretch-wsola": "^1.0.0" } }, "sha512-4LHFAy5Pbjbeij+x4ParGkNeHq+p6pE2pITYOXR/+QbV7Y64A6jkNxsA80Xo8lBW5CYdYc/h6c+IbZN1uoJtFw=="],
-
-    "@audio/stretch-pvoc": ["@audio/stretch-pvoc@1.2.2", "", { "dependencies": { "fourier-transform": "^2.4.2" } }, "sha512-W2aIpbuOFyd7yoRq/xPijB0yrxCZt2mZkjdiv12UAevTq4hOPpHWilTJPbPDa+RL3pU8H0cgy8DGy+CEssq7zg=="],
-
-    "@audio/stretch-pvoc-lock": ["@audio/stretch-pvoc-lock@1.3.2", "", { "dependencies": { "@audio/spectral-pvoc": "^1.0.0", "fourier-transform": "^2.4.2" } }, "sha512-+Cbf4YXWAc0x8bO6F8GiNMMNvAG2pzpKRSRB8s7Dv801b1V7UkO2nWbBH47POhFc9DxIz1sqRA/LqIgjjhDi2A=="],
-
-    "@audio/stretch-sms": ["@audio/stretch-sms@1.2.2", "", { "dependencies": { "fourier-transform": "^2.3.0" } }, "sha512-B5EgBsf2hxN6U3FdA2NbvVfTj2YJoW7pK7Zo65ggEQGusStG3W08GLkevtbDmNRi/YEXH+DugcA4byG4R7FBNQ=="],
-
-    "@audio/stretch-transient": ["@audio/stretch-transient@1.2.2", "", { "dependencies": { "@audio/spectral-pvoc": "^1.0.0", "fourier-transform": "^2.4.2" } }, "sha512-DzVIC/WsB57aIUHdnlrSUdxh4Nlgim5BggMWloA2R5CABGreYCvYSY4WImBMgICBBNQAWXqM3eYDej/m+mABaQ=="],
-
-    "@audio/stretch-wsola": ["@audio/stretch-wsola@1.2.2", "", {}, "sha512-+D+ki44y+zhIl+jvGEYq1Hek54b0zQ0A80NIIGch0ZTGBa/CYrzhg8UQRmNIJrYlInOI+ev3Zc7JPKoh69IgqQ=="],
-
-    "@audio/vocals": ["@audio/vocals@1.0.5", "", { "dependencies": { "@audio/spatial-midside": "^1.0.0" } }, "sha512-70zDOmNPmS15W4BxXtjJ8UNiRClimoKqMWlBGuSVyBO5oSBVc/vOPn9i31mdM6xCj0csfOPN0rZinMjXV6AvoQ=="],
-
-    "@audio/weighting": ["@audio/weighting@1.2.1", "", { "dependencies": { "@audio/weighting-a": "^1.0.0", "@audio/weighting-b": "^1.0.0", "@audio/weighting-c": "^1.0.0", "@audio/weighting-d": "^1.0.0", "@audio/weighting-itu468": "^1.0.0", "@audio/weighting-k": "^1.0.0", "@audio/weighting-riaa": "^1.0.0" } }, "sha512-EhglU529sWSXizHiAVWQeLPSI9r40W3M1U3jqRApkbB2xnwAiVAkm1jPs6NaQ2eTnrX0WvJL31kUjO1iUSjnZg=="],
-
-    "@audio/weighting-a": ["@audio/weighting-a@1.2.2", "", { "dependencies": { "@audio/biquad": "^1.1.0", "digital-filter": "^2.0.0" } }, "sha512-Xee9lL2rdGEs2EIjWHHlFEfSaNVAi28Xj2QTJ2rt1EWvfWb1pIqn018c9s5UH+YAvt+AkFdonB7qCWvD+c526w=="],
-
-    "@audio/weighting-b": ["@audio/weighting-b@1.1.2", "", { "dependencies": { "@audio/biquad": "^1.1.0", "digital-filter": "^2.0.0" } }, "sha512-vkBYs11aY3cuK3JWfFXsPb7a2FgKJzrP29X6fOu0i77oBebprk+mMDM+aPVs6RK3nsOwQSQWh5zaop8sZBFRMg=="],
-
-    "@audio/weighting-c": ["@audio/weighting-c@1.2.2", "", { "dependencies": { "@audio/biquad": "^1.1.0", "digital-filter": "^2.0.0" } }, "sha512-DSt3MQXnkRPN5F0UtMZ2MpVuY1SiAJ0pCii3AlyZbF/VpmcfaMj+5w9/J6CypZy2ci3CdJzZGWM0uK0ADNr2Dg=="],
-
-    "@audio/weighting-d": ["@audio/weighting-d@1.0.2", "", { "dependencies": { "@audio/biquad": "^1.1.0", "digital-filter": "^2.0.0" } }, "sha512-3O3OBYh4oHyjqjL6GUSSe0gT30OJ6t8iBGh4Sb8R8kSUUrNH/DEPmZsJB4mHY2WDi6SwLE9Kjn7HT5GTs5zSEg=="],
-
-    "@audio/weighting-itu468": ["@audio/weighting-itu468@1.2.2", "", { "dependencies": { "@audio/biquad": "^1.1.0", "digital-filter": "^2.0.0" } }, "sha512-8K0B+YkVHdeb6R+7F+RMKzRkzk5r6dNYu5qWHaf+U7LftYpA05Ue+IkFwA2Cev+VX0Qst/ObDkYKOnCZvzjDcQ=="],
-
-    "@audio/weighting-k": ["@audio/weighting-k@1.1.2", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-0XtiwcQzplDmgsZvYuAcRcDm5qbXufYjauEWHxo00DSeW9k1JGQIb+qt3vfClN+miBwRdvpWYBFLbOmUZD8tow=="],
-
-    "@audio/weighting-riaa": ["@audio/weighting-riaa@1.1.2", "", { "dependencies": { "@audio/biquad": "^1.1.0" } }, "sha512-pZjHkxZuCoQnGClIAyWIXVmblXv8rx9ekNlKvOjFdpxI4gRlOHWeIUaob80c0ctlgF7VIISJChQPwEPA2p18hA=="],
-
-    "@audio/window": ["@audio/window@1.0.3", "", { "dependencies": { "window-function": "^3.0.1" } }, "sha512-tGYjmAqvGExwlkjtLEqU29tyPAznC7NuQy9wRNpAcHrGD5CXJzseV0Bnniw2EIeYIgMJr/5LZBx52l4Y/5dpFQ=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
@@ -330,8 +69,6 @@
     "@babel/traverse": ["@babel/traverse@7.29.8", "", { "dependencies": { "@babel/code-frame": "^7.29.7", "@babel/generator": "^7.29.8", "@babel/helper-globals": "^7.29.7", "@babel/parser": "^7.29.8", "@babel/template": "^7.29.7", "@babel/types": "^7.29.8", "debug": "^4.3.1" } }, "sha512-I5z7H3bf/41ktsNVLtpN0wAa336HkqIHQ5BuPLEhTkt1jVSyZpeNKIzTgEWmlxjdg81R0IgUCcaE+Ok3NvrfZg=="],
 
     "@babel/types": ["@babel/types@7.29.8", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.7", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="],
-
-    "@eshaz/web-worker": ["@eshaz/web-worker@1.2.2", "", {}, "sha512-WxXiHFmD9u/owrzempiDlBB1ZYqiLnm9s6aPc8AlFQalq2tKmqdmMr9GXOupDgzXtqnBipj8Un0gkIm7Sjf8mw=="],
 
     "@eslint-community/eslint-utils": ["@eslint-community/eslint-utils@4.10.1", "", { "dependencies": { "eslint-visitor-keys": "^3.4.3" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0" } }, "sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg=="],
 
@@ -399,12 +136,6 @@
 
     "@ngrok/ngrok-win32-x64-msvc": ["@ngrok/ngrok-win32-x64-msvc@1.7.0", "", { "os": "win32", "cpu": "x64" }, "sha512-UFJg/duEWzZlLkEs61Gz6/5nYhGaKI62I8dvUGdBR3NCtIMagehnFaFxmnXZldyHmCM8U0aCIFNpWRaKcrQkoA=="],
 
-    "@swc/helpers": ["@swc/helpers@0.5.23", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw=="],
-
-    "@thi.ng/bitstream": ["@thi.ng/bitstream@2.4.55", "", { "dependencies": { "@thi.ng/errors": "^2.6.17" } }, "sha512-9Oj7k8SrPZ/T+ke7nivbNnoTm+fnICzz8jbgN/+JdpeohfplVW64rSiTqgbhzq8BakFa3yxeFjxeFlFZ+2gFYg=="],
-
-    "@thi.ng/errors": ["@thi.ng/errors@2.6.17", "", {}, "sha512-momw7wo3EXes1wa6Smckr+l4BaJi/h+E67R3furYOBjQpciie1OgoTa43PXPb1POsuWxynkEF8OCnQgreE8twg=="],
-
     "@types/bun": ["@types/bun@1.4.1", "", { "dependencies": { "bun-types": "1.4.1" } }, "sha512-0AVGiTXGajf1rgKom3N+c5L7CBxuoyyv1i44M0nX4UDK0G/fnRAMiri93nHuVPIb429KKtAgj7HatVmmOjeQLA=="],
 
     "@types/cli-spinners": ["@types/cli-spinners@1.3.3", "", {}, "sha512-B5/ya7/tb6zH2sFza0WYMuuIP3klS94+bkGAJ4ISXstmIaesoG1PZ3glNllmPUx94Oh4kguzgoZucEBqBUds6w=="],
@@ -449,12 +180,6 @@
 
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.69.0", "", { "dependencies": { "@typescript-eslint/types": "8.69.0", "eslint-visitor-keys": "^5.0.0" } }, "sha512-+rmdgPA+EXkNgKYvHvFfhrs35utXbwaC5PGpDquSXcoXQDKUA5UjV0LmTucG/4JXkM31BTu4TilHtrN8IVBe8w=="],
 
-    "@wasm-audio-decoders/common": ["@wasm-audio-decoders/common@9.0.7", "", { "dependencies": { "@eshaz/web-worker": "1.2.2", "simple-yenc": "^1.0.4" } }, "sha512-WRaUuWSKV7pkttBygml/a6dIEpatq2nnZGFIoPTc5yPLkxL6Wk4YaslPM98OPQvWacvNZ+Py9xROGDtrFBDzag=="],
-
-    "@wasm-audio-decoders/flac": ["@wasm-audio-decoders/flac@0.2.11", "", { "dependencies": { "@wasm-audio-decoders/common": "9.0.7", "codec-parser": "2.5.0" } }, "sha512-bbSGuDDxY89CrS7FYc2cBBfvtgk3EY9As8dVe8PFIgX7ECd/wefdi8UbGlvcdQZczRwE500KBt4cqf/+mMVsfw=="],
-
-    "@wasm-audio-decoders/ogg-vorbis": ["@wasm-audio-decoders/ogg-vorbis@0.1.20", "", { "dependencies": { "@wasm-audio-decoders/common": "9.0.7", "codec-parser": "2.5.0" } }, "sha512-zaQPasU5usRjUDXtXOHYED5tfkR4QMXd+EH3Nrz1+4+M5pCsdD+s9YxJqb0oqnTyRu/KUujOmu5Z/m/NT47vwg=="],
-
     "acorn": ["acorn@8.18.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ=="],
 
     "acorn-jsx": ["acorn-jsx@5.3.2", "", { "peerDependencies": { "acorn": "^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="],
@@ -484,10 +209,6 @@
     "arraybuffer.prototype.slice": ["arraybuffer.prototype.slice@1.0.4", "", { "dependencies": { "array-buffer-byte-length": "^1.0.1", "call-bind": "^1.0.8", "define-properties": "^1.2.1", "es-abstract": "^1.23.5", "es-errors": "^1.3.0", "get-intrinsic": "^1.2.6", "is-array-buffer": "^3.0.4" } }, "sha512-BNoCY6SXXPQ7gF2opIP4GBE+Xw7U+pHMYKuzjgCN3GwiaIR09UUeKfheyIry77QtrCBlC0KK0q5/TER/tYh3PQ=="],
 
     "async-function": ["async-function@1.0.0", "", {}, "sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA=="],
-
-    "audio": ["audio@2.6.10", "", { "dependencies": { "@audio/beat": "^2.1.3", "@audio/decode": "^3.15.0", "@audio/decode-flac": "^1.3.3", "@audio/decode-mp3": "^1.3.1", "@audio/decode-wav": "^1.5.0", "@audio/encode": "^1.6.5", "@audio/encode-flac": "^1.2.2", "@audio/encode-mp3": "^1.2.2", "@audio/encode-wav": "^1.3.2", "@audio/eq": "^1.0.3", "@audio/filter": "^3.2.1", "@audio/mic": "^1.1.3", "@audio/mir": "^1.1.3", "@audio/note": "^1.0.2", "@audio/pitch": "^2.0.4", "@audio/speaker": "^2.3.3", "@audio/stretch": "^2.0.5", "@audio/vocals": "^1.0.5", "@audio/weighting": "^1.2.1", "@audio/weighting-a": "^1.2.2", "@audio/window": "^1.0.3", "audio-type": "^2.4.1", "fourier-transform": "^2.4.2", "parse-duration": "^2.1.6", "pcm-convert": "^3.1.1" }, "bin": { "audio": "bin/cli.js" } }, "sha512-qd3Px5U+V9Sey88G1+DfbjeQK/8fA2J5ihqdQF9JcHJ9Rrkik2y6TcZ5a01710UITFNacOYYpWnQb/qrUFV37g=="],
-
-    "audio-type": ["audio-type@2.7.0", "", {}, "sha512-macErCCilP6JsoJGLguH2wVDNA1qsBAMNp9yq+ZFndBbD+KqRxjSUQahjKmXbIkSH5LRU0ybcR8fNbOLvOo/bg=="],
 
     "auto-bind": ["auto-bind@5.0.1", "", {}, "sha512-ooviqdwwgfIfNmDwo94wlshcdzfO64XV0Cg6oDsDYBJfITDz1EngD2z7DkbvCWn+XIMsIqW27sEVF6qcpJrRcg=="],
 
@@ -531,8 +252,6 @@
 
     "code-excerpt": ["code-excerpt@4.0.0", "", { "dependencies": { "convert-to-spaces": "^2.0.1" } }, "sha512-xxodCmBen3iy2i0WtAK8FlFNrRzjUqjRsMfho58xT/wvZU1YTM3fCnRjcy1gJPMepaRlgm/0e6w8SpWHpn3/cA=="],
 
-    "codec-parser": ["codec-parser@2.5.0", "", {}, "sha512-Ru9t80fV8B0ZiixQl8xhMTLru+dzuis/KQld32/x5T/+3LwZb0/YvQdSKytX9JqCnRdiupvAvyYJINKrXieziQ=="],
-
     "color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
@@ -562,8 +281,6 @@
     "define-properties": ["define-properties@1.2.1", "", { "dependencies": { "define-data-property": "^1.0.1", "has-property-descriptors": "^1.0.0", "object-keys": "^1.1.1" } }, "sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg=="],
 
     "define-property": ["define-property@1.0.0", "", { "dependencies": { "is-descriptor": "^1.0.0" } }, "sha512-cZTYKFWspt9jZsMscWo8sc/5lbPC9Q0N5nBLgb+Yd915iL3udB1uFgS3B8YCx66UVHq018DAVFoee7x+gxggeA=="],
-
-    "digital-filter": ["digital-filter@2.4.2", "", { "dependencies": { "window-function": "^3.0.1" } }, "sha512-whhiIcz/YlKqDca8CqpGjMvP4Jly/De2QCCmilPAeKgZFAyzTS62prcdl0pKZOQxhez33pipbsF8WYVY3/9YTA=="],
 
     "doctrine": ["doctrine@2.1.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw=="],
 
@@ -640,8 +357,6 @@
     "flatted": ["flatted@3.4.4", "", {}, "sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q=="],
 
     "for-each": ["for-each@0.3.5", "", { "dependencies": { "is-callable": "^1.2.7" } }, "sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg=="],
-
-    "fourier-transform": ["fourier-transform@2.4.2", "", {}, "sha512-XmtK+y/lePPK0P3LQ1Ii5e9YNvuf4aDn0qYrvKGT9M0/WDlJaiF4MkJUAsbNW6n9K4fFih3HTsQNiuSDkeqObw=="],
 
     "function-bind": ["function-bind@1.1.2", "", {}, "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA=="],
 
@@ -811,8 +526,6 @@
 
     "levn": ["levn@0.4.1", "", { "dependencies": { "prelude-ls": "^1.2.1", "type-check": "~0.4.0" } }, "sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ=="],
 
-    "libflacjs": ["libflacjs@5.6.0", "", { "bin": { "index.d.ts": "dist/index.d.ts", "libflac.d.ts": "dist/libflac.d.ts", "libflac.dev.d.ts": "dist/libflac.dev.d.ts", "libflac.dev.js": "dist/libflac.dev.js", "libflac.dev.js.symbols": "dist/libflac.dev.js.symbols", "libflac.dev.wasm.d.ts": "dist/libflac.dev.wasm.d.ts", "libflac.dev.wasm.js": "dist/libflac.dev.wasm.js", "libflac.dev.wasm.js.symbols": "dist/libflac.dev.wasm.js.symbols", "libflac.dev.wasm.wasm": "dist/libflac.dev.wasm.wasm", "libflac.dev.wasm.wasm.map": "dist/libflac.dev.wasm.wasm.map", "libflac.js": "dist/libflac.js", "libflac.js.symbols": "dist/libflac.js.symbols", "libflac.min.d.ts": "dist/libflac.min.d.ts", "libflac.min.js": "dist/libflac.min.js", "libflac.min.js.mem": "dist/libflac.min.js.mem", "libflac.min.js.symbols": "dist/libflac.min.js.symbols", "libflac.min.wasm.d.ts": "dist/libflac.min.wasm.d.ts", "libflac.min.wasm.js": "dist/libflac.min.wasm.js", "libflac.min.wasm.js.symbols": "dist/libflac.min.wasm.js.symbols", "libflac.min.wasm.wasm": "dist/libflac.min.wasm.wasm", "libflac.wasm.d.ts": "dist/libflac.wasm.d.ts", "libflac.wasm.js": "dist/libflac.wasm.js", "libflac.wasm.js.symbols": "dist/libflac.wasm.js.symbols", "libflac.wasm.wasm": "dist/libflac.wasm.wasm" } }, "sha512-ev9pJxcPEkUdQDBd5ywPHEtYe9mGlzLaNwj+sS32IpiOTPnCYQsCPZLR95dAYXix24UICJJwld4D/tZrR0RFbw=="],
-
     "lint-staged": ["lint-staged@17.5.0", "", { "dependencies": { "picomatch": "^4.0.7", "string-argv": "^0.3.2", "tinyexec": "^1.3.1" }, "optionalDependencies": { "yaml": "^2.9.0" }, "bin": { "lint-staged": "bin/lint-staged.js" } }, "sha512-ah2qsNtvKP1+Ak4rAvEEIvcXDLjjbr/xmxCvlequxqEOFYk0qINcZcRxD3Ic8wRn7/oQ8+wC9s0DfDrdMVCRFg=="],
 
     "locate-path": ["locate-path@6.0.0", "", { "dependencies": { "p-locate": "^5.0.0" } }, "sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw=="],
@@ -828,8 +541,6 @@
     "mimic-fn": ["mimic-fn@2.1.0", "", {}, "sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg=="],
 
     "minimatch": ["minimatch@3.1.5", "", { "dependencies": { "brace-expansion": "^1.1.7" } }, "sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w=="],
-
-    "mpg123-decoder": ["mpg123-decoder@1.0.3", "", { "dependencies": { "@wasm-audio-decoders/common": "9.0.7" } }, "sha512-+fjxnWigodWJm3+4pndi+KUg9TBojgn31DPk85zEsim7C6s0X5Ztc/hQYdytXkwuGXH+aB0/aEkG40Emukv6oQ=="],
 
     "ms": ["ms@2.1.3", "", {}, "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="],
 
@@ -865,8 +576,6 @@
 
     "parent-module": ["parent-module@1.0.1", "", { "dependencies": { "callsites": "^3.0.0" } }, "sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g=="],
 
-    "parse-duration": ["parse-duration@2.1.9", "", {}, "sha512-q73c2djLx0fPIEcnW4Eb9LBZnH+NunMUzKh3/UwHyMz8LKxd4hF0OVq3nap8x0AevX1QEyCojF7QO/vAb6PFiA=="],
-
     "patch-console": ["patch-console@2.0.0", "", {}, "sha512-0YNdUceMdaQwoKce1gatDScmMo5pu/tfABfnzEqeG0gtTmd7mh/WcwgUjtAeOU7N8nFFlbQBnFK2gXW5fGvmMA=="],
 
     "path-exists": ["path-exists@4.0.0", "", {}, "sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w=="],
@@ -874,8 +583,6 @@
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
 
     "path-parse": ["path-parse@1.0.7", "", {}, "sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw=="],
-
-    "pcm-convert": ["pcm-convert@3.2.0", "", { "dependencies": { "@audio/resample-polyphase": "^1.0.0" } }, "sha512-usFx+deSGAHpwT9TUsUtJwK0L4Gdmz+sS7eBP3ythCyTEsBcRem1EiM1J7aQw7O0snFcSGj629GhGbbRIEMArA=="],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
@@ -890,8 +597,6 @@
     "prop-types": ["prop-types@15.8.1", "", { "dependencies": { "loose-envify": "^1.4.0", "object-assign": "^4.1.1", "react-is": "^16.13.1" } }, "sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg=="],
 
     "punycode": ["punycode@2.3.1", "", {}, "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg=="],
-
-    "qoa-format": ["qoa-format@1.0.1", "", { "dependencies": { "@thi.ng/bitstream": "^2.2.12" } }, "sha512-dMB0Z6XQjdpz/Cw4Rf6RiBpQvUSPCfYlQMWvmuWlWkAT7nDQD29cVZ1SwDUB6DYJSitHENwbt90lqfI+7bvMcw=="],
 
     "react": ["react@19.2.8", "", {}, "sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw=="],
 
@@ -945,8 +650,6 @@
 
     "signal-exit": ["signal-exit@3.0.7", "", {}, "sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ=="],
 
-    "simple-yenc": ["simple-yenc@1.0.4", "", {}, "sha512-5gvxpSd79e9a3V4QDYUqnqxeD4HGlhCakVpb6gMnDD7lexJggSBJRBO5h52y/iJrdXRilX9UCuDaIJhSWm5OWw=="],
-
     "slice-ansi": ["slice-ansi@9.0.0", "", { "dependencies": { "ansi-styles": "^6.2.3", "is-fullwidth-code-point": "^5.1.0" } }, "sha512-SO/3iYL5S3W57LLEniscOGPZgOqZUPCx6d3dB+52B80yJ0XstzsC/eV8gnA4tM3MHDrKz+OCFSLNjswdSC+/bA=="],
 
     "stack-utils": ["stack-utils@2.0.6", "", { "dependencies": { "escape-string-regexp": "^2.0.0" } }, "sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ=="],
@@ -991,8 +694,6 @@
 
     "ts-api-utils": ["ts-api-utils@2.5.0", "", { "peerDependencies": { "typescript": ">=4.8.4" } }, "sha512-OJ/ibxhPlqrMM0UiNHJ/0CKQkoKF243/AEmplt3qpRgkW8VG7IfOS41h7V8TjITqdByHzrjcS/2si+y4lIh8NA=="],
 
-    "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
-
     "type-check": ["type-check@0.4.0", "", { "dependencies": { "prelude-ls": "^1.2.1" } }, "sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew=="],
 
     "type-fest": ["type-fest@5.9.0", "", { "dependencies": { "tagged-tag": "^1.0.0" } }, "sha512-yANm3Jr3GiJ1qgJlxGAVxTOIcEOk1rhQHamlXtnrCK7EHP4HeM9OGxtMg/W7HFdrVzw/ZWJKGVIJusVH85sLtw=="],
@@ -1015,8 +716,6 @@
 
     "uri-js": ["uri-js@4.4.1", "", { "dependencies": { "punycode": "^2.1.0" } }, "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg=="],
 
-    "wasm-media-encoders": ["wasm-media-encoders@0.7.0", "", { "dependencies": { "@swc/helpers": "^0.5.10" } }, "sha512-Sp4wUasgxOK/IFfNhpon6LQQgYGwtpxyV4isjGIe1rvhnJL3w2KYr4f+CdqDNtGPDcgCDRY+uBanVfSx6Si0WQ=="],
-
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
 
     "which-boxed-primitive": ["which-boxed-primitive@1.1.1", "", { "dependencies": { "is-bigint": "^1.1.0", "is-boolean-object": "^1.2.1", "is-number-object": "^1.1.1", "is-string": "^1.1.1", "is-symbol": "^1.1.1" } }, "sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA=="],
@@ -1028,8 +727,6 @@
     "which-typed-array": ["which-typed-array@1.1.22", "", { "dependencies": { "available-typed-arrays": "^1.0.7", "call-bind": "^1.0.9", "call-bound": "^1.0.4", "for-each": "^0.3.5", "get-proto": "^1.0.1", "gopd": "^1.2.0", "has-tostringtag": "^1.0.2" } }, "sha512-fvO4ExWMFsqyhG3AiPAObMuY1lxaqgYcxbc49CNdWDDECOJNgQyvsOWVwbZc+qf3rzRtxojBK+CMEv0Ld5CYpw=="],
 
     "widest-line": ["widest-line@6.0.0", "", { "dependencies": { "string-width": "^8.1.0" } }, "sha512-U89AsyEeAsyoF0zVJBkG9zBgekjgjK7yk9sje3F4IQpXBJ10TF6ByLlIfjMhcmHMJgHZI4KHt4rdNfktzxIAMA=="],
-
-    "window-function": ["window-function@3.0.2", "", {}, "sha512-MyN8QESmxgiFTU5zGjB4vTrhCs6H3d/7u46VaqwIz2qCsU0IP2+OY9oQQe77mHP+5roWh6zkivRnGOha0dbtsA=="],
 
     "window-size": ["window-size@1.1.1", "", { "dependencies": { "define-property": "^1.0.0", "is-number": "^3.0.0" }, "bin": { "window-size": "cli.js" } }, "sha512-5D/9vujkmVQ7pSmc0SCBmHXbkv6eaHwXEx65MywhmUMsI8sGqJ972APq1lotfcwMKPFLuCFfL8xGHLIp7jaBmA=="],
 
