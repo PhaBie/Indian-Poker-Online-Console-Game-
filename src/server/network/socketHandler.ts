@@ -243,6 +243,13 @@ function handleReconnectJoin(
     playerId: existingPlayerId,
     roomId: room.roomId,
   });
+
+  // Tell the reconnecting client its playerId and token again so its ClientState can recover myPlayerId
+  sendEvent(wsClient, {
+    type: 'SESSION_CREATED',
+    payload: { playerId: existingPlayerId, reconnectToken },
+  });
+
   broadcastGameStateUpdate(room.roomId, context);
   broadcastRoomList(context);
 }
