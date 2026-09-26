@@ -28,6 +28,7 @@ function runNavigationSteps(
       socketClient,
       onClearState: () => clientState.clearState(),
       onClearError: () => clientState.clearError(),
+      onSetSessionInfo: () => undefined,
     });
     useLayoutEffect(() => {
       executionSteps[stepTracker.current++]?.(navigation);

@@ -307,11 +307,13 @@ function resolvePlayerSeatVisuals(
   isEntranceDeckPhase: boolean = false,
 ) {
   const hasFolded = player.status === 'FOLDED';
+  const isDisconnected = player.status === 'DISCONNECTED';
   const fallbackBadge = getPlayerBadgeInfo(
     hasFolded,
     isThisPlayerTurn,
     isPendingSideshowTargetNode,
     isShowdownRevealed,
+    isDisconnected,
   );
   const badge = getSeatBadge(
     isSideshowParticipantNode,

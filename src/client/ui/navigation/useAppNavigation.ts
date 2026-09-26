@@ -40,6 +40,7 @@ export interface UseAppNavigationParams {
   readonly onlineServerUrl?: string;
   readonly onClearState: () => void;
   readonly onClearError: () => void;
+  readonly onSetSessionInfo: (name: string, url: string) => void;
 }
 
 function useGameStatePhaseSync(
@@ -77,6 +78,7 @@ export function useAppNavigation({
   onlineServerUrl: initialOnlineServerUrl = getOnlineServerUrl(),
   onClearState,
   onClearError,
+  onSetSessionInfo,
 }: UseAppNavigationParams) {
   const [screen, setScreen] = useState<ActiveScreen>('intro');
   const [playerName, setPlayerName] = useState<string>('');
@@ -125,27 +127,116 @@ export function useAppNavigation({
     } else if (!playerName) {
       setScreen('enterName');
     } else if (nextIntent === 'create') {
+      onSetSessionInfo(
+        playerName,
+        mode === 'LAN' ? initialServerUrl : initialOnlineServerUrl,
+      );
       socketClient.send({
         type: 'CREATE_ROOM',
         payload: { playerName, bootAmount: 50, maxPlayers },
       });
     } else {
+      onSetSessionInfo(
+        playerName,
+        mode === 'LAN' ? initialServerUrl : initialOnlineServerUrl,
+      );
       setScreen('tableLounge');
       socketClient.send({ type: 'GET_ROOMS' });
     }
   };
 
   const handleIntroFinish = () => {
+    // DEBUG: Write state to file to see why auto-reconnect fails
+    try {
+      const fs = require('fs');
+      fs.writeFileSync(
+        'debug_intro_state.json',
+        JSON.stringify(
+          {
+            reconnectToken: state.reconnectToken,
+            savedPlayerName: state.savedPlayerName,
+            savedServerUrl: state.savedServerUrl,
+            currentRoomId: state.currentRoomId,
+            profile: process.env.SESSION_PROFILE,
+          },
+          null,
+          2,
+        ),
+      );
+    } catch {}
+
+    if (
+      state.reconnectToken &&
+      state.savedPlayerName &&
+      state.savedServerUrl &&
+      state.currentRoomId
+    ) {
+      setPlayerName(state.savedPlayerName);
+      if (
+        state.savedServerUrl.includes('ngrok') ||
+        state.savedServerUrl.includes('wss://')
+      ) {
+        setNetworkMode('INTERNET');
+        setOnlineServerUrl(state.savedServerUrl);
+        setScreen('onlineConnection');
+        // trigger reconnect connection in background
+        socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
+          if (success) {
+            socketClient.send({
+              type: 'JOIN_ROOM',
+              payload: {
+                playerName: state.savedPlayerName!,
+                roomId: state.currentRoomId!,
+                reconnectToken: state.reconnectToken!,
+              },
+            });
+          } else {
+            setScreen('mainMenu');
+          }
+        });
+      } else {
+        setNetworkMode('LAN');
+        setCurrentServerUrl(state.savedServerUrl);
+        setScreen('serverConnection');
+        socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
+          if (success) {
+            socketClient.send({
+              type: 'JOIN_ROOM',
+              payload: {
+                playerName: state.savedPlayerName!,
+                roomId: state.currentRoomId!,
+                reconnectToken: state.reconnectToken!,
+              },
+            });
+          } else {
+            setScreen('mainMenu');
+          }
+        });
+      }
+      return;
+    }
     setScreen(playerName ? 'mainMenu' : 'enterName');
   };
 
   useGameStatePhaseSync(state.latestGameState, state.myPlayerId, screen, setScreen);
+
   useEffect(() => {
     if (!state.roomClosed) return;
 
     setScreen(resolveRoomClosedScreen(intent));
     socketClient.send({ type: 'GET_ROOMS' });
   }, [intent, socketClient, state.roomClosed]);
+
+  useEffect(() => {
+    if (
+      (screen === 'serverConnection' || screen === 'onlineConnection') &&
+      state.lastError &&
+      !state.reconnectToken
+    ) {
+      // Auto-reconnect failed and session was cleared. Fall back to main menu.
+      setScreen('mainMenu');
+    }
+  }, [screen, state.lastError, state.reconnectToken]);
 
   const handlers = useNavigationHandlers({
     socketClient,

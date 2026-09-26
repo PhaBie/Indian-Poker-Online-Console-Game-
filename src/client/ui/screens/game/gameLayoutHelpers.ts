@@ -117,12 +117,16 @@ export function getPlayerBadgeInfo(
   isThisPlayerTurn: boolean,
   isPendingSideshowTarget: boolean,
   isShowdownRevealed: boolean = false,
+  isDisconnected: boolean = false,
 ): PlayerBadgeInfo {
   // SHOW exposes both hands before the round result is presented. The server
   // marks the losing hand folded internally to settle the pot, but that is
   // not a voluntary fold and should not be shown as one during the reveal.
   if (isShowdownRevealed) {
     return { label: null, color: 'white' };
+  }
+  if (isDisconnected) {
+    return { label: '[DISCONNECT]', color: 'redBright' };
   }
   if (hasFolded) {
     return { label: '[FOLD]', color: 'redBright' };

@@ -19,6 +19,7 @@ export class Player extends BaseUser implements ServerPlayer {
   public chips: number;
   public bet: number;
   public status: PlayerStatus;
+  public previousStatus?: PlayerStatus;
   public privateCards: Card[];
   public isBlind: boolean;
 
@@ -142,6 +143,20 @@ export class Player extends BaseUser implements ServerPlayer {
     this.isBlind = false;
   }
 
+  public disconnect(): void {
+    this.previousStatus = this.status;
+    this.status = 'DISCONNECTED';
+  }
+
+  public reconnect(): void {
+    if (this.previousStatus) {
+      this.status = this.previousStatus;
+      this.previousStatus = undefined;
+    } else {
+      this.status = 'WAITING';
+    }
+  }
+
   /**
    * แปลงสถานะผู้เล่นเป็น JSON Object สำหรับส่งผ่าน Network หรือแสดงผล
    * แต่ไม่มี privateCards = Anti-Cheat กันไพ่รั่ว ไป Client อื่น
@@ -153,6 +168,7 @@ export class Player extends BaseUser implements ServerPlayer {
       chips: this.chips,
       bet: this.bet,
       status: this.status,
+      previousStatus: this.previousStatus,
       isBlind: this.isBlind,
     };
   }
@@ -185,6 +201,9 @@ export class Player extends BaseUser implements ServerPlayer {
 
     // รักษาสถานะเดิม ไม่เปลี่ยนเป็น WAITING โดยอัตโนมัติ
     player.status = data.status;
+    if ('previousStatus' in data) {
+      player.previousStatus = data.previousStatus as PlayerStatus;
+    }
 
     // คืนไพ่จริงฝั่ง Server รวมถึงไพ่ของผู้เล่น Blind
     // การซ่อนไพ่จาก Client เป็นหน้าที่ของ Network

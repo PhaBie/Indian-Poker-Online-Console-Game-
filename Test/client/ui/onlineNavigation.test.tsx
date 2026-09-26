@@ -28,6 +28,7 @@ function mountNavigation(
       onlineServerUrl,
       onClearState: () => clientState.clearState(),
       onClearError: () => clientState.clearError(),
+      onSetSessionInfo: () => undefined,
     });
     useLayoutEffect(() => {
       navigation = current;

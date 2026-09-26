@@ -101,8 +101,8 @@ export class Room {
       return;
     }
 
-    // 2. ปรับสถานะจากหลุด (DISCONNECTED) ให้กลับมาเป็น 'WAITING' เพื่อรอเล่นรอบต่อไป
-    player.status = 'WAITING';
+    // 2. ปรับสถานะกลับด้วยการเรียก player.reconnect()
+    player.reconnect();
   }
 
   /**

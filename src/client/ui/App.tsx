@@ -217,6 +217,7 @@ export function App({ clientState, serverUrl, socketClient }: AppProps) {
     initialServerUrl: serverUrl,
     onClearState: () => clientState.clearState(),
     onClearError: () => clientState.clearError(),
+    onSetSessionInfo: (name, url) => clientState.setSessionInfo(name, url),
   });
 
   useEffect(() => {

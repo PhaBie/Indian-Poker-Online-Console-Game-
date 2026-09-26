@@ -24,6 +24,7 @@ const HOST_DECISION_TIMEOUT_MS = 5_000;
 const showRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const sideshowRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const autoNextGameTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 type DepartedPlayer = DepartedPlayerResult;
 // A player can leave before the action that actually ends a hand. Keep that
 // information at room scope so the eventual result still tells the table who
@@ -230,6 +231,13 @@ function handleReconnectJoin(
     sendError(wsClient, 'Player not in room', 'NOT_IN_ROOM');
     return;
   }
+
+  const timer = disconnectTimers.get(existingPlayerId);
+  if (timer) {
+    clearTimeout(timer);
+    disconnectTimers.delete(existingPlayerId);
+  }
+
   room.reconnect(existingPlayerId);
   context.connectedClients.set(wsClient, {
     playerId: existingPlayerId,
@@ -479,6 +487,12 @@ function handleLeaveRoom(wsClient: WebSocket, context: NetworkContext) {
   const session = context.connectedClients.get(wsClient);
   if (!session || !session.roomId) return;
 
+  const timer = disconnectTimers.get(session.playerId);
+  if (timer) {
+    clearTimeout(timer);
+    disconnectTimers.delete(session.playerId);
+  }
+
   const room = context.roomManager.getRoom(session.roomId);
   if (room) {
     if (room.hostId === session.playerId) {
@@ -571,15 +585,35 @@ export function handleClientDisconnect(
     return;
   }
 
-  if (room.hostId === session.playerId) {
-    closeRoom(session.roomId, context);
-    context.connectedClients.delete(wsClient);
-    return;
+  const playerId = session.playerId;
+  const roomId = session.roomId;
+  const player = room.getPlayer(playerId);
+
+  if (player) {
+    player.disconnect();
   }
 
-  removeNonHostPlayer(room, session.playerId, 'disconnected', context);
   context.connectedClients.delete(wsClient);
+  broadcastGameStateUpdate(roomId, context);
   broadcastRoomList(context);
+
+  const timer = setTimeout(() => {
+    disconnectTimers.delete(playerId);
+
+    const currentRoom = context.roomManager.getRoom(roomId);
+    if (!currentRoom) return;
+
+    const currentPlayer = currentRoom.getPlayer(playerId);
+    if (currentPlayer && currentPlayer.status === 'DISCONNECTED') {
+      if (currentRoom.hostId === playerId) {
+        closeRoom(roomId, context);
+      } else {
+        removeNonHostPlayer(currentRoom, playerId, 'disconnected', context);
+      }
+    }
+  }, 30000);
+
+  disconnectTimers.set(playerId, timer);
 }
 
 export function broadcastGameStateUpdate(roomId: string, context: NetworkContext): void {
