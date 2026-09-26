@@ -14,7 +14,7 @@ export async function startOnlineServer() {
     const ngrok = await import('@ngrok/ngrok');
     const listener = await ngrok.forward({
       addr: `127.0.0.1:${port}`,
-      authtoken_from_env: true,
+      authtoken: process.env.NGROK_AUTHTOKEN,
       ...(process.env.NGROK_DOMAIN ? { domain: process.env.NGROK_DOMAIN } : {}),
     });
     const url = listener.url();
@@ -47,10 +47,11 @@ if (import.meta.main) {
       process.once('SIGINT', shutdown);
       process.once('SIGTERM', shutdown);
     })
-    .catch(() => {
+    .catch((err) => {
       console.error(
         'Online startup failed. Check NGROK_AUTHTOKEN, NGROK_DOMAIN, port availability and connectivity.',
       );
+      console.error(err);
       process.exitCode = 1;
     });
 }
