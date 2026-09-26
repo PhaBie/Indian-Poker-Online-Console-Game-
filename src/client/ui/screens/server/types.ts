@@ -4,6 +4,6 @@ export interface ServerConnectionScreenProps {
   readonly serverUrl: string;
   readonly isConnected: boolean;
   readonly onConnect: (newUrl: string) => Promise<boolean>;
-  readonly onConnectedSuccess: () => void;
+  readonly onConnectedSuccess: (urlToSave: string) => void;
   readonly onBack: () => void;
 }

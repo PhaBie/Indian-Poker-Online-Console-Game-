@@ -226,7 +226,9 @@ export function useAppNavigation({
     setPlayerName,
     setScreen,
     setCurrentServerUrl,
+    currentServerUrl,
     onClearState,
+    onSetSessionInfo,
   });
 
   const handleChangeName = (returnTo: 'lobby' | 'code' = 'lobby') => {

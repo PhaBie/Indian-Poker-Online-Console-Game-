@@ -15,7 +15,9 @@ interface UseNavigationHandlersParams {
   readonly setPlayerName: (name: string) => void;
   readonly setScreen: (screen: ActiveScreen) => void;
   readonly setCurrentServerUrl: (url: string) => void;
+  readonly currentServerUrl: string;
   readonly onClearState: () => void;
+  readonly onSetSessionInfo: (name: string, url: string) => void;
 }
 
 export function useNavigationHandlers({
@@ -28,7 +30,9 @@ export function useNavigationHandlers({
   setPlayerName,
   setScreen,
   setCurrentServerUrl,
+  currentServerUrl,
   onClearState,
+  onSetSessionInfo,
 }: UseNavigationHandlersParams) {
   const handleConnectServer = useCallback(
     async (newUrl: string): Promise<boolean> => {
@@ -44,27 +48,32 @@ export function useNavigationHandlers({
     [onClearState, setCurrentServerUrl, socketClient],
   );
 
-  const handleConnectedSuccess = useCallback(() => {
-    if (!playerName) {
-      setScreen('enterName');
-    } else if (intent === 'create') {
-      executeUserSubmission(
-        'create',
-        playerName,
-        'LAN',
-        '',
-        socketClient,
-        pendingMaxPlayers,
-      );
-    } else {
-      setScreen('tableLounge');
-      socketClient.send({ type: 'GET_ROOMS' });
-    }
-  }, [pendingMaxPlayers, playerName, intent, socketClient, setScreen]);
+  const handleConnectedSuccess = useCallback(
+    (urlToSave: string) => {
+      onSetSessionInfo(playerName, urlToSave);
+      if (!playerName) {
+        setScreen('enterName');
+      } else if (intent === 'create') {
+        executeUserSubmission(
+          'create',
+          playerName,
+          'LAN',
+          '',
+          socketClient,
+          pendingMaxPlayers,
+        );
+      } else {
+        setScreen('tableLounge');
+        socketClient.send({ type: 'GET_ROOMS' });
+      }
+    },
+    [pendingMaxPlayers, playerName, intent, socketClient, setScreen, onSetSessionInfo],
+  );
 
   const handleUsernameSubmit = useCallback(
     (name: string) => {
       setPlayerName(name);
+      onSetSessionInfo(name, currentServerUrl);
       if (intent === 'join') {
         setScreen('tableLounge');
         socketClient.send({ type: 'GET_ROOMS' });
@@ -87,6 +96,8 @@ export function useNavigationHandlers({
       socketClient,
       setPlayerName,
       setScreen,
+      onSetSessionInfo,
+      currentServerUrl,
     ],
   );
 

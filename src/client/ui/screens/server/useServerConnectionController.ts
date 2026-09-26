@@ -19,7 +19,7 @@ export function useServerConnectionController({
       const isSuccess = await onConnect(targetUrl);
       setIsConnecting(false);
       if (isSuccess) {
-        onConnectedSuccess();
+        onConnectedSuccess(targetUrl);
       }
     },
     [onConnect, onConnectedSuccess],
