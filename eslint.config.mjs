@@ -11,7 +11,7 @@ export default [
   },
   // --- 1. การตั้งค่าพื้นฐานของโปรเจกต์ (ครอบคลุมทั้ง Source และ Test) ---
   {
-    files: ['src/**/*.{ts,tsx}', 'Test/**/*.{ts,tsx}'],
+    files: ['01-Source-code/**/*.{ts,tsx}', '02-Tests/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -103,7 +103,7 @@ export default [
   },
   // --- 2. การยกเว้นกฎเฉพาะสำหรับ React / UI ---
   {
-    files: ['src/client/ui/**/*.{ts,tsx}'],
+    files: ['01-Source-code/client/ui/**/*.{ts,tsx}'],
     rules: {
       // อนุญาต PascalCase สำหรับ Component ในส่วน UI (ต้องเก็บกฎ Boolean กับ TypeLike ไว้ด้วย)
       '@typescript-eslint/naming-convention': [
@@ -145,7 +145,7 @@ export default [
   },
   // --- 3. การยกเว้นกฎเฉพาะสำหรับชุดทดสอบ (Test) ---
   {
-    files: ['Test/**/*.{ts,tsx}'],
+    files: ['02-Tests/**/*.{ts,tsx}'],
     rules: {
       // ปิดกฎเหล่านี้ในไฟล์ทดสอบ เพื่อให้ตั้ง Fixtures ซ้ำๆ หรือเขียน Describe ยาวๆ ได้สะดวก
       'max-lines-per-function': 'off',

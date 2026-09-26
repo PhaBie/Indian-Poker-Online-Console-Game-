@@ -1,4 +1,4 @@
-import { PokerServer } from './src/server/index';
+import { PokerServer } from './01-Source-code/server/index';
 
 const server = new PokerServer();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
