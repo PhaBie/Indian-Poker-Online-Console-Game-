@@ -9,6 +9,7 @@ interface OnlineConnectionParams {
   socketClient: SocketClient;
   setScreen: (screen: ActiveScreen) => void;
   setCurrentServerUrl: (url: string) => void;
+  onSetSessionInfo: (playerName: string, serverUrl: string) => void;
   maxPlayers: 2 | 3 | 4;
 }
 
@@ -18,6 +19,7 @@ export function useOnlineConnection({
   socketClient,
   setScreen,
   setCurrentServerUrl,
+  onSetSessionInfo,
   maxPlayers,
 }: OnlineConnectionParams) {
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export function useOnlineConnection({
         if (!isConnected)
           throw new Error('Unable to connect. Check the ngrok URL and try again.');
         setCurrentServerUrl(url);
+        onSetSessionInfo(playerName, url);
         if (!playerName) {
           setScreen('enterName');
         } else if (intent === 'create') {

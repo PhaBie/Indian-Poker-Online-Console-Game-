@@ -4,6 +4,7 @@ import type { ClientState } from '../state/ClientState';
 import { useClientState } from './shared/hooks/useClientState';
 import { useAppNavigation } from './navigation/useAppNavigation';
 import { GameIntroSplash } from './screens/intro/GameIntroSplash';
+import { ReconnectPromptScreen } from './screens/intro/ReconnectPromptScreen';
 import { MainMenuScreen } from './screens/mainMenu/MainMenuScreen';
 import { CreateRoomScreen } from './screens/createRoom/CreateRoomScreen';
 import { JoinRoomScreen } from './screens/joinRoom/JoinRoomScreen';
@@ -98,6 +99,15 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
 
   if (screen === 'intro') {
     return <GameIntroSplash onFinish={navigation.handleIntroFinish} />;
+  }
+  if (screen === 'reconnectPrompt') {
+    return (
+      <ReconnectPromptScreen
+        roomId={state.currentRoomId!}
+        onAccept={navigation.handleReconnectAccept}
+        onDecline={navigation.handleReconnectDecline}
+      />
+    );
   }
   if (screen === 'mainMenu') {
     return (

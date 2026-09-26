@@ -192,6 +192,7 @@ export class ClientState {
     this.savedPlayerName = playerName;
     this.savedServerUrl = serverUrl;
     this.saveSession();
+    this.notifyListeners();
   }
 
   public setPlayerId(playerId: string): void {

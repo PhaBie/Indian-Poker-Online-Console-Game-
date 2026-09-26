@@ -15,6 +15,7 @@ import type { RoomMaxPlayers } from '../screens/createRoom/types';
 
 export type ActiveScreen =
   | 'intro'
+  | 'reconnectPrompt'
   | 'mainMenu'
   | 'serverConnection'
   | 'onlineConnection'
@@ -101,6 +102,7 @@ export function useAppNavigation({
     socketClient,
     setScreen,
     setCurrentServerUrl,
+    onSetSessionInfo,
     maxPlayers: pendingMaxPlayers,
   });
 
@@ -146,75 +148,50 @@ export function useAppNavigation({
   };
 
   const handleIntroFinish = () => {
-    // DEBUG: Write state to file to see why auto-reconnect fails
-    try {
-      const fs = require('fs');
-      fs.writeFileSync(
-        'debug_intro_state.json',
-        JSON.stringify(
-          {
-            reconnectToken: state.reconnectToken,
-            savedPlayerName: state.savedPlayerName,
-            savedServerUrl: state.savedServerUrl,
-            currentRoomId: state.currentRoomId,
-            profile: process.env.SESSION_PROFILE,
-          },
-          null,
-          2,
-        ),
-      );
-    } catch {}
-
-    if (
-      state.reconnectToken &&
-      state.savedPlayerName &&
-      state.savedServerUrl &&
-      state.currentRoomId
-    ) {
-      setPlayerName(state.savedPlayerName);
-      if (
-        state.savedServerUrl.includes('ngrok') ||
-        state.savedServerUrl.includes('wss://')
-      ) {
-        setNetworkMode('INTERNET');
-        setOnlineServerUrl(state.savedServerUrl);
-        setScreen('onlineConnection');
-        // trigger reconnect connection in background
-        socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
-          if (success) {
-            socketClient.send({
-              type: 'JOIN_ROOM',
-              payload: {
-                playerName: state.savedPlayerName!,
-                roomId: state.currentRoomId!,
-                reconnectToken: state.reconnectToken!,
-              },
-            });
-          } else {
-            setScreen('mainMenu');
-          }
-        });
-      } else {
-        setNetworkMode('LAN');
-        setCurrentServerUrl(state.savedServerUrl);
-        setScreen('serverConnection');
-        socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
-          if (success) {
-            socketClient.send({
-              type: 'JOIN_ROOM',
-              payload: {
-                playerName: state.savedPlayerName!,
-                roomId: state.currentRoomId!,
-                reconnectToken: state.reconnectToken!,
-              },
-            });
-          } else {
-            setScreen('mainMenu');
-          }
-        });
-      }
+    // If we have a saved reconnect token, we ask the user if they want to reconnect
+    if (state.reconnectToken && state.currentRoomId && state.savedServerUrl) {
+      setScreen('reconnectPrompt');
       return;
     }
+    setScreen(playerName ? 'mainMenu' : 'enterName');
+  };
+
+  const handleReconnectAccept = () => {
+    if (!state.savedServerUrl || !state.reconnectToken || !state.currentRoomId) {
+      setScreen('mainMenu');
+      return;
+    }
+    setPlayerName(state.savedPlayerName || 'Player');
+    if (
+      state.savedServerUrl.includes('ngrok') ||
+      state.savedServerUrl.includes('wss://')
+    ) {
+      setNetworkMode('INTERNET');
+      setOnlineServerUrl(state.savedServerUrl);
+      setScreen('onlineConnection');
+    } else {
+      setNetworkMode('LAN');
+      setCurrentServerUrl(state.savedServerUrl);
+      setScreen('serverConnection');
+    }
+    socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
+      if (success) {
+        socketClient.send({
+          type: 'JOIN_ROOM',
+          payload: {
+            playerName: state.savedPlayerName || 'Player',
+            roomId: state.currentRoomId!,
+            reconnectToken: state.reconnectToken!,
+          },
+        });
+      } else {
+        setScreen('mainMenu');
+      }
+    });
+  };
+
+  const handleReconnectDecline = () => {
+    onClearState();
     setScreen(playerName ? 'mainMenu' : 'enterName');
   };
 
@@ -308,5 +285,7 @@ export function useAppNavigation({
       mode: 'LAN' | 'INTERNET',
       maxPlayers: RoomMaxPlayers = 4,
     ) => selectNetwork(mode, 'create', maxPlayers),
+    handleReconnectAccept,
+    handleReconnectDecline,
   };
 }
