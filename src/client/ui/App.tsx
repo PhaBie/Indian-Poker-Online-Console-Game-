@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Box, useApp } from 'ink';
+import { Box, useApp, useInput } from 'ink';
+import { soundEffects } from '../shared/utils/sound';
 import type { ClientState } from '../state/ClientState';
 import { useClientState } from './shared/hooks/useClientState';
 import { useAppNavigation } from './navigation/useAppNavigation';
@@ -246,6 +247,14 @@ export function App({ clientState, serverUrl, socketClient }: AppProps) {
       showTerminalCursor();
     };
   }, []);
+
+  useInput((_, key) => {
+    if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow || key.tab) {
+      soundEffects.move();
+    } else if (key.return) {
+      soundEffects.select();
+    }
+  });
 
   const handleExitApp = () => {
     exit();
