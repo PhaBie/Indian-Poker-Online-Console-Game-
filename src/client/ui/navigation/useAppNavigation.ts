@@ -168,11 +168,9 @@ export function useAppNavigation({
     ) {
       setNetworkMode('INTERNET');
       setOnlineServerUrl(state.savedServerUrl);
-      setScreen('onlineConnection');
     } else {
       setNetworkMode('LAN');
       setCurrentServerUrl(state.savedServerUrl);
-      setScreen('serverConnection');
     }
     socketClient.connectWithTimeout(state.savedServerUrl).then((success) => {
       if (success) {
@@ -185,6 +183,7 @@ export function useAppNavigation({
           },
         });
       } else {
+        onClearState();
         setScreen('mainMenu');
       }
     });
@@ -206,7 +205,9 @@ export function useAppNavigation({
 
   useEffect(() => {
     if (
-      (screen === 'serverConnection' || screen === 'onlineConnection') &&
+      (screen === 'serverConnection' ||
+        screen === 'onlineConnection' ||
+        screen === 'reconnectPrompt') &&
       state.lastError &&
       !state.reconnectToken
     ) {
