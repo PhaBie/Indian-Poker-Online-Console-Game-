@@ -57,6 +57,10 @@ function handleInputKeypress({
   }
 }
 
+/**
+ * Hook ดักรับการกดแป้นพิมพ์ในหน้าเมนูหลัก
+ * ดักจับปุ่มลูกศรขึ้น/ลง เพื่อเลื่อนตำแหน่งโฟกัส, ปุ่ม Enter เพื่อเลือก และปุ่ม Escape เพื่อออกจากเกม
+ */
 export function useMainMenuInput(params: UseMainMenuInputParams) {
   useInput(
     (_input, key) => {

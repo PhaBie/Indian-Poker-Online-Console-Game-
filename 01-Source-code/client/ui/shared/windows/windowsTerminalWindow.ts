@@ -53,8 +53,7 @@ const kernel32Symbols = {
   },
 } as const;
 
-// Bun can keep stdout.columns/rows at the old ConPTY size until stdin enters raw mode.
-// Query the console buffer directly while the window is being prepared.
+// ตรวจสอบขนาดบัฟเฟอร์ของคอนโซลโดยตรงระหว่างเตรียมหน้าต่าง เพื่อป้องกันค่าขนาดค้างจาก ConPTY
 export function getWindowsConsoleDimensions(): { columns: number; rows: number } | null {
   const kernel32 = dlopen('kernel32.dll', kernel32Symbols);
   try {
@@ -157,6 +156,11 @@ function decreaseConsoleFont(
   return kernel32.SetCurrentConsoleFontEx(outputHandle, false, ptr(fontInfo));
 }
 
+/**
+ * ควบคุมหน้าต่างเทอร์มินัลบนระบบปฏิบัติการ Windows ผ่าน Bun Foreign Function Interface (FFI)
+ * เชื่อมต่อไปยัง user32.dll และ kernel32.dll เพื่อสั่งขยายหน้าต่างแบบเต็มจอ (Maximize)
+ * และปรับลดขนาดฟอนต์คอนโซลโดยอัตโนมัติ เพื่อให้ได้พื้นที่แสดงผลเกมที่สมบูรณ์
+ */
 export function openWindowsTerminalWindow(): TerminalWindowController | null {
   const user32 = dlopen('user32.dll', user32Symbols);
   const kernel32 = dlopen('kernel32.dll', kernel32Symbols);

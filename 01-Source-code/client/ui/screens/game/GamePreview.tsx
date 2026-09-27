@@ -12,8 +12,7 @@ import type { ServerEvent } from '../../../../shared/types';
 import type { GameStatePayload } from './types';
 
 type GameResultPayload = Extract<ServerEvent, { type: 'GAME_RESULT' }>['payload'];
-// Keep every bot action visible: seeing cards, calling, betting, folding, and
-// a new turn are all deliberately separated in Preview.
+// แยกแต่ละการกระทำของบอทให้เห็นชัดเจนในโหมดดูตัวอย่าง: การดูไพ่, Call, Bet, Fold และการสลับเทิร์น
 const BOT_ACTION_DELAY_MS = 6_000;
 const SIDESHOW_CARDS_REVEAL_DELAY_MS = 2_000;
 const SIDESHOW_RESULT_DELAY_MS = 4_000;
@@ -22,6 +21,10 @@ export const HIDDEN_SIDESHOW_PAUSE_MS = 1_200;
 const SHOWDOWN_REVEAL_DELAY_MS = 4_000;
 const ROUND_RESULT_DELAY_MS = 6_000;
 
+/**
+ * กำหนดเวลากลับมาดำเนินการเกมต่อหลังจากแสดงผลลัพธ์ Sideshow ครบตามระยะเวลาหน่วงที่กำหนด
+ * คืนค่าฟังก์ชันยกเลิกตัวนับเวลา (clearTimeout) สำหรับล้างการทำงานเมื่อคอมโพเนนต์ถูกถอดออก
+ */
 export function scheduleSideshowResume(
   session: GamePreviewSession,
   gameState: GameStatePayload,
@@ -49,6 +52,10 @@ interface GamePreviewProps {
   readonly playerCount: GamePreviewPlayerCount;
 }
 
+/**
+ * คอมโพเนนต์หน้าจอทดลองเล่น/ดูตัวอย่างเกม (Game Preview)
+ * รันเกมแบบโลคัลพร้อมผู้เล่นบอท จำลองการเล่นและทดสอบการแสดงผลโต๊ะเกม UI โดยไม่ต้องต่อเซิร์ฟเวอร์จริง
+ */
 export function GamePreview({ playerCount }: GamePreviewProps) {
   const { exit } = useApp();
   const [session] = useState(() => new GamePreviewSession(playerCount));
@@ -58,8 +65,7 @@ export function GamePreview({ playerCount }: GamePreviewProps) {
   const [roundStartChips, setRoundStartChips] = useState(() =>
     session.getRoundStartChips(),
   );
-  // The session owns the result. Reading it here is a defensive fallback so a
-  // completed round cannot be left on the table if a UI state update is missed.
+  // กลไกสำรองกรณีที่การอัปเดตสถานะ UI ตกหล่น เพื่อไม่ให้ผลการแข่งขันค้างอยู่บนโต๊ะ
   const resolvedRoundResult = roundResult ?? session.getRoundResult();
   const previewSocket = useMemo(() => {
     const socket = new SocketClient();

@@ -15,7 +15,7 @@ export const UI_COLORS = {
   logoDash: '#888888',
   logoMain: '#29B6F6',
   logoMenu: '#29B6F6',
-  // Card Palette (Single Source of Truth)
+  // ชุดโทนสีของไพ่ (แหล่งอ้างอิงค่าสีหลัก)
   cardRedSuit: '#FF5252',
   cardDarkSuitForeground: '#FFFFFF',
   cardBackDim: '#1976D2',

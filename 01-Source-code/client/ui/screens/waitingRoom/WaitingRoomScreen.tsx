@@ -13,6 +13,11 @@ import { WaitingRoomHelpFooter } from './WaitingRoomHelpFooter';
 
 export type { WaitingRoomScreenProps } from './types';
 
+/**
+ * หน้าจอห้องพักคอยก่อนเริ่มเล่นเกม (Waiting Room Screen)
+ * แสดงรายชื่อผู้เล่นในห้อง, สถานะความพร้อม (Ready), สิทธิ์หัวหน้าห้อง (Host)
+ * และจัดการตรวจสอบขนาดเทอร์มินัลก่อนเรนเดอร์เนื้อหา
+ */
 export function WaitingRoomScreen(props: WaitingRoomScreenProps) {
   const { columns, rows } = useTerminalSize();
   const isHost = Boolean(props.myPlayerId && props.myPlayerId === props.hostId);

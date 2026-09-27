@@ -51,7 +51,7 @@ function createPlayers(playerCount: GamePreviewPlayerCount): Player[] {
   return [humanPlayer, ...botOpponents];
 }
 
-/** Runs a fully local game using the same rule classes as the server. */
+/** จำลองเซสชันเกมแบบโลคัลสมบูรณ์ โดยใช้คลาสและกติกาเดียวกันกับฝั่งเซิร์ฟเวอร์ */
 export class GamePreviewSession {
   private readonly players: Player[];
   private gameState: GameState;
@@ -92,8 +92,8 @@ export class GamePreviewSession {
       })),
       myCards: this.players[0].isBlind ? [] : this.players[0].privateCards,
       pendingSideshow: this.gameState.pendingSideshow,
-      // Match the authoritative server's privacy rule: the comparison cards
-      // exist only in the challenger and target's client payloads.
+      // ปฏิบัติตามกฎความเป็นส่วนตัวของเซิร์ฟเวอร์หลัก: ข้อมูลไพ่ที่เปรียบเทียบใน Sideshow
+      // จะส่งให้เฉพาะผู้ท้าชิงและผู้ถูกท้าชิงเท่านั้น
       sideshowResult: isSideshowParticipant ? sideshowResult : null,
       sideshowNotice: this.gameState.lastSideshowNotice,
       showdownCards: this.gameState.pendingShow?.cards ?? null,
@@ -130,13 +130,13 @@ export class GamePreviewSession {
     return Boolean(this.gameState.lastSideshow || this.gameState.lastSideshowNotice);
   }
 
-  /** Clears a completed Sideshow's short-lived UI snapshot after its pause. */
+  /** ล้างผลลัพธ์การแสดงผล Sideshow ชั่วคราวบนหน้าจอ UI หลังจากแสดงผลตามระยะเวลาที่กำหนดแล้ว */
   public clearSideshowPresentation(): void {
     this.gameState.clearSideshowResult();
     this.gameState.lastSideshowNotice = null;
   }
 
-  /** Plays one bot turn. The UI calls this on a short timer so bot moves are visible. */
+  /** ดำเนินการเล่นเทิร์นของบอทหนึ่งเทิร์น โดย UI จะเรียกผ่านตัวนับเวลาสั้น ๆ เพื่อให้เห็นการเคลื่อนไหวของบอท */
   public playNextBot(): boolean {
     if (this.hasActiveSideshow()) return false;
 
@@ -166,9 +166,8 @@ export class GamePreviewSession {
       }
     }
 
-    // Every bot first looks at its cards, then mixes in the same actions a
-    // human can choose. Alpha's first move is a duel, which exposes the
-    // accept/decline flow in Preview as well.
+    // บอททุกตัวจะเปิดดูไพ่ก่อน จากนั้นจึงสลับเล่นแอคชันต่าง ๆ เสมือนผู้เล่นจริง
+    // การเคลื่อนไหวแรกของ Alpha คือการขอประลอง (Sideshow) เพื่อทดสอบขั้นตอนตอบรับ/ปฏิเสธในโหมดดูตัวอย่าง
     if (currentPlayer.isBlind) {
       this.play(currentPlayer.id, 'SEEN');
       return true;
@@ -189,13 +188,12 @@ export class GamePreviewSession {
     }
 
     if ((botIndex + decision) % 3 === 2) {
-      // A seen player pays double; this is the legal minimum BET amount.
+      // ผู้เล่นที่เปิดดูไพ่แล้วต้องจ่ายเงินเดิมพันสองเท่า ซึ่งเป็นยอดเดิมพัน (BET) ขั้นต่ำตามกติกา
       this.play(currentPlayer.id, 'BET', this.gameState.currentStake * 2);
       return true;
     }
 
-    // Keep the first several circuits intact so every player can reach a
-    // Pagat-legal Sideshow before bots begin folding the table down.
+    // รักษารอบการเล่นช่วงแรกไว้เพื่อให้ผู้เล่นทุกคนมีโอกาสขอ Sideshow ตามกติกา ก่อนที่บอทจะเริ่มหมอบไพ่ลง
     const foldThreshold = PREVIEW_BET * this.players.length * 10;
     this.play(currentPlayer.id, this.gameState.pot >= foldThreshold ? 'FOLD' : 'CALL');
     return true;
@@ -213,9 +211,8 @@ export class GamePreviewSession {
   }
 
   /**
-   * A challenged bot only knows its own cards, just like a real player. It
-   * protects strong made hands and declines weak ones instead of accepting
-   * every bot's first Sideshow request.
+   * บอทที่ถูกท้าประลองจะรับรู้เฉพาะไพ่ของตนเองเสมือนผู้เล่นจริง
+   * โดยจะยอมรับการดวลเฉพาะเมื่อถือไพ่ที่แข็งแกร่ง และปฏิเสธหากไพ่ต่ำ แทนที่จะยอมรับทุกคำขอ
    */
   private shouldAcceptSideshow(playerId: string): boolean {
     const player = this.players.find((candidate) => candidate.id === playerId);

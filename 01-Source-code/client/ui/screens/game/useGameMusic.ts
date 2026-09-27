@@ -12,6 +12,11 @@ export function isMusicToggleInput(
   return input.toLowerCase() === 'm' && !key.ctrl && !key.meta;
 }
 
+/**
+ * Hook ควบคุมดนตรีประกอบในหน้าโต๊ะเกม (Background Music Controller)
+ * จัดการเริ่มเล่นเพลงเมื่อคอมโพเนนต์ถูกเมานต์ และหยุดเพลงเมื่อออกจากหน้าจอ
+ * พร้อมดักจับปุ่ม 'M' เพื่อสลับสถานะเปิด/ปิดเสียง (Mute / Unmute)
+ */
 export function useGameMusic(): boolean {
   const [isMuted, setIsMuted] = useState(false);
   const mutedRef = useRef(false);

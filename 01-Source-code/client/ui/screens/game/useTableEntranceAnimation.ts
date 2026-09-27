@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useInput } from 'ink';
 import { isAnimationEnabled } from '../../shared/components/ShimmeringHeader';
 
-// Leave a little more room between cards so the deal is readable without
-// making the later seat and pot animations any slower.
+// กำหนดระยะห่างระหว่างการแจกไพ่แต่ละใบให้อ่านลำดับได้ชัดเจน โดยไม่กระทบความเร็วของแอนิเมชันถัดไป
 const FIRST_CARD_DEAL_MS = 1_000;
 const CARD_DEAL_INTERVAL_MS = 1_200;
 const CARD_DEAL_HIGHLIGHT_MS = 500;
@@ -38,6 +37,13 @@ export interface EntranceMilestones {
   readonly totalDurationMs: number;
 }
 
+/**
+ * กำหนดจุดเวลาสำคัญ (Milestones) ของแอนิเมชันเปิดโต๊ะเกม
+ * - หากมีผู้เล่นไม่เกิน 2 คน (<= 2): จะข้ามขั้นตอนการหมุนที่นั่งและกวาดแสงชื่อผู้เล่นเสมอ
+ * - สำหรับผู้เล่นตั้งแต่ 3 คนขึ้นไป:
+ *   - รอบแรกหรือเมื่อจำนวนผู้เล่นเปลี่ยน: แสดงแอนิเมชันครบวงจร (แจกไพ่ -> ไพ่เรืองแสง -> หมุนที่นั่ง -> ชื่อกวาดแสง -> กองกลาง)
+ *   - รอบถัดไป: ข้ามขั้นตอนหมุนที่นั่งและกวาดแสงชื่อ เพื่อความกระชับในการเล่นต่อเนื่อง
+ */
 export function getEntranceMilestones(
   playerCount: number,
   isSubsequentRound: boolean = false,
@@ -408,6 +414,11 @@ function useSkipOnEscape(dealSequence: number, isEscapeActive: boolean): boolean
   return isSkipped;
 }
 
+/**
+ * Hook ควบคุมภาพเคลื่อนไหวเปิดโต๊ะเกมทั้งหมด (Table Entrance Animation)
+ * ติดตามสถานะ Timeline, นับเวลาผ่านไป, รองรับการกดข้ามด้วยปุ่ม Escape
+ * และคืนค่าสถานะแอนิเมชันสำหรับส่งต่อไปยัง Table Layout
+ */
 export function useTableEntranceAnimation(
   finalPot: number,
   playerCount: number = 4,

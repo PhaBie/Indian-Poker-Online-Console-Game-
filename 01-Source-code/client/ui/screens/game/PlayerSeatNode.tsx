@@ -21,6 +21,10 @@ interface HandModeIndicatorProps {
   readonly isShowdownRevealed: boolean;
 }
 
+/**
+ * แสดงป้ายโหมดการเล่นของผู้เล่น ([BLIND], [SEEN], [REVEALED])
+ * พร้อมเอฟเฟกต์แสงวิ่งผ่านตัวอักษรทีละตัวทุก 130ms และเว้นช่วง 8 วินาทีเมื่อวิ่งจบรอบ
+ */
 function HandModeIndicator({ isBlind, isShowdownRevealed }: HandModeIndicatorProps) {
   const handMode = isShowdownRevealed ? 'REVEALED' : isBlind ? 'BLIND' : 'SEEN';
   const displayText = `[${handMode}]`;
@@ -230,6 +234,11 @@ function MySeatDetails({
   );
 }
 
+/**
+ * แสดงแถวไพ่ 3 ใบประจำที่นั่งของผู้เล่น
+ * ควบคุมการคว่ำ/เปิดไพ่ตามสถานะ Blind และการเปิดเผยไพ่ (Showdown/Sideshow)
+ * พร้อมแสดงสีขอบกะพริบสีเหลืองเมื่อไพ่ใบดังกล่าวเพิ่งถูกแจกลงโต๊ะ (justDealtCardIndex)
+ */
 function PlayerCardsRow({
   isMe,
   isBlind,
@@ -298,6 +307,10 @@ function getSeatBorderColor(
   return 'gray';
 }
 
+/**
+ * ประเมินรูปแบบการแสดงผลของที่นั่ง (ป้าย Badge, สีขอบกล่อง, สถานะการหมอบ/หลุดการเชื่อมต่อ)
+ * โดยให้ลำดับความสำคัญแก่การดวล Sideshow, ช่วงเริ่มแจกไพ่ (Dealing), และเทิร์นปัจจุบันของผู้เล่น
+ */
 function resolvePlayerSeatVisuals(
   player: GamePlayerItem,
   isThisPlayerTurn: boolean,
@@ -365,6 +378,12 @@ function OtherPlayerSeatView(props: SeatNodeRenderProps) {
   );
 }
 
+/**
+ * คอมโพเนนต์โหนดที่นั่งของผู้เล่นบนโต๊ะเกม (Player Seat Node)
+ * รองรับการแสดงผล 2 รูปแบบ:
+ * - ที่นั่งตนเอง (MySeatView): จัดวางแนวนอน แสดงไพ่ทางซ้ายและข้อมูลผู้เล่นทางขวา
+ * - ที่นั่งผู้เล่นอื่น (OtherPlayerSeatView): จัดวางแนวตั้ง แสดงชื่อ/สถานะด้านบนและไพ่ด้านล่าง
+ */
 export function PlayerSeatNode(props: PlayerSeatNodeProps) {
   if (!props.player) {
     return <Box width={26} height={8} />;
