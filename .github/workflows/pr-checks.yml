@@ -86,3 +86,25 @@ jobs:
         env:
           TEST_FILE: ${{ matrix.test_file }}
         run: bun test "./$TEST_FILE"
+
+  # 4. Job รวบรวมผลลัพธ์ทั้งหมดสำหรับตั้งเป็น Required Status Check ใน Branch Protection
+  all-checks-passed:
+    name: All Checks Passed
+    needs: [lint-and-typecheck, discover-tests, run-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate check statuses
+        run: |
+          echo "Lint & Typecheck status: ${{ needs.lint-and-typecheck.result }}"
+          echo "Discover Tests status: ${{ needs.discover-tests.result }}"
+          echo "Run Tests status: ${{ needs.run-tests.result }}"
+
+          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
+             [ "${{ needs.discover-tests.result }}" != "success" ] || \
+             [ "${{ needs.run-tests.result }}" != "success" ]; then
+            echo "❌ Required checks did not succeed. Blocking merge."
+            exit 1
+          fi
+
+          echo "✅ All checks passed successfully."
