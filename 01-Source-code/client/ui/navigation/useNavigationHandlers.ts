@@ -20,6 +20,10 @@ interface UseNavigationHandlersParams {
   readonly onSetSessionInfo: (name: string, url: string) => void;
 }
 
+/**
+ * Hook รวบรวมฟังก์ชันจัดการเหตุการณ์ (Event Handlers) สำหรับระบบนำทาง
+ * ครอบคลุมการเชื่อมต่อ WebSocket, การตอบสนองเมื่อเชื่อมต่อสำเร็จ, และการยืนยันชื่อผู้เล่น
+ */
 export function useNavigationHandlers({
   socketClient,
   playerName,
@@ -34,6 +38,9 @@ export function useNavigationHandlers({
   onClearState,
   onSetSessionInfo,
 }: UseNavigationHandlersParams) {
+  /**
+   * ส่งคำขอเชื่อมต่อเซิร์ฟเวอร์เป้าหมาย พร้อมตั้งเวลารอสูงสุด 3000 มิลลิวินาที (Timeout)
+   */
   const handleConnectServer = useCallback(
     async (newUrl: string): Promise<boolean> => {
       try {
@@ -48,6 +55,13 @@ export function useNavigationHandlers({
     [onClearState, setCurrentServerUrl, socketClient],
   );
 
+  /**
+   * ลำดับขั้นตอนเมื่อเชื่อมต่อ WebSocket สำเร็จ:
+   * 1. กำหนดชื่อผู้เล่นและ URL ลงในสถานะลูกข่าย (Client State)
+   * 2. หากยังไม่มีชื่อผู้เล่น จะนำทางไปหน้ากรอกชื่อ (enterName)
+   * 3. หากมีเจตนาสร้างห้อง จะส่งคำสั่งสร้างห้องไปยังเซิร์ฟเวอร์
+   * 4. หากมีเจตนาเข้าร่วม จะนำทางไปหน้ารายชื่อห้อง (tableLounge) และร้องขอรายการห้อง
+   */
   const handleConnectedSuccess = useCallback(
     (urlToSave: string) => {
       onSetSessionInfo(playerName, urlToSave);

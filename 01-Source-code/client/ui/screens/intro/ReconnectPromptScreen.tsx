@@ -15,6 +15,11 @@ interface ReconnectPromptScreenProps {
   onDecline: () => void;
 }
 
+/**
+ * หน้าจอสอบถามการกลับเข้าสู่ห้องเดิม (Session Reconnection Prompt)
+ * ทำหน้าที่แจ้งเตือนเมื่อระบบตรวจพบข้อมูลเซสชันของห้องที่เคยเล่นค้างอยู่
+ * พร้อมทั้งให้ผู้เล่นเลือกว่าจะเชื่อมต่อกลับเข้าห้องเดิม หรือปฏิเสธการต่อกลับและส่งต่อให้ผู้เรียกจัดการสถานะและนำทาง
+ */
 export function ReconnectPromptScreen({
   roomId,
   onAccept,
@@ -24,20 +29,25 @@ export function ReconnectPromptScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selection, setSelection] = useState<'Y' | 'N'>('Y');
 
+  // ดักรับการกดปุ่มเพื่อเลือกคำตอบและการยืนยัน
   useInput((input, key) => {
+    // ป้องกันการรับคำสั่งซ้ำระหว่างที่ระบบกำลังดำเนินการเปลี่ยนสถานะ
     if (isSubmitting) return;
 
     const lowerInput = input.toLowerCase();
 
+    // เลื่อนสลับตัวเลือกระหว่าง Yes กับ No ด้วยปุ่มลูกศร
     if (key.leftArrow || key.rightArrow) {
       setSelection((prev) => (prev === 'Y' ? 'N' : 'Y'));
     } else if (lowerInput === 'y') {
       setSelection('Y');
       setIsSubmitting(true);
+      // หน่วงเวลา 300ms เพื่อให้หน้าจอแสดงสถานะกำลังเชื่อมต่อก่อนนำทางต่อ
       setTimeout(onAccept, 300);
     } else if (lowerInput === 'n') {
       setSelection('N');
       setIsSubmitting(true);
+      // หน่วงเวลา 300ms เพื่อแสดงผลตอบรับสถานะก่อนเรียก onDecline ให้ผู้เรียกจัดการสถานะและนำทาง
       setTimeout(onDecline, 300);
     } else if (key.return) {
       setIsSubmitting(true);
@@ -49,6 +59,7 @@ export function ReconnectPromptScreen({
     }
   });
 
+  // ตรวจสอบขนาดของหน้าต่างเทอร์มินัลให้มีพื้นที่เพียงพอตามเกณฑ์ที่ระบบต้องการ
   const sizeStatus = getTerminalSizeStatus(columns, rows);
   if (sizeStatus !== 'OPTIMAL') {
     return (

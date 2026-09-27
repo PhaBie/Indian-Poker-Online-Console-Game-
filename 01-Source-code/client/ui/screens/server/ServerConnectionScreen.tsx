@@ -11,6 +11,11 @@ import { useServerConnectionController } from './useServerConnectionController';
 import { ServerConnectionCard } from './ServerConnectionCard';
 import { ServerHelpFooter } from './ServerHelpFooter';
 
+/**
+ * หน้าจอตั้งค่าการเชื่อมต่อเซิร์ฟเวอร์ (Server Connection Screen)
+ * รับผิดชอบการแสดงผลสถานะการเชื่อมต่อ WebSocket, การสลับโหมดป้อน IP หรือเลือกคำสั่ง,
+ * และตรวจสอบขนาดเทอร์มินัลก่อนเรนเดอร์เนื้อหา
+ */
 export function ServerConnectionScreen(props: ServerConnectionScreenProps) {
   const { columns, rows } = useTerminalSize();
   const { mode, isConnecting, ipInput, setIpInput, handleIpSubmit, isConnected } =

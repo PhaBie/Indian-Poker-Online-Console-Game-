@@ -10,6 +10,10 @@ export interface ValidationResult {
   readonly errorMessage: string | null;
 }
 
+/**
+ * กรองข้อความชื่อผู้เล่น โดยตัดช่องว่างส่วนเกินและตัดคำนำหน้าแบบเก่า ('name ')
+ * ที่อาจติดมาจากการป้อนคำสั่งแบบคอนโซลยุคเดิมออก เพื่อให้ได้เฉพาะชื่อผู้เล่นจริง
+ */
 export function sanitizeUsernameInput(rawInput: string): string {
   const trimmed = rawInput.trim();
   if (trimmed.toLowerCase().startsWith('name ')) {
@@ -18,6 +22,9 @@ export function sanitizeUsernameInput(rawInput: string): string {
   return trimmed;
 }
 
+/**
+ * จำกัดจำนวนตัวอักษรสูงสุดที่สามารถพิมพ์ได้ เพื่อป้องกันการพิมพ์ล้นเกินขนาดฟิลด์
+ */
 export function clampUsernameInput(
   rawInput: string,
   maxLength: number = MAX_USERNAME_LENGTH,
@@ -29,6 +36,10 @@ export function clampUsernameInput(
     : rawInput;
 }
 
+/**
+ * ตรวจสอบความถูกต้องของความยาวชื่อผู้เล่นตามเงื่อนไขทางธุรกิจ
+ * ต้องไม่เป็นค่าว่าง และมีความยาวอยู่ในช่วงที่กำหนด (MIN_USERNAME_LENGTH - MAX_USERNAME_LENGTH)
+ */
 export function validateUsernameLength(username: string): ValidationResult {
   if (username.length === 0) {
     return {
@@ -67,6 +78,10 @@ function resolveSubmitError(submitError: unknown): string {
   return 'Failed to connect to server';
 }
 
+/**
+ * Hook ควบคุมการป้อนและตรวจสอบความถูกต้องของชื่อผู้เล่น
+ * รับผิดชอบการซิงก์สถานะข้อความ, การแจ้งข้อผิดพลาด, และการดักปุ่ม Escape เพื่อย้อนกลับ
+ */
 export function useUsernameInput({
   onSubmit,
   onBack,

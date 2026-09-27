@@ -263,6 +263,11 @@ export interface ShimmeringHeaderProps {
   readonly pageTitle?: string;
 }
 
+/**
+ * แถบหัวเรื่องแบรนด์เกมด้านบนสุดของหน้าจอ (Shimmering Header)
+ * แสดงชื่อเกม "TEEN PATTI" ตามด้วยชื่อหน้าจอ พร้อมลูกเล่นคลื่นแสงเคลื่อนไหว (Shimmer Wave Animation)
+ * และแสดงเลขเวอร์ชันของแอปพลิเคชันทางมุมขวา
+ */
 export function ShimmeringHeader({
   pageTitle = 'MAIN MENU',
 }: ShimmeringHeaderProps = {}) {

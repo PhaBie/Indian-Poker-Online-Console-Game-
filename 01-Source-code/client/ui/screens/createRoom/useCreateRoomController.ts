@@ -14,6 +14,13 @@ interface UseCreateRoomControllerParams {
   ) => void;
 }
 
+/**
+ * Hook ควบคุมขั้นตอนการสร้างห้องเกม (Create Room Controller)
+ * จัดการกระบวนการแบบ 2 ขั้นตอน:
+ * - ขั้นที่ 1 (mode): เลือกโหมดการเชื่อมต่อ (LAN หรือ INTERNET)
+ * - ขั้นที่ 2 (settings): กำหนดจำนวนผู้เล่นสูงสุด (2, 3 หรือ 4 คน)
+ * พร้อมทั้งดักจับปุ่มลัด Esc/0 เพื่อย้อนกลับทีละขั้นตอน และปุ่มตัวเลข/ลูกศรเพื่อปรับค่า
+ */
 export function useCreateRoomController({
   socketClient,
   playerName = 'Host',

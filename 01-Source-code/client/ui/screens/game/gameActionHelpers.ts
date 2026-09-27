@@ -14,6 +14,11 @@ export interface GameplayActionState {
   readonly pendingSideshow: { challengerId: string; targetId: string } | null;
 }
 
+/**
+ * คำนวณช่วงเงินเดิมพันต่ำสุดและสูงสุดตามสถานะการเล่นของผู้เล่น
+ * - หากอยู่ในสถานะ Blind: ตัวคูณเป็น 1 เท่าของ Stake ปัจจุบัน
+ * - หากเปิดดูไพ่แล้ว (Seen): ตัวคูณเป็น 2 เท่าของ Stake ปัจจุบัน
+ */
 export function getBetRange(
   currentStake: number,
   isBlind: boolean,
@@ -28,6 +33,10 @@ export function getBetRange(
   };
 }
 
+/**
+ * ประเมินรายการแอคชันที่ผู้เล่นปัจจุบันสามารถเลือกเล่นได้ในเทิร์นนี้
+ * ตรวจสอบเงื่อนไขยอดชิปคงเหลือ, คำขอ Sideshow ที่รอการตอบรับ, และจำนวนผู้เล่นที่ยังอยู่ในเกม
+ */
 export function getGameplayActions(
   state: GameplayActionState,
 ): readonly GameplayAction[] {
@@ -56,9 +65,8 @@ export function getGameplayActions(
   const betRange = getBetRange(state.currentStake, me.isBlind);
   const actions: GameplayAction[] = [];
 
-  // The server rejects payments above a player's stack. Keep every displayed
-  // choice executable, especially after a player has looked at their cards
-  // and their minimum payment doubles.
+  // เซิร์ฟเวอร์จะปฏิเสธคำสั่งที่ใช้ชิปเกินกว่าที่ผู้เล่นมี จึงแสดงเฉพาะแอคชันที่สามารถจ่ายชิปได้จริง
+  // โดยเฉพาะหลังเปิดดูไพ่แล้ว ซึ่งยอดเดิมพันขั้นต่ำจะเพิ่มเป็นสองเท่า
   if (me.chips >= betRange.minimum) {
     actions.push({ label: 'CALL', value: 'CALL', hint: `$${betRange.minimum}` });
     actions.push({

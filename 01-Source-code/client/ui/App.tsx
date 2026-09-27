@@ -41,6 +41,10 @@ interface ActiveScreenRouterProps {
   readonly onExit: () => void;
 }
 
+/**
+ * เรนเดอร์หน้าจอในส่วนการเล่นเกม (Gameplay)
+ * สลับระหว่าง: ห้องพักรอเริ่มเกม (waitingRoom), โต๊ะเล่นเกมสด (game), และสรุปผลรอบเกม (result)
+ */
 function renderGameplayScreens({
   state,
   navigation,
@@ -94,6 +98,11 @@ function renderGameplayScreens({
   return null;
 }
 
+/**
+ * เรนเดอร์หน้าจอส่วนล็อบบี้และการเชื่อมต่อเครือข่าย
+ * สลับระหว่าง: หน้าเปิดตัว (intro), สอบถามการต่อกลับ (reconnectPrompt), เมนูหลัก (mainMenu),
+ * ตั้งค่าเซิร์ฟเวอร์ LAN (serverConnection), ตั้งค่าเซิร์ฟเวอร์ Online (onlineConnection), และรายชื่อโต๊ะ (tableLounge)
+ */
 function renderLobbyScreens(props: ActiveScreenRouterProps) {
   const { navigation, state, socketClient, serverUrl, onExit } = props;
   const { screen } = navigation;
@@ -168,6 +177,10 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
   return null;
 }
 
+/**
+ * เรนเดอร์หน้าจอส่วนการตั้งค่าผู้เล่นและห้องเกม
+ * สลับระหว่าง: กรอกชื่อผู้เล่น (enterName), สร้างห้อง (createRoom), และเข้าร่วมห้อง (joinRoom)
+ */
 function renderSetupScreens(props: ActiveScreenRouterProps) {
   const { navigation, state, socketClient, serverUrl } = props;
   const { screen } = navigation;
@@ -212,12 +225,18 @@ function renderSetupScreens(props: ActiveScreenRouterProps) {
   return null;
 }
 
+/** ตัวจัดเส้นทางหน้าจอหลัก ทำหน้าที่เลือกเรนเดอร์คอมโพเนนต์ตามหน้าจอที่กำลังเปิดอยู่ */
 function ActiveScreenRouter(props: ActiveScreenRouterProps) {
   return (
     renderLobbyScreens(props) ?? renderSetupScreens(props) ?? renderGameplayScreens(props)
   );
 }
 
+/**
+ * คอมโพเนนต์รากของระบบติดต่อผู้ใช้ (Root UI Component)
+ * จัดการวงจรชีวิตของแอปพลิเคชัน, ซ่อน/แสดงเคอร์เซอร์เทอร์มินัล, เล่นเสียงเอฟเฟกต์ตามปุ่มกด,
+ * ตรวจสอบความละเอียดหน้าต่างเทอร์มินัล และกระจายข้อมูลสถานะไปยังแต่ละหน้าจอ
+ */
 export function App({ clientState, serverUrl, socketClient }: AppProps) {
   const { exit } = useApp();
   const state = useClientState(clientState);

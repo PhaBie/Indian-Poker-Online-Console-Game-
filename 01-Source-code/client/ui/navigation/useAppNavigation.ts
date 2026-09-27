@@ -13,6 +13,7 @@ import { useOnlineConnection } from '../screens/onlineConnection/useOnlineConnec
 import { getOnlineServerUrl } from '../../config';
 import type { RoomMaxPlayers } from '../screens/createRoom/types';
 
+/** รายการระบุหน้าจอทั้งหมดที่แอปพลิเคชันสามารถสลับไปแสดงผลได้ */
 export type ActiveScreen =
   | 'intro'
   | 'reconnectPrompt'
@@ -27,6 +28,9 @@ export type ActiveScreen =
   | 'game'
   | 'result';
 
+/**
+ * ตรวจสอบว่าผู้เล่นปัจจุบันยังคงมีสถานะอยู่ในห้องเกมหรือไม่
+ */
 export function isPlayerPresentInRoom(
   players: ReadonlyArray<{ readonly id: string }> | undefined,
   playerId: string | null,
@@ -44,6 +48,14 @@ export interface UseAppNavigationParams {
   readonly onSetSessionInfo: (name: string, url: string) => void;
 }
 
+/**
+ * ซิงก์สถานะหน้าจอให้สอดคล้องกับระยะของเกม (Game Phase) ที่ได้รับจากเซิร์ฟเวอร์โดยอัตโนมัติ
+ * (โดยการเปลี่ยนหน้าจอในระยะ LOBBY, PLAYING และ ENDED จะเกิดขึ้นเฉพาะเมื่อผู้เล่นปัจจุบันอยู่ในห้องเท่านั้น):
+ * - LOBBY: นำทางไปยังหน้าห้องพักรอ (waitingRoom) เมื่อผู้เล่นอยู่ในห้อง
+ * - PLAYING: นำทางไปยังหน้าเล่นเกมบนโต๊ะ (game) เมื่อผู้เล่นอยู่ในห้อง
+ * - ENDED: นำทางไปยังหน้าสรุปผลรอบเกม (result) เมื่อผู้เล่นอยู่ในห้อง
+ * - กรณีไม่มีข้อมูลห้องเกมค้างอยู่: นำทางกลับไปยังเมนูหลัก (mainMenu)
+ */
 function useGameStatePhaseSync(
   latestGameState: ClientStateSnapshot['latestGameState'],
   myPlayerId: ClientStateSnapshot['myPlayerId'],
@@ -72,6 +84,10 @@ function useGameStatePhaseSync(
   }, [latestGameState, myPlayerId, screen, setScreen]);
 }
 
+/**
+ * Hook หลักสำหรับควบคุมระบบนำทางและสเตตัสของหน้าจอทั้งหมดในฝั่ง Client
+ * ทำหน้าที่ประสานงานระหว่างสถานะเครือข่าย, ข้อมูลห้อง, และการสลับหน้าจอแสดงผล
+ */
 export function useAppNavigation({
   state,
   socketClient,
@@ -148,7 +164,7 @@ export function useAppNavigation({
   };
 
   const handleIntroFinish = () => {
-    // If we have a saved reconnect token, we ask the user if they want to reconnect
+    // หากมีโทเคนสำหรับเชื่อมต่อห้องเดิมค้างอยู่ ให้เปลี่ยนไปยังหน้าจอสอบถามการต่อกลับ
     if (state.reconnectToken && state.currentRoomId && state.savedServerUrl) {
       setScreen('reconnectPrompt');
       return;
@@ -211,7 +227,7 @@ export function useAppNavigation({
       state.lastError &&
       !state.reconnectToken
     ) {
-      // Auto-reconnect failed and session was cleared. Fall back to main menu.
+      // กรณีการเชื่อมต่ออัตโนมัติล้มเหลวและเซสชันถูกล้าง ให้ย้อนกลับสู่เมนูหลัก
       setScreen('mainMenu');
     }
   }, [screen, state.lastError, state.reconnectToken]);

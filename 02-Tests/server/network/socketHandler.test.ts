@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, describe, expect, jest, test } from 'bun:test';
+import { beforeEach, describe, expect, jest, test } from 'bun:test';
 import type { WebSocket as WSWebSocket } from 'ws';
 import type { NetworkContext } from '../../../01-Source-code/server/network/socketHandler';
 import {
@@ -11,39 +11,6 @@ import { GAME_CONSTANTS } from '../../../01-Source-code/shared/constants';
 import { Player } from '../../../01-Source-code/server/domain/models/Player';
 import { RoomManager } from '../../../01-Source-code/server/domain/services/RoomManager';
 
-// Polyfill for Bun jest timers
-let timerCallbacks: { id: number; cb: Function; ms: number }[] = [];
-let timerIdCounter = 1;
-const originalSetTimeout = global.setTimeout;
-const originalClearTimeout = global.clearTimeout;
-
-beforeEach(() => {
-  timerCallbacks = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).setTimeout = (cb: Function, ms: number) => {
-    const id = timerIdCounter++;
-    timerCallbacks.push({ id, cb, ms });
-    return id;
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).clearTimeout = (id: number) => {
-    timerCallbacks = timerCallbacks.filter((t) => t.id !== id);
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (jest as any).advanceTimersByTime = (ms: number) => {
-    for (const t of [...timerCallbacks]) {
-      t.ms -= ms;
-      if (t.ms <= 0) {
-        t.cb();
-        timerCallbacks = timerCallbacks.filter((x) => x.id !== t.id);
-      }
-    }
-  };
-});
-afterEach(() => {
-  global.setTimeout = originalSetTimeout;
-  global.clearTimeout = originalClearTimeout;
-});
 function client(events: ServerEvent[]): WSWebSocket {
   return {
     readyState: 1,
@@ -203,100 +170,140 @@ describe('7. ระบบควบคุมการจบรอบและเ�
     ).toBeNull();
   });
 
-  test('[PostRoundFlow] 7.8 ผู้เล่นที่ไม่ใช่ Host ตัดการเชื่อมต่อจะถูกนำออกทันที และหากเหลือ Host คนเดียวห้องจะกลับสู่ LOBBY', () => {
-    const host = new Player('host', 'Host');
-    const guest = new Player('guest', 'Thanathon');
-    const room = context.roomManager.createRoom('disconnect-lone-host', host, 2);
-    room.join(guest);
-    room.startGame(host.id);
-    const hostEvents: ServerEvent[] = [];
-    const hostClient = client(hostEvents);
-    const guestClient = client([]);
-    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
-    context.connectedClients.set(guestClient, {
-      playerId: guest.id,
-      roomId: room.roomId,
-    });
+  test('[PostRoundFlow] 7.8 ผู้เล่นที่ไม่ใช่ Host ตัดการเชื่อมต่อจะรอต่อกลับ 30 วินาทีก่อนถูกนำออก และหากเหลือ Host คนเดียวห้องจะกลับสู่ LOBBY', () => {
+    jest.useFakeTimers();
+    try {
+      const host = new Player('host', 'Host');
+      const guest = new Player('guest', 'Thanathon');
+      const room = context.roomManager.createRoom('disconnect-lone-host', host, 2);
+      room.join(guest);
+      room.startGame(host.id);
+      const hostEvents: ServerEvent[] = [];
+      const hostClient = client(hostEvents);
+      const guestClient = client([]);
+      context.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      context.connectedClients.set(guestClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
 
-    handleClientDisconnect(guestClient, context);
-    jest.advanceTimersByTime(30000);
+      handleClientDisconnect(guestClient, context);
 
-    expect(room.getPlayer(guest.id)).toBeUndefined();
-    expect(room.phase).toBe('LOBBY');
-    expect(room.gameState).toBeNull();
-    expect(room.getPlayerCount()).toBe(1);
-    expect(hostEvents.some((event) => event.type === 'GAME_LOG_MESSAGE')).toBe(false);
+      expect(room.getPlayer(guest.id)?.status).toBe('DISCONNECTED');
+      expect(room.phase).toBe('PLAYING');
+      expect(room.getPlayerCount()).toBe(2);
+
+      jest.advanceTimersByTime(30_000);
+
+      expect(room.getPlayer(guest.id)).toBeUndefined();
+      expect(room.phase).toBe('LOBBY');
+      expect(room.gameState).toBeNull();
+      expect(room.getPlayerCount()).toBe(1);
+      expect(hostEvents.some((event) => event.type === 'GAME_LOG_MESSAGE')).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  test('[PostRoundFlow] 7.9 ผู้เล่นที่หลุดระหว่างเล่นจะทำให้รอบจบลงเมื่อเหลือ Host และผู้เล่น WAITING รวมกันครบจำนวนเริ่มรอบใหม่ได้', () => {
-    const host = new Player('host', 'Host');
-    const guest = new Player('guest', 'Thanathon');
-    const waitingPlayer = new Player('waiting', 'Waiting');
-    const room = context.roomManager.createRoom('disconnect-with-waiting', host, 3);
-    room.join(guest);
-    room.startGame(host.id);
-    room.join(waitingPlayer);
-    const hostEvents: ServerEvent[] = [];
-    const hostClient = client(hostEvents);
-    const guestClient = client([]);
-    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
-    context.connectedClients.set(guestClient, {
-      playerId: guest.id,
-      roomId: room.roomId,
-    });
+  test('[PostRoundFlow] 7.9 ผู้เล่นที่หลุดระหว่างเล่นจะทำให้รอบจบลงเมื่อครบ 30 วินาทีและเหลือ Host กับผู้เล่น WAITING รวมกันครบจำนวนเริ่มรอบใหม่ได้', () => {
+    jest.useFakeTimers();
+    try {
+      const host = new Player('host', 'Host');
+      const guest = new Player('guest', 'Thanathon');
+      const waitingPlayer = new Player('waiting', 'Waiting');
+      const room = context.roomManager.createRoom('disconnect-with-waiting', host, 3);
+      room.join(guest);
+      room.startGame(host.id);
+      room.join(waitingPlayer);
+      const hostEvents: ServerEvent[] = [];
+      const hostClient = client(hostEvents);
+      const guestClient = client([]);
+      context.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      context.connectedClients.set(guestClient, {
+        playerId: guest.id,
+        roomId: room.roomId,
+      });
 
-    handleClientDisconnect(guestClient, context);
+      handleClientDisconnect(guestClient, context);
 
-    expect(room.getPlayer(guest.id)?.status).toBe('DISCONNECTED');
-    expect(room.phase).toBe('ENDED');
-    expect(room.getPlayerCount()).toBe(3);
-    expect(room.getPlayer(waitingPlayer.id)?.status).toBe('WAITING');
-    const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
-    expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
-      { id: guest.id, name: guest.name, status: 'DISCONNECTED' },
-    ]);
+      expect(room.getPlayer(guest.id)?.status).toBe('DISCONNECTED');
+      expect(room.phase).toBe('PLAYING');
+      expect(room.getPlayerCount()).toBe(3);
+
+      jest.advanceTimersByTime(30_000);
+
+      expect(room.getPlayer(guest.id)).toBeUndefined();
+      expect(room.phase).toBe('ENDED');
+      expect(room.getPlayerCount()).toBe(2);
+      expect(room.getPlayer(waitingPlayer.id)?.status).toBe('WAITING');
+      const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
+      expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
+        { id: guest.id, name: guest.name, status: 'DISCONNECTED' },
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  test('[PostRoundFlow] 7.10 บันทึกข้อมูลผู้เล่นที่ตัดการเชื่อมต่อระหว่างเล่นไว้ในตารางผลสรุปเกม (GAME_RESULT)', () => {
-    const host = new Player('host', 'Host');
-    const firstGuest = new Player('guest-1', 'Disconnected player');
-    const secondGuest = new Player('guest-2', 'Still playing');
-    const room = context.roomManager.createRoom('disconnect-before-result', host, 4);
-    room.join(firstGuest);
-    room.join(secondGuest);
-    room.startGame(host.id);
-    room.gameState!.currentPlayerIndex = room.gameState!.activePlayers.findIndex(
-      (player) => player.id === secondGuest.id,
-    );
+  test('[PostRoundFlow] 7.10 บันทึกข้อมูลผู้เล่นที่ตัดการเชื่อมต่อระหว่างเล่นไว้ในตารางผลสรุปเกม (GAME_RESULT) หลังครบกำหนดเวลาต่อกลับ 30 วินาที', () => {
+    jest.useFakeTimers();
+    try {
+      const host = new Player('host', 'Host');
+      const firstGuest = new Player('guest-1', 'Disconnected player');
+      const secondGuest = new Player('guest-2', 'Still playing');
+      const room = context.roomManager.createRoom('disconnect-before-result', host, 4);
+      room.join(firstGuest);
+      room.join(secondGuest);
+      room.startGame(host.id);
+      room.gameState!.currentPlayerIndex = room.gameState!.activePlayers.findIndex(
+        (player) => player.id === secondGuest.id,
+      );
 
-    const hostEvents: ServerEvent[] = [];
-    const hostClient = client(hostEvents);
-    const firstGuestClient = client([]);
-    const secondGuestClient = client([]);
-    context.connectedClients.set(hostClient, { playerId: host.id, roomId: room.roomId });
-    context.connectedClients.set(firstGuestClient, {
-      playerId: firstGuest.id,
-      roomId: room.roomId,
-    });
-    context.connectedClients.set(secondGuestClient, {
-      playerId: secondGuest.id,
-      roomId: room.roomId,
-    });
+      const hostEvents: ServerEvent[] = [];
+      const hostClient = client(hostEvents);
+      const firstGuestClient = client([]);
+      const secondGuestClient = client([]);
+      context.connectedClients.set(hostClient, {
+        playerId: host.id,
+        roomId: room.roomId,
+      });
+      context.connectedClients.set(firstGuestClient, {
+        playerId: firstGuest.id,
+        roomId: room.roomId,
+      });
+      context.connectedClients.set(secondGuestClient, {
+        playerId: secondGuest.id,
+        roomId: room.roomId,
+      });
 
-    handleClientDisconnect(firstGuestClient, context);
-    // In this test, secondGuest acts BEFORE 30s timeout
-    expect(room.phase).toBe('PLAYING');
+      handleClientDisconnect(firstGuestClient, context);
 
-    handleClientMessage(
-      secondGuestClient,
-      { type: 'PLAYER_ACTION', payload: { action: 'FOLD' } },
-      context,
-    );
+      expect(room.phase).toBe('PLAYING');
+      expect(room.getPlayer(firstGuest.id)?.status).toBe('DISCONNECTED');
 
-    const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
-    expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
-      { id: firstGuest.id, name: firstGuest.name, status: 'DISCONNECTED' },
-    ]);
+      jest.advanceTimersByTime(30_000);
+
+      expect(room.getPlayer(firstGuest.id)).toBeUndefined();
+
+      handleClientMessage(
+        secondGuestClient,
+        { type: 'PLAYER_ACTION', payload: { action: 'FOLD' } },
+        context,
+      );
+
+      const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
+      expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
+        { id: firstGuest.id, name: firstGuest.name, status: 'DISCONNECTED' },
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

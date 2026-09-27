@@ -9,6 +9,14 @@ interface UseWaitingRoomControllerParams {
   readonly serverError?: string | null;
 }
 
+/**
+ * Hook ควบคุมเหตุการณ์และปุ่มคำสั่งในห้องพักรอ (Waiting Room Controller)
+ * - จัดการแสดงผลข้อผิดพลาดและเคลียร์ข้อความทิ้งอัตโนมัติภายใน 3 วินาที (Auto-dismiss)
+ * - ดักจับปุ่มกด:
+ *   - R: สลับสถานะพร้อม (Ready / Unready)
+ *   - S: สั่งเริ่มเกม (เฉพาะหัวหน้าห้อง / Host เท่านั้น หากลูกห้องกดจะแจ้งเตือน)
+ *   - Escape / L / Q: ออกจากห้องเกม (Leave Room)
+ */
 export function useWaitingRoomController({
   isHost,
   onStart,
