@@ -13,12 +13,15 @@ export { MAX_TERMINAL_COLUMNS, MAX_TERMINAL_ROWS } from '../layout/terminalRequi
 const MAX_WARNING_COLUMNS = 220;
 const MAX_WARNING_ROWS = 55;
 
+/** สถานะความเหมาะสมของขนาดหน้าต่างเทอร์มินัล */
 export type TerminalSizeStatus = 'OPTIMAL' | 'TOO_SMALL' | 'TOO_LARGE';
 
+/** ตรวจสอบว่าขนาดเทอร์มินัลมีพื้นที่เพียงพอตามเกณฑ์ขั้นต่ำหรือไม่ */
 export function isTerminalSizeSufficient(columns: number, rows: number): boolean {
   return columns >= MIN_TERMINAL_COLUMNS && rows >= MIN_TERMINAL_ROWS;
 }
 
+/** ตรวจสอบว่าขนาดเทอร์มินัลอยู่ในช่วงที่เหมาะสมที่สุด (Optimal Range) ทั้งความกว้างและความสูงหรือไม่ */
 export function isTerminalSizeOptimal(columns: number, rows: number): boolean {
   return (
     columns >= MIN_TERMINAL_COLUMNS &&
@@ -28,6 +31,12 @@ export function isTerminalSizeOptimal(columns: number, rows: number): boolean {
   );
 }
 
+/**
+ * วิเคราะห์และคืนค่าสถานะความเหมาะสมของขนาดหน้าต่างเทอร์มินัล
+ * - TOO_SMALL: เล็กกว่าเกณฑ์ขั้นต่ำที่ UI สามารถเรนเดอร์ได้อย่างถูกต้อง
+ * - TOO_LARGE: กว้างหรือสูงเกินกว่าสัดส่วนที่ออกแบบไว้
+ * - OPTIMAL: ขนาดเหมาะสมพร้อมสำหรับการแสดงผล
+ */
 export function getTerminalSizeStatus(columns: number, rows: number): TerminalSizeStatus {
   if (columns < MIN_TERMINAL_COLUMNS || rows < MIN_TERMINAL_ROWS) {
     return 'TOO_SMALL';
@@ -102,6 +111,10 @@ function TerminalOutOfRangeContent({
   );
 }
 
+/**
+ * หน้าจอแจ้งเตือนเมื่อขนาดเทอร์มินัลไม่อยู่ในเกณฑ์ที่กำหนด
+ * แสดงขนาดปัจจุบันเทียบกับขนาดที่ต้องการ พร้อมรองรับการกดปุ่ม Esc หรือ Q เพื่อออกจากแอปพลิเคชัน
+ */
 export function TerminalOutOfRangeScreen({
   currentColumns,
   currentRows,

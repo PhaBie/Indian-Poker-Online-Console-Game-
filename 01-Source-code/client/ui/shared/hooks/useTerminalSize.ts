@@ -10,8 +10,11 @@ export interface TerminalDimensions {
 
 const WIDE_SCREEN_COLUMN_THRESHOLD = 85;
 
+/** รหัส Escape sequence สำหรับล้างหน้าจอและเลื่อนเคอร์เซอร์กลับไปที่จุดเริ่มต้น */
 export const TERMINAL_CLEAR_SEQUENCE = '\x1b[2J\x1b[3J\x1b[H\x1b[0m';
+/** รหัส Escape sequence สำหรับซ่อนตัวชี้เคอร์เซอร์ */
 export const HIDE_CURSOR_SEQUENCE = '\x1b[?25l';
+/** รหัส Escape sequence สำหรับแสดงตัวชี้เคอร์เซอร์ */
 export const SHOW_CURSOR_SEQUENCE = '\x1b[?25h';
 
 interface ResizableTerminalOutput {
@@ -41,6 +44,10 @@ function refreshTerminalSize(
   output.rows = size.rows;
 }
 
+/**
+ * ปรับแต่งสภาพแวดล้อมหน้าต่างเทอร์มินัลให้พร้อมสำหรับการเล่นเกม
+ * ส่งคำขอปรับขนาดหน้าต่าง ขยายเต็มจอ (Maximize) และลดขนาดฟอนต์ลงหากพื้นที่ยังไม่เพียงพอตามเกณฑ์ขั้นต่ำ
+ */
 export async function preparePlayableTerminal(
   output: ResizableTerminalOutput = process.stdout,
   controller?: TerminalWindowController | null,
@@ -95,7 +102,7 @@ export async function initializePlayableTerminal(): Promise<void> {
       controller = openWindowsTerminalWindow();
       readSize = getWindowsConsoleDimensions;
     } catch {
-      // Terminals that do not expose a controllable window still get a resize request.
+      // ส่งคำขอปรับขนาดหน้าต่างไปยังเทอร์มินัล แม้จะไม่รองรับตัวควบคุมหน้าต่างโดยตรง
     }
   }
 
@@ -116,7 +123,7 @@ export function requestPlayableTerminalSize(
   }
 
   try {
-    // XTWINOPS asks supported terminals to resize the window in character cells.
+    // ใช้คำสั่ง XTWINOPS เพื่อขอปรับขนาดหน้าต่างตามจำนวนช่องตัวอักษรสำหรับเทอร์มินัลที่รองรับ
     output.write(`\x1b[8;${GAMEPLAY_HEIGHT};${GAMEPLAY_WIDTH}t`);
     return true;
   } catch {
@@ -131,13 +138,13 @@ function writeEscapeSequence(sequence: string): void {
       return;
     }
   } catch {
-    // Fallback if fs.writeSync is unavailable
+    // กลไกสำรองกรณี fs.writeSync ไม่พร้อมใช้งาน
   }
 
   try {
     process.stdout.write(sequence);
   } catch {
-    // Ignore if stream closed
+    // ละเว้นข้อผิดพลาดกรณีสตรีมถูกปิดการทำงานแล้ว
   }
 }
 
@@ -167,6 +174,10 @@ export function getTerminalDimensions(): { columns: number; rows: number } {
   return { columns: terminalColumns, rows: terminalRows };
 }
 
+/**
+ * React Hook สำหรับตรวจวัดและติดตามขนาดของหน้าต่างเทอร์มินัลแบบเรียลไทม์
+ * อัปเดต state ทันทีเมื่อเกิดเหตุการณ์ปรับขนาดหน้าต่าง (Terminal Resize Event)
+ */
 export function useTerminalSize(): TerminalDimensions {
   const [dimensions, setDimensions] = useState(getTerminalDimensions);
 

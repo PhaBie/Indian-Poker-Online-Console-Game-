@@ -13,6 +13,11 @@ export interface RoundResultScreenProps {
   onLeave: () => void;
 }
 
+/**
+ * หน้าจอแสดงผลลัพธ์รอบเกม (Round Result Screen)
+ * สรุปรายชื่อผู้ชนะ, รูปแบบไพ่ที่ชนะ (Winning Hand), และเงินรางวัลที่ได้รับ (Payouts)
+ * พร้อมรองรับการพิมพ์คำสั่ง 'next' เพื่อกลับไปยังห้องพักรอ (RESET_LOBBY) หรือ 'leave' เพื่อออกจากห้อง
+ */
 export function RoundResultScreen({
   result,
   gameState,

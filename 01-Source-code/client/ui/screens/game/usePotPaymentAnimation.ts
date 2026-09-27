@@ -5,6 +5,12 @@ export const POT_COUNT_UP_INTERVAL_MS = 60;
 export const POT_FLASH_PULSE_DURATION_MS = 250;
 export const POT_FLASH_TOTAL_STEPS = 6;
 
+/**
+ * เฟสของแอนิเมชันยอดเงินกองกลาง:
+ * - IDLE: สถานะนิ่ง แสดงยอดเงินตามปกติ
+ * - COUNT_UP: ทยอยเพิ่มตัวเลขยอดเงินอย่างต่อเนื่องตามลำดับขั้น
+ * - BLINKING: กระพริบเน้นยอดเงินเมื่อเงินเข้าสู่กองกลางเรียบร้อย
+ */
 export type PotAnimationPhase = 'IDLE' | 'COUNT_UP' | 'BLINKING';
 
 export interface PotPaymentAnimationResult {
@@ -23,6 +29,19 @@ export interface PotAnimationState {
   readonly blinkStep: number;
 }
 
+/**
+ * กำหนดสถานะแอนิเมชันของกองกลางเมื่อค่ายอดเงินเปลี่ยนไป:
+ * - กรณีคงสถานะขณะแอนิเมชันกำลังทำงาน:
+ *   หากยอด nextPot เท่ากับ currentState.targetPot ขณะที่สถานะไม่ใช่ IDLE (เช่น COUNT_UP หรือ BLINKING)
+ *   ฟังก์ชันจะคืนค่าสถานะเดิมต่อไป เพื่อให้เล่นแอนิเมชันเดิมจนเสร็จสิ้น ไม่เปลี่ยนสถานะเป็น IDLE
+ * - กรณีคงสถานะเมื่อไม่มีการเปลี่ยนแปลงในสถานะปกติ:
+ *   หากอยู่ในสถานะ IDLE และยอด nextPot เท่ากับ currentState.observedPot เดิม จะคืนค่าสถานะเดิมทันที
+ * - กรณีเริ่มแอนิเมชันนับยอดเงินขึ้น (COUNT_UP):
+ *   หากยอดเดิมมากกว่า 0 และมียอดใหม่เพิ่มขึ้น (nextPot > currentState.observedPot) จะเริ่มเล่นแอนิเมชันนับยอดเงิน
+ * - กรณีปรับยอดเงินทันทีในสถานะ IDLE:
+ *   หากไม่เข้ากรณีข้างต้น (เช่น ยอดเริ่มต้นจาก 0, ยอดลดลง หรือไม่ได้เพิ่มขึ้นขณะไม่อยู่ในแอนิเมชันเป้าหมายเดิม)
+ *   จะอัปเดตยอดเงินทันทีและกำหนดสถานะเป็น IDLE โดยไม่มีแอนิเมชันนับตัวเลข
+ */
 export function resolveNextPotAnimationState(
   nextPot: number,
   currentState: PotAnimationState,

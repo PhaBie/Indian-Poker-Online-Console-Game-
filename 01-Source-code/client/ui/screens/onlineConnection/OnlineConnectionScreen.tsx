@@ -24,6 +24,11 @@ export function getOnlineConnectionLabel(intent: OnlineConnectionScreenProps['in
   return intent === 'create' ? 'CREATE ONLINE' : 'JOIN ONLINE';
 }
 
+/**
+ * หน้าจอตั้งค่าการเชื่อมต่อเซิร์ฟเวอร์ออนไลน์ (Online Connection Screen)
+ * รับข้อมูล URL (เช่น ที่อยู่ ngrok) สำหรับสร้างหรือเข้าร่วมห้องเล่นเกมผ่านอินเทอร์เน็ต
+ * พร้อมแสดงสถานะการเชื่อมต่อ (Spinner) และข้อความแจ้งเตือนข้อผิดพลาด
+ */
 export function OnlineConnectionScreen({
   intent,
   error,

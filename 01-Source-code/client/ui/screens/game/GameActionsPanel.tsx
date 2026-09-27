@@ -29,6 +29,11 @@ const ACTION_COLORS: Readonly<Record<string, string>> = {
   DECLINE: 'redBright',
 };
 
+/**
+ * ตรวจสอบเงื่อนไขความพร้อมในการเลือกแอคชันของผู้เล่น
+ * ต้องไม่อยู่ในขั้นตอนแอนิเมชันเปิดโต๊ะ (Entrance), ได้รับอนุญาตให้แสดงคำสั่ง,
+ * และต้องเป็นเทิร์นของผู้เล่นเอง หรือเป็นผู้ถูกขอประลอง Sideshow
+ */
 export function canChooseGameAction({
   isEntranceActive,
   shouldShowActions,
@@ -43,6 +48,7 @@ export function canChooseGameAction({
   return !isEntranceActive && shouldShowActions && (isMyTurn || isPendingSideshowTarget);
 }
 
+/** แสดงปุ่มแอคชันแต่ละรายการในเมนู พร้อมจัดรูปแบบสีและคำใบ้จำนวนชิป (Hint) */
 function ActionButton({ isSelected, label }: ActionButtonProps) {
   const [action, amount] = label.split('|');
   const actionColor = ACTION_COLORS[action] ?? 'white';
@@ -190,6 +196,13 @@ interface PanelBodyContentProps {
   readonly status: ReturnType<typeof getStatusDisplayInfo>;
 }
 
+/**
+ * แสดงผลเนื้อหาภายในพาเนลตามสถานะการเล่น:
+ * - กำลังเริ่มแอนิเมชันเริ่มเกม (Entrance): แสดงข้อความกำลังแจกไพ่
+ * - ยังไม่สามารถเลือกแอคชันได้: แสดงข้อความรอรอบหรือสถานะโต๊ะ
+ * - โหมดกรอกเงินเดิมพัน (input_bet): แสดงฟอร์ม TextInput
+ * - โหมดปกติ: แสดงเมนู SelectInput ให้เลือกคำสั่ง
+ */
 function PanelBodyContent({
   isEntranceActive,
   canChooseAction,
@@ -233,6 +246,7 @@ function PanelBodyContent({
   );
 }
 
+/** สร้างจังหวะกะพริบสัญลักษณ์สถานะหัวพาเนล (● / ○) ทุก 450ms เมื่อถึงเทิร์นของผู้เล่น */
 function useActionPulse(canChooseAction: boolean): boolean {
   const [isPulseOn, setIsPulseOn] = useState(false);
 
@@ -297,6 +311,14 @@ function PanelContentGroup({
   );
 }
 
+/**
+ * พาเนลควบคุมการเล่นและแสดงสถานะเกม (Game Actions Panel) ด้านข้างโต๊ะเกม
+ * รองรับการแสดงผล:
+ * - ชื่อเทิร์นและสถานะโต๊ะปัจจุบัน
+ * - เมนูเลือกแอคชันที่แสดงบนหน้าจอ (CALL, BET, FOLD, SEE, DUEL, SHOW, ACCEPT, DECLINE)
+ * - ฟอร์มกรอกจำนวนเงินเดิมพัน (เมื่อเลือกคำสั่งที่ต้องระบุยอดเงิน เช่น BET หรือคำสั่งลงเงินที่คอนโทรลเลอร์รองรับ)
+ * - แอนิเมชันกะพริบหัวพาเนล และกล่องแจ้งเตือนความผิดพลาด (NoticeBox)
+ */
 export function GameActionsPanel(props: GameActionsPanelProps) {
   const {
     isMyTurn,

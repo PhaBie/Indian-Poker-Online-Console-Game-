@@ -20,6 +20,11 @@ export interface EnterUsernameScreenProps {
   readonly serverError?: string | null;
 }
 
+/**
+ * หน้าจอกรอกชื่อผู้เล่น (Player Username Registration / Setup Screen)
+ * รองรับทั้งการลงทะเบียนชื่อใหม่ครั้งแรก และการตั้งค่าชื่อในเซสชันปัจจุบัน
+ * พร้อมทั้งจัดการแสดงผลข้อผิดพลาดจากฝั่งเซิร์ฟเวอร์หรือข้อผิดพลาดจากการตรวจสอบในเครื่อง
+ */
 export function EnterUsernameScreen({
   onSubmit,
   onBack,
