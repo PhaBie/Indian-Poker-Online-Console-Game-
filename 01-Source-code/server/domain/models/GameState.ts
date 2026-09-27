@@ -114,8 +114,16 @@ export class GameState {
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
 
       const nextPlayer = this.activePlayers[this.currentPlayerIndex];
-      if (nextPlayer.status !== 'ACTIVE') {
-        continue;
+
+      const activeCount = this.activePlayers.filter((p) => p.status === 'ACTIVE').length;
+      if (activeCount >= 2) {
+        if (nextPlayer.status !== 'ACTIVE') {
+          continue;
+        }
+      } else {
+        if (nextPlayer.status !== 'ACTIVE' && nextPlayer.status !== 'DISCONNECTED') {
+          continue;
+        }
       }
 
       // In Teen Patti a player pays to stay in. Spending the last chip is
@@ -507,8 +515,8 @@ export class GameState {
       throw new InvalidActionError('SHOW');
     }
 
-    // ผู้เล่น Seen ห้ามขอ Show กับผู้เล่น Blind
-    if (!player.isBlind && opponent.isBlind) {
+    // ผู้เล่น Seen ห้ามขอ Show กับผู้เล่น Blind (ยกเว้นคู่แข่งหลุดไปแล้ว)
+    if (!player.isBlind && opponent.isBlind && opponent.status !== 'DISCONNECTED') {
       throw new InvalidActionError('SHOW');
     }
 
