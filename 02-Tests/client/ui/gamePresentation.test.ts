@@ -1,4 +1,5 @@
 import { describe, expect, jest, test } from 'bun:test';
+jest.useFakeTimers();
 import {
   determineSeatPositions,
   getCardSuitColor,
