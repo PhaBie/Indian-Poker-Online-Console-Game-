@@ -535,7 +535,7 @@ function removeNonHostPlayer(
       status: reason === 'disconnected' ? 'DISCONNECTED' : 'LEFT',
     });
   }
-  const isGameOver = room.gameState?.handlePlayerDisconnect(playerId) ?? false;
+  const isGameOver = room.gameState?.handlePlayerDisconnect(playerId, true) ?? false;
   room.leave(playerId);
 
   // A host left alone cannot play or choose a meaningful next game. Keep the
@@ -600,17 +600,7 @@ export function handleClientDisconnect(
 
   if (player) {
     player.disconnect();
-    const isPlayingInThisHand =
-      room.phase === 'PLAYING' &&
-      room.gameState?.activePlayers.some((p) => p.id === playerId) === true;
-    if (isPlayingInThisHand) {
-      recordDepartedPlayer(room.roomId, {
-        id: playerId,
-        name: player.name,
-        status: 'DISCONNECTED',
-      });
-    }
-    const isGameOver = room.gameState?.handlePlayerDisconnect(playerId) ?? false;
+    const isGameOver = room.gameState?.handlePlayerDisconnect(playerId, false) ?? false;
     if (isGameOver) {
       const result = room.endGame(true);
       if (result) {
