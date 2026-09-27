@@ -38,6 +38,7 @@ _เทสต์ Room อยู่ใน `server/domain/room.test.ts` และ 
 - เฉพาะ GameLogic: `bun run test:logic`
 - เฉพาะ Schema: `bun run test:schema`
 - เฉพาะ Validator: `bun run test:validator`
+- เฉพาะ SocketHandler: `bun run test:socket-handler`
 
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง เช่น:
 
