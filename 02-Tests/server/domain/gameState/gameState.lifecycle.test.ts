@@ -253,7 +253,13 @@ describe('4. การจัดการสถานะและการเล�
 
   test('[GameState.handlePlayerDisconnect] 4.57 ผู้เล่นที่ไม่ ACTIVE ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
-      { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
+      {
+        id: 'playerOne',
+        name: 'Player One',
+        status: 'DISCONNECTED',
+        previousStatus: 'FOLDED',
+        chips: 1000,
+      },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
 

@@ -1,5 +1,38 @@
-import { describe, expect, jest, test } from 'bun:test';
-jest.useFakeTimers();
+import { describe, expect, jest, test, beforeEach, afterEach } from 'bun:test';
+
+// Polyfill for Bun jest timers
+let timerCallbacks: { id: number; cb: Function; ms: number }[] = [];
+let timerIdCounter = 1;
+const originalSetTimeout = global.setTimeout;
+const originalClearTimeout = global.clearTimeout;
+
+beforeEach(() => {
+  timerCallbacks = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).setTimeout = (cb: Function, ms: number) => {
+    const id = timerIdCounter++;
+    timerCallbacks.push({ id, cb, ms });
+    return id;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).clearTimeout = (id: number) => {
+    timerCallbacks = timerCallbacks.filter((t) => t.id !== id);
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (jest as any).advanceTimersByTime = (ms: number) => {
+    for (const t of [...timerCallbacks]) {
+      t.ms -= ms;
+      if (t.ms <= 0) {
+        t.cb();
+        timerCallbacks = timerCallbacks.filter((x) => x.id !== t.id);
+      }
+    }
+  };
+});
+afterEach(() => {
+  global.setTimeout = originalSetTimeout;
+  global.clearTimeout = originalClearTimeout;
+});
 import {
   determineSeatPositions,
   getCardSuitColor,

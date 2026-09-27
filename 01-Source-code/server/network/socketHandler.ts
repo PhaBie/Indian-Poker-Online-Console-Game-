@@ -48,8 +48,10 @@ function clearRoomTimers(roomId: string): void {
 
 function recordDepartedPlayer(roomId: string, player: DepartedPlayer): void {
   const departedPlayers = departedPlayersByRoom.get(roomId) ?? [];
-  departedPlayers.push(player);
-  departedPlayersByRoom.set(roomId, departedPlayers);
+  if (!departedPlayers.some((p) => p.id === player.id)) {
+    departedPlayers.push(player);
+    departedPlayersByRoom.set(roomId, departedPlayers);
+  }
 }
 
 function consumeDepartedPlayers(roomId: string): DepartedPlayer[] {
@@ -598,6 +600,30 @@ export function handleClientDisconnect(
 
   if (player) {
     player.disconnect();
+    const isPlayingInThisHand =
+      room.phase === 'PLAYING' &&
+      room.gameState?.activePlayers.some((p) => p.id === playerId) === true;
+    if (isPlayingInThisHand) {
+      recordDepartedPlayer(room.roomId, {
+        id: playerId,
+        name: player.name,
+        status: 'DISCONNECTED',
+      });
+    }
+    const isGameOver = room.gameState?.handlePlayerDisconnect(playerId) ?? false;
+    if (isGameOver) {
+      const result = room.endGame(true);
+      if (result) {
+        saveGameHistory(room, result);
+        broadcastGameResult(
+          room.roomId,
+          result,
+          context,
+          consumeDepartedPlayers(room.roomId),
+        );
+        scheduleAutoNextGame(room.roomId, context);
+      }
+    }
   }
 
   context.connectedClients.delete(wsClient);

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from 'bun:test';
+import { beforeEach, afterEach, describe, expect, jest, test } from 'bun:test';
 import type { WebSocket as WSWebSocket } from 'ws';
 import type { NetworkContext } from '../../../01-Source-code/server/network/socketHandler';
 import {
@@ -11,6 +11,39 @@ import { GAME_CONSTANTS } from '../../../01-Source-code/shared/constants';
 import { Player } from '../../../01-Source-code/server/domain/models/Player';
 import { RoomManager } from '../../../01-Source-code/server/domain/services/RoomManager';
 
+// Polyfill for Bun jest timers
+let timerCallbacks: { id: number; cb: Function; ms: number }[] = [];
+let timerIdCounter = 1;
+const originalSetTimeout = global.setTimeout;
+const originalClearTimeout = global.clearTimeout;
+
+beforeEach(() => {
+  timerCallbacks = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).setTimeout = (cb: Function, ms: number) => {
+    const id = timerIdCounter++;
+    timerCallbacks.push({ id, cb, ms });
+    return id;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).clearTimeout = (id: number) => {
+    timerCallbacks = timerCallbacks.filter((t) => t.id !== id);
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (jest as any).advanceTimersByTime = (ms: number) => {
+    for (const t of [...timerCallbacks]) {
+      t.ms -= ms;
+      if (t.ms <= 0) {
+        t.cb();
+        timerCallbacks = timerCallbacks.filter((x) => x.id !== t.id);
+      }
+    }
+  };
+});
+afterEach(() => {
+  global.setTimeout = originalSetTimeout;
+  global.clearTimeout = originalClearTimeout;
+});
 function client(events: ServerEvent[]): WSWebSocket {
   return {
     readyState: 1,
@@ -186,6 +219,7 @@ describe('7. ระบบควบคุมการจบรอบและเ�
     });
 
     handleClientDisconnect(guestClient, context);
+    jest.advanceTimersByTime(30000);
 
     expect(room.getPlayer(guest.id)).toBeUndefined();
     expect(room.phase).toBe('LOBBY');
@@ -213,9 +247,9 @@ describe('7. ระบบควบคุมการจบรอบและเ�
 
     handleClientDisconnect(guestClient, context);
 
-    expect(room.getPlayer(guest.id)).toBeUndefined();
+    expect(room.getPlayer(guest.id)?.status).toBe('DISCONNECTED');
     expect(room.phase).toBe('ENDED');
-    expect(room.getPlayerCount()).toBe(2);
+    expect(room.getPlayerCount()).toBe(3);
     expect(room.getPlayer(waitingPlayer.id)?.status).toBe('WAITING');
     const result = hostEvents.find((event) => event.type === 'GAME_RESULT');
     expect(result?.type === 'GAME_RESULT' && result.payload.departedPlayers).toEqual([
@@ -250,6 +284,7 @@ describe('7. ระบบควบคุมการจบรอบและเ�
     });
 
     handleClientDisconnect(firstGuestClient, context);
+    // In this test, secondGuest acts BEFORE 30s timeout
     expect(room.phase).toBe('PLAYING');
 
     handleClientMessage(

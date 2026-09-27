@@ -588,6 +588,10 @@ export class GameState {
     )
       return false;
 
+    if (player.status === 'DISCONNECTED' && player.previousStatus === 'FOLDED') {
+      return false;
+    }
+
     if (
       this.pendingSideshow?.challengerId === playerId ||
       this.pendingSideshow?.targetId === playerId

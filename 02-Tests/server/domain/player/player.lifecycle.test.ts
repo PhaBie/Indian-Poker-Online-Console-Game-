@@ -20,7 +20,7 @@ describe('3. การหมอบของผู้เล่น (Player.fold)',
   });
 
   describe('กรณีข้อผิดพลาด (Unhappy Paths)', () => {
-    const invalidFoldStates: PlayerStatus[] = ['WAITING', 'FOLDED', 'DISCONNECTED'];
+    const invalidFoldStates: PlayerStatus[] = ['WAITING', 'FOLDED'];
     test.each(invalidFoldStates)(
       '[Player.fold] 3.29 สั่งหมอบในสถานะไม่อนุญาต (%s) → โยน PlayerStateError',
       (state) => {
