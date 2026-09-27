@@ -6,7 +6,7 @@
 
 <!-- prettier-ignore -->
 ```bash
-Test/
+02-Tests/
 ├── server/
 │   ├── core/             # กติกาไพ่และ Schema
 │   ├── domain/
@@ -42,7 +42,7 @@ _เทสต์ Room อยู่ใน `server/domain/room.test.ts` และ 
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง เช่น:
 
 ```bash
-bun test ./Test/server/domain/player/player.money.test.ts
+bun test ./02-Tests/server/domain/player/player.money.test.ts
 ```
 
 ## 3. ข้อควรรู้
