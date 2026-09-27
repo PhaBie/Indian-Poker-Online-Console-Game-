@@ -114,7 +114,7 @@ export class GameState {
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
 
       const nextPlayer = this.activePlayers[this.currentPlayerIndex];
-      if (nextPlayer.status !== 'ACTIVE' && nextPlayer.status !== 'DISCONNECTED') {
+      if (nextPlayer.status !== 'ACTIVE') {
         continue;
       }
 
@@ -129,10 +129,8 @@ export class GameState {
       return;
     }
 
-    throw new PlayerStateError(
-      this.activePlayers[this.currentPlayerIndex]?.id ?? '',
-      this.activePlayers[this.currentPlayerIndex]?.status ?? 'UNKNOWN',
-    );
+    // If no one is ACTIVE, we pause the turn on the last player until someone reconnects or is kicked
+    return;
   }
 
   public processAction(
@@ -290,10 +288,7 @@ export class GameState {
         const prevIndex =
           (this.currentPlayerIndex - i + this.activePlayers.length) %
           this.activePlayers.length;
-        if (
-          this.activePlayers[prevIndex].status === 'ACTIVE' ||
-          this.activePlayers[prevIndex].status === 'DISCONNECTED'
-        ) {
+        if (this.activePlayers[prevIndex].status === 'ACTIVE') {
           targetPlayer = this.activePlayers[prevIndex];
           break;
         }
@@ -597,11 +592,20 @@ export class GameState {
       return false;
     }
 
-    if (
-      this.pendingSideshow?.challengerId === playerId ||
-      this.pendingSideshow?.targetId === playerId
-    ) {
+    // ถ้ามีท้าดวลอยู่ แล้วมีคนหลุด ให้ยกเลิกการท้าดวลทันที
+    if (this.pendingSideshow?.targetId === playerId) {
+      this.lastSideshowNotice = {
+        challengerId: this.pendingSideshow.challengerId,
+        targetId: this.pendingSideshow.targetId,
+        outcome: 'DECLINED',
+      };
       this.pendingSideshow = null;
+      // ผ่านเทิร์นของคนท้าไปเลย
+      this.nextTurn();
+    } else if (this.pendingSideshow?.challengerId === playerId) {
+      this.pendingSideshow = null;
+      // ผ่านเทิร์นของคนท้า (ที่หลุดไป)
+      this.nextTurn();
     }
 
     // Only fold if the player is permanently leaving

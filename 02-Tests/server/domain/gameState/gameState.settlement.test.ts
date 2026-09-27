@@ -128,7 +128,8 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
       },
     ]);
     const survivor = gameState.checkLastManStanding();
-    expect(survivor).toBe(gameState.activePlayers[1]);
+    // They don't win immediately because DISCONNECTED player is still in game
+    expect(survivor).toBeNull();
   });
 
   test('[GameState.evaluateWinner] 4.27 เสมอ 3 คน → แบ่งกองกลางเท่าๆ กัน และรักษาสมดุลเงินในระบบสมบูรณ์', () => {

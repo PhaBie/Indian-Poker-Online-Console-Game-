@@ -165,7 +165,11 @@ export class ClientState {
       case 'ERROR': {
         this.lastError = event.message;
         // If we get an error like INVALID_TOKEN or ROOM_NOT_FOUND, our session is invalid.
-        if (event.code === 'INVALID_TOKEN' || event.code === 'ROOM_NOT_FOUND') {
+        if (
+          event.code === 'INVALID_TOKEN' ||
+          event.code === 'ROOM_NOT_FOUND' ||
+          event.code === 'NOT_IN_ROOM'
+        ) {
           this.clearSession();
         }
         break;
