@@ -11,12 +11,14 @@ export interface PlayingCardDefinition {
   readonly color: string;
 }
 
+/** ชุดไพ่ Royal Trail ที่ใช้แสดงเป็นตัวแทนในฉากเปิดตัว (A โพดำ, K โพแดง, Q ข้าวหลามตัด) */
 export const ROYAL_TRAIL_CARDS: readonly PlayingCardDefinition[] = [
   { rank: 'A', suit: '♠', color: UI_COLORS.cardDarkSuitForeground },
   { rank: 'K', suit: '♥', color: UI_COLORS.cardRedSuit },
   { rank: 'Q', suit: '♦', color: UI_COLORS.cardRedSuit },
 ];
 
+/** ระยะเวลาหน่วงค่าเริ่มต้น (Default Delay) ก่อนสิ้นสุดแอนิเมชันและเปลี่ยนหน้าจอโดยอัตโนมัติ (มิลลิวินาที) สามารถส่งค่าอื่นทับผ่านพร็อปส์ได้ */
 export const INTRO_DEAL_DELAY_MS = 1200;
 
 export interface IntroDealState {
@@ -26,6 +28,10 @@ export interface IntroDealState {
   readonly isSubtitleVisible: boolean;
 }
 
+/**
+ * คำนวณสถานะการแสดงผลของไพ่และข้อความตามเวลาที่ผ่านไป (Timeline Sequence)
+ * เพื่อให้เกิดลำดับภาพ: ทยอยแจกไพ่คว่ำหน้า -> ทยอยหงายไพ่ -> แสดงชื่อเกม -> แสดงคำบรรยาย
+ */
 export function calculateDealSequence(elapsedMs: number): IntroDealState {
   if (elapsedMs < 180) {
     return {
@@ -143,6 +149,12 @@ function CasinoCardSlot({ card, isVisible, isFlipped }: CasinoCardSlotProps) {
   return <CardFront card={card} />;
 }
 
+/**
+ * ควบคุมวงจรชีวิตของภาพเคลื่อนไหว (Animation Lifecycle)
+ * - อัปเดตเวลาทุก 40 มิลลิวินาที (ประมาณ 25 FPS ใน Terminal)
+ * - ดักจับการกดปุ่มจากคีย์บอร์ดเพื่อข้ามแอนิเมชันทันที (Skip Animation)
+ * - สิ้นสุดแอนิเมชันและเรียก onFinish เมื่อครบเวลาที่กำหนด หรือกรณีที่ระบบปิดการแสดงผลแอนิเมชัน
+ */
 function useDealAnimation(
   onFinish: () => void,
   autoFinishDelayMs: number,
@@ -150,6 +162,7 @@ function useDealAnimation(
   const isAnimated = isAnimationEnabled();
   const [elapsedMs, setElapsedMs] = useState<number>(0);
 
+  // ดักรับการกดปุ่มใด ๆ เพื่อให้ผู้เล่นสามารถกดข้ามแอนิเมชันได้ทันที
   useInput(
     () => {
       onFinish();
@@ -158,6 +171,7 @@ function useDealAnimation(
   );
 
   useEffect(() => {
+    // หากปิดการแสดงผลแอนิเมชัน ให้ข้ามไปยังขั้นตอนถัดไปทันที
     if (!isAnimated) {
       onFinish();
       return;
@@ -214,6 +228,11 @@ export interface GameIntroSplashProps {
   readonly autoFinishDelayMs?: number;
 }
 
+/**
+ * หน้าจอเปิดตัวเกม (Intro Splash Screen)
+ * ทำหน้าที่แสดงภาพเคลื่อนไหวการแจกและหงายไพ่ต้อนรับ พร้อมทั้งแสดงชื่อเกมอย่างเป็นลำดับ
+ * รองรับการข้ามภาพเคลื่อนไหวทันทีเมื่อผู้ใช้งานกดปุ่มใด ๆ
+ */
 export function GameIntroSplash({
   onFinish,
   autoFinishDelayMs = INTRO_DEAL_DELAY_MS,
