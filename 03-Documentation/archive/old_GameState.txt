@@ -1,0 +1,416 @@
+﻿import {
+  calculateSplitPot,
+  compareHands,
+  createDeck,
+  dealCards,
+  getWinners,
+  shuffleDeck,
+} from '../../core/gameLogic';
+import type { Card, GameActionType } from '../../../shared/types';
+import {
+  GameError,
+  InvalidActionError,
+  PlayerStateError,
+  WrongTurnError,
+} from '../errors/GameError';
+import type { Player } from './Player';
+
+export class GameState {
+  public pot: number;
+  public currentStake: number;
+  public currentPlayerIndex: number;
+  public deck: Card[];
+  public activePlayers: Player[];
+  public bootAmount: number;
+  public maxPotLimit: number;
+  public dealerIndex: number;
+
+  constructor(players: Player[], bootAmount: number = 50, maxPotLimit: number = 10000) {
+    this.pot = 0;
+    this.currentStake = bootAmount;
+    this.currentPlayerIndex = 0;
+    this.deck = [];
+    this.activePlayers = players;
+    this.bootAmount = bootAmount;
+    this.maxPotLimit = maxPotLimit;
+    this.dealerIndex = 0;
+  }
+
+  public startGame(): void {
+    // α╕òα╕úα╕ºα╕êα╕èα╕┤α╕¢α╕ùα╕╕α╕üα╕äα╕Öα╕üα╣êα╕¡α╕Öα╣Çα╕úα╕┤α╣êα╕íα╕êα╣êα╕▓α╕ó α╣Çα╕₧α╕╖α╣êα╕¡α╣äα╕íα╣êα╣âα╕½α╣ëα╕½α╕▒α╕üα╣Çα╕çα╕┤α╕Öα╣äα╕¢α╕Üα╕▓α╕çα╕¬α╣êα╕ºα╕Ö
+    if (this.activePlayers.some((player) => player.chips < this.bootAmount)) {
+      throw new GameError('Insufficient chips to start game', 'INSUFFICIENT_CHIPS');
+    }
+
+    // α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╕α╕üα╕äα╕Öα╕êα╣êα╕▓α╕óα╣Çα╕çα╕┤α╕Öα╣Çα╕úα╕┤α╣êα╕íα╣Çα╕üα╕íα╣Çα╕éα╣ëα╕▓ Pot
+    for (const player of this.activePlayers) {
+      player.payBet(this.bootAmount);
+      this.pot += this.bootAmount;
+      player.status = 'ACTIVE';
+    }
+
+    // α╕¬α╕úα╣ëα╕▓α╕çα╣äα╕₧α╣ê α╕¬α╕▒α╕Üα╣äα╕₧α╣ê α╣üα╕Ñα╕░α╣üα╕êα╕üα╣äα╕₧α╣êα╕äα╕Öα╕Ñα╕░ 3 α╣âα╕Ü
+    const result = dealCards(shuffleDeck(createDeck()), this.activePlayers.length, 3);
+    this.deck = result.remainingDeck;
+
+    for (let index = 0; index < this.activePlayers.length; index++) {
+      this.activePlayers[index].receiveCards(result.hands[index]);
+    }
+
+    // α╣âα╕½α╣ëα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╣üα╕úα╕üα╣Çα╕úα╕┤α╣êα╕íα╣Çα╕Ñα╣êα╕Ö
+    this.currentPlayerIndex = 0;
+  }
+
+  public nextTurn(): void {
+    // α╕éα╣ëα╕▓α╕íα╣äα╕¢α╕½α╕▓α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕ûα╕▒α╕öα╣äα╕¢α╕ùα╕╡α╣êα╕óα╕▒α╕çα╣Çα╕Ñα╣êα╕Öα╕¡α╕óα╕╣α╣ê
+    if (this.activePlayers.length === 0) {
+      return;
+    }
+
+    for (let count = 0; count < this.activePlayers.length; count++) {
+      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
+
+      if (this.activePlayers[this.currentPlayerIndex].status === 'ACTIVE') {
+        return;
+      }
+    }
+
+    throw new PlayerStateError(
+      this.activePlayers[this.currentPlayerIndex]?.id ?? '',
+      this.activePlayers[this.currentPlayerIndex]?.status ?? 'UNKNOWN',
+    );
+  }
+
+  public processAction(playerId: string, action: GameActionType, amount?: number): void {
+    // α╕òα╣ëα╕¡α╕çα╣Çα╕¢α╣çα╕Öα╣Çα╕ùα╕┤α╕úα╣îα╕Öα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕Öα╕╡α╣ëα╕üα╣êα╕¡α╕Öα╕êα╕╢α╕çα╕êα╕░α╣Çα╕Ñα╣êα╕Öα╣äα╕öα╣ë
+    const player = this.activePlayers.find(
+      (activePlayer) => activePlayer.id === playerId,
+    );
+
+    if (player === undefined) {
+      throw new GameError('Player not found', 'PLAYER_NOT_FOUND');
+    }
+
+    if (player.status === 'FOLDED') {
+      throw new PlayerStateError(player.id, player.status);
+    }
+
+    if (player.status !== 'ACTIVE') {
+      throw new InvalidActionError(action);
+    }
+
+    if (player !== this.activePlayers[this.currentPlayerIndex]) {
+      throw new WrongTurnError(playerId);
+    }
+
+    // α╕äα╕│α╕Öα╕ºα╕ôα╕êα╕│α╕Öα╕ºα╕Öα╣Çα╕çα╕┤α╕Öα╕ùα╕╡α╣êα╕òα╣ëα╕¡α╕çα╕êα╣êα╕▓α╕ó α╣üα╕Ñα╣ëα╕ºα╕ùα╕│ action α╕ùα╕╡α╣êα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╣Çα╕Ñα╕╖α╕¡α╕ü
+    let payment = 0;
+
+    switch (action) {
+      case 'CALL':
+        payment = player.isBlind ? this.currentStake : this.currentStake * 2;
+        break;
+      case 'BET':
+      case 'RAISE':
+        if (
+          amount === undefined ||
+          !Number.isInteger(amount) ||
+          amount <= 0 ||
+          amount > Number.MAX_SAFE_INTEGER
+        ) {
+          throw new GameError('Invalid amount', 'INVALID_AMOUNT');
+        }
+
+        {
+          const minimumAmount = player.isBlind
+            ? this.currentStake
+            : this.currentStake * 2;
+          const maximumAmount = player.isBlind
+            ? this.currentStake * 2
+            : this.currentStake * 4;
+          const isBelowMinimum =
+            action === 'RAISE' ? amount <= minimumAmount : amount < minimumAmount;
+
+          if (
+            isBelowMinimum ||
+            amount > maximumAmount ||
+            (!player.isBlind && amount % 2 !== 0)
+          ) {
+            throw new GameError('Invalid amount', 'INVALID_AMOUNT');
+          }
+        }
+        payment = amount;
+        break;
+      case 'FOLD':
+        player.fold();
+        return;
+      case 'SEEN':
+        player.seeCards();
+        return;
+      case 'SHOW':
+        this.requestShow(playerId);
+        return;
+      default:
+        throw new InvalidActionError(action);
+    }
+
+    if (this.pot + payment > Number.MAX_SAFE_INTEGER) {
+      throw new GameError('Pot exceeds max safe integer', 'INVALID_AMOUNT');
+    }
+
+    player.payBet(payment);
+    this.pot += payment;
+
+    if (action === 'BET' || action === 'RAISE') {
+      this.currentStake = player.isBlind ? payment : payment / 2;
+    }
+  }
+
+  public evaluateWinner(): void {
+    // α╣âα╕èα╣ëα╣Çα╕ëα╕₧α╕▓α╕░α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕óα╕▒α╕çα╣äα╕íα╣êα╕½α╕íα╕¡α╕Üα╣âα╕Öα╕üα╕▓α╕úα╕½α╕▓α╕£α╕╣α╣ëα╕èα╕Öα╕░
+    const players = this.activePlayers
+      .filter((player) => player.status === 'ACTIVE')
+      .map((player) => ({ id: player.id, cards: player.privateCards }));
+
+    if (players.length === 0) {
+      return;
+    }
+
+    // α╕½α╕▓ ID α╕£α╕╣α╣ëα╕èα╕Öα╕░ α╣üα╕Ñα╣ëα╕ºα╣üα╕Üα╣êα╕çα╣Çα╕çα╕┤α╕Öα╣âα╕Ö Pot α╣âα╕½α╣ëα╕£α╕╣α╣ëα╕èα╕Öα╕░
+    const winnerIds = getWinners(players);
+    const rewards = calculateSplitPot(this.pot, winnerIds);
+
+    for (const player of this.activePlayers) {
+      const reward = rewards[player.id];
+      if (reward !== undefined && player.chips + reward > Number.MAX_SAFE_INTEGER) {
+        throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
+      }
+    }
+
+    for (const player of this.activePlayers) {
+      const reward = rewards[player.id];
+      if (reward !== undefined) {
+        player.addChips(reward);
+      }
+    }
+
+    // α╕êα╣êα╕▓α╕ó Pot α╣üα╕Ñα╣ëα╕º α╕êα╕╢α╕çα╣Çα╕úα╕┤α╣êα╕íα╣Çα╕¢α╣çα╕Öα╕¿α╕╣α╕Öα╕óα╣îα╕¬α╕│α╕½α╕úα╕▒α╕Üα╕úα╕¡α╕Üα╕ûα╕▒α╕öα╣äα╕¢
+    this.pot = 0;
+  }
+
+  public endGame(): void {
+    // α╕êα╕Üα╕úα╕¡α╕Üα╕ïα╣ëα╕│α╣äα╕íα╣êα╣äα╕öα╣ë α╣Çα╕₧α╕úα╕▓α╕░ Pot α╕ûα╕╣α╕üα╕êα╣êα╕▓α╕óα╣äα╕¢α╣üα╕Ñα╣ëα╕º
+    if (this.pot === 0) {
+      return;
+    }
+
+    const remainingPlayers = this.activePlayers.filter(
+      (player) => player.status === 'ACTIVE',
+    );
+
+    // α╕ûα╣ëα╕▓α╣äα╕íα╣êα╕íα╕╡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕óα╕▒α╕çα╕¡α╕óα╕╣α╣êα╣âα╕Öα╣Çα╕üα╕í α╕üα╣çα╣äα╕íα╣êα╕íα╕╡α╕£α╕╣α╣ëα╕úα╕▒α╕Ü Pot
+    if (remainingPlayers.length === 0) {
+      return;
+    }
+
+    // α╕ûα╣ëα╕▓α╣Çα╕½α╕Ñα╕╖α╕¡α╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕Öα╕▒α╣ëα╕Öα╕èα╕Öα╕░α╕ùα╕▒α╕Öα╕ùα╕╡α╣éα╕öα╕óα╣äα╕íα╣êα╕òα╣ëα╕¡α╕çα╣Çα╕¢α╕┤α╕öα╣äα╕₧α╣ê
+    if (remainingPlayers.length === 1) {
+      remainingPlayers[0].addChips(this.pot);
+      this.pot = 0;
+      return;
+    }
+
+    // α╕ûα╣ëα╕▓α╕óα╕▒α╕çα╣Çα╕½α╕Ñα╕╖α╕¡α╕½α╕Ñα╕▓α╕óα╕äα╕Ö α╕óα╕▒α╕çα╣äα╕íα╣êα╕òα╣ëα╕¡α╕çα╕êα╣êα╕▓α╕ó Pot
+  }
+
+  public executeSideshow(challengerId: string, targetId: string): void {
+    const challenger = this.activePlayers.find((player) => player.id === challengerId);
+    const target = this.activePlayers.find((player) => player.id === targetId);
+
+    // α╕òα╣ëα╕¡α╕çα╕íα╕╡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕▒α╣ëα╕çα╕¬α╕¡α╕çα╕äα╕Ö α╣üα╕Ñα╕░α╕ùα╕▒α╣ëα╕çα╕äα╕╣α╣êα╕òα╣ëα╕¡α╕çα╕óα╕▒α╕çα╕¡α╕óα╕╣α╣êα╣âα╕Öα╣Çα╕üα╕í
+    if (challenger === undefined || target === undefined) {
+      throw new InvalidActionError('SIDESHOW');
+    }
+
+    if (challenger.status !== 'ACTIVE') {
+      throw new InvalidActionError('SIDESHOW');
+    }
+
+    if (target.status !== 'ACTIVE') {
+      throw new InvalidActionError('SIDESHOW');
+    }
+
+    // α╣Çα╕¢α╕úα╕╡α╕óα╕Üα╣Çα╕ùα╕╡α╕óα╕Üα╣äα╕₧α╣ê: α╕äα╣êα╕▓α╕Üα╕ºα╕üα╣üα╕¢α╕Ñα╕ºα╣êα╕▓α╕£α╕╣α╣ëα╕ùα╣ëα╕▓α╕èα╕Öα╕░ α╕äα╣êα╕▓α╕Ñα╕Üα╣üα╕¢α╕Ñα╕ºα╣êα╕▓α╣Çα╕¢α╣ëα╕▓α╕½α╕íα╕▓α╕óα╕èα╕Öα╕░
+    const result = compareHands(challenger.privateCards, target.privateCards);
+
+    // α╕ûα╣ëα╕▓α╣Çα╕¬α╕íα╕¡ α╕£α╕╣α╣ëα╕ùα╣ëα╕▓α╕òα╣ëα╕¡α╕çα╣Çα╕¢α╣çα╕Öα╕¥α╣êα╕▓α╕óα╕½α╕íα╕¡α╕Ü
+    if (result <= 0) {
+      challenger.fold();
+    } else {
+      target.fold();
+    }
+
+    // α╕ûα╣ëα╕▓α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╣âα╕½α╣ëα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕Öα╕▒α╣ëα╕Öα╕úα╕▒α╕Ü Pot
+    this.endGame();
+  }
+
+  public requestShow(playerId: string): void {
+    const player = this.activePlayers.find(
+      (activePlayer) => activePlayer.id === playerId,
+    );
+    const remainingPlayers = this.activePlayers.filter(
+      (activePlayer) => activePlayer.status === 'ACTIVE',
+    );
+
+    // Show α╕ùα╕│α╣äα╕öα╣ëα╣Çα╕íα╕╖α╣êα╕¡α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕óα╕▒α╕çα╣Çα╕Ñα╣êα╕Öα╕¡α╕óα╕╣α╣êα╣üα╕äα╣ê 2 α╕äα╕Ö
+    if (player === undefined || remainingPlayers.length !== 2) {
+      throw new InvalidActionError('SHOW');
+    }
+
+    if (player !== this.activePlayers[this.currentPlayerIndex]) {
+      throw new WrongTurnError(playerId);
+    }
+
+    const opponent = remainingPlayers.find((activePlayer) => activePlayer !== player);
+    if (opponent === undefined) {
+      throw new InvalidActionError('SHOW');
+    }
+
+    // α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Ö Seen α╕½α╣ëα╕▓α╕íα╕éα╕¡ Show α╕üα╕▒α╕Üα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Ö Blind
+    if (!player.isBlind && opponent.isBlind) {
+      throw new InvalidActionError('SHOW');
+    }
+
+    // Blind α╕êα╣êα╕▓α╕ó 1 α╣Çα╕ùα╣êα╕▓ α╕¬α╣êα╕ºα╕Ö Seen α╕êα╣êα╕▓α╕ó 2 α╣Çα╕ùα╣êα╕▓α╕éα╕¡α╕ç currentStake
+    const showCost = player.isBlind ? this.currentStake : this.currentStake * 2;
+    player.payBet(showCost);
+    this.pot += showCost;
+
+    // α╕ûα╣ëα╕▓α╣üα╕òα╣ëα╕íα╣Çα╕¬α╕íα╕¡ α╕£α╕╣α╣ëα╕éα╕¡ Show α╣Çα╕¢α╣çα╕Öα╕¥α╣êα╕▓α╕óα╣üα╕₧α╣ë
+    if (compareHands(player.privateCards, opponent.privateCards) <= 0) {
+      player.fold();
+    } else {
+      opponent.fold();
+    }
+
+    // α╣Çα╕íα╕╖α╣êα╕¡α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╣âα╕½α╣ëα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕Öα╕▒α╣ëα╕Öα╕úα╕▒α╕Ü Pot
+    this.endGame();
+  }
+
+  public canForceShow(): boolean {
+    // α╕Üα╕▒α╕çα╕äα╕▒α╕Ü Show α╣äα╕öα╣ëα╣Çα╕íα╕╖α╣êα╕¡α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕óα╕▒α╕çα╣Çα╕Ñα╣êα╕Öα╕¡α╕óα╕╣α╣ê 2 α╕äα╕Ö
+    const remainingPlayers = this.activePlayers.filter(
+      (player) => player.status === 'ACTIVE',
+    );
+
+    return remainingPlayers.length === 2;
+  }
+
+  public checkLastManStanding(): Player | null {
+    // α╕äα╣ëα╕Öα╕½α╕▓α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕óα╕▒α╕çα╕¡α╕óα╕╣α╣êα╣âα╕Öα╣Çα╕üα╕í
+    const remainingPlayers = this.activePlayers.filter(
+      (player) => player.status === 'ACTIVE',
+    );
+
+    // α╕ûα╣ëα╕▓α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╣âα╕½α╣ëα╕äα╕╖α╕Öα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕Öα╕▒α╣ëα╕Ö
+    if (remainingPlayers.length === 1) {
+      return remainingPlayers[0];
+    }
+
+    // α╕ûα╣ëα╕▓α╕óα╕▒α╕çα╣äα╕íα╣êα╣Çα╕½α╕Ñα╕╖α╕¡α╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╣âα╕½α╣ëα╕äα╕╖α╕Ö null
+    return null;
+  }
+
+  public checkPotLimitReached(): boolean {
+    // Pot α╕ûα╕╢α╕çα╕½α╕úα╕╖α╕¡α╣Çα╕üα╕┤α╕Öα╕êα╕│α╕Öα╕ºα╕Öα╕¬α╕╣α╕çα╕¬α╕╕α╕öα╕ùα╕╡α╣êα╕üα╕│α╕½α╕Öα╕öα╣üα╕Ñα╣ëα╕ºα╕½α╕úα╕╖α╕¡α╕óα╕▒α╕ç
+    return this.pot >= this.maxPotLimit;
+  }
+
+  public handleTie(winners: Player[]): void {
+    // α╕ûα╣ëα╕▓α╣äα╕íα╣êα╕íα╕╡α╕£α╕╣α╣ëα╕èα╕Öα╕░ α╕üα╣çα╕óα╕▒α╕çα╣äα╕íα╣êα╕òα╣ëα╕¡α╕çα╕êα╣êα╕▓α╕ó Pot
+    if (winners.length === 0) {
+      return;
+    }
+
+    // α╣üα╕Üα╣êα╕ç Pot α╣âα╕½α╣ëα╕£α╕╣α╣ëα╕èα╕Öα╕░α╕ùα╕╡α╣êα╣üα╕òα╣ëα╕íα╣Çα╕ùα╣êα╕▓α╕üα╕▒α╕Ö
+    const winnerIds = winners.map((winner) => winner.id);
+    const rewards = calculateSplitPot(this.pot, winnerIds);
+
+    for (const winner of winners) {
+      const reward = rewards[winner.id] ?? 0;
+      if (winner.chips + reward > Number.MAX_SAFE_INTEGER) {
+        throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
+      }
+    }
+
+    for (const winner of winners) {
+      winner.addChips(rewards[winner.id] ?? 0);
+    }
+
+    // α╕êα╣êα╕▓α╕ó Pot α╣üα╕Ñα╣ëα╕º α╕êα╕╢α╕çα╣Çα╕äα╕Ñα╕╡α╕óα╕úα╣îα╣äα╕ºα╣ëα╕¬α╕│α╕½α╕úα╕▒α╕Üα╕úα╕¡α╕Üα╕ûα╕▒α╕öα╣äα╕¢
+    this.pot = 0;
+  }
+
+  public rotateDealer(): void {
+    // α╕ûα╣ëα╕▓α╣äα╕íα╣êα╕íα╕╡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Ö α╕üα╣çα╣äα╕íα╣êα╕òα╣ëα╕¡α╕çα╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╕òα╕│α╣üα╕½α╕Öα╣êα╕ç Dealer
+    if (this.activePlayers.length === 0) {
+      return;
+    }
+
+    // α╣Çα╕Ñα╕╖α╣êα╕¡α╕Öα╣äα╕¢α╕óα╕▒α╕çα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╕ûα╕▒α╕öα╣äα╕¢ α╣üα╕Ñα╕░α╕ºα╕Öα╕üα╕Ñα╕▒α╕Üα╣äα╕¢α╕äα╕Öα╣üα╕úα╕üα╣Çα╕íα╕╖α╣êα╕¡α╕ûα╕╢α╕çα╕äα╕Öα╕¬α╕╕α╕öα╕ùα╣ëα╕▓α╕ó
+    this.dealerIndex = (this.dealerIndex + 1) % this.activePlayers.length;
+  }
+
+  public rejectSideshow(): void {
+    // α╕¢α╕Åα╕┤α╣Çα╕¬α╕ÿ Sideshow α╣éα╕öα╕óα╣äα╕íα╣êα╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╕¬α╕ûα╕▓α╕Öα╕░α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕½α╕úα╕╖α╕¡ Pot
+    return;
+  }
+
+  public handlePlayerDisconnect(playerId: string): void {
+    const player = this.activePlayers.find(
+      (activePlayer) => activePlayer.id === playerId,
+    );
+
+    // α╕ûα╣ëα╕▓α╣äα╕íα╣êα╕₧α╕Üα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Ö α╕üα╣çα╣äα╕íα╣êα╕íα╕╡α╕¡α╕░α╣äα╕úα╣âα╕½α╣ëα╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Ö
+    if (player === undefined) {
+      throw new GameError('Player not found', 'PLAYER_NOT_FOUND');
+    }
+
+    if (player.status === 'DISCONNECTED') {
+      return;
+    }
+
+    // α╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╕¬α╕ûα╕▓α╕Öα╕░α╣Çα╕₧α╕╖α╣êα╕¡α╣äα╕íα╣êα╣âα╕½α╣ëα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕½α╕Ñα╕╕α╕öα╣Çα╕Ñα╣êα╕Öα╕òα╣êα╕¡α╣äα╕öα╣ë
+    player.status = 'DISCONNECTED';
+
+    // α╕ûα╣ëα╕▓α╣Çα╕¢α╣çα╕Öα╣Çα╕ùα╕┤α╕úα╣îα╕Öα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕½α╕Ñα╕╕α╕ö α╣âα╕½α╣ëα╕éα╣ëα╕▓α╕íα╣äα╕¢α╕äα╕Öα╕ûα╕▒α╕öα╣äα╕¢
+    if (
+      this.activePlayers[this.currentPlayerIndex] === player &&
+      this.activePlayers.some((activePlayer) => activePlayer.status === 'ACTIVE')
+    ) {
+      this.nextTurn();
+    }
+
+    // α╕ûα╣ëα╕▓α╣Çα╕½α╕Ñα╕╖α╕¡α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕äα╕Öα╣Çα╕öα╕╡α╕óα╕º α╣âα╕½α╣ëα╕êα╕Üα╕úα╕¡α╕Üα╣üα╕Ñα╕░α╕êα╣êα╕▓α╕ó Pot
+    this.endGame();
+  }
+
+  public autoFoldTimeout(): void {
+    if (this.activePlayers.length === 0) {
+      return;
+    }
+
+    const currentPlayer = this.activePlayers[this.currentPlayerIndex];
+
+    // Timeout α╣âα╕èα╣ëα╣äα╕öα╣ëα╕üα╕▒α╕Üα╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╕ùα╕╡α╣êα╕üα╕│α╕Ñα╕▒α╕çα╣Çα╕Ñα╣êα╕Öα╕¡α╕óα╕╣α╣êα╣Çα╕ùα╣êα╕▓α╕Öα╕▒α╣ëα╕Ö
+    if (currentPlayer.status !== 'ACTIVE') {
+      return;
+    }
+
+    // α╕£α╕╣α╣ëα╣Çα╕Ñα╣êα╕Öα╣äα╕íα╣êα╣Çα╕Ñα╕╖α╕¡α╕ü action α╕áα╕▓α╕óα╣âα╕Öα╣Çα╕ºα╕Ñα╕▓ α╕êα╕╢α╕çα╕ûα╕╖α╕¡α╕ºα╣êα╕▓α╕½α╕íα╕¡α╕Ü
+    currentPlayer.fold();
+
+    // α╣Çα╕íα╕╖α╣êα╕¡α╕óα╕▒α╕çα╕íα╕╡α╕½α╕Ñα╕▓α╕óα╕äα╕Ö α╣âα╕½α╣ëα╕äα╕ç index α╣Çα╕öα╕┤α╕íα╣äα╕ºα╣ëα╕òα╕▓α╕íα╕úα╕¡α╕Üα╣Çα╕üα╕í
+    this.endGame();
+  }
+}

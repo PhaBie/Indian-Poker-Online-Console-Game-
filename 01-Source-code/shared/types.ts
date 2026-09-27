@@ -1,0 +1,208 @@
+/**
+ * @file types.ts
+ * @description โครงสร้างข้อมูลกลางสำหรับเชื่อมต่อระหว่าง Client และ Server (Shared Types)
+ */
+
+// ==========================================
+// 1. Domain Primitives (โครงสร้างพื้นฐาน)
+// ==========================================
+
+export type Suit = 'SPADES' | 'HEARTS' | 'DIAMONDS' | 'CLUBS';
+
+/**
+ * ลำดับแต้มของไพ่ (2-14)
+ * หมายเหตุ: 11=J, 12=Q, 13=K, 14=A
+ */
+export type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+
+export type HandRank =
+  'TRAIL' | 'PURE_SEQUENCE' | 'SEQUENCE' | 'COLOR' | 'PAIR' | 'HIGH_CARD';
+
+export type PlayerStatus = 'WAITING' | 'READY' | 'ACTIVE' | 'FOLDED' | 'DISCONNECTED';
+export type GameActionType =
+  | 'BET'
+  | 'CALL'
+  | 'RAISE'
+  | 'FOLD'
+  | 'SHOW'
+  | 'SIDESHOW'
+  | 'SEEN'
+  | 'ACCEPT_SIDESHOW'
+  | 'REJECT_SIDESHOW';
+
+/** สถานะของห้อง เพื่อให้ Client สลับหน้าจอระหว่าง Lobby กับโต๊ะเกมได้ถูก */
+export type RoomPhase = 'LOBBY' | 'PLAYING' | 'ENDED';
+
+// ==========================================
+// 2. Entities & DTOs
+// ==========================================
+
+export interface Card {
+  readonly suit: Suit;
+  readonly rank: Rank;
+}
+
+/**
+ * ข้อมูล State ผู้เล่นภายในระบบ Server (Domain Entity)
+ * คำเตือน: ห้ามส่งโครงสร้างนี้ผ่าน WebSocket โดยตรง เพื่อป้องกันการรั่วไหลของข้อมูล privateCards
+ */
+export interface ServerPlayer {
+  id: string;
+  name: string;
+  chips: number;
+  bet: number;
+  status: PlayerStatus;
+  privateCards: Card[];
+  isBlind: boolean;
+}
+
+/**
+ * Data Transfer Object (DTO) สำหรับแสดงผลฝั่ง Client
+ * ใช้สำหรับ Broadcast ข้อมูลผู้เล่นโดยผ่านการ Filter ข้อมูลที่ละเอียดอ่อนออกแล้ว
+ */
+export interface PublicPlayerDTO {
+  id: string;
+  name: string;
+  chips: number;
+  bet: number;
+  status: PlayerStatus;
+  isBlind: boolean;
+}
+
+/**
+ * โครงสร้างสำหรับบันทึกลง JSON File (Persistence)
+ */
+export interface RoomSaveData {
+  roomId: string;
+  history: unknown[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
+}
+
+export interface RoomSummaryDTO {
+  readonly roomId: string;
+  readonly hostName: string;
+  readonly playerCount: number;
+  readonly waitingCount: number;
+  readonly maxPlayers: number;
+  readonly phase: RoomPhase;
+  readonly bootAmount: number;
+}
+
+export type RoundWinReason =
+  'SHOW' | 'SHOW_TIE' | 'LAST_PLAYER_STANDING' | 'FORCED_SHOWDOWN';
+
+export type RoundResult =
+  | {
+      readonly winReason: 'LAST_PLAYER_STANDING';
+      readonly winningHand: null;
+      readonly winnerIds: readonly string[];
+      readonly payouts: Readonly<Record<string, number>>;
+      readonly exposedCards: Readonly<Record<string, Card[]>>;
+    }
+  | {
+      readonly winReason: 'SHOW' | 'SHOW_TIE' | 'FORCED_SHOWDOWN';
+      readonly winningHand: HandRank;
+      readonly winnerIds: readonly string[];
+      readonly payouts: Readonly<Record<string, number>>;
+      readonly exposedCards: Readonly<Record<string, Card[]>>;
+    };
+
+export interface DepartedPlayerResult {
+  readonly id: string;
+  readonly name: string;
+  readonly status: 'DISCONNECTED' | 'LEFT';
+}
+
+export type GameResultPayload = RoundResult & {
+  readonly departedPlayers?: readonly DepartedPlayerResult[];
+};
+
+// ==========================================
+// 3. Network Contracts (WebSocket Payload)
+// ==========================================
+
+/**
+ * โครงสร้างข้อมูลขาเข้า (Client -> Server)
+ */
+export type ClientEvent =
+  | {
+      type: 'CREATE_ROOM';
+      payload: { playerName: string; bootAmount: number; maxPlayers?: number };
+    }
+  | {
+      type: 'JOIN_ROOM';
+      payload: { playerName: string; roomId: string; reconnectToken?: string };
+    }
+  | { type: 'GET_ROOMS' }
+  | { type: 'LEAVE_ROOM' }
+  | { type: 'START_GAME' }
+  | { type: 'NEXT_GAME' }
+  | { type: 'END_GAME' }
+  | { type: 'TOGGLE_READY' }
+  | { type: 'RESET_LOBBY' }
+  | { type: 'SAVE_GAME' }
+  | { type: 'LOAD_GAME'; payload: { roomId: string } }
+  | { type: 'SEND_CHAT'; payload: { message: string } }
+  | {
+      type: 'PLAYER_ACTION';
+      payload: {
+        action: GameActionType;
+        amount?: number;
+      };
+    };
+
+/**
+ * โครงสร้างข้อมูลขาออก (Server -> Client)
+ */
+export type ServerEvent =
+  | { type: 'ERROR'; message: string; code?: string }
+  | { type: 'SESSION_CREATED'; payload: { playerId: string; reconnectToken: string } }
+  | { type: 'ROOM_CREATED'; payload: { roomId: string } }
+  | { type: 'ROOM_LIST'; payload: { rooms: RoomSummaryDTO[] } }
+  /** ห้องถูกปิดเพราะ Host ออกหรือขาดการเชื่อมต่อ */
+  | { type: 'ROOM_CLOSED'; payload: { roomId: string } }
+  | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
+  | { type: 'GAME_LOG_MESSAGE'; payload: { message: string } }
+  | { type: 'GAME_SAVED'; payload: { roomId: string } }
+  | { type: 'GAME_LOADED'; payload: { roomId: string } }
+  | {
+      type: 'GAME_STATE_UPDATE';
+      payload: {
+        roomId: string;
+        phase: RoomPhase;
+        hostId: string; // ใช้บอกว่าใครคือเจ้าของห้อง
+        maxPlayers: number;
+        pot: number;
+        currentStake: number;
+        currentTurnPlayerId: string | null;
+        turnEndTime: number | null;
+        /** Timestamp when the round/deal started on the server (used for real-time animation sync) */
+        roundStartedAt?: number | null;
+        players: PublicPlayerDTO[];
+        /** ข้อมูลคำขอท้า Sideshow (ถ้ามี) */
+        pendingSideshow?: { challengerId: string; targetId: string } | null;
+        /** ผล Sideshow ล่าสุด; ส่งไพ่เฉพาะคู่ดวลหลัง target ยอมรับแล้วเท่านั้น */
+        sideshowResult?: {
+          challengerId: string;
+          targetId: string;
+          winnerId: string;
+          loserId: string;
+          cards: Record<string, Card[]>;
+        } | null;
+        /** แจ้งทุกคนว่าเป้าหมายปฏิเสธ Sideshow; ไม่มีการเปิดไพ่ */
+        sideshowNotice?: {
+          challengerId: string;
+          targetId: string;
+          outcome: 'DECLINED';
+        } | null;
+        /** Preview: ไพ่ที่เปิดบนโต๊ะระหว่างรอแสดงผล SHOW */
+        showdownCards?: Record<string, Card[]> | null;
+        /** ผลรอบสำหรับ client ที่ต้องวาด table และผลลัพธ์จาก snapshot เดียวกัน */
+        roundResult?: RoundResult | null;
+        /** ไพ่ส่วนตัว จะถูกส่งให้ตรงกับ session ของ Client เท่านั้น (ถ้าอยู่ใน Lobby จะเป็น array ว่าง) */
+        myCards: Card[];
+      };
+    }
+  | {
+      type: 'GAME_RESULT';
+      payload: GameResultPayload;
+    };

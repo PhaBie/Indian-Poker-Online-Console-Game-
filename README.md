@@ -29,6 +29,47 @@ bun install
 
 _(คำสั่งนี้จะไปโหลด `ws`, `@types/ws` และเครื่องมืออื่นๆ ที่จำเป็นมาให้ครบเลยครับ)_
 
+### ดูหน้าเกมเพื่อปรับ UI โดยไม่ต้องเปิดห้อง
+
+```bash
+bun run dev:game
+```
+
+โหมดนี้ใช้ข้อมูลเกม 2 คนจำลองในเครื่อง ไม่เปิด WebSocket และไม่ต้องสร้างหรือ join ห้อง ต้องใช้ terminal อย่างน้อย 150 x 41
+
+เมื่อรัน `bun run dev` หรือ `bun run dev:game` เกมจะขอปรับขนาด Terminal เป็น 150 x 41 และบน Windows จะขยายหน้าต่าง CMD/PowerShell/Windows Terminal ที่กำลังใช้งานให้เต็มจอ หากยังไม่พอ เกมจะลดขนาดตัวอักษรในหน้าต่างนั้นทีละขั้นจนแสดงโต๊ะเกมได้ การปรับนี้มีผลกับหน้าต่าง Terminal ปัจจุบันเท่านั้น หาก Terminal ไม่อนุญาตให้โปรแกรมควบคุมหน้าต่าง หรือจอเล็กเกินกว่าจะแสดง 150 x 41 ช่อง จะมีหน้าแจ้งขนาดให้ปรับเองได้ขณะเกมเปิดอยู่โดยไม่ต้องกด Ctrl+C แล้วรันใหม่
+
+ใช้ `bun run dev:game:2`, `bun run dev:game:3`, หรือ `bun run dev:game:4` เพื่อดู layout ตามจำนวนผู้เล่น
+
+### เพลงประกอบระหว่างเล่น
+
+เมื่อเข้าโต๊ะเกมจริงหรือเปิดพรีวิว ไคลเอนต์จะเล่น `Music/Illslick_M_Leg_Indian.mp3` วนที่ระดับเสียงเริ่มต้น 20% หน้าเมนูและห้องรอไม่มีเพลง กด `M` ระหว่างอยู่หน้าเกมเพื่อปิดหรือเปิดเสียง เพลงยังเดินต่อขณะปิดเสียงและจะไม่เริ่มใหม่เมื่อเปิดเสียงอีกครั้ง เพลงหยุดเมื่อออกจากโต๊ะ ตัวเล่นเสียงและตัวถอดรหัส MP3 ติดตั้งพร้อม `bun install` โดยไม่ต้องลง `ffplay` เอง มี binary สำเร็จรูปสำหรับ Windows x64, macOS x64/arm64 และ Linux x64/arm64 ที่มีอุปกรณ์เสียง หากเปิดเสียงไม่ได้ เกมยังเล่นได้และจะแสดงข้อผิดพลาด `[Music]`
+
+ปรับเสียงด้วยตัวแปร `POKER_MUSIC_VOLUME` ค่า 0–100 โดย `0` คือปิดเพลง เช่นใน PowerShell:
+
+```powershell
+$env:POKER_MUSIC_VOLUME = 8
+bun run dev
+```
+
+ใช้ `bun run music:check` เพื่อทดลองฟังเพลง เปิดปิดเสียง และตรวจว่าตำแหน่งเพลงเดินต่อขณะปิดเสียง หากคำสั่งนี้ไม่มีเสียง ให้ตรวจอุปกรณ์เสียงและระดับเสียงของระบบ
+
+### run server local / Ngrok (Onlie)
+
+`bun run dev` : รัน server local
+
+## ใช้สำหรับตั้ง powershellโดยไปเอา Key ใน Ngrok มาก่อน
+
+`[Environment]::SetEnvironmentVariable(
+  "NGROK_AUTHTOKEN",
+  "TOKEN จากหน้า ngrok dashboard",
+  "User"
+)`
+
+`bun run server:online` : เมื่อตั้งค่าเสร็จแล้ว ก็พิมพ์นี้เพื่อรันเซิฟเวอรื Onlie
+
+มันจะพิมพ์ URL ประมาณนี้: `wss://xxxxx.ngrok-free.app` ให้ส่ง URL นี้ให้เพื่อน แล้วก็รัน `bun run dev` เพื่อเปิดเกมปกติเลย
+
 ---
 
 ## 🛡️ กฎการทำงานร่วมกันของทีม (Git Workflow)
@@ -48,11 +89,63 @@ _(คำสั่งนี้จะไปโหลด `ws`, `@types/ws` แล�
 
 ## 📂 โครงสร้างโฟลเดอร์หลัก (Project Structure)
 
-- `src/shared/` - เก็บ Type และกติกาที่ต้องรู้ตรงกันทั้ง Server และ Client (เช่น ข้อมูลไพ่)
-- `src/server/core/` - ระบบกติกาเกม (Game Logic) เหมาะสำหรับเขียน Unit Test (TDD)
-- `src/server/domain/` - ระบบจำลองสถานะเกม (GameState, Room, Player)
-- `src/server/network/` - ระบบ WebSocket รับส่งข้อมูล
-- `src/server/infrastructure/` - ระบบบันทึกและจัดการข้อมูล
-- `src/client/` - ระบบจัดการการเชื่อมต่อฝั่งคลายเอนต์และหน้าจอ (React + Ink)
-- `Test/` - ชุดทดสอบครอบคลุมการทำงาน (Unit Tests)
-- `Documentation/` - เอกสารการออกแบบและ TDD
+```text
+├── .github/                           # CI/CD Workflows และ GitHub Configurations
+├── .husky/                            # Git Hooks สำหรับตรวจสอบโค้ดก่อน Commit
+├── .prettierignore                    # รายการยกเว้นการจัดรูปแบบของ Prettier
+├── .prettierrc                        # การตั้งค่า Prettier Code Formatter
+├── Documentation/
+│   ├── archive/                       # เอกสารบันทึกประวัติการพัฒนาเดิม
+│   ├── contracts/                     # ข้อตกลงสถานะและกติกาเกม (GameState Contract)
+│   └── guides/                        # คู่มือการพัฒนาและแบ่งงาน
+├── Demo/                              # [deferred to dead-code audit]
+├── Music/                             # เพลงประกอบฝั่งไคลเอนต์
+├── data/
+│   ├── generated/                     # ข้อมูลจำลองที่สร้างโดย GameLogic (simulation.json, gitignored)
+│   └── runtime/                       # ประวัติเกมขณะรันระบบ (History.json, gitignored)
+├── src/
+│   ├── client/
+│   │   ├── index.ts                   # Entry point ฝั่งไคลเอนต์
+│   │   ├── previewGame.tsx            # โหมดพรีวิว UI เดี่ยว
+│   │   ├── config.ts                  # กำหนดค่าการเชื่อมต่อเริ่มต้นของไคลเอนต์
+│   │   ├── network/                   # SocketClient จัดการ WebSocket
+│   │   ├── state/                     # ClientState จัดการสถานะในไคลเอนต์
+│   │   └── ui/
+│   │       ├── App.tsx                # Ink Root Component
+│   │       ├── GameUI.ts              # [deferred to dead-code audit]
+│   │       ├── LobbyUI.ts             # [deferred to dead-code audit]
+│   │       ├── navigation/            # ระบบสลับหน้าจอ (useAppNavigation, actions)
+│   │       ├── screens/               # หน้าจอเกมแยกตามฟีเจอร์ (Colocated Screens)
+│   │       │   ├── intro/
+│   │       │   ├── mainMenu/
+│   │       │   ├── createRoom/
+│   │       │   ├── joinRoom/
+│   │       │   ├── username/
+│   │       │   ├── server/
+│   │       │   ├── onlineConnection/
+│   │       │   ├── roomBrowser/
+│   │       │   ├── waitingRoom/
+│   │       │   ├── game/
+│   │       │   └── RoundResultScreen.tsx  # [deferred to dead-code audit]
+│   │       └── shared/                # Layout, components, hooks และ theme ส่วนกลางของ UI
+│   ├── server/
+│   │   ├── index.ts                   # Entry point เซิร์ฟเวอร์ Local
+│   │   ├── online.ts                  # Entry point เซิร์ฟเวอร์ Online (Ngrok)
+│   │   ├── core/                      # ระบบกติกาเกม (Game Logic) และ Zod Validation
+│   │   ├── domain/                    # โดเมนหลัก (Models, Errors, Services: RoomManager)
+│   │   ├── network/                   # WebSocket Handlers, Validator, Helpers, AccessPolicy
+│   │   ├── infrastructure/            # ระบบบันทึกข้อมูล (StorageManager)
+│   │   └── utils/
+│   │       └── logger.ts              # [deferred to dead-code audit]
+│   └── shared/                        # ค่าคงที่, Types และโมดูลที่ใช้ร่วมกัน (networkMode)
+├── Test/                              # ชุดทดสอบครอบคลุมการทำงาน (Unit & Integration Tests)
+│   ├── client/                        # ทดสอบฝั่ง Client (network, state, ui)
+│   ├── server/                        # ทดสอบฝั่ง Server (core, domain, infrastructure, network)
+│   └── shared/                        # ทดสอบโมดูลส่วนกลาง (networkMode)
+├── .gitignore                         # รายการไฟล์และโฟลเดอร์ที่ละเว้นจาก Git
+├── bun.lock                           # Lockfile สำหรับการติดตั้ง Dependencies ด้วย Bun
+├── eslint.config.mjs                  # การตั้งค่า ESLint (Flat Config)
+├── package.json                       # รายการ dependencies และ scripts ของโครงการ
+├── server.ts                          # [deferred to dead-code audit]
+└── tsconfig.json                      # การตั้งค่า TypeScript Compiler
+```
