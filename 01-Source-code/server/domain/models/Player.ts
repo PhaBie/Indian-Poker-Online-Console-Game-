@@ -84,10 +84,14 @@ export class Player extends BaseUser implements ServerPlayer {
    * ปรับสถานะของผู้เล่นเป็น 'FOLDED' ถ้าหมอบ ก็โดนตัดสิทธิ์ในการเล่นรอบนี้
    */
   public fold(): void {
-    if (this.status !== 'ACTIVE') {
+    if (this.status !== 'ACTIVE' && this.status !== 'DISCONNECTED') {
       throw new PlayerStateError(this.id, this.status);
     }
-    this.status = 'FOLDED';
+    if (this.status === 'DISCONNECTED') {
+      this.previousStatus = 'FOLDED';
+    } else {
+      this.status = 'FOLDED';
+    }
   }
 
   /**

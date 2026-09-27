@@ -582,7 +582,11 @@ export class GameState {
     );
 
     // A spectator can leave without ever having occupied a hand.
-    if (player === undefined || player.status !== 'ACTIVE') return false;
+    if (
+      player === undefined ||
+      (player.status !== 'ACTIVE' && player.status !== 'DISCONNECTED')
+    )
+      return false;
 
     if (
       this.pendingSideshow?.challengerId === playerId ||
