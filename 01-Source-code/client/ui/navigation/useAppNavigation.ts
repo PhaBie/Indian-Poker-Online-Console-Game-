@@ -17,6 +17,7 @@ import type { RoomMaxPlayers } from '../screens/createRoom/types';
 export type ActiveScreen =
   | 'intro'
   | 'reconnectPrompt'
+  | 'reconnectErrorPrompt'
   | 'mainMenu'
   | 'serverConnection'
   | 'onlineConnection'
@@ -200,7 +201,7 @@ export function useAppNavigation({
         });
       } else {
         onClearState();
-        setScreen('mainMenu');
+        setScreen('reconnectErrorPrompt');
       }
     });
   };
@@ -227,8 +228,8 @@ export function useAppNavigation({
       state.lastError &&
       !state.reconnectToken
     ) {
-      // กรณีการเชื่อมต่ออัตโนมัติล้มเหลวและเซสชันถูกล้าง ให้ย้อนกลับสู่เมนูหลัก
-      setScreen('mainMenu');
+      // กรณีการเชื่อมต่ออัตโนมัติล้มเหลวและเซสชันถูกล้าง ให้แสดง Error prompt
+      setScreen('reconnectErrorPrompt');
     }
   }, [screen, state.lastError, state.reconnectToken]);
 
@@ -306,5 +307,6 @@ export function useAppNavigation({
     ) => selectNetwork(mode, 'create', maxPlayers),
     handleReconnectAccept,
     handleReconnectDecline,
+    clearError: onClearError,
   };
 }

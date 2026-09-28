@@ -6,6 +6,7 @@ import { useClientState } from './shared/hooks/useClientState';
 import { useAppNavigation } from './navigation/useAppNavigation';
 import { GameIntroSplash } from './screens/intro/GameIntroSplash';
 import { ReconnectPromptScreen } from './screens/intro/ReconnectPromptScreen';
+import { ReconnectErrorPromptScreen } from './screens/intro/ReconnectErrorPromptScreen';
 import { MainMenuScreen } from './screens/mainMenu/MainMenuScreen';
 import { CreateRoomScreen } from './screens/createRoom/CreateRoomScreen';
 import { JoinRoomScreen } from './screens/joinRoom/JoinRoomScreen';
@@ -116,6 +117,17 @@ function renderLobbyScreens(props: ActiveScreenRouterProps) {
         roomId={state.currentRoomId!}
         onAccept={navigation.handleReconnectAccept}
         onDecline={navigation.handleReconnectDecline}
+      />
+    );
+  }
+  if (screen === 'reconnectErrorPrompt') {
+    return (
+      <ReconnectErrorPromptScreen
+        errorMsg={state.lastError || ''}
+        onAcknowledge={() => {
+          navigation.clearError();
+          navigation.setScreen('mainMenu');
+        }}
       />
     );
   }
