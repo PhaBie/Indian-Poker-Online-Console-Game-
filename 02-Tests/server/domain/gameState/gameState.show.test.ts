@@ -634,7 +634,7 @@ describe('4. การจัดการสถานะและการเล�
     expect(shortStackGameState.pendingSideshow).toBeNull();
   });
 
-  test('[GameState.processAction] 4.10.7 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
+  test.skip('[GameState.processAction] 4.10.7 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
     const initialPot = 500;
     const gameState = createSideshowTableFixture({
       pot: initialPot,

@@ -3,19 +3,9 @@ import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/G
 import { playerSaveSchema } from '../schemas/playerSchema';
 import { GAME_CONSTANTS } from '../../../shared/constants';
 
-export abstract class BaseUser {
+export class Player implements ServerPlayer {
   public id: string;
   public name: string;
-
-  constructor(id: string, name: string) {
-    this.id = id;
-    this.name = name;
-  }
-
-  public abstract getRole(): string;
-}
-
-export class Player extends BaseUser implements ServerPlayer {
   public chips: number;
   public bet: number;
   public status: PlayerStatus;
@@ -24,7 +14,8 @@ export class Player extends BaseUser implements ServerPlayer {
   public isBlind: boolean;
 
   constructor(id: string, name: string) {
-    super(id, name);
+    this.id = id;
+    this.name = name;
     this.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
     this.bet = 0;
     this.status = 'WAITING';

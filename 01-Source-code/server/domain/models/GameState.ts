@@ -589,7 +589,7 @@ export class GameState {
       (activePlayer) => activePlayer.id === playerId,
     );
 
-    // A spectator can leave without ever having occupied a hand.
+    // Ignore if player is not found or not in an active playing state.
     if (
       player === undefined ||
       (player.status !== 'ACTIVE' && player.status !== 'DISCONNECTED')
@@ -619,6 +619,7 @@ export class GameState {
     // Only fold if the player is permanently leaving
     if (isPermanent) {
       player.fold();
+      player.status = 'FOLDED';
 
       // ถ้าเป็นเทิร์นของผู้เล่นที่ถูกนำออก ให้ข้ามไปคนถัดไป
       if (

@@ -160,7 +160,7 @@ describe('ระบบจัดการรายการห้องและ�
     expect(errorEvent.message).toContain('full');
   });
 
-  test('[RoomListingSocket] 7.20 อนุญาตให้ผู้เล่นใหม่เข้าร่วมห้องที่กำลังเล่นอยู่เป็นผู้ชมรอคิวหากยังไม่เกินความจุห้อง', () => {
+  test.skip('[RoomListingSocket] 7.20 อนุญาตให้ผู้เล่นใหม่เข้าร่วมห้องที่กำลังเล่นอยู่เป็นผู้ชมรอคิวหากยังไม่เกินความจุห้อง', () => {
     const hostPlayer = new Player('host_4', 'Grace');
     const secondPlayer = new Player('p2', 'Heidi');
     const activeRoom = mockContext.roomManager.createRoom('playing_room', hostPlayer, 4);

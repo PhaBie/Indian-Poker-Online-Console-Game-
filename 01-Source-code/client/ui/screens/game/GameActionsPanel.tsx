@@ -137,7 +137,7 @@ function TableWaitingContent({
         <Text color="gray">
           {status.text.includes('WAITING FOR NEW GAME')
             ? 'SEAT RESERVED FOR NEW GAME'
-            : 'WATCH THE TABLE'}
+            : 'WAITING FOR OTHERS'}
         </Text>
       </Box>
     </Box>

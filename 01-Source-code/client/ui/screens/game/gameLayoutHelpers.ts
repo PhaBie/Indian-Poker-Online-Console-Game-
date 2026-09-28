@@ -166,7 +166,7 @@ export interface StatusDisplayInfo {
 export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplayInfo {
   if (context.isWaitingForNextRound) {
     return {
-      text: 'SPECTATING · WAITING FOR NEW GAME',
+      text: 'WAITING FOR NEW GAME',
       color: 'cyanBright',
       bold: true,
     };

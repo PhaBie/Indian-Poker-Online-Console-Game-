@@ -61,6 +61,10 @@ export class Room {
    * - บันทึกผู้เล่นลงใน players Map
    */
   public join(player: Player): void {
+    if (this.phase !== 'LOBBY') {
+      throw new GameError('Cannot join while the game is in progress', 'ROOM_NOT_LOBBY');
+    }
+
     // ชื่อซ้ำได้ในคนละห้อง แต่ห้ามซ้ำภายในห้องเดียวกัน โดยไม่สนตัวพิมพ์เล็ก/ใหญ่
     const normalizedPlayerName = player.name.trim().toLocaleLowerCase();
     const hasDuplicateName = Array.from(this.players.values()).some(

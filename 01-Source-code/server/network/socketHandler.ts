@@ -230,7 +230,7 @@ function handleReconnectJoin(
   }
   const player = room.getPlayer(existingPlayerId);
   if (!player) {
-    sendError(wsClient, 'Player not in room', 'NOT_IN_ROOM');
+    sendError(wsClient, 'Cannot connect because you were disconnected for too long.', 'NOT_IN_ROOM');
     return;
   }
 
