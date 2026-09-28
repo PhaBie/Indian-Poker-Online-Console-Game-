@@ -1,5 +1,4 @@
 import { expect, test, describe } from 'bun:test';
-import { PlayerStateError } from '../../../../01-Source-code/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
@@ -155,9 +154,7 @@ describe('4. การจัดการสถานะและการเล�
       { id: 'waitingPlayer', name: 'Waiting Player', status: 'WAITING', chips: 1000 },
     ]);
 
-    
-      gameState.nextTurn();
-    
+    gameState.nextTurn();
 
     expect(gameState.currentPlayerIndex).toBe(0);
   });
