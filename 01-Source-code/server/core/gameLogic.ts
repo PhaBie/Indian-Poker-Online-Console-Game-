@@ -207,116 +207,116 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
   return shuffledDeck;
 }
 
-// ============================================================================
-// 🔴 IMPURE FUNCTIONS (Side Effects / Logging / Simulation)
-// ฟังก์ชันกลุ่มนี้มีหน้าที่แสดงผล (console.log) ติดต่อภายนอก หรือจำลองการเล่น
-// ============================================================================
+// // ============================================================================
+// // 🔴 IMPURE FUNCTIONS (Side Effects / Logging / Simulation)
+// // ฟังก์ชันกลุ่มนี้มีหน้าที่แสดงผล (console.log) ติดต่อภายนอก หรือจำลองการเล่น
+// // ============================================================================
 
-export function simulateGameAndLog() {
-  console.log('====================================================');
-  console.log('🚀 เริ่มการจำลองเกม (Indian Poker) 🚀');
-  console.log('====================================================\n');
+// export function simulateGameAndLog() {
+//   console.log('====================================================');
+//   console.log('🚀 เริ่มการจำลองเกม (Indian Poker) 🚀');
+//   console.log('====================================================\n');
 
-  console.log('🃏 [GameLogic] เริ่มสร้างสำรับไพ่ใหม่...');
-  const deck = createDeck();
-  console.log(`✅ [GameLogic] สร้างไพ่เสร็จสิ้น จำนวน ${deck.length} ใบ`);
-  console.log(
-    '📦 ข้อมูลในสำรับไพ่ (Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
-    '\n',
-  );
+//   console.log('🃏 [GameLogic] เริ่มสร้างสำรับไพ่ใหม่...');
+//   const deck = createDeck();
+//   console.log(`✅ [GameLogic] สร้างไพ่เสร็จสิ้น จำนวน ${deck.length} ใบ`);
+//   console.log(
+//     '📦 ข้อมูลในสำรับไพ่ (Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
+//     '\n',
+//   );
 
-  console.log(`🔀 [GameLogic] กำลังสับไพ่...`);
-  const shuffledDeck = shuffleDeck(deck);
-  console.log(`✅ [GameLogic] สับไพ่เสร็จสิ้น`);
-  console.log(
-    '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
-    '\n',
-  );
+//   console.log(`🔀 [GameLogic] กำลังสับไพ่...`);
+//   const shuffledDeck = shuffleDeck(deck);
+//   console.log(`✅ [GameLogic] สับไพ่เสร็จสิ้น`);
+//   console.log(
+//     '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
+//     '\n',
+//   );
 
-  const PLAYERS = ['Player_1', 'Player_2', 'Player_3', 'Player_4'];
-  const CARDS_PER_PLAYER = 3;
+//   const PLAYERS = ['Player_1', 'Player_2', 'Player_3', 'Player_4'];
+//   const CARDS_PER_PLAYER = 3;
 
-  console.log(
-    `🎴 [GameLogic] กำลังแจกไพ่ให้ผู้เล่น ${PLAYERS.length} คน คนละ ${CARDS_PER_PLAYER} ใบ...`,
-  );
-  const { hands, remainingDeck } = dealCards(
-    shuffledDeck,
-    PLAYERS.length,
-    CARDS_PER_PLAYER,
-  );
-  console.log(`✅ [GameLogic] แจกไพ่สำเร็จ (ไพ่เหลือในกอง ${remainingDeck.length} ใบ)\n`);
+//   console.log(
+//     `🎴 [GameLogic] กำลังแจกไพ่ให้ผู้เล่น ${PLAYERS.length} คน คนละ ${CARDS_PER_PLAYER} ใบ...`,
+//   );
+//   const { hands, remainingDeck } = dealCards(
+//     shuffledDeck,
+//     PLAYERS.length,
+//     CARDS_PER_PLAYER,
+//   );
+//   console.log(`✅ [GameLogic] แจกไพ่สำเร็จ (ไพ่เหลือในกอง ${remainingDeck.length} ใบ)\n`);
 
-  const suitSymbols: Record<string, string> = {
-    SPADES: '♠',
-    HEARTS: '♥',
-    DIAMONDS: '♦',
-    CLUBS: '♣',
-  };
+//   const suitSymbols: Record<string, string> = {
+//     SPADES: '♠',
+//     HEARTS: '♥',
+//     DIAMONDS: '♦',
+//     CLUBS: '♣',
+//   };
 
-  const playerHands = PLAYERS.map((id, index) => {
-    const cards = hands[index];
-    const evaluated = evaluateHand(cards);
-    const cardStr = cards.map((c) => `${c.rank}${suitSymbols[c.suit]}`).join('-');
+//   const playerHands = PLAYERS.map((id, index) => {
+//     const cards = hands[index];
+//     const evaluated = evaluateHand(cards);
+//     const cardStr = cards.map((c) => `${c.rank}${suitSymbols[c.suit]}`).join('-');
 
-    console.log(`👤 [${id}] ได้รับไพ่:`);
-    console.log(
-      `🔍 ไพ่ ${cardStr} -> ได้ [${evaluated.rank}] (RankValue: ${evaluated.rankValue})\n`,
-    );
+//     console.log(`👤 [${id}] ได้รับไพ่:`);
+//     console.log(
+//       `🔍 ไพ่ ${cardStr} -> ได้ [${evaluated.rank}] (RankValue: ${evaluated.rankValue})\n`,
+//     );
 
-    return { id, cards };
-  });
+//     return { id, cards };
+//   });
 
-  console.log('====================================================');
-  console.log(`🏆 [GameLogic] ค้นหาผู้ชนะจากผู้เล่น ${PLAYERS.length} คน...`);
-  const winners = getWinners(playerHands);
-  console.log(`🏅 [GameLogic] ผู้ชนะได้แก่: [${winners.join(', ')}]\n`);
+//   console.log('====================================================');
+//   console.log(`🏆 [GameLogic] ค้นหาผู้ชนะจากผู้เล่น ${PLAYERS.length} คน...`);
+//   const winners = getWinners(playerHands);
+//   console.log(`🏅 [GameLogic] ผู้ชนะได้แก่: [${winners.join(', ')}]\n`);
 
-  const POT_AMOUNT = 1000;
-  console.log(
-    `💰 [GameLogic] แบ่งกองกลาง ${POT_AMOUNT} ชิป ให้ผู้ชนะ ${winners.length} คน...`,
-  );
-  const splitResult = calculateSplitPot(POT_AMOUNT, winners);
-  console.log(`💵 [GameLogic] ผลลัพธ์การโอนชิป:`, JSON.stringify(splitResult), '\n');
+//   const POT_AMOUNT = 1000;
+//   console.log(
+//     `💰 [GameLogic] แบ่งกองกลาง ${POT_AMOUNT} ชิป ให้ผู้ชนะ ${winners.length} คน...`,
+//   );
+//   const splitResult = calculateSplitPot(POT_AMOUNT, winners);
+//   console.log(`💵 [GameLogic] ผลลัพธ์การโอนชิป:`, JSON.stringify(splitResult), '\n');
 
-  // Export JSON
-  const simulationData = {
-    deck,
-    shuffledDeck,
-    remainingDeck,
-    playerHands: playerHands.map((p) => ({
-      id: p.id,
-      cards: p.cards,
-      evaluated: evaluateHand(p.cards),
-    })),
-    winners,
-    splitResult,
-  };
+//   // Export JSON
+//   const simulationData = {
+//     deck,
+//     shuffledDeck,
+//     remainingDeck,
+//     playerHands: playerHands.map((p) => ({
+//       id: p.id,
+//       cards: p.cards,
+//       evaluated: evaluateHand(p.cards),
+//     })),
+//     winners,
+//     splitResult,
+//   };
 
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const simulationPath = path.join(
-      process.cwd(),
-      'data',
-      'generated',
-      'simulation.json',
-    );
-    fs.mkdirSync(path.dirname(simulationPath), { recursive: true });
-    fs.writeFileSync(simulationPath, JSON.stringify(simulationData, null, 2));
-    console.log(
-      '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ data/generated/simulation.json เรียบร้อยแล้ว\n',
-    );
-  } catch (err) {
-    console.error('ไม่สามารถบันทึกไฟล์ JSON ได้:', err);
-  }
+//   try {
+//     const fs = require('fs');
+//     const path = require('path');
+//     const simulationPath = path.join(
+//       process.cwd(),
+//       'data',
+//       'generated',
+//       'simulation.json',
+//     );
+//     fs.mkdirSync(path.dirname(simulationPath), { recursive: true });
+//     fs.writeFileSync(simulationPath, JSON.stringify(simulationData, null, 2));
+//     console.log(
+//       '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ data/generated/simulation.json เรียบร้อยแล้ว\n',
+//     );
+//   } catch (err) {
+//     console.error('ไม่สามารถบันทึกไฟล์ JSON ได้:', err);
+//   }
 
-  console.log('====================================================');
-  console.log('🎉 จบการจำลองเกม 🎉');
-  console.log('====================================================\n');
-}
+//   console.log('====================================================');
+//   console.log('🎉 จบการจำลองเกม 🎉');
+//   console.log('====================================================\n');
+// }
 
-// ทำงานเฉพาะเมื่อสั่งรันไฟล์นี้โดยตรงผ่าน bun run src/server/core/gameLogic.ts
-// @ts-ignore
-if (import.meta.main) {
-  simulateGameAndLog();
-}
+// // ทำงานเฉพาะเมื่อสั่งรันไฟล์นี้โดยตรงผ่าน bun run src/server/core/gameLogic.ts
+// // @ts-ignore
+// if (import.meta.main) {
+//   simulateGameAndLog();
+// }
