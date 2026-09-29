@@ -151,9 +151,8 @@ export const clientEventSchema = z.discriminatedUnion('type', [
  */
 export class Validator {
   /**
-   * ตรวจสอบความถูกต้องของข้อมูล ClientEvent ที่ได้รับจาก WebSocket
-   * รองรับทั้ง JSON Object ดิบ, Buffer/Uint8Array และ JSON String
-   * คืนค่า ClientEvent หากข้อมูลถูกต้อง หรือคืนค่า null หากข้อมูลไม่ถูกต้อง
+   * 🟢 PURE FUNCTION (Method)
+   * เหตุผล: รับ `event` เข้ามาแล้วตรวจสอบโครงสร้าง (Parse/Validate) ผ่าน Zod Schema จากนั้นคืนค่าผลลัพธ์กลับไป โดยไม่ปรับเปลี่ยน State ภายนอก
    */
   public validateClientEvent(event: unknown): ClientEvent | null {
     if (event === null || event === undefined) {

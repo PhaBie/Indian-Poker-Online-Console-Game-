@@ -14,12 +14,20 @@ import {
 // ฟังก์ชันกลุ่มนี้จะรับ Input เข้ามาและคืนค่า Output ออกไปอย่างเดียว โดยไม่แก้ไข State ภายนอก
 // ============================================================================
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: คืนค่าเป็นสำรับไพ่ใหม่ตายตัวเสมอ โดยไม่ได้ไปแก้ไขค่าหรือพึ่งพาตัวแปรจากภายนอก (No Side Effects) ผลลัพธ์เหมือนเดิมทุกครั้งที่เรียก
+ */
 export function createDeck(): Card[] {
   const suits: Card['suit'][] = ['SPADES', 'HEARTS', 'DIAMONDS', 'CLUBS'];
   const ranks: Card['rank'][] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
   return suits.flatMap((suit) => ranks.map((rank) => ({ suit, rank })));
 }
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: รับข้อมูลไพ่ (deck) เข้ามา และคืนค่าไพ่ที่แจกแล้วพร้อมไพ่ที่เหลือกลับไป โดยไม่มีการไปแก้ไขค่า (mutate) deck ต้นฉบับ
+ */
 export function dealCards(
   deck: Card[],
   playerCount: number,
@@ -45,6 +53,10 @@ export function dealCards(
   return { hands, remainingDeck };
 }
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: รับไพ่เข้ามาเพื่อคำนวณแต้ม และคืนค่าแต้มออกไป โดยผลลัพธ์ขึ้นอยู่กับ Input ล้วนๆ ไม่มีการดึง State ภายนอกมาใช้
+ */
 export function evaluateHand(cardsInput: Card[]): {
   rank: HandRank;
   rankValue: number;
@@ -112,6 +124,10 @@ export const RANK_WEIGHT: Record<HandRank, number> = {
   HIGH_CARD: 1,
 };
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: เปรียบเทียบไพ่สองมือ โดยอาศัยแค่พารามิเตอร์ Input ที่รับเข้ามา และคืนค่าตัวเลขผลลัพธ์ออกมา ไม่มีผลกระทบใดๆ กับระบบภายนอก
+ */
 export function compareHands(firstHand: Card[], secondHand: Card[]): number {
   const valid = compareHandsInputSchema.parse({ firstHand, secondHand });
   const handA = evaluateHand(valid.firstHand);
@@ -134,6 +150,10 @@ export function compareHands(firstHand: Card[], secondHand: Card[]): number {
   return kickerDifference ?? 0;
 }
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: อาศัยแค่ข้อมูลผู้เล่นที่รับมาทาง Input เพื่อคำนวณหาผู้ชนะ คืนค่า Array กลับไป โดยไม่มีการแตะต้อง State หรือ Database ภายนอก
+ */
 export function getWinners(players: { id: string; cards: Card[] }[]): string[] {
   const validPlayers = getWinnersInputSchema.parse(players);
 
@@ -163,6 +183,10 @@ export function getWinners(players: { id: string; cards: Card[] }[]): string[] {
   return winnerIds;
 }
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: คำนวณส่วนแบ่งเงินจากค่า pot และ winnerIds ที่รับเข้ามาเท่านั้น คืนค่า object ใหม่เสมอโดยไม่ไปปรับเปลี่ยนค่าดั้งเดิม
+ */
 export function calculateSplitPot(
   pot: number,
   winnerIds: string[],
@@ -185,10 +209,13 @@ export function calculateSplitPot(
 }
 
 // ============================================================================
-// 🟡 IMPURE FUNCTIONS (Randomness / Side Effects)
-// ฟังก์ชันกลุ่มนี้มีการพึ่งพาความน่าจะเป็น หรือ State ภายนอก (เช่น Math.random)
+// 🔴 IMPURE FUNCTIONS (Side Effects / Logging / Simulation)
 // ============================================================================
 
+/**
+ * 🔴 IMPURE FUNCTION (By Default)
+ * เหตุผล: มีการเรียกใช้ `Math.random()` เป็นค่าเริ่มต้น ซึ่งค่าแรนด้อมทำให้ผลลัพธ์แต่ละครั้งไม่เหมือนเดิม และคาดเดาไม่ได้ (Non-deterministic)
+ */
 export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
   const validDeck = shuffleDeckInputSchema.parse(deck);
   const shuffledDeck = [...validDeck];
@@ -207,11 +234,10 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
   return shuffledDeck;
 }
 
-// ============================================================================
-// 🔴 IMPURE FUNCTIONS (Side Effects / Logging / Simulation)
-// ฟังก์ชันกลุ่มนี้มีหน้าที่แสดงผล (console.log) ติดต่อภายนอก หรือจำลองการเล่น
-// ============================================================================
-
+/**
+ * 🔴 IMPURE FUNCTION
+ * เหตุผล: มีการใช้ `console.log` (แสดงผลออกหน้าจอ) และ `fs.writeFileSync` (เขียนไฟล์ลง Harddisk) ถือว่าเป็นการทำ Side Effects กับระบบโดยตรง
+ */
 export function simulateGameAndLog() {
   console.log('====================================================');
   console.log('🚀 เริ่มการจำลองเกม (Indian Poker) 🚀');

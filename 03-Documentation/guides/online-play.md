@@ -1,60 +1,35 @@
-# LAN and Online play
+# การเล่นผ่าน LAN และ Online
 
-The two modes run separate PokerServer instances and independent room/session stores.
-The shared lobby UI shows LAN LOBBY or ONLINE LOBBY, with the same table and controls.
-Join Online opens the online room list. Room codes remain available inside the lobby.
-Create Online creates a room on the central server, not on the player's computer.
+ทั้งสองโหมดนี้จะทำงานแยกกันบนอินสแตนซ์ของ PokerServer คนละตัว และแยกระบบจัดเก็บห้อง (Room/Session) ออกจากกันอย่างอิสระ
+UI ของ Lobby ส่วนกลางจะแสดงข้อความว่า LAN LOBBY หรือ ONLINE LOBBY โดยใช้โต๊ะและการควบคุมแบบเดียวกัน
+การเลือก Join Online จะเป็นการเปิดรายชื่อห้องของเซิร์ฟเวอร์ออนไลน์ (โค้ดห้องยังสามารถใช้ได้ในหน้า Lobby)
+การเลือก Create Online จะสร้างห้องขึ้นเก็บบนเซิร์ฟเวอร์ส่วนกลาง ไม่ได้ถูกสร้างบนคอมพิวเตอร์ของผู้เล่นเอง
 
-## Administrator: online server
+## ผู้ดูแลระบบ (Administrator): เซิร์ฟเวอร์ออนไลน์
 
-1. Set `NGROK_AUTHTOKEN` on the server machine (environment or a local `.env`).
-2. Optionally set `NGROK_DOMAIN` to the hostname assigned to your ngrok account.
-3. Run `bun run server:online`. The game server listens on loopback port 8081;
-   ngrok forwards only to that port. `ONLINE_PORT` overrides it.
-4. Copy the public endpoint printed at startup. It can be shared as either the
-   printed `wss://` address or its `https://` equivalent.
+1. ตั้งค่า `NGROK_AUTHTOKEN` ไว้ที่เครื่องเซิร์ฟเวอร์ (ตั้งค่าผ่าน Environment Variables หรือไฟล์ `.env` ในเครื่อง)
+2. (ถ้ามี) ตั้งค่า `NGROK_DOMAIN` ตาม Hostname ที่คุณได้รับจากบัญชี ngrok
+3. รันคำสั่ง `bun run server:online` เซิร์ฟเวอร์เกมจะทำงานที่ loopback port 8081 และ ngrok จะส่งต่อการเชื่อมต่อไปที่พอร์ตนี้เท่านั้น (หากตั้งค่าตัวแปร `ONLINE_PORT` จะเขียนทับค่านี้ได้)
+4. คัดลอก Public Endpoint (URL สาธารณะ) ที่แสดงขึ้นมาตอนเริ่มเซิร์ฟเวอร์ และส่งให้ผู้เล่นคนอื่น สามารถแชร์ได้ทั้งแบบ `wss://` ที่แสดงขึ้นมา หรือจะแปลงเป็นแบบ `https://` ก็ได้
 
-The administrator must keep this process and machine running. The command fails
-without credentials; it does not silently expose the LAN server. Stopping it closes
-the tunnel and game server. Rooms live in memory and disappear on restart.
+ผู้ดูแลระบบจะต้องเปิดโปรแกรมและเครื่องนี้ทิ้งไว้ตลอดการเล่น หากไม่มี Credentials ของ ngrok คำสั่งรันจะไม่สำเร็จ (ระบบจะไม่แอบเปิดเซิร์ฟเวอร์ LAN ให้โดยพลการ) หากปิดโปรแกรม ช่องทาง tunnel และตัวเซิร์ฟเวอร์เกมก็จะปิดลงไปด้วย ข้อมูลของห้องทั้งหมดถูกเก็บไว้ในหน่วยความจำ (Memory) เท่านั้น ดังนั้นหากรีสตาร์ทเซิร์ฟเวอร์ ห้องเก่าจะหายไปทั้งหมด
 
-## Distribute the client
+## การตั้งค่าฝั่งผู้เล่น (Client)
 
-Choose Create Online or Join Online, then paste the host's public ngrok URL into
-the **ONLINE / NGROK** screen. The client converts an `https://` ngrok URL into
-the secure WebSocket connection automatically and then uses the normal lobby,
-room browser, waiting room and game UI. `DEFAULT_ONLINE_SERVER_URL` or
-`POKER_ONLINE_URL` can still provide a convenient prefilled value for a fixed
-server, but are no longer required.
+ผู้เล่นกดเลือก "Create Online" หรือ "Join Online" จากนั้นให้นำ Public URL (ngrok URL) ที่ Host ส่งให้ มาวางลงในหน้าจอ **ONLINE / NGROK** ฝั่ง Client จะทำการแปลง URL ที่ขึ้นต้นด้วย `https://` ให้กลายเป็นการเชื่อมต่อ WebSocket แบบปลอดภัย (wss) โดยอัตโนมัติ จากนั้นก็เข้าสู่หน้า Lobby ระบบค้นหาห้อง ห้องรอ และเล่นเกมได้ตามปกติ (คุณสามารถตั้งค่าตัวแปร `DEFAULT_ONLINE_SERVER_URL` หรือ `POKER_ONLINE_URL` ไว้ล่วงหน้าได้ เพื่อความสะดวกจะได้ไม่ต้องมานั่งพิมพ์ URL เองบ่อยๆ แต่ไม่ได้บังคับ)
 
-The URL identifies the server, not one room. The host and every joining player
-must enter the same URL; room codes select a particular room after reaching that
-server. A temporary ngrok endpoint changes whenever the host restarts it, so it
-must be shared again. To avoid sharing a changing URL, use an ngrok reserved
-domain or deploy the online server to a persistent host.
+URL นี้ใช้สำหรับระบุตัว "เซิร์ฟเวอร์ส่วนกลาง" ไม่ใช่ URL สำหรับห้อง 1 ห้อง ดังนั้นทั้งคนที่ตั้งห้องและคนที่มาจอยห้อง จะต้องกรอก URL เดียวกันให้ตรงกันก่อน พอเชื่อมต่อไปถึงเซิร์ฟเวอร์ได้แล้ว จึงค่อยใช้โค้ดเพื่อเลือกเข้าห้องย่อยอีกที หากใช้ ngrok แบบฟรี URL จะเปลี่ยนไปทุกครั้งที่ Host รีสตาร์ทเซิร์ฟเวอร์ ดังนั้น Host ต้องส่ง URL ใหม่ให้ทุกคนเสมอ เพื่อหลีกเลี่ยงปัญหา URL เปลี่ยนไปมา แนะนำให้ใช้ Ngrok Reserved Domain หรืออัปโหลดโค้ดฝั่งเซิร์ฟเวอร์ไปวางโฮสต์บนอินเทอร์เน็ตที่เปิดค้างไว้ได้เลย
 
-Never ship an ngrok authtoken in client code or configuration. Players do not need
-ngrok accounts or ngrok software. The public endpoint is not a secret.
+**ข้อควรระวัง:** ห้ามแนบ ngrok authtoken ไปกับโค้ดฝั่ง Client หรือคอนฟิกเด็ดขาด ผู้เล่นคนอื่นๆ ไม่จำเป็นต้องมีบัญชี ngrok หรือติดตั้งโปรแกรม ngrok เลย สิ่งเดียวที่พวกเขาต้องการคือ Public Endpoint ที่ทุกคนเห็นได้
 
-## LAN server
+## การตั้งค่าเซิร์ฟเวอร์ LAN
 
-Run `bun run server:lan` (or `bun run server`). It binds a private local IPv4 address
-on port 8080. Set `LAN_HOST` explicitly when there are multiple adapters/VPNs.
-The server prints the address for LAN players. The client accepts private IPv4
-addresses only for LAN; online endpoints must use WSS. Modes are checked during
-the WebSocket upgrade, and Online clients cannot use a LAN endpoint or vice versa.
+รันคำสั่ง `bun run server:lan` (หรือ `bun run server` เฉยๆ ก็ได้) ระบบจะทำการตั้งค่าผูกติดกับที่อยู่ Private IPv4 ภายในเครือข่าย ผ่านพอร์ต 8080 (สามารถตั้งค่าตัวแปร `LAN_HOST` บังคับได้ในกรณีที่เครื่องมีระบบเครือข่าย/VPN ซ้อนทับกันหลายตัว) เซิร์ฟเวอร์จะแสดงที่อยู่ IP ขึ้นมาเพื่อให้ผู้เล่นคนอื่นใน LAN นำไปกรอก ฝั่ง Client จะอนุญาตให้กรอกที่อยู่ Private IPv4 ในการเล่นโหมด LAN เท่านั้น ส่วน Endpoint แบบ Online บังคับว่าจะต้องใช้ WSS ระบบจะเช็คโหมดเหล่านี้ตอนทำการอัปเกรด WebSocket ดังนั้น Client ฝั่ง Online จะไม่สามารถกรอก URL ฝั่ง LAN ได้ และฝั่ง LAN ก็จะกรอก URL แบบ Online ไม่ได้เช่นกัน
 
-LAN accepts loopback and private peers on a local interface's subnet and rejects
-forwarded HTTP requests. Keep firewall access limited to the intended local subnet;
-do not port-forward or tunnel the LAN port. Software cannot prevent an administrator
-from deliberately bridging a network or proxying traffic through an allowed local peer.
+เซิร์ฟเวอร์ LAN จะอนุญาตให้เชื่อมต่อได้เฉพาะเครื่องตัวเอง (Loopback) และเครื่องของเพื่อนๆ ที่อยู่ใน Local Subnet เดียวกันเท่านั้น และจะปฏิเสธคำขอแบบ Forwarded HTTP ควรตั้งค่า Firewall ให้อนุญาตให้เฉพาะคนใน Local Subnet มองเห็นได้เท่านั้น ห้ามทำ Port-forward หรือ Tunneling พอร์ต LAN โดยเด็ดขาด อย่างไรก็ตาม ตัวซอฟต์แวร์ไม่สามารถป้องกันกรณีที่แอดมินจงใจตั้งค่าเครือข่ายเชื่อมกันเองหรือทำ Proxy การรับส่งข้อมูลผ่านทาง Local Peer ได้
 
-## Verification and limitations
+## การทดสอบและข้อจำกัด
 
-Run `bun test ./Test` and `bunx tsc --noEmit`. Network integration tests use real local
-WebSockets to check separate room lists and mode rejection. They do not contact ngrok.
-An actual public smoke test needs the administrator's token and reachable endpoint:
-start Online, configure two clients, create a room, join it from the other client,
-then confirm the room is absent in LAN. ngrok plan limits apply to the central account.
+สามารถรันคำสั่ง `bun test ./Test` และ `bunx tsc --noEmit` เพื่อทดสอบได้ ระบบทดสอบ Network Integration จะทำการสร้าง WebSocket ภายในเครื่องจำลองขึ้นมาเพื่อเช็คการแยกรายชื่อห้อง และการปฏิเสธการเชื่อมต่อข้ามโหมด (การทดสอบนี้ไม่ได้เรียกใช้ ngrok แต่อย่างใด) การทำ Smoke Test บนอินเทอร์เน็ตจริงจำเป็นต้องใช้ Token ของแอดมินและ Endpoint ที่เข้าถึงได้: ให้ลองเริ่มเซิร์ฟเวอร์ Online ขึ้นมาตั้งค่า Client 2 ตัว, สร้างห้อง, และลองจอยห้องจาก Client อีกตัว จากนั้นเช็คดูให้แน่ใจว่าไม่มีห้องนี้โผล่ในรายชื่อห้องของโหมด LAN อนึ่ง โควต้าจำกัดของแพ็กเกจ ngrok จะคิดจากฝั่งบัญชีส่วนกลางเท่านั้น
 
-This is a prototype central lobby, not a production account/authentication service.
+นี่เป็นเพียงตัวต้นแบบของระบบ Lobby ส่วนกลาง ไม่ใช่ระบบสำหรับจัดการบัญชีผู้ใช้งานหรือระบบล็อกอินยืนยันตัวตนสำหรับใช้บน Production จริง
