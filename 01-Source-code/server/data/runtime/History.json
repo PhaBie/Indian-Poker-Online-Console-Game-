@@ -1,0 +1,1309 @@
+[
+  {
+    "timestamp": "2026-09-27T14:57:54.288Z",
+    "roomId": "auto-next",
+    "pot": 100,
+    "winners": ["guest"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 10
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 13
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 1050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 13
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27T14:57:54.300Z",
+    "roomId": "showdown-reveal-room",
+    "pot": 200,
+    "winners": ["playerRequester"],
+    "winReason": "SHOW",
+    "winningHand": "TRAIL",
+    "players": [
+      {
+        "playerName": "Requester",
+        "chips": 1050,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 14
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 14
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "Opponent",
+        "chips": 950,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 13
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 8
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27T16:42:45.615Z",
+    "roomId": "B7F29B",
+    "pot": 1350,
+    "winners": ["9139f3b0-06ee-42c0-8b2b-2d5cc07d76b2"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "ddd",
+        "chips": 600,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 11
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 10
+          },
+          {
+            "suit": "SPADES",
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 650,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "SPADES",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "thanathon",
+        "chips": 500,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 13
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27T16:43:39.806Z",
+    "roomId": "B7F29B",
+    "pot": 550,
+    "winners": ["0a9164ef-5f48-414f-9514-e2e0c6304c4b"],
+    "winReason": "SHOW",
+    "winningHand": "SEQUENCE",
+    "players": [
+      {
+        "playerName": "ddd",
+        "chips": 350,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 11
+          },
+          {
+            "suit": "SPADES",
+            "rank": 4
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 1050,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 7
+          },
+          {
+            "suit": "SPADES",
+            "rank": 9
+          },
+          {
+            "suit": "SPADES",
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "playerName": "thanathon",
+        "chips": 350,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          },
+          {
+            "suit": "SPADES",
+            "rank": 14
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-27T16:44:56.658Z",
+    "roomId": "B7F29B",
+    "pot": 850,
+    "winners": ["0a9164ef-5f48-414f-9514-e2e0c6304c4b"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "ddd",
+        "chips": 100,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 10
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 3
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 1550,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 10
+          },
+          {
+            "suit": "SPADES",
+            "rank": 12
+          },
+          {
+            "suit": "SPADES",
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "playerName": "thanathon",
+        "chips": 100,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 11
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "playerName": "Shamiko",
+        "chips": 1000,
+        "isBlind": true,
+        "status": "WAITING",
+        "cards": []
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T06:20:46.412Z",
+    "roomId": "auto-next",
+    "pot": 100,
+    "winners": ["guest"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 14
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 10050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 12
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T10:49:40.520Z",
+    "roomId": "auto-next",
+    "pot": 100,
+    "winners": ["guest"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 10050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          },
+          {
+            "suit": "SPADES",
+            "rank": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T10:54:50.019Z",
+    "roomId": "C0AE6C",
+    "pot": 750,
+    "winners": ["2fb5f44a-62c9-42a4-a248-1541ae20e658"],
+    "winReason": "SHOW",
+    "winningHand": "COLOR",
+    "players": [
+      {
+        "playerName": "เดี่ยน",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 12
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 4
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 10550,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 14
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          }
+        ]
+      },
+      {
+        "playerName": "EiEI",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 3
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T10:55:32.340Z",
+    "roomId": "C0AE6C",
+    "pot": 200,
+    "winners": ["d36e4d4a-b6cf-41bf-8b59-6a103e851e0f"],
+    "winReason": "SHOW",
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "เดี่ยน",
+        "chips": 9700,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 6
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          },
+          {
+            "suit": "SPADES",
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 10500,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 4
+          },
+          {
+            "suit": "SPADES",
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "playerName": "EiEI",
+        "chips": 9850,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 2
+          },
+          {
+            "suit": "SPADES",
+            "rank": 4
+          },
+          {
+            "suit": "SPADES",
+            "rank": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:05:09.602Z",
+    "roomId": "auto-next",
+    "pot": 100,
+    "winners": ["guest"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 11
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 12
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 10050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 5
+          },
+          {
+            "suit": "SPADES",
+            "rank": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:07:03.311Z",
+    "roomId": "auto-next",
+    "pot": 100,
+    "winners": ["guest"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Host",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 2
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 6
+          }
+        ]
+      },
+      {
+        "playerName": "Guest",
+        "chips": 10050,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 13
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 13
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:22:23.618Z",
+    "roomId": "DE191D",
+    "pot": 750,
+    "winners": ["a1c9126e-3eb0-4c9a-b6fc-95acf6fcc9af"],
+    "winReason": "SHOW",
+    "winningHand": "PAIR",
+    "players": [
+      {
+        "playerName": "ddd",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 11
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "playerName": "Shamiko",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          },
+          {
+            "suit": "SPADES",
+            "rank": 5
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 9950,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 12
+          },
+          {
+            "suit": "SPADES",
+            "rank": 9
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "playerName": "emma",
+        "chips": 10550,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:24:04.181Z",
+    "roomId": "DE191D",
+    "pot": 1300,
+    "winners": ["04becb40-946c-4b95-9727-4fa46f8ee210"],
+    "winReason": "SHOW",
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "Shamiko",
+        "chips": 9300,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 6
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 10800,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 9
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 12
+          }
+        ]
+      },
+      {
+        "playerName": "emma",
+        "chips": 10200,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 12
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:24:29.913Z",
+    "roomId": "DE191D",
+    "pot": 150,
+    "winners": ["a1c9126e-3eb0-4c9a-b6fc-95acf6fcc9af"],
+    "winReason": "LAST_PLAYER_STANDING",
+    "winningHand": null,
+    "players": [
+      {
+        "playerName": "Shamiko",
+        "chips": 9250,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 6
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 10750,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 10
+          },
+          {
+            "suit": "SPADES",
+            "rank": 8
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 13
+          }
+        ]
+      },
+      {
+        "playerName": "emma",
+        "chips": 10300,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "SPADES",
+            "rank": 9
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 13
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T11:42:37.079Z",
+    "roomId": "D5132E",
+    "pot": 1100,
+    "winners": ["39bafcde-5e0e-4fc4-a65a-173a9d8c495e"],
+    "winReason": "SHOW",
+    "winningHand": "PAIR",
+    "players": [
+      {
+        "playerName": "KIMHUN",
+        "chips": 10850,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 7
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "playerName": "Shamiko",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          },
+          {
+            "suit": "SPADES",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie",
+        "chips": 9650,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 11
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 14
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-29T07:38:46.761Z",
+    "roomId": "6A219B",
+    "pot": 950,
+    "winners": ["479371a4-8211-4a17-aab5-8243e3bc426f"],
+    "winReason": "SHOW",
+    "winningHand": "PAIR",
+    "players": [
+      {
+        "playerName": "PhaBie1",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 7
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie2",
+        "chips": 10700,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 11
+          },
+          {
+            "suit": "SPADES",
+            "rank": 5
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie3",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 2
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-29T07:39:13.709Z",
+    "roomId": "6A219B",
+    "pot": 200,
+    "winners": ["14bb6e74-175e-4566-b2bf-ebbd62b9b44a"],
+    "winReason": "SHOW",
+    "winningHand": "HIGH_CARD",
+    "players": [
+      {
+        "playerName": "PhaBie1",
+        "chips": 9850,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 10
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie2",
+        "chips": 10650,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 5
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie3",
+        "chips": 9700,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          },
+          {
+            "suit": "SPADES",
+            "rank": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-29T07:41:12.698Z",
+    "roomId": "6A219B",
+    "pot": 450,
+    "winners": ["479371a4-8211-4a17-aab5-8243e3bc426f"],
+    "winReason": "SHOW",
+    "winningHand": "PAIR",
+    "players": [
+      {
+        "playerName": "PhaBie1",
+        "chips": 9850,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie3",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 12
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie2",
+        "chips": 10350,
+        "isBlind": true,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-29T07:41:14.683Z",
+    "roomId": "6A219B",
+    "pot": 450,
+    "winners": ["479371a4-8211-4a17-aab5-8243e3bc426f"],
+    "winReason": "SHOW",
+    "winningHand": "PAIR",
+    "players": [
+      {
+        "playerName": "PhaBie1",
+        "chips": 9850,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "CLUBS",
+            "rank": 9
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 3
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie3",
+        "chips": 9950,
+        "isBlind": true,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 2
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 12
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBie2",
+        "chips": 10350,
+        "isBlind": true,
+        "status": "DISCONNECTED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 3
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 8
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-29T08:32:32.843Z",
+    "roomId": "9A2469",
+    "pot": 900,
+    "winners": ["98ee9d36-643c-44f7-9f80-be245bc96c24"],
+    "winReason": "SHOW",
+    "winningHand": "SEQUENCE",
+    "players": [
+      {
+        "playerName": "Shamiko",
+        "chips": 10650,
+        "isBlind": false,
+        "status": "ACTIVE",
+        "cards": [
+          {
+            "suit": "HEARTS",
+            "rank": 10
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 12
+          },
+          {
+            "suit": "SPADES",
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "playerName": "PhaBieHost",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 8
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 4
+          },
+          {
+            "suit": "HEARTS",
+            "rank": 12
+          }
+        ]
+      },
+      {
+        "playerName": "thanatorn",
+        "chips": 9750,
+        "isBlind": false,
+        "status": "FOLDED",
+        "cards": [
+          {
+            "suit": "DIAMONDS",
+            "rank": 2
+          },
+          {
+            "suit": "CLUBS",
+            "rank": 7
+          },
+          {
+            "suit": "DIAMONDS",
+            "rank": 5
+          }
+        ]
+      }
+    ]
+  }
+]

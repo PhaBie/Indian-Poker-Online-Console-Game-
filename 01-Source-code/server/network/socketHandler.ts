@@ -727,7 +727,14 @@ function sendError(wsClient: WebSocket, message: string, code?: string): void {
 
 function saveGameHistory(room: Room, result: RoundResult): void {
   try {
-    const historyPath = path.join(process.cwd(), 'data', 'runtime', 'History.json');
+    const historyPath = path.join(
+      process.cwd(),
+      '01-Source-code',
+      'server',
+      'data',
+      'runtime',
+      'History.json',
+    );
     fs.mkdirSync(path.dirname(historyPath), { recursive: true });
     let history: Array<{
       timestamp: string;

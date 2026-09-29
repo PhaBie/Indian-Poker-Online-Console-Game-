@@ -221,7 +221,7 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
 //   const deck = createDeck();
 //   console.log(`✅ [GameLogic] สร้างไพ่เสร็จสิ้น จำนวน ${deck.length} ใบ`);
 //   console.log(
-//     '📦 ข้อมูลในสำรับไพ่ (Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
+//     '📦 ข้อมูลในสำรับไพ่ (Deck): ดู 01-Source-code/server/data/generated/simulation.json เพื่อตรวจสอบ',
 //     '\n',
 //   );
 
@@ -229,7 +229,7 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
 //   const shuffledDeck = shuffleDeck(deck);
 //   console.log(`✅ [GameLogic] สับไพ่เสร็จสิ้น`);
 //   console.log(
-//     '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู data/generated/simulation.json เพื่อตรวจสอบ',
+//     '📦 ข้อมูลในสำรับไพ่หลังจากสับ (Shuffled Deck): ดู 01-Source-code/server/data/generated/simulation.json เพื่อตรวจสอบ',
 //     '\n',
 //   );
 
@@ -297,6 +297,8 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
 //     const path = require('path');
 //     const simulationPath = path.join(
 //       process.cwd(),
+//       '01-Source-code',
+//       'server',
 //       'data',
 //       'generated',
 //       'simulation.json',
@@ -304,7 +306,7 @@ export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card
 //     fs.mkdirSync(path.dirname(simulationPath), { recursive: true });
 //     fs.writeFileSync(simulationPath, JSON.stringify(simulationData, null, 2));
 //     console.log(
-//       '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ data/generated/simulation.json เรียบร้อยแล้ว\n',
+//       '💾 [GameLogic] บันทึกข้อมูล JSON ลงไฟล์ 01-Source-code/server/data/generated/simulation.json เรียบร้อยแล้ว\n',
 //     );
 //   } catch (err) {
 //     console.error('ไม่สามารถบันทึกไฟล์ JSON ได้:', err);

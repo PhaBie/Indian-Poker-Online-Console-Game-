@@ -134,7 +134,7 @@ _(คำสั่งนี้จะไปโหลด `ws`, `@types/ws` แล�
 
 ### เพลงประกอบระหว่างเล่น
 
-เมื่อเข้าโต๊ะเกมจริงหรือเปิดพรีวิว ไคลเอนต์จะเล่น `Music/Illslick_M_Leg_Indian.mp3` วนที่ระดับเสียงเริ่มต้น 20% กด `M` ระหว่างอยู่หน้าเกมเพื่อปิดหรือเปิดเสียง
+เมื่อเข้าโต๊ะเกมจริงหรือเปิดพรีวิว ไคลเอนต์จะเล่น `01-Source-code/client/assets/Music/Illslick_M_Leg_Indian.mp3` วนที่ระดับเสียงเริ่มต้น 20% กด `M` ระหว่างอยู่หน้าเกมเพื่อปิดหรือเปิดเสียง
 ปรับเสียงด้วยตัวแปร `POKER_MUSIC_VOLUME` ค่า 0–100 เช่น:
 
 ```powershell
@@ -400,11 +400,7 @@ Test/
 │   ├── archive/                       # เอกสารบันทึกประวัติการพัฒนาเดิม
 │   ├── contracts/                     # ข้อตกลงสถานะและกติกาเกม (GameState Contract)
 │   └── guides/                        # คู่มือการพัฒนาและแบ่งงาน
-├── Demo/                              # [deferred to dead-code audit]
-├── Music/                             # เพลงประกอบฝั่งไคลเอนต์
-├── data/
-│   ├── generated/                     # ข้อมูลจำลองที่สร้างโดย GameLogic (simulation.json, gitignored)
-│   └── runtime/                       # ประวัติเกมขณะรันระบบ (History.json, gitignored)
+├── 04-Demo/                           # [deferred to dead-code audit]
 ├── src/
 │   ├── client/
 │   │   ├── index.ts                   # Entry point ฝั่งไคลเอนต์
