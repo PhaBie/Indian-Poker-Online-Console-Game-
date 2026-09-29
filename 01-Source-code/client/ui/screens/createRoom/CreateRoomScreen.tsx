@@ -12,6 +12,10 @@ import { CreateRoomCard, CreateRoomHelpFooter } from './CreateRoomCard';
 
 export type { CreateRoomScreenProps } from './types';
 
+/**
+ * หน้าจอสร้างห้องเกมใหม่ (Create Room Screen)
+ * จัดการแสดงผลตัวเลือกเครือข่ายและตัวเลือกจำนวนผู้เล่น พร้อมตรวจสอบขนาดเทอร์มินัลก่อนเรนเดอร์
+ */
 export function CreateRoomScreen({
   socketClient,
   onBack,

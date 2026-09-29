@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const TRACK_PATH = fileURLToPath(
-  new URL('../../../Music/Illslick_M_Leg_Indian.mp3', import.meta.url),
+  new URL('../assets/Music/Illslick_M_Leg_Indian.mp3', import.meta.url),
 );
 const DEFAULT_VOLUME = 20;
 

@@ -6,7 +6,7 @@
 
 <!-- prettier-ignore -->
 ```bash
-Test/
+02-Tests/
 ├── server/
 │   ├── core/             # กติกาไพ่และ Schema
 │   ├── domain/
@@ -38,15 +38,16 @@ _เทสต์ Room อยู่ใน `server/domain/room.test.ts` และ 
 - เฉพาะ GameLogic: `bun run test:logic`
 - เฉพาะ Schema: `bun run test:schema`
 - เฉพาะ Validator: `bun run test:validator`
+- เฉพาะ SocketHandler: `bun run test:socket-handler`
 
 ถ้าต้องการเจาะจงไฟล์ สามารถรันผ่าน path ได้โดยตรง เช่น:
 
 ```bash
-bun test ./Test/server/domain/player/player.money.test.ts
+bun test ./02-Tests/server/domain/player/player.money.test.ts
 ```
 
 ## 3. ข้อควรรู้
 
 - `fixtures/` ใช้เตรียมข้อมูลตั้งต้นสำหรับทดสอบ (Instance จริง ไม่ใช่ Mock) ส่วน `helpers/` ใช้ช่วยตรวจผล
 - การจัดกลุ่มเทสต์: `GameState` ถูกแยกตามพฤติกรรม (`CALL`, `BET`, `RAISE`, `SHOW`), ส่วน `flow` ใช้จำลองหลายคำสั่งต่อเนื่องภายในรอบ และ `player.cards` เน้นทดสอบการรับไพ่ ดูไพ่ และคืนข้อมูลไพ่
-- ข้อกำหนดและเงื่อนไขของ GameState ให้อ่านจาก `Documentation/contracts/gameState-contract.md` (โดยฟีเจอร์การดวลไพ่ `Sideshow`/`DUEL` ได้รับการตรวจสอบ flow และรักษาความลับของไพ่ Card Privacy ในชุดทดสอบครบถ้วน)
+- ข้อกำหนดและเงื่อนไขของ GameState ให้อ่านจาก `03-Documentation/contracts/gameState-contract.md` (โดยฟีเจอร์การดวลไพ่ `Sideshow`/`DUEL` ได้รับการตรวจสอบ flow และรักษาความลับของไพ่ Card Privacy ในชุดทดสอบครบถ้วน)

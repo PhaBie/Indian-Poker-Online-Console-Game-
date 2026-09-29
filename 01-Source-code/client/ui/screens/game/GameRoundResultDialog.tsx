@@ -63,6 +63,9 @@ const HAND_RANK_COLORS: Readonly<Record<HandRank, string>> = {
   HIGH_CARD: UI_COLORS.handRankHighCard,
 };
 
+/**
+ * กรองรายชื่อผู้เล่นโดยคัดแยกเฉพาะผู้เล่นที่ไม่ได้อยู่ในสถานะ WAITING ออกมาแสดงผล
+ */
 export function getRoundParticipants<T extends { readonly status?: string }>(
   players: readonly T[],
 ): T[] {
@@ -99,6 +102,11 @@ export function getRoundResultPresentation(result: GameResult): RoundResultPrese
   };
 }
 
+/**
+ * จัดลำดับผู้เล่นสำหรับแสดงผลในตารางสรุปผลลัพธ์
+ * - ผู้ชนะจะอยู่ด้านบนสุดเรียงตามลำดับการชนะ
+ * - ผู้เล่นอื่นจะเรียงตามจำนวนชิปคงเหลือ, กำไรสุทธิ (Net), และชื่อตามลำดับตัวอักษร
+ */
 export function sortPlayersForResult(
   players: readonly ResultPlayer[],
   result: GameResult,
@@ -127,6 +135,7 @@ export function sortPlayersForResult(
   });
 }
 
+/** แสดงชื่อผู้ชนะพร้อมเอฟเฟกต์แสงวิ่ง (Shimmer) โดยเลื่อนตำแหน่งตัวอักษรสีขาวสว่างทุก 130ms */
 function WinnerName({ children }: { readonly children: string }) {
   const [lightPosition, setLightPosition] = useState(0);
 
@@ -404,6 +413,10 @@ interface UseHostDecisionControlsOptions {
   readonly onEndGame: () => void;
 }
 
+/**
+ * ควบคุมส่วนการตัดสินใจของโฮสต์หลังจบรอบเกม
+ * จัดการอัปเดตตัวเลขนับเวลาถอยหลัง 5 วินาทีสำหรับแสดงผล และรับอินพุตปุ่มลัด [N] เพื่อเริ่มเกมถัดไป หรือ [E] เพื่อจบเกมกลับห้องพักรอ
+ */
 function useHostDecisionControls({
   isHost,
   result,
@@ -440,6 +453,11 @@ function getWinnerNames(
     .join(', ');
 }
 
+/**
+ * ไดอะล็อกแสดงผลลัพธ์รอบเกมแบบโอเวอร์เลย์ (Round Result Dialog)
+ * แสดงรายชื่อผู้ชนะ, รูปแบบไพ่ที่ชนะ, ตารางคำนวณชิป (Start, Bet, Payout, End, Net),
+ * และส่วนการตัดสินใจของโฮสต์ในการเริ่มรอบใหม่หรือกลับห้องพักรอ
+ */
 export function GameRoundResultDialog(props: GameRoundResultDialogProps) {
   const { result, gameState, roundStartChips, myPlayerId, onNextGame, onEndGame } = props;
   const isHost = gameState.hostId === myPlayerId;

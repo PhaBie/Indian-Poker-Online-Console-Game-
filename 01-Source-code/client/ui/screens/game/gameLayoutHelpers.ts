@@ -11,6 +11,9 @@ export const HAND_RANK_LABELS: Readonly<Record<HandRank, string>> = {
   HIGH_CARD: 'HIGH CARD',
 };
 
+/**
+ * เรียงลำดับรายชื่อผู้เล่นตามมุมมอง โดยหากพบผู้เล่นปัจจุบัน (myPlayerId) จะหมุนอาเรย์ให้มาอยู่ตำแหน่งแรก แต่หากไม่พบจะคงลำดับเดิมไว้
+ */
 export function getOrderedPlayersByPerspective<T extends { readonly id: string }>(
   players: readonly T[],
   myPlayerId: string | null,
@@ -25,6 +28,9 @@ export function getOrderedPlayersByPerspective<T extends { readonly id: string }
   return [...players.slice(myIndex), ...players.slice(0, myIndex)];
 }
 
+/**
+ * กำหนดตำแหน่งที่นั่ง 4 ทิศ (ล่าง, ซ้าย, บน, ขวา) บนโต๊ะเกมตามจำนวนผู้เล่นที่ร่วมโต๊ะ
+ */
 export function determineSeatPositions<T>(
   orderedPlayers: readonly T[],
 ): TableSeatPositions<T> {
@@ -94,6 +100,12 @@ export function getCardSuitColor(suit: Card['suit']): string {
     : UI_COLORS.cardDarkSuitForeground;
 }
 
+/**
+ * ตรวจสอบว่าต้องซ่อน (คว่ำ) ไพ่ของผู้เล่นหรือไม่
+ * - หากมีการเปิดเผยไพ่ (Showdown หรือ Sideshow) จะไม่ซ่อน
+ * - หากเป็นไพ่ของผู้เล่นอื่น จะซ่อนเสมอ
+ * - หากเป็นไพ่ของผู้เล่นตนเอง จะซ่อนเมื่อยังอยู่ในสถานะ Blind
+ */
 export function shouldHidePlayerCards({
   isMe,
   isBlind,
@@ -112,6 +124,9 @@ export function shouldHidePlayerCards({
   return isBlind;
 }
 
+/**
+ * กำหนดข้อความและสีของป้ายสถานะประจำตัวผู้เล่น (Badge) เช่น [TURN], [FOLD], [DISCONNECT], [SIDESHOW?]
+ */
 export function getPlayerBadgeInfo(
   hasFolded: boolean,
   isThisPlayerTurn: boolean,
@@ -119,9 +134,8 @@ export function getPlayerBadgeInfo(
   isShowdownRevealed: boolean = false,
   isDisconnected: boolean = false,
 ): PlayerBadgeInfo {
-  // SHOW exposes both hands before the round result is presented. The server
-  // marks the losing hand folded internally to settle the pot, but that is
-  // not a voluntary fold and should not be shown as one during the reveal.
+  // กรณี SHOW จะเปิดเผยไพ่ของทั้งสองฝ่ายก่อนสรุปผลการแข่งขันรอบเกม แม้ระบบภายในเซิร์ฟเวอร์จะมาร์กผู้แพ้ว่าหมอบ (folded) เพื่อตัดยอดกองกลาง
+  // แต่ไม่ใช่การหมอบโดยสมัครใจ จึงไม่แสดงป้าย [FOLD] ในระหว่างจังหวะเปิดเผยไพ่นี้
   if (isShowdownRevealed) {
     return { label: null, color: 'white' };
   }
@@ -146,10 +160,13 @@ export interface StatusDisplayInfo {
   readonly bold?: boolean;
 }
 
+/**
+ * ประเมินข้อความและสีสำหรับแถบแสดงสถานะส่วนกลางของโต๊ะเกมตามบริบทของเกมในปัจจุบัน
+ */
 export function getStatusDisplayInfo(context: StatusStateContext): StatusDisplayInfo {
   if (context.isWaitingForNextRound) {
     return {
-      text: 'SPECTATING · WAITING FOR NEW GAME',
+      text: 'WAITING FOR NEW GAME',
       color: 'cyanBright',
       bold: true,
     };

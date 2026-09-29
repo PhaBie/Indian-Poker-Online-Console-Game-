@@ -20,14 +20,22 @@ function getLobbyContainerWidth(terminalColumns: number): number {
   return Math.min(98, Math.round(93 + (terminalColumns - 140) * 0.1));
 }
 
+/**
+ * คำนวณจำนวนแถวของรายการห้องสูงสุดที่สามารถแสดงผลได้ในหน้าต่างเทอร์มินัลปัจจุบัน
+ * โดยกันพื้นที่สำหรับส่วนหัว, ฟุตเตอร์, ข้อความแจ้งเตือนเลื่อนหน้า และแถบข้อผิดพลาด (หากมี)
+ */
 function getMaxVisibleRoomRows(terminalRows: number, hasError: boolean): number {
-  // Reserve header, footer and both scroll hints before allocating two lines per room.
   return Math.max(
     1,
     Math.min(6, Math.floor((terminalRows - 19 - (hasError ? 2 : 0)) / 2)),
   );
 }
 
+/**
+ * หน้าจอแสดงรายการห้องเกมที่เปิดให้เข้าร่วม (Room Browser Screen)
+ * นำเสนอตารางรายชื่อห้อง, จำนวนผู้เล่นในห้อง, สถานะห้อง,
+ * และรองรับการค้นหาห้องโดยตรงผ่านรหัสห้อง (Room Code Prompt)
+ */
 export function RoomBrowserScreen(props: RoomBrowserScreenProps) {
   const [isEnteringCode, setIsEnteringCode] = useState(
     props.initialEnteringCode ?? false,

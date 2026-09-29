@@ -11,6 +11,7 @@ import {
 import { UI_COLORS } from '../../shared/theme/colors';
 import { getGameContainerWidth } from '../../shared/layout/gameContainerLayout';
 
+/** ตัวเลือกหลักในหน้าเมนูเกม */
 export type MainMenuOption = 'CREATE_ROOM' | 'JOIN_ROOM' | 'EXIT';
 
 export interface MainMenuScreenProps {
@@ -20,6 +21,9 @@ export interface MainMenuScreenProps {
   readonly onExit?: () => void;
 }
 
+/**
+ * แปลงข้อความอินพุตจากผู้ใช้ (เช่น "1", "2", "3" หรือชื่อคำสั่ง) ให้เป็นตัวเลือกเมนูที่ถูกต้อง
+ */
 export function parseMainMenuChoice(rawInput: string): MainMenuOption | null {
   const trimmedInput = rawInput.trim();
   if (trimmedInput === '1' || trimmedInput.toUpperCase() === 'CREATE_ROOM') {
@@ -36,6 +40,10 @@ export function parseMainMenuChoice(rawInput: string): MainMenuOption | null {
 
 const LAST_MENU_INDEX = MENU_CARD_DEFINITIONS.length - 1;
 
+/**
+ * คำนวณลำดับโฟกัสถัดไปของการเลือกเมนูในลักษณะวนลูป (Circular Navigation)
+ * เมื่อเลื่อนขึ้นจากเมนูแรกจะวนไปเมนูสุดท้าย และเมื่อเลื่อนลงจากเมนูสุดท้ายจะวนกลับไปเมนูแรก
+ */
 export function determineNextFocus(
   currentFocus: number,
   direction: 'PREVIOUS' | 'NEXT',
@@ -158,6 +166,11 @@ function useMenuSelection({
   return { focusedIndex, isSubmitting, transitionText };
 }
 
+/**
+ * หน้าจอเมนูหลักของเกม (Main Menu Screen)
+ * นำเสนอตัวเลือก: สร้างห้อง (Create Room), เข้าร่วมห้อง (Join Room), และออกจากเกม (Exit)
+ * พร้อมแสดงลูกเล่นเอฟเฟกต์การเลือกเมนู และจัดการสลับหน้าจออย่างนุ่มนวล
+ */
 export function MainMenuScreen(props: MainMenuScreenProps) {
   const { focusedIndex, isSubmitting, transitionText } = useMenuSelection(props);
   const { columns, rows } = useTerminalSize();

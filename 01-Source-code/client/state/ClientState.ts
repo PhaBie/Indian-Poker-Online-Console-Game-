@@ -48,13 +48,19 @@ export class ClientState {
 
   private getSessionFilePath(): string {
     const profile = process.env.SESSION_PROFILE || 'default';
-    return path.join(process.cwd(), 'data', 'client', `session_${profile}.json`);
+    return path.join(
+      process.cwd(),
+      '01-Source-code',
+      'client',
+      'data',
+      `session_${profile}.json`,
+    );
   }
 
   private saveSession(): void {
     if (!this.reconnectToken || !this.currentRoomId) return;
     try {
-      const dirPath = path.join(process.cwd(), 'data', 'client');
+      const dirPath = path.join(process.cwd(), '01-Source-code', 'client', 'data');
       fs.mkdirSync(dirPath, { recursive: true });
       const filePath = this.getSessionFilePath();
       fs.writeFileSync(
@@ -157,15 +163,15 @@ export class ClientState {
         this.latestGameResult = event.payload;
         break;
       }
-      case 'GAME_SAVED':
-      case 'GAME_LOADED': {
-        this.currentRoomId = event.payload.roomId;
-        break;
-      }
+
       case 'ERROR': {
         this.lastError = event.message;
         // If we get an error like INVALID_TOKEN or ROOM_NOT_FOUND, our session is invalid.
-        if (event.code === 'INVALID_TOKEN' || event.code === 'ROOM_NOT_FOUND') {
+        if (
+          event.code === 'INVALID_TOKEN' ||
+          event.code === 'ROOM_NOT_FOUND' ||
+          event.code === 'NOT_IN_ROOM'
+        ) {
           this.clearSession();
         }
         break;

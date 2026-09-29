@@ -114,8 +114,16 @@ export class GameState {
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.activePlayers.length;
 
       const nextPlayer = this.activePlayers[this.currentPlayerIndex];
-      if (nextPlayer.status !== 'ACTIVE') {
-        continue;
+
+      const activeCount = this.activePlayers.filter((p) => p.status === 'ACTIVE').length;
+      if (activeCount >= 2) {
+        if (nextPlayer.status !== 'ACTIVE') {
+          continue;
+        }
+      } else {
+        if (nextPlayer.status !== 'ACTIVE' && nextPlayer.status !== 'DISCONNECTED') {
+          continue;
+        }
       }
 
       // In Teen Patti a player pays to stay in. Spending the last chip is
@@ -129,10 +137,8 @@ export class GameState {
       return;
     }
 
-    throw new PlayerStateError(
-      this.activePlayers[this.currentPlayerIndex]?.id ?? '',
-      this.activePlayers[this.currentPlayerIndex]?.status ?? 'UNKNOWN',
-    );
+    // If no one is ACTIVE, we pause the turn on the last player until someone reconnects or is kicked
+    return;
   }
 
   public processAction(
@@ -247,7 +253,8 @@ export class GameState {
         // รอบเป็น Seen; ผู้ท้าจ่ายขั้นต่ำของ Seen แล้วท้าคนที่ลงก่อนหน้าตนเอง
         {
           const activePlayers = this.activePlayers.filter(
-            (activePlayer) => activePlayer.status === 'ACTIVE',
+            (activePlayer) =>
+              activePlayer.status === 'ACTIVE' || activePlayer.status === 'DISCONNECTED',
           );
           if (
             activePlayers.length <= 2 ||
@@ -312,7 +319,7 @@ export class GameState {
   public evaluateWinner(): GameResult | null {
     // ใช้เฉพาะผู้เล่นที่ยังไม่หมอบในการหาผู้ชนะ
     const players = this.activePlayers
-      .filter((player) => player.status === 'ACTIVE')
+      .filter((player) => player.status === 'ACTIVE' || player.status === 'DISCONNECTED')
       .map((player) => ({ id: player.id, cards: player.privateCards }));
 
     if (players.length === 0) {
@@ -352,7 +359,7 @@ export class GameState {
     // Collect exposed cards (all active players show their cards)
     const exposedCards: Record<string, Card[]> = {};
     for (const p of this.activePlayers) {
-      if (p.status === 'ACTIVE') {
+      if (p.status === 'ACTIVE' || p.status === 'DISCONNECTED') {
         exposedCards[p.id] = p.privateCards;
       }
     }
@@ -406,7 +413,7 @@ export class GameState {
     }
 
     const remainingPlayers = this.activePlayers.filter(
-      (player) => player.status === 'ACTIVE',
+      (player) => player.status === 'ACTIVE' || player.status === 'DISCONNECTED',
     );
 
     // ถ้าไม่มีผู้เล่นที่ยังอยู่ในเกม ก็ไม่มีผู้รับ Pot
@@ -490,7 +497,8 @@ export class GameState {
       (activePlayer) => activePlayer.id === playerId,
     );
     const remainingPlayers = this.activePlayers.filter(
-      (activePlayer) => activePlayer.status === 'ACTIVE',
+      (activePlayer) =>
+        activePlayer.status === 'ACTIVE' || activePlayer.status === 'DISCONNECTED',
     );
 
     // Show ทำได้เมื่อเหลือผู้เล่นที่ยังเล่นอยู่แค่ 2 คน (กติกามาตรฐาน Teen Patti)
@@ -507,8 +515,8 @@ export class GameState {
       throw new InvalidActionError('SHOW');
     }
 
-    // ผู้เล่น Seen ห้ามขอ Show กับผู้เล่น Blind
-    if (!player.isBlind && opponent.isBlind) {
+    // ผู้เล่น Seen ห้ามขอ Show กับผู้เล่น Blind (ยกเว้นคู่แข่งหลุดไปแล้ว)
+    if (!player.isBlind && opponent.isBlind && opponent.status !== 'DISCONNECTED') {
       throw new InvalidActionError('SHOW');
     }
 
@@ -545,7 +553,7 @@ export class GameState {
   public canForceShow(): boolean {
     // บังคับ Show ได้เมื่อเหลือผู้เล่นที่ยังเล่นอยู่ 2 คน
     const remainingPlayers = this.activePlayers.filter(
-      (player) => player.status === 'ACTIVE',
+      (player) => player.status === 'ACTIVE' || player.status === 'DISCONNECTED',
     );
 
     return remainingPlayers.length === 2;
@@ -554,7 +562,7 @@ export class GameState {
   public checkLastManStanding(): Player | null {
     // ค้นหาผู้เล่นที่ยังอยู่ในเกม
     const remainingPlayers = this.activePlayers.filter(
-      (player) => player.status === 'ACTIVE',
+      (player) => player.status === 'ACTIVE' || player.status === 'DISCONNECTED',
     );
 
     // ถ้าเหลือผู้เล่นคนเดียว ให้คืนผู้เล่นคนนั้น
@@ -576,30 +584,53 @@ export class GameState {
     this.dealerIndex = (this.dealerIndex + 1) % this.activePlayers.length;
   }
 
-  public handlePlayerDisconnect(playerId: string): boolean {
+  public handlePlayerDisconnect(playerId: string, isPermanent: boolean = false): boolean {
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
     );
 
-    // A spectator can leave without ever having occupied a hand.
-    if (player === undefined || player.status !== 'ACTIVE') return false;
-
+    // Ignore if player is not found or not in an active playing state.
     if (
-      this.pendingSideshow?.challengerId === playerId ||
-      this.pendingSideshow?.targetId === playerId
-    ) {
-      this.pendingSideshow = null;
+      player === undefined ||
+      (player.status !== 'ACTIVE' && player.status !== 'DISCONNECTED')
+    )
+      return false;
+
+    if (player.status === 'DISCONNECTED' && player.previousStatus === 'FOLDED') {
+      return false;
     }
 
-    // A departed participant contributes no more actions to this hand.
-    player.fold();
-
-    // ถ้าเป็นเทิร์นของผู้เล่นที่หลุด ให้ข้ามไปคนถัดไป
-    if (
-      this.activePlayers[this.currentPlayerIndex] === player &&
-      this.activePlayers.some((activePlayer) => activePlayer.status === 'ACTIVE')
-    ) {
+    // ถ้ามีท้าดวลอยู่ แล้วมีคนหลุด ให้ยกเลิกการท้าดวลทันที
+    if (this.pendingSideshow?.targetId === playerId) {
+      this.lastSideshowNotice = {
+        challengerId: this.pendingSideshow.challengerId,
+        targetId: this.pendingSideshow.targetId,
+        outcome: 'DECLINED',
+      };
+      this.pendingSideshow = null;
+      // ผ่านเทิร์นของคนท้าไปเลย
       this.nextTurn();
+    } else if (this.pendingSideshow?.challengerId === playerId) {
+      this.pendingSideshow = null;
+      // ผ่านเทิร์นของคนท้า (ที่หลุดไป)
+      this.nextTurn();
+    }
+
+    // Only fold if the player is permanently leaving
+    if (isPermanent) {
+      player.fold();
+      player.status = 'FOLDED';
+
+      // ถ้าเป็นเทิร์นของผู้เล่นที่ถูกนำออก ให้ข้ามไปคนถัดไป
+      if (
+        this.activePlayers[this.currentPlayerIndex] === player &&
+        this.activePlayers.some(
+          (activePlayer) =>
+            activePlayer.status === 'ACTIVE' || activePlayer.status === 'DISCONNECTED',
+        )
+      ) {
+        this.nextTurn();
+      }
     }
 
     // ถ้าเหลือผู้เล่นคนเดียว

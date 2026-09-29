@@ -13,6 +13,7 @@ export type PlayerFixture = {
   bet?: number;
   isBlind?: boolean;
   cards?: Card[];
+  previousStatus?: PlayerStatus;
 };
 
 /**
@@ -47,6 +48,9 @@ export function createGameStateFixture(
     }
     if (config.cards !== undefined) {
       playerInstance.privateCards = config.cards;
+    }
+    if (config.previousStatus !== undefined) {
+      playerInstance.previousStatus = config.previousStatus;
     }
 
     return playerInstance;

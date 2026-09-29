@@ -1,5 +1,4 @@
 import { expect, test, describe } from 'bun:test';
-import { PlayerStateError } from '../../../../01-Source-code/server/domain/errors/GameError';
 import { createGameStateFixture } from './fixtures/gameState.fixture';
 import { expectGameErrorWithCode } from '../helpers/expectGameErrorWithCode';
 
@@ -31,17 +30,11 @@ describe('4. การจัดการสถานะและการเล�
     expect(gameState.currentPlayerIndex).toBe(1);
   });
 
-  test('[GameState.nextTurn] 4.3 ผู้เล่นสถานะ FOLDED, DISCONNECTED หรือ WAITING → ข้ามเทิร์นไปยังคนถัดไปที่เป็น ACTIVE', () => {
+  test('[GameState.nextTurn] 4.3 ผู้เล่นสถานะ FOLDED หรือ WAITING → ข้ามเทิร์นไปยังคนถัดไปที่เป็น ACTIVE', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'activePlayer', name: 'Active Player', status: 'ACTIVE', chips: 1000 },
       { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
       { id: 'waitingPlayer', name: 'Waiting Player', status: 'WAITING', chips: 1000 },
-      {
-        id: 'disconnectedPlayer',
-        name: 'Disconnected Player',
-        status: 'DISCONNECTED',
-        chips: 1000,
-      },
       {
         id: 'nextActivePlayer',
         name: 'Next Active Player',
@@ -50,7 +43,7 @@ describe('4. การจัดการสถานะและการเล�
       },
     ]);
     gameState.nextTurn();
-    expect(gameState.currentPlayerIndex).toBe(4);
+    expect(gameState.currentPlayerIndex).toBe(3);
   });
 
   test('[GameState.nextTurn] 4.3.1 หากเหลือ ACTIVE คนเดียว ต้องไม่เปลี่ยนเงินและไพ่', () => {
@@ -133,7 +126,7 @@ describe('4. การจัดการสถานะและการเล�
     }
   });
 
-  test('[GameState.nextTurn] 4.20 ข้าม FOLDED และ DISCONNECTED หลายคนติดกัน', () => {
+  test('[GameState.nextTurn] 4.20 ข้าม FOLDED หลายคนติดกัน แต่ไม่ข้าม DISCONNECTED', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'activePlayer', name: 'Active Player', status: 'ACTIVE', chips: 1000 },
       { id: 'foldedPlayer1', name: 'Folded Player 1', status: 'FOLDED', chips: 1000 },
@@ -155,20 +148,13 @@ describe('4. การจัดการสถานะและการเล�
     expect(gameState.currentPlayerIndex).toBe(4);
   });
 
-  test('[GameState.nextTurn] 4.21 โยน PlayerStateError เมื่อไม่มีผู้เล่นสถานะ ACTIVE เหลืออยู่เลย', () => {
+  test('[GameState.nextTurn] 4.21 โยน PlayerStateError เมื่อไม่มีผู้เล่นสถานะ ACTIVE/DISCONNECTED เหลืออยู่เลย', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
-      {
-        id: 'disconnectedPlayer',
-        name: 'Disconnected Player',
-        status: 'DISCONNECTED',
-        chips: 1000,
-      },
+      { id: 'waitingPlayer', name: 'Waiting Player', status: 'WAITING', chips: 1000 },
     ]);
 
-    expect(() => {
-      gameState.nextTurn();
-    }).toThrow(PlayerStateError);
+    gameState.nextTurn();
 
     expect(gameState.currentPlayerIndex).toBe(0);
   });
@@ -185,7 +171,7 @@ describe('4. การจัดการสถานะและการเล�
     expect(gameState.dealerIndex).toBe(0);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.29 หมอบผู้เล่นที่หลุดโดยไม่คืนเงิน และไม่กระทบยอดคนอื่น', () => {
+  test('[GameState.handlePlayerDisconnect] 4.29 หมอบผู้เล่นที่ถูกลบออกจากเกมถาวรโดยไม่คืนเงิน', () => {
     const gameState = createGameStateFixture({ pot: 500, currentPlayerIndex: 0 }, [
       {
         id: 'disconnectingPlayer',
@@ -199,7 +185,7 @@ describe('4. การจัดการสถานะและการเล�
     const [disconnectingPlayer, secondPlayer, thirdPlayer] = gameState.activePlayers;
     disconnectingPlayer.bet = 100;
 
-    gameState.handlePlayerDisconnect(disconnectingPlayer.id);
+    gameState.handlePlayerDisconnect(disconnectingPlayer.id, true);
 
     expect(disconnectingPlayer.status).toBe('FOLDED');
     expect(disconnectingPlayer.chips).toBe(900);
@@ -239,21 +225,27 @@ describe('4. การจัดการสถานะและการเล�
     expect(gameState.handlePlayerDisconnect('ghost')).toBe(false);
   });
 
-  test('[GameState.handlePlayerDisconnect] 4.56 หลุดนอกตาตัวเอง -> หมอบแต่ไม่ขยับตา', () => {
+  test('[GameState.handlePlayerDisconnect] 4.56 หลุดชั่วคราวนอกตาตัวเอง -> ไม่หมอบ', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0 }, [
       { id: 'playerOne', name: 'Player One', status: 'ACTIVE', chips: 1000 },
-      { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
+      { id: 'playerTwo', name: 'Player Two', status: 'DISCONNECTED', chips: 1000 },
       { id: 'playerThree', name: 'Player Three', status: 'ACTIVE', chips: 1000 },
     ]);
 
-    gameState.handlePlayerDisconnect('playerTwo');
-    expect(gameState.activePlayers[1].status).toBe('FOLDED');
+    gameState.handlePlayerDisconnect('playerTwo', false);
+    expect(gameState.activePlayers[1].status).toBe('DISCONNECTED');
     expect(gameState.currentPlayerIndex).toBe(0);
   });
 
   test('[GameState.handlePlayerDisconnect] 4.57 ผู้เล่นที่ไม่ ACTIVE ต้องไม่ทำงานซ้ำหรือจ่ายเงินซ้ำ', () => {
     const gameState = createGameStateFixture({ currentPlayerIndex: 0, pot: 500 }, [
-      { id: 'playerOne', name: 'Player One', status: 'DISCONNECTED', chips: 1000 },
+      {
+        id: 'playerOne',
+        name: 'Player One',
+        status: 'DISCONNECTED',
+        previousStatus: 'FOLDED',
+        chips: 1000,
+      },
       { id: 'playerTwo', name: 'Player Two', status: 'ACTIVE', chips: 1000 },
     ]);
 

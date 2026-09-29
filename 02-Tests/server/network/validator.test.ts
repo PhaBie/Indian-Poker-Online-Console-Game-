@@ -15,15 +15,14 @@ describe('6. การตรวจสอบ Event ของระบบ (Validat
         | 'NEXT_GAME'
         | 'END_GAME'
         | 'TOGGLE_READY'
-        | 'RESET_LOBBY'
-        | 'SAVE_GAME';
+        | 'RESET_LOBBY';
     }
   >;
 
   type PayloadClientEvent = Extract<
     ClientEvent,
     {
-      type: 'CREATE_ROOM' | 'JOIN_ROOM' | 'LOAD_GAME' | 'SEND_CHAT' | 'PLAYER_ACTION';
+      type: 'CREATE_ROOM' | 'JOIN_ROOM' | 'SEND_CHAT' | 'PLAYER_ACTION';
     }
   >;
 
@@ -35,7 +34,6 @@ describe('6. การตรวจสอบ Event ของระบบ (Validat
     ['END_GAME', { type: 'END_GAME' }],
     ['TOGGLE_READY', { type: 'TOGGLE_READY' }],
     ['RESET_LOBBY', { type: 'RESET_LOBBY' }],
-    ['SAVE_GAME', { type: 'SAVE_GAME' }],
   ];
 
   const validPayloadEvents: [PayloadClientEvent['type'], PayloadClientEvent][] = [
@@ -47,7 +45,6 @@ describe('6. การตรวจสอบ Event ของระบบ (Validat
       'JOIN_ROOM',
       { type: 'JOIN_ROOM', payload: { playerName: 'Bob', roomId: 'room-1' } },
     ],
-    ['LOAD_GAME', { type: 'LOAD_GAME', payload: { roomId: 'room-1' } }],
     ['SEND_CHAT', { type: 'SEND_CHAT', payload: { message: 'Hello' } }],
     ['PLAYER_ACTION', { type: 'PLAYER_ACTION', payload: { action: 'CALL' } }],
   ];

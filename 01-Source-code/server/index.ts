@@ -1,7 +1,7 @@
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { IncomingMessage } from 'http';
+import { createServer, type Server, type IncomingMessage } from 'http';
+import type { Socket } from 'net';
 import { RoomManager } from './domain/services/RoomManager';
-import { StorageManager } from './infrastructure/StorageManager';
 import { Validator } from './network/validator';
 import { acceptsConnection, getLanBindAddress } from './network/accessPolicy';
 import { isPrivateIPv4, type NetworkMode } from '../shared/networkMode';
@@ -14,21 +14,21 @@ import {
 
 export class PokerServer {
   public roomManager: RoomManager;
-  public storageManager: StorageManager;
   public isRunning: boolean;
   public wss: WebSocketServer | null;
+  public httpServer: Server | null;
   public validator: Validator;
   private tokenMap: Map<string, string>; // token -> playerId
   public connectedClients: Map<WebSocket, SocketSession>;
 
   constructor(public readonly networkMode: NetworkMode = 'LAN') {
     this.roomManager = new RoomManager();
-    this.storageManager = new StorageManager();
     this.validator = new Validator();
     this.tokenMap = new Map();
     this.connectedClients = new Map();
     this.isRunning = false;
     this.wss = null;
+    this.httpServer = null;
   }
 
   private get networkContext(): NetworkContext {
@@ -59,12 +59,32 @@ export class PokerServer {
         'Bind LAN to a local IPv4 address; Online must use loopback behind its tunnel.',
       );
     }
-    this.wss = new WebSocketServer({
-      port,
-      host,
-      verifyClient: ({ req }: { req: IncomingMessage }) =>
-        acceptsConnection(req, this.networkMode),
+
+    this.httpServer = createServer();
+    this.wss = new WebSocketServer({ noServer: true });
+
+    this.httpServer.on(
+      'upgrade',
+      (request: IncomingMessage, socket: Socket, head: Buffer) => {
+        if (!acceptsConnection(request, this.networkMode)) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        this.wss!.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+          this.wss!.emit('connection', ws, request);
+        });
+      },
+    );
+
+    this.httpServer.listen(port, host, () => {
+      this.wss!.emit('listening');
     });
+
+    // Provide address() to maintain compatibility with tests
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.wss.address = () => this.httpServer?.address() as any;
+
     this.isRunning = true;
     console.log(`[Server] WebSocket Server กำลังทำงานที่ Port ${port}`);
 
@@ -106,6 +126,10 @@ export class PokerServer {
       }
       this.wss.close();
       this.wss = null;
+    }
+    if (this.httpServer) {
+      this.httpServer.close();
+      this.httpServer = null;
     }
     this.isRunning = false;
     console.log('[Server] ปิดการทำงานเรียบร้อย');

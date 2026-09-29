@@ -76,6 +76,13 @@ function JoinMethodStep({ selectedNetwork }: { readonly selectedNetwork: 1 | 2 }
   );
 }
 
+/**
+ * หน้าจอเลือกวิธีการเข้าร่วมห้องเกม (Join Room Screen)
+ * ให้ผู้เล่นเลือกระหว่าง:
+ * - [1] Join LAN: เข้าร่วมห้องในวงเครือข่ายท้องถิ่นผ่าน IP ของ Host
+ * - [2] Join Online: ค้นหาและเข้าร่วมห้องบนเครือข่ายอินเทอร์เน็ต
+ * รองรับการกดปุ่ม 1, 2, ลูกศรขึ้น/ลง, Enter เพื่อยืนยัน และ Escape เพื่อย้อนกลับ
+ */
 export function JoinRoomScreen({ onBack, onJoinSubmit }: JoinRoomScreenProps) {
   const { columns, rows } = useTerminalSize();
   const [selectedNetwork, setSelectedNetwork] = useState<1 | 2>(1);

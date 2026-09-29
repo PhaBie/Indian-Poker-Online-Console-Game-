@@ -160,37 +160,6 @@ describe('ระบบจัดการรายการห้องและ�
     expect(errorEvent.message).toContain('full');
   });
 
-  test('[RoomListingSocket] 7.20 อนุญาตให้ผู้เล่นใหม่เข้าร่วมห้องที่กำลังเล่นอยู่เป็นผู้ชมรอคิวหากยังไม่เกินความจุห้อง', () => {
-    const hostPlayer = new Player('host_4', 'Grace');
-    const secondPlayer = new Player('p2', 'Heidi');
-    const activeRoom = mockContext.roomManager.createRoom('playing_room', hostPlayer, 4);
-    activeRoom.join(secondPlayer);
-    activeRoom.phase = 'PLAYING';
-
-    const sentEvents: ServerEvent[] = [];
-    const newPlayerSocket = {
-      readyState: 1,
-      send: (rawPayload: string) => {
-        sentEvents.push(JSON.parse(rawPayload));
-      },
-    } as unknown as WSWebSocket;
-
-    const joinMessage: ClientEvent = {
-      type: 'JOIN_ROOM',
-      payload: { playerName: 'Ivan', roomId: 'playing_room' },
-    };
-
-    handleClientMessage(newPlayerSocket, joinMessage, mockContext);
-
-    expect(activeRoom.players.size).toBe(3);
-    const ivanPlayer = activeRoom.getPlayer(Array.from(activeRoom.players.keys())[2]);
-    expect(ivanPlayer?.name).toBe('Ivan');
-    expect(ivanPlayer?.status).toBe('WAITING');
-
-    const sessionCreatedEvent = sentEvents.find((evt) => evt.type === 'SESSION_CREATED');
-    expect(sessionCreatedEvent).toBeDefined();
-  });
-
   test('[RoomListingSocket] 7.21 อนุญาตให้ผู้เล่นเดิมที่มี Token ถูกต้องทำการ Reconnect กลับเข้าห้องที่กำลังเล่นอยู่ได้', () => {
     const hostPlayer = new Player('host_5', 'Judy');
     const existingPlayer = new Player('player_reconnect', 'Kevin');

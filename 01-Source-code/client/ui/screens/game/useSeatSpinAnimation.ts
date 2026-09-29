@@ -4,6 +4,12 @@ export const SEAT_SPIN_INTERVAL_MS = 120;
 export const DEFAULT_SPIN_START_MS = 5200;
 export const DEFAULT_SPIN_END_MS = 9200;
 
+/**
+ * จำลองการสลับหมุนชื่อผู้เล่นคู่แข่ง (Seat Spin Effect) ในช่วงเปิดตัวโต๊ะเกม
+ * - ก่อนถึง spinStartMs: แสดงชื่อเป็น [ ··· ] เพื่อรอเริ่มหมุน
+ * - ระหว่างหมุน: สลับรายชื่อคู่แข่งหมุนวนแบบรูเล็ตต์ตามรอบเวลา
+ * - หลังสิ้นสุด: คืนค่าเป็นข้อมูลผู้เล่นจริงที่นั่งในตำแหน่งนั้น
+ */
 export function resolveSpinningOpponentSeat(
   originalPlayer: GamePlayerItem | undefined,
   opponents: readonly GamePlayerItem[],

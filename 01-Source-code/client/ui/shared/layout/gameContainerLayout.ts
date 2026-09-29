@@ -5,6 +5,10 @@ export const CONTAINER_BREAKPOINTS = {
   extraLarge: { baseWidth: 88, growthRate: 0.2, maxWidth: 92 },
 } as const;
 
+/**
+ * คำนวณความกว้างของกรอบหน้าจอเกม (Container Width) ให้ตอบสนองตามขนาดเทอร์มินัล (Responsive Breakpoints)
+ * ช่วยปรับขนาดกรอบระหว่าง 66 ถึงสูงสุด 92 คอลัมน์อย่างลื่นไหลตามสัดส่วนจอ
+ */
 export function getGameContainerWidth(terminalColumns: number): number {
   const { small, medium, large, extraLarge } = CONTAINER_BREAKPOINTS;
   if (terminalColumns <= small.maxColumns) {

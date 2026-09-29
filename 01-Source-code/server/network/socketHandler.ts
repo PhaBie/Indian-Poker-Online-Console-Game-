@@ -48,8 +48,10 @@ function clearRoomTimers(roomId: string): void {
 
 function recordDepartedPlayer(roomId: string, player: DepartedPlayer): void {
   const departedPlayers = departedPlayersByRoom.get(roomId) ?? [];
-  departedPlayers.push(player);
-  departedPlayersByRoom.set(roomId, departedPlayers);
+  if (!departedPlayers.some((p) => p.id === player.id)) {
+    departedPlayers.push(player);
+    departedPlayersByRoom.set(roomId, departedPlayers);
+  }
 }
 
 function consumeDepartedPlayers(roomId: string): DepartedPlayer[] {
@@ -228,7 +230,11 @@ function handleReconnectJoin(
   }
   const player = room.getPlayer(existingPlayerId);
   if (!player) {
-    sendError(wsClient, 'Player not in room', 'NOT_IN_ROOM');
+    sendError(
+      wsClient,
+      'Cannot connect because you were disconnected for too long.',
+      'NOT_IN_ROOM',
+    );
     return;
   }
 
@@ -533,7 +539,7 @@ function removeNonHostPlayer(
       status: reason === 'disconnected' ? 'DISCONNECTED' : 'LEFT',
     });
   }
-  const isGameOver = room.gameState?.handlePlayerDisconnect(playerId) ?? false;
+  const isGameOver = room.gameState?.handlePlayerDisconnect(playerId, true) ?? false;
   room.leave(playerId);
 
   // A host left alone cannot play or choose a meaningful next game. Keep the
@@ -598,6 +604,20 @@ export function handleClientDisconnect(
 
   if (player) {
     player.disconnect();
+    const isGameOver = room.gameState?.handlePlayerDisconnect(playerId, false) ?? false;
+    if (isGameOver) {
+      const result = room.endGame(true);
+      if (result) {
+        saveGameHistory(room, result);
+        broadcastGameResult(
+          room.roomId,
+          result,
+          context,
+          consumeDepartedPlayers(room.roomId),
+        );
+        scheduleAutoNextGame(room.roomId, context);
+      }
+    }
   }
 
   context.connectedClients.delete(wsClient);
@@ -707,7 +727,14 @@ function sendError(wsClient: WebSocket, message: string, code?: string): void {
 
 function saveGameHistory(room: Room, result: RoundResult): void {
   try {
-    const historyPath = path.join(process.cwd(), 'data', 'runtime', 'History.json');
+    const historyPath = path.join(
+      process.cwd(),
+      '01-Source-code',
+      'server',
+      'data',
+      'runtime',
+      'History.json',
+    );
     fs.mkdirSync(path.dirname(historyPath), { recursive: true });
     let history: Array<{
       timestamp: string;

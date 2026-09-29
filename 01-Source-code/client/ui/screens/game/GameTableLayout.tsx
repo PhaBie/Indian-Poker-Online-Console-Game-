@@ -229,6 +229,11 @@ function TableSlotsLayout({
   );
 }
 
+/**
+ * คอมโพเนนต์โครงสร้างโต๊ะเกมโป๊กเกอร์ (Game Table Layout)
+ * จัดวางตำแหน่งที่นั่งผู้เล่น 4 ทิศทางรอบโต๊ะ (บน, ซ้าย, ขวา, ล่าง)
+ * ล้อมรอบพื้นที่กองกลาง (Pot) และสำรับไพ่ พร้อมรองรับแอนิเมชันเปิดโต๊ะและแสงเรืองรอบไพ่
+ */
 export function GameTableLayout(props: GameTableLayoutProps) {
   const cardBorderGlowColors = useCardBorderGlow(
     props.isEntranceActive,

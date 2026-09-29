@@ -31,6 +31,10 @@ export const DEFAULT_CARD_BORDER_COLORS: CardBorderColorTriple = [
   cardBack,
 ];
 
+/**
+ * คำนวณสีขอบไพ่ 3 ใบสำหรับช่วงแอนิเมชันเปิดโต๊ะเกม (Entrance Glow)
+ * ให้แสงวิ่งผ่านขอบไพ่ทีละใบตามลำดับเวลาที่กำหนด
+ */
 export function calculateEntranceBorderGlowColors(
   elapsedMs: number,
   glowStartMs: number = 4000,

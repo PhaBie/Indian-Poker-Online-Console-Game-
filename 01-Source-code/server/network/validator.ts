@@ -79,29 +79,6 @@ export const endGameEventSchema = z
   .strict();
 
 /**
- * Schema สำหรับ Event: SAVE_GAME
- */
-export const saveGameEventSchema = z
-  .object({
-    type: z.literal('SAVE_GAME'),
-  })
-  .strict();
-
-/**
- * Schema สำหรับ Event: LOAD_GAME
- */
-export const loadGameEventSchema = z
-  .object({
-    type: z.literal('LOAD_GAME'),
-    payload: z
-      .object({
-        roomId: z.string().trim().min(1),
-      })
-      .strict(),
-  })
-  .strict();
-
-/**
  * Schema สำหรับ Event: SEND_CHAT
  */
 export const sendChatEventSchema = z
@@ -164,8 +141,7 @@ export const clientEventSchema = z.discriminatedUnion('type', [
   endGameEventSchema,
   toggleReadyEventSchema,
   resetLobbyEventSchema,
-  saveGameEventSchema,
-  loadGameEventSchema,
+
   sendChatEventSchema,
   playerActionEventSchema,
 ]);

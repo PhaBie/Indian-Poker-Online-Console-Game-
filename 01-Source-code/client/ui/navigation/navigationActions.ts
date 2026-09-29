@@ -1,6 +1,10 @@
 import type { SocketClient } from '../../network/socketClient';
 import type { ActiveScreen } from './useAppNavigation';
 
+/**
+ * ส่งคำสั่งสร้างห้องใหม่ (CREATE_ROOM) ไปยังเซิร์ฟเวอร์ผ่าน WebSocket
+ * หากยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์ จะแจ้งเตือนข้อผิดพลาด
+ */
 export function sendCreateRoomMessage(
   socketClient: SocketClient,
   playerName: string,
@@ -17,6 +21,11 @@ export function sendCreateRoomMessage(
   });
 }
 
+/**
+ * ส่งคำสั่งขอเข้าร่วมห้อง (JOIN_ROOM) ไปยังเซิร์ฟเวอร์
+ * - โหมด LAN: หากระบุที่อยู่ IP จะตัดการเชื่อมต่อเดิมแล้วต่อใหม่ไปยัง IP นั้น ก่อนหน่วงเวลาส่งคำสั่งเข้าร่วม
+ * - โหมด INTERNET: ส่งรหัสห้องเป้าหมายไปยังเซิร์ฟเวอร์ออนไลน์ปัจจุบัน
+ */
 export function sendJoinRoomMessage(
   socketClient: SocketClient,
   method: 'LAN' | 'INTERNET',
@@ -44,6 +53,9 @@ export function sendJoinRoomMessage(
   }
 }
 
+/**
+ * คำนวณหน้าจอที่จะย้อนกลับไป ตามเจตนาการใช้งานก่อนหน้า (Intent)
+ */
 export function resolveBackScreenFromIntent(
   intent: 'create' | 'join' | null,
 ): ActiveScreen {
@@ -56,6 +68,9 @@ export function resolveBackScreenFromIntent(
   return 'mainMenu';
 }
 
+/**
+ * ประมวลผลการส่งข้อมูลชื่อผู้ใช้ โดยเลือกระหว่างสร้างห้องใหม่ หรือขอเข้าร่วมห้องตามเจตนา (Intent)
+ */
 export function executeUserSubmission(
   intent: 'create' | 'join' | null,
   name: string,
@@ -116,10 +131,17 @@ export function createGameFlowActions(
   };
 }
 
+/**
+ * คำนวณหน้าจอที่จะสลับไปเมื่อผู้เล่นออกจากห้อง
+ * ผู้สร้างห้องจะกลับไปที่หน้า mainMenu ส่วนผู้เข้าร่วมจะกลับไปที่หน้า tableLounge
+ */
 export function resolveLeaveRoomScreen(intent: 'create' | 'join' | null): ActiveScreen {
   return intent === 'create' ? 'mainMenu' : 'tableLounge';
 }
 
+/**
+ * คำนวณหน้าจอที่จะสลับไปเมื่อห้องถูกปิดตัวลงจากฝั่งเซิร์ฟเวอร์
+ */
 export function resolveRoomClosedScreen(intent: 'create' | 'join' | null): ActiveScreen {
   return intent === 'create' ? 'mainMenu' : 'tableLounge';
 }

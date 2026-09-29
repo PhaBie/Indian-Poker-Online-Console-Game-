@@ -13,6 +13,11 @@ interface OnlineConnectionParams {
   maxPlayers: 2 | 3 | 4;
 }
 
+/**
+ * Hook ควบคุมการเชื่อมต่อไปยังเซิร์ฟเวอร์ออนไลน์ (Online WebSocket / ngrok)
+ * จัดการการปรับแต่ง URL, การเชื่อมต่อพร้อม Timeout 5000 มิลลิวินาที,
+ * และการส่งคำสั่งสร้างห้อง (CREATE_ROOM) หรือขอดูรายการห้อง (GET_ROOMS) ตามเจตนาการใช้งาน
+ */
 export function useOnlineConnection({
   intent,
   playerName,
