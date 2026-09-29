@@ -2,7 +2,6 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { createServer, type Server, type IncomingMessage } from 'http';
 import type { Socket } from 'net';
 import { RoomManager } from './domain/services/RoomManager';
-import { StorageManager } from './infrastructure/StorageManager';
 import { Validator } from './network/validator';
 import { acceptsConnection, getLanBindAddress } from './network/accessPolicy';
 import { isPrivateIPv4, type NetworkMode } from '../shared/networkMode';
@@ -15,7 +14,6 @@ import {
 
 export class PokerServer {
   public roomManager: RoomManager;
-  public storageManager: StorageManager;
   public isRunning: boolean;
   public wss: WebSocketServer | null;
   public httpServer: Server | null;
@@ -25,7 +23,6 @@ export class PokerServer {
 
   constructor(public readonly networkMode: NetworkMode = 'LAN') {
     this.roomManager = new RoomManager();
-    this.storageManager = new StorageManager();
     this.validator = new Validator();
     this.tokenMap = new Map();
     this.connectedClients = new Map();

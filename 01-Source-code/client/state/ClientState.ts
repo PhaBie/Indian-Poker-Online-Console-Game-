@@ -157,11 +157,7 @@ export class ClientState {
         this.latestGameResult = event.payload;
         break;
       }
-      case 'GAME_SAVED':
-      case 'GAME_LOADED': {
-        this.currentRoomId = event.payload.roomId;
-        break;
-      }
+
       case 'ERROR': {
         this.lastError = event.message;
         // If we get an error like INVALID_TOKEN or ROOM_NOT_FOUND, our session is invalid.

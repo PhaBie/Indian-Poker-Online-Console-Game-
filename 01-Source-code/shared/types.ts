@@ -69,14 +69,6 @@ export interface PublicPlayerDTO {
   isBlind: boolean;
 }
 
-/**
- * โครงสร้างสำหรับบันทึกลง JSON File (Persistence)
- */
-export interface RoomSaveData {
-  roomId: string;
-  history: unknown[]; // ทีม Server สามารถกำหนดโครงสร้างการเก็บประวัติเพิ่มเติมได้
-}
-
 export interface RoomSummaryDTO {
   readonly roomId: string;
   readonly hostName: string;
@@ -139,8 +131,6 @@ export type ClientEvent =
   | { type: 'END_GAME' }
   | { type: 'TOGGLE_READY' }
   | { type: 'RESET_LOBBY' }
-  | { type: 'SAVE_GAME' }
-  | { type: 'LOAD_GAME'; payload: { roomId: string } }
   | { type: 'SEND_CHAT'; payload: { message: string } }
   | {
       type: 'PLAYER_ACTION';
@@ -162,8 +152,6 @@ export type ServerEvent =
   | { type: 'ROOM_CLOSED'; payload: { roomId: string } }
   | { type: 'CHAT_MESSAGE'; payload: { senderName: string; message: string } }
   | { type: 'GAME_LOG_MESSAGE'; payload: { message: string } }
-  | { type: 'GAME_SAVED'; payload: { roomId: string } }
-  | { type: 'GAME_LOADED'; payload: { roomId: string } }
   | {
       type: 'GAME_STATE_UPDATE';
       payload: {

@@ -1,6 +1,5 @@
 import type { ServerPlayer, PlayerStatus, Card } from '../../../shared/types';
 import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/GameError';
-import { playerSaveSchema } from '../schemas/playerSchema';
 import { GAME_CONSTANTS } from '../../../shared/constants';
 
 export class Player implements ServerPlayer {
@@ -150,64 +149,5 @@ export class Player implements ServerPlayer {
     } else {
       this.status = 'WAITING';
     }
-  }
-
-  /**
-   * แปลงสถานะผู้เล่นเป็น JSON Object สำหรับส่งผ่าน Network หรือแสดงผล
-   * แต่ไม่มี privateCards = Anti-Cheat กันไพ่รั่ว ไป Client อื่น
-   */
-  public toJSON(): object {
-    return {
-      id: this.id,
-      name: this.name,
-      chips: this.chips,
-      bet: this.bet,
-      status: this.status,
-      previousStatus: this.previousStatus,
-      isBlind: this.isBlind,
-    };
-  }
-
-  /**
-   * กู้คืนออบเจกต์ Player จากข้อมูล JSON
-   * สร้างอินสแตนซ์ Player ขึ้นมาใหม่ แล้วนำข้อมูลจาก JSON มาแมปกลับคืนในแต่ละฟิลด์
-   * รองรับระบบ Persistence (Save/Load Game) และการ Reconnect ทำให้สามารถนำข้อมูลกลับมาใช้งานต่อได้ทันที
-   */
-  public static fromJSON(json: unknown): Player {
-    // ตรวจข้อมูลจริงที่ได้รับ โดย safeParse คืนผลสำเร็จหรือข้อผิดพลาด
-    // แทนการใช้ as ซึ่งไม่ได้ตรวจข้อมูลตอนโปรแกรมทำงาน
-    const result = playerSaveSchema.safeParse(json);
-
-    // หากข้อมูลผิด ให้หยุดก่อนสร้าง Player
-    // ใช้ GameError ตาม Contract ของ Player ไม่ปล่อย ZodError ออกไป
-    if (!result.success) {
-      throw new GameError('Invalid player data', 'INVALID_PLAYER_DATA');
-    }
-
-    // ใช้ข้อมูลผลลัพธ์ที่ผ่านการตรวจและตัดฟิลด์ส่วนเกินแล้ว
-    const data = result.data;
-
-    // สร้าง Player ด้วย ID และชื่อจากข้อมูลที่โหลด
-    const player = new Player(data.id, data.name);
-
-    // คืนยอดชิปและเดิมพันตามที่บันทึกไว้
-    player.chips = data.chips;
-    player.bet = data.bet;
-
-    // รักษาสถานะเดิม ไม่เปลี่ยนเป็น WAITING โดยอัตโนมัติ
-    player.status = data.status;
-    if ('previousStatus' in data) {
-      player.previousStatus = data.previousStatus as PlayerStatus;
-    }
-
-    // คืนไพ่จริงฝั่ง Server รวมถึงไพ่ของผู้เล่น Blind
-    // การซ่อนไพ่จาก Client เป็นหน้าที่ของ Network
-    player.privateCards = data.privateCards;
-
-    // รักษาสถานะ Blind/Seen ตามที่บันทึกไว้
-    player.isBlind = data.isBlind;
-
-    // คืน Instance ของ Player ที่มีข้อมูลและเมธอดพร้อมให้ระบบเรียกใช้
-    return player;
   }
 }
