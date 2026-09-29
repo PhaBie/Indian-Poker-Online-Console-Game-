@@ -9,6 +9,10 @@ import {
 } from '../errors/GameError';
 import { GAME_CONSTANTS } from '../../../shared/constants';
 
+/**
+ * 🔴 IMPURE FUNCTION
+ * เหตุผล: มีการใช้ `Math.random()` ภายในฟังก์ชัน ทำให้การสลับตำแหน่งไม่ตายตัว (Non-deterministic)
+ */
 function shufflePlayerList(players: readonly Player[]): Player[] {
   const shuffledPlayers = [...players];
   for (let index = shuffledPlayers.length - 1; index > 0; index--) {
@@ -20,10 +24,18 @@ function shufflePlayerList(players: readonly Player[]): Player[] {
   return shuffledPlayers;
 }
 
+/**
+ * 🔴 IMPURE FUNCTION
+ * เหตุผล: คืนค่าตำแหน่งแบบสุ่มจากการเรียก `Math.random()`
+ */
 function randomDealerIndex(playerCount: number): number {
   return Math.floor(Math.random() * playerCount);
 }
 
+/**
+ * 🟢 PURE FUNCTION
+ * เหตุผล: อาศัยแค่สมการคณิตศาสตร์ `(dealerIndex + 1) % playerCount` ในการคำนวณ คืนค่าตรงไปตรงมาโดยไม่มี Side Effects
+ */
 function getFirstPlayerIndex(dealerIndex: number, playerCount: number): number {
   return (dealerIndex + 1) % playerCount;
 }
@@ -48,11 +60,8 @@ export class Room {
   }
 
   /**
-   * นำผู้เล่นเข้าร่วมห้อง
-   * - ตรวจสอบว่าห้องเต็มหรือไม่ (จำกัดสูงสุด 4 คน) หากเต็มจะโยน RoomFullError
-   * - หากยังไม่มี Host (ผู้เล่นคนแรกที่เข้าห้อง) จะตั้งผู้เล่นคนนี้เป็น hostId
-   * - กำหนดสถานะผู้เล่นเป็น 'WAITING'
-   * - บันทึกผู้เล่นลงใน players Map
+   * 🔴 IMPURE FUNCTION (Method)
+   * เหตุผล: เปลี่ยนแปลง State ภายในของห้อง เช่น เพิ่มสมาชิกเข้า `this.players` และแก้ `this.hostId`
    */
   public join(player: Player): void {
     if (this.phase !== 'LOBBY') {
@@ -125,14 +134,8 @@ export class Room {
   }
 
   /**
-   * เริ่มเกม (Start Game)
-   *
-   * การทำงาน:
-   * 1. ตรวจสอบว่าคนที่สั่งเริ่มเกมคือ Host หรือไม่ หากไม่ใช่จะโยน NotHostError
-   * 2. ตรวจสอบจำนวนผู้เล่น ต้องมีอย่างน้อย 2 คนขึ้นไป หากไม่พอจะโยน GameError
-   * 3. สร้างอ็อบเจกต์ GameState จากผู้เล่นทั้งหมดในห้อง และค่า bootAmount
-   * 4. สั่ง gameState.startGame() เพื่อหักเงินค่า Boot เข้า Pot, แจกไพ่ และเริ่มเทิร์นแรก
-   * 5. เปลี่ยนสถานะห้อง (phase) เป็น 'PLAYING'
+   * 🔴 IMPURE FUNCTION (Method)
+   * เหตุผล: เปลี่ยนสถานะของห้อง (`this.phase`), ดึงข้อมูลแบบสุ่มมาสร้าง `GameState` ใหม่
    */
   public startGame(requestingPlayerId: string): void {
     // 1. ตรวจสอบว่าคนที่กดเริ่มเกมเป็นหัวห้อง (Host) หรือไม่

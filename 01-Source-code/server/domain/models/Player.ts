@@ -2,6 +2,11 @@ import type { ServerPlayer, PlayerStatus, Card } from '../../../shared/types';
 import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/GameError';
 import { GAME_CONSTANTS } from '../../../shared/constants';
 
+/**
+ * 🔴 IMPURE METHODS (Class)
+ * คลาสนี้เปรียบเสมือนตัวเก็บ State ของผู้เล่น ดังนั้นฟังก์ชัน/เมธอดภายในทั้งหมด (เช่น receiveCards, payBet, fold)
+ * ถือว่าเป็น Impure Function เพราะมีจุดประสงค์หลักคือการแก้ไขค่า (Mutate) ตัวแปรภายในคลาส (this.xxx)
+ */
 export class Player implements ServerPlayer {
   public id: string;
   public name: string;
