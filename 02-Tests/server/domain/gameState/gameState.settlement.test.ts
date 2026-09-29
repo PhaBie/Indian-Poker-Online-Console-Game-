@@ -202,19 +202,6 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
     expect(gameState.checkLastManStanding()).toBeNull();
   });
 
-  test.skip('[GameState.checkLastManStanding] 4.44.1 คืนค่า null เมื่อไม่เหลือผู้เล่น ACTIVE เลย', () => {
-    const gameState = createGameStateFixture({}, [
-      { id: 'foldedPlayer', name: 'Folded Player', status: 'FOLDED', chips: 1000 },
-      {
-        id: 'disconnectedPlayer',
-        name: 'Disconnected Player',
-        status: 'DISCONNECTED',
-        chips: 1000,
-      },
-    ]);
-    expect(gameState.checkLastManStanding()).toBeNull();
-  });
-
   test('[GameState.evaluateWinner] 4.47.1 ไม่จ่ายให้คนที่หมอบแม้ไพ่จะดีที่สุดในโต๊ะ', () => {
     const gameState = createGameStateFixture({ pot: 500 }, [
       {
@@ -273,48 +260,6 @@ describe('4. การสรุปผลและแจกจ่าย Pot ส�
 
     gameState.endGame();
     expect(winner.chips).toBe(2000);
-  });
-
-  test.skip('[GameState.evaluateWinner] 4.64 ผู้เล่น DISCONNECTED หรือ WAITING ไม่ได้รับรางวัล แม้ไพ่ดีที่สุด', () => {
-    const gameState = createGameStateFixture({ pot: 1000 }, [
-      {
-        id: 'playerOne',
-        name: 'Player One',
-        status: 'DISCONNECTED',
-        chips: 1000,
-        cards: [
-          { rank: 14, suit: 'SPADES' },
-          { rank: 14, suit: 'HEARTS' },
-          { rank: 14, suit: 'DIAMONDS' },
-        ],
-      },
-      {
-        id: 'playerTwo',
-        name: 'Player Two',
-        status: 'WAITING',
-        chips: 1000,
-        cards: [
-          { rank: 14, suit: 'SPADES' },
-          { rank: 14, suit: 'HEARTS' },
-          { rank: 14, suit: 'DIAMONDS' },
-        ],
-      },
-      {
-        id: 'playerThree',
-        name: 'Player Three',
-        status: 'ACTIVE',
-        chips: 1000,
-        cards: [
-          { rank: 2, suit: 'SPADES' },
-          { rank: 3, suit: 'SPADES' },
-          { rank: 5, suit: 'HEARTS' },
-        ],
-      },
-    ]);
-    gameState.evaluateWinner();
-    expect(gameState.activePlayers[0].chips).toBe(1000);
-    expect(gameState.activePlayers[1].chips).toBe(1000);
-    expect(gameState.activePlayers[2].chips).toBe(2000);
   });
 
   test('[GameState.evaluateWinner] 4.65 ผู้ชนะอยู่ตำแหน่งอื่น และสลับลำดับแล้วยังจ่ายให้คนเดิม', () => {

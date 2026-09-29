@@ -38,7 +38,6 @@ import {
   getCardSuitColor,
   getOrderedPlayersByPerspective,
   getPlayerBadgeInfo,
-  getStatusDisplayInfo,
   resolveTableParticipants,
   shouldHidePlayerCards,
 } from '../../../01-Source-code/client/ui/screens/game/gameLayoutHelpers';
@@ -174,26 +173,6 @@ describe('14. ระบบแสดงผลโต๊ะเกมและผล
 
       const showdownBadge = getPlayerBadgeInfo(false, false, false, true);
       expect(showdownBadge.label).toBeNull();
-    });
-
-    test.skip('[getStatusDisplayInfo] 14.5 สร้างข้อความสถานะการเล่น → แสดงข้อความผู้ชมรอรอบใหม่ หรือแสดงตาของผู้เล่นอย่างถูกต้อง', () => {
-      const waitingPlayerStatusInfo = getStatusDisplayInfo({
-        isWaitingForNextRound: true,
-        isMyTurn: false,
-        isPendingSideshowTarget: false,
-        isPendingSideshowChallenger: false,
-        hasPendingSideshow: false,
-      });
-      expect(waitingPlayerStatusInfo.text).toBe('Waiting · WAITING FOR NEW GAME');
-
-      const myTurnStatusInfo = getStatusDisplayInfo({
-        isWaitingForNextRound: false,
-        isMyTurn: true,
-        isPendingSideshowTarget: false,
-        isPendingSideshowChallenger: false,
-        hasPendingSideshow: false,
-      });
-      expect(myTurnStatusInfo.text).toBe('Your turn!');
     });
   });
 

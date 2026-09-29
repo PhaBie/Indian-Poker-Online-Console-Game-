@@ -634,31 +634,6 @@ describe('4. การจัดการสถานะและการเล�
     expect(shortStackGameState.pendingSideshow).toBeNull();
   });
 
-  test.skip('[GameState.processAction] 4.10.7 ผลการดวล Sideshow ทำให้เหลือผู้เล่นเพียงคนเดียว → จบรอบและจ่าย Pot ให้ผู้ชนะเพียงครั้งเดียว', () => {
-    const initialPot = 500;
-    const gameState = createSideshowTableFixture({
-      pot: initialPot,
-      targetCards: HIGH_TRAIL_CARDS,
-      challengerCards: LOW_CARDS,
-    });
-
-    gameState.processAction('playerChallenger', 'SIDESHOW');
-    gameState.handlePlayerDisconnect('playerThird');
-    const isHandTerminated = gameState.processAction('playerTarget', 'ACCEPT_SIDESHOW');
-
-    expect(isHandTerminated).toBe(true);
-    expect(gameState.checkLastManStanding()?.id).toBe('playerTarget');
-
-    const result = gameState.endGame();
-    expect(result?.winnerIds).toEqual(['playerTarget']);
-    expect(gameState.pot).toBe(0);
-    expect(gameState.activePlayers[0].chips).toBe(1000 + initialPot + 100);
-
-    const secondEndGameResult = gameState.endGame();
-    expect(secondEndGameResult).toBe(result);
-    expect(gameState.activePlayers[0].chips).toBe(1000 + initialPot + 100);
-  });
-
   test('[GameState.processAction] 4.12 เหลือผู้เล่น Blind 2 คนและไพ่เสมอ → ผู้ขอจ่ายค่า SHOW และอีกคนรับกองกลางทั้งหมด', () => {
     const gameState = createGameStateFixture(
       { pot: 500, currentPlayerIndex: 0, currentStake: 100 },
