@@ -26,3 +26,12 @@ Coverage/
 .agent/
 .agents/
 skills/
+
+# Data output
+01-Source-code/server/data/runtime/*
+!01-Source-code/server/data/runtime/.gitkeep
+01-Source-code/server/data/generated/*
+!01-Source-code/server/data/generated/.gitkeep
+01-Source-code/client/data/*
+!01-Source-code/client/data/.gitkeep
+test_results.log

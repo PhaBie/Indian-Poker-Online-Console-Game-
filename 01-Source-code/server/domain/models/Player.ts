@@ -1,0 +1,158 @@
+import type { ServerPlayer, PlayerStatus, Card } from '../../../shared/types';
+import { GameError, InsufficientChipsError, PlayerStateError } from '../errors/GameError';
+import { GAME_CONSTANTS } from '../../../shared/constants';
+
+/**
+ * 🔴 IMPURE METHODS (Class)
+ * คลาสนี้เปรียบเสมือนตัวเก็บ State ของผู้เล่น ดังนั้นฟังก์ชัน/เมธอดภายในทั้งหมด (เช่น receiveCards, payBet, fold)
+ * ถือว่าเป็น Impure Function เพราะมีจุดประสงค์หลักคือการแก้ไขค่า (Mutate) ตัวแปรภายในคลาส (this.xxx)
+ */
+export class Player implements ServerPlayer {
+  public id: string;
+  public name: string;
+  public chips: number;
+  public bet: number;
+  public status: PlayerStatus;
+  public previousStatus?: PlayerStatus;
+  public privateCards: Card[];
+  public isBlind: boolean;
+
+  constructor(id: string, name: string) {
+    this.id = id;
+    this.name = name;
+    this.chips = GAME_CONSTANTS.DEFAULT_STARTING_CHIPS;
+    this.bet = 0;
+    this.status = 'WAITING';
+    this.privateCards = [];
+    this.isBlind = true;
+  }
+
+  public getRole(): string {
+    return 'PLAYER';
+  }
+
+  /**
+   * รับไพ่ที่เซิร์ฟเวอร์แจกให้
+   * เอาไพ่ที่แจกมาบันทึกเก็บไว้ใน privateCards
+   * เก็บเป็น State ประจำตัวผู้เล่นฝั่ง Server ไม่เปิดเผยให้คนอื่นเห็น
+   */
+  public receiveCards(cards: Card[]): void {
+    if (this.status === 'FOLDED' || this.status === 'DISCONNECTED') {
+      throw new PlayerStateError(this.id, this.status);
+    }
+    this.privateCards = cards;
+  }
+
+  /**
+   * วางเงินเดิมพัน
+   * หักเงินออกจากผู้เล่น และนำไปบวกสะสมในยอด bet ของรอบนั้น
+   * เช็คสถานะก่อน หากผู้เล่นหมอบไปแล้ว จะเดิมพันไม่ได้ เลยโยน PlayerStateError
+   * เช็คว่าชิปพอจ่ายไหม กันไม่ให้ติดลบ เลยโยน InsufficientChipsError
+   */
+  public payBet(amount: number): void {
+    if (this.status === 'FOLDED' || this.status === 'DISCONNECTED') {
+      throw new PlayerStateError(this.id, this.status);
+    }
+
+    if (
+      typeof amount !== 'number' ||
+      !Number.isInteger(amount) ||
+      amount <= 0 ||
+      amount > Number.MAX_SAFE_INTEGER
+    ) {
+      throw new GameError('Invalid amount', 'INVALID_AMOUNT');
+    }
+
+    if (this.bet + amount > Number.MAX_SAFE_INTEGER) {
+      throw new GameError('Bet exceeds max safe integer', 'INVALID_AMOUNT');
+    }
+
+    if (amount > this.chips) {
+      throw new InsufficientChipsError(this.name);
+    }
+    this.chips -= amount;
+    this.bet += amount;
+  }
+
+  /**
+   * หมอบ
+   * ปรับสถานะของผู้เล่นเป็น 'FOLDED' ถ้าหมอบ ก็โดนตัดสิทธิ์ในการเล่นรอบนี้
+   */
+  public fold(): void {
+    if (this.status !== 'ACTIVE' && this.status !== 'DISCONNECTED') {
+      throw new PlayerStateError(this.id, this.status);
+    }
+    if (this.status === 'DISCONNECTED') {
+      this.previousStatus = 'FOLDED';
+    } else {
+      this.status = 'FOLDED';
+    }
+  }
+
+  /**
+   * เปิดไพ่ในมือ
+   * คืนค่ารายการไพ่ privateCards ทั้งหมดของผู้เล่น ใช้ตอน Showdown หรือจบเกม เพื่อนำไพ่จริงไปเปรียบเทียบแต้ม
+   */
+  public showCards(): Card[] {
+    return this.privateCards;
+  }
+
+  /**
+   * เพิ่มเงิน
+   * บวกยอดเงินเข้าตัวผู้เล่นตามจำนวน amount
+   * ถ้าชนะ จะได้เงิน จากกองกลาง (Pot )
+   */
+  public addChips(amount: number): void {
+    if (
+      typeof amount !== 'number' ||
+      !Number.isInteger(amount) ||
+      amount < 0 ||
+      amount > Number.MAX_SAFE_INTEGER
+    ) {
+      throw new GameError('Invalid amount', 'INVALID_AMOUNT');
+    }
+
+    if (this.chips + amount > Number.MAX_SAFE_INTEGER) {
+      throw new GameError('Chips exceed max safe integer', 'INVALID_AMOUNT');
+    }
+
+    this.chips += amount;
+  }
+
+  /**
+   * เคลียร์ข้อมูลและรีเซ็ตสถานะตอนเริ่มรอบใหม่
+   * รีเซ็ตข้อมูลที่ใช้เฉพาะในรอบปัจจุบัน เช่น ไพ่และยอดเดิมพัน พร้อมเปลี่ยนสถานะกลับเป็น WAITING และตั้งเป็น Blind
+   * ส่วนชิปจะคงจำนวนเดิมไว้
+   */
+  public resetForNewRound(): void {
+    this.privateCards = [];
+    this.bet = 0;
+    this.isBlind = true;
+    this.status = 'WAITING';
+  }
+
+  /**
+   * เปิดไพ่ของตัวเอง (เปลี่ยนสถานะจาก Blind เป็น Seen)
+   * เปลี่ยนค่า isBlind เป็น false
+   */
+  public seeCards(): void {
+    if (this.status !== 'ACTIVE') {
+      throw new PlayerStateError(this.id, this.status);
+    }
+    this.isBlind = false;
+  }
+
+  public disconnect(): void {
+    this.previousStatus = this.status;
+    this.status = 'DISCONNECTED';
+  }
+
+  public reconnect(): void {
+    if (this.previousStatus) {
+      this.status = this.previousStatus;
+      this.previousStatus = undefined;
+    } else {
+      this.status = 'WAITING';
+    }
+  }
+}

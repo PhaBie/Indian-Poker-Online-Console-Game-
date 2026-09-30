@@ -1,0 +1,163 @@
+import type { SocketClient } from '../../network/socketClient';
+import type { ActiveScreen } from './useAppNavigation';
+
+/**
+ * ส่งคำสั่งสร้างห้องใหม่ (CREATE_ROOM) ไปยังเซิร์ฟเวอร์ผ่าน WebSocket
+ * หากยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์ จะแจ้งเตือนข้อผิดพลาด
+ */
+export function sendCreateRoomMessage(
+  socketClient: SocketClient,
+  playerName: string,
+  maxPlayers: 2 | 3 | 4 = 4,
+): void {
+  if (!socketClient.isConnected) {
+    throw new Error(
+      'Server is not running. Please run "bun run server" in another terminal',
+    );
+  }
+  socketClient.send({
+    type: 'CREATE_ROOM',
+    payload: { playerName, bootAmount: 50, maxPlayers },
+  });
+}
+
+/**
+ * ส่งคำสั่งขอเข้าร่วมห้อง (JOIN_ROOM) ไปยังเซิร์ฟเวอร์
+ * - โหมด LAN: หากระบุที่อยู่ IP จะตัดการเชื่อมต่อเดิมแล้วต่อใหม่ไปยัง IP นั้น ก่อนหน่วงเวลาส่งคำสั่งเข้าร่วม
+ * - โหมด INTERNET: ส่งรหัสห้องเป้าหมายไปยังเซิร์ฟเวอร์ออนไลน์ปัจจุบัน
+ */
+export function sendJoinRoomMessage(
+  socketClient: SocketClient,
+  method: 'LAN' | 'INTERNET',
+  target: string,
+  playerName: string,
+): void {
+  if (method === 'LAN') {
+    const isFullWsUrl = target.startsWith('ws://') || target.startsWith('wss://');
+    const wsUrl = isFullWsUrl ? target : `ws://${target}`;
+
+    socketClient.disconnect();
+    socketClient.connect(wsUrl);
+
+    setTimeout(() => {
+      socketClient.send({
+        type: 'JOIN_ROOM',
+        payload: { playerName, roomId: '' },
+      });
+    }, 500);
+  } else {
+    socketClient.send({
+      type: 'JOIN_ROOM',
+      payload: { playerName, roomId: target },
+    });
+  }
+}
+
+/**
+ * คำนวณหน้าจอที่จะย้อนกลับไป ตามเจตนาการใช้งานก่อนหน้า (Intent)
+ */
+export function resolveBackScreenFromIntent(
+  intent: 'create' | 'join' | null,
+): ActiveScreen {
+  if (intent === 'create') {
+    return 'createRoom';
+  }
+  if (intent === 'join') {
+    return 'joinRoom';
+  }
+  return 'mainMenu';
+}
+
+/**
+ * ประมวลผลการส่งข้อมูลชื่อผู้ใช้ โดยเลือกระหว่างสร้างห้องใหม่ หรือขอเข้าร่วมห้องตามเจตนา (Intent)
+ */
+export function executeUserSubmission(
+  intent: 'create' | 'join' | null,
+  name: string,
+  networkMode: 'LAN' | 'INTERNET',
+  pendingTarget: string,
+  socketClient: SocketClient,
+  maxPlayers: 2 | 3 | 4 = 4,
+): void {
+  if (intent === 'create') {
+    sendCreateRoomMessage(socketClient, name, maxPlayers);
+  } else if (intent === 'join') {
+    sendJoinRoomMessage(socketClient, networkMode, pendingTarget, name);
+  }
+}
+
+export function createTableLoungeActions(socketClient: SocketClient, playerName: string) {
+  return {
+    handleJoinTableFromLounge: (roomId: string) => {
+      socketClient.send({
+        type: 'JOIN_ROOM',
+        payload: { playerName: playerName || 'Player', roomId },
+      });
+    },
+    handleJoinTableByCode: (roomId: string) => {
+      socketClient.send({
+        type: 'JOIN_ROOM',
+        payload: { playerName: playerName || 'Player', roomId },
+      });
+    },
+    handleCreateTableFromLounge: () => {
+      socketClient.send({
+        type: 'CREATE_ROOM',
+        payload: { playerName: playerName || 'Host', bootAmount: 50, maxPlayers: 4 },
+      });
+    },
+    handleRefreshRooms: () => {
+      if (socketClient.isConnected) {
+        socketClient.send({ type: 'GET_ROOMS' });
+      }
+    },
+  };
+}
+
+export function createGameFlowActions(
+  socketClient: SocketClient,
+  onClearState: () => void,
+  setScreen: (screen: ActiveScreen) => void,
+  intent: 'create' | 'join' | null,
+) {
+  return {
+    handleStartGame: () => socketClient.send({ type: 'START_GAME' }),
+    handleToggleReady: () => socketClient.send({ type: 'TOGGLE_READY' }),
+    handleLeaveRoom: () => {
+      socketClient.send({ type: 'LEAVE_ROOM' });
+      onClearState();
+      setScreen(resolveLeaveRoomScreen(intent));
+    },
+  };
+}
+
+/**
+ * คำนวณหน้าจอที่จะสลับไปเมื่อผู้เล่นออกจากห้อง
+ * ผู้สร้างห้องจะกลับไปที่หน้า mainMenu ส่วนผู้เข้าร่วมจะกลับไปที่หน้า tableLounge
+ */
+export function resolveLeaveRoomScreen(intent: 'create' | 'join' | null): ActiveScreen {
+  return intent === 'create' ? 'mainMenu' : 'tableLounge';
+}
+
+/**
+ * คำนวณหน้าจอที่จะสลับไปเมื่อห้องถูกปิดตัวลงจากฝั่งเซิร์ฟเวอร์
+ */
+export function resolveRoomClosedScreen(intent: 'create' | 'join' | null): ActiveScreen {
+  return intent === 'create' ? 'mainMenu' : 'tableLounge';
+}
+
+export function createMenuNavigationActions(
+  setIntent: (intent: 'create' | 'join' | null) => void,
+  setScreen: (screen: ActiveScreen) => void,
+) {
+  return {
+    handleStartCreateRoomFlow: () => {
+      setIntent('create');
+      setScreen('createRoom');
+    },
+    handleStartJoinRoomFlow: () => {
+      setIntent('join');
+      setScreen('joinRoom');
+    },
+  };
+}

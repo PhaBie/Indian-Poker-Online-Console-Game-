@@ -1,0 +1,71 @@
+import { useInput } from 'ink';
+import type { Key } from 'ink';
+import type { MainMenuOption } from './MainMenuScreen';
+import { determineNextFocus } from './MainMenuScreen';
+import { MENU_CARD_DEFINITIONS } from './MainMenuCards';
+
+const EXIT_MENU_INDEX = MENU_CARD_DEFINITIONS.findIndex(
+  (item) => item.optionId === 'EXIT',
+);
+
+export interface UseMainMenuInputParams {
+  readonly focusedIndex: number;
+  readonly isSubmitting: boolean;
+  readonly onSelectOption: (option: MainMenuOption) => void;
+  readonly setFocusedIndex: (updater: (prev: number) => number) => void;
+  readonly onTriggerSubmit: () => void;
+}
+
+interface HandleInputKeyParams {
+  readonly key: Key;
+  readonly focusedIndex: number;
+  readonly isSubmitting: boolean;
+  readonly onSelectOption: (option: MainMenuOption) => void;
+  readonly setFocusedIndex: (updater: (prev: number) => number) => void;
+  readonly onTriggerSubmit: () => void;
+}
+
+function handleInputKeypress({
+  key,
+  focusedIndex,
+  isSubmitting,
+  onSelectOption,
+  setFocusedIndex,
+  onTriggerSubmit,
+}: HandleInputKeyParams): void {
+  if (key.escape) {
+    onSelectOption('EXIT');
+    return;
+  }
+  if (isSubmitting) {
+    return;
+  }
+  if (key.upArrow) {
+    setFocusedIndex((prev) => determineNextFocus(prev, 'PREVIOUS'));
+    return;
+  }
+  if (key.downArrow) {
+    setFocusedIndex((prev) => determineNextFocus(prev, 'NEXT'));
+    return;
+  }
+  if (key.return) {
+    if (focusedIndex === EXIT_MENU_INDEX) {
+      onSelectOption('EXIT');
+      return;
+    }
+    onTriggerSubmit();
+  }
+}
+
+/**
+ * Hook ดักรับการกดแป้นพิมพ์ในหน้าเมนูหลัก
+ * ดักจับปุ่มลูกศรขึ้น/ลง เพื่อเลื่อนตำแหน่งโฟกัส, ปุ่ม Enter เพื่อเลือก และปุ่ม Escape เพื่อออกจากเกม
+ */
+export function useMainMenuInput(params: UseMainMenuInputParams) {
+  useInput(
+    (_input, key) => {
+      handleInputKeypress({ key, ...params });
+    },
+    { isActive: Boolean(process.stdin.isTTY) },
+  );
+}

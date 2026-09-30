@@ -49,10 +49,10 @@ jobs:
       - name: Find test files
         id: set-matrix
         run: |
-          # ค้นหาไฟล์ .test.ts และ .test.tsx ในโฟลเดอร์ Test และเรียงลำดับ
-          FILES=$(find Test -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) | sort)
+          # ค้นหาไฟล์ .test.ts และ .test.tsx ในโฟลเดอร์ 02-Tests และเรียงลำดับ
+          FILES=$(find 02-Tests -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) | sort)
           if [ -z "$FILES" ]; then
-            echo "Error: No test files found in Test/ directory!"
+            echo "Error: No test files found in 02-Tests/ directory!"
             exit 1
           fi
           # แปลงลิสต์บรรทัดเป็น JSON Array
