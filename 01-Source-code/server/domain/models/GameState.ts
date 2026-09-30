@@ -72,6 +72,7 @@ export class GameState {
     this.roundStartedAt = null;
   }
 
+  /** เริ่มรอบใหม่: เก็บเงินเริ่มต้น แจกไพ่ และกำหนดผู้เล่นที่เริ่มเล่น */
   public startGame(firstPlayerIndex: number = 0): void {
     this.lastGameResult = null;
     this.pendingShow = null;
@@ -104,6 +105,7 @@ export class GameState {
         : 0;
   }
 
+  /** เลื่อนเทิร์นไปยังผู้เล่นที่ยังเล่นได้ พร้อมหมอบผู้เล่นที่ไม่มีชิป */
   public nextTurn(): void {
     // ข้ามไปหาผู้เล่นคนถัดไปที่ยังเล่นอยู่
     if (this.activePlayers.length === 0) {
@@ -141,6 +143,7 @@ export class GameState {
     return;
   }
 
+  /** ตรวจสอบและดำเนินการตาม action ของผู้เล่น โดยอัปเดตสถานะเกม */
   public processAction(
     playerId: string,
     action: GameActionType,
@@ -316,6 +319,7 @@ export class GameState {
     return this.checkLastManStanding() !== null;
   }
 
+  /** ตัดสินผู้ชนะจากไพ่ที่เปิดอยู่ จ่าย Pot และคืนผลการจบรอบ */
   public evaluateWinner(): GameResult | null {
     // ใช้เฉพาะผู้เล่นที่ยังไม่หมอบในการหาผู้ชนะ
     const players = this.activePlayers
@@ -373,6 +377,7 @@ export class GameState {
     };
   }
 
+  /** สร้างผลรอบสำหรับผู้ชนะคนเดียว โดยไม่แก้สถานะเกม */
   private createSoleWinnerResult(winner: Player, payout: number): RoundResult {
     const payouts: Record<string, number> = { [winner.id]: payout };
     const hasPendingShow = Boolean(this.pendingShow);
@@ -406,6 +411,7 @@ export class GameState {
     };
   }
 
+  /** จบรอบและจ่าย Pot เมื่อมีผู้ชนะคนเดียว หรือเมื่อสั่งเปิดไพ่ตัดสิน */
   public endGame(forceShowdown: boolean = false): GameResult | null {
     // จบรอบซ้ำไม่ได้ เพราะ Pot ถูกจ่ายไปแล้ว
     if (this.pot === 0) {
@@ -449,6 +455,7 @@ export class GameState {
     return null;
   }
 
+  /** เปรียบเทียบไพ่ของผู้ท้าและเป้าหมาย แล้วหมอบผู้แพ้ */
   private executeSideshow(challengerId: string, targetId: string): void {
     const challenger = this.activePlayers.find((player) => player.id === challengerId);
     const target = this.activePlayers.find((player) => player.id === targetId);
@@ -488,10 +495,12 @@ export class GameState {
     // ผู้เรียก processAction จะตรวจผู้เล่นที่เหลือและสรุป Pot เพียงครั้งเดียว
   }
 
+  /** ล้างผล Sideshow ที่เก็บไว้สำหรับแสดงผลรอบก่อน */
   public clearSideshowResult(): void {
     this.lastSideshow = null;
   }
 
+  /** ประมวลผลการขอ Show: เก็บค่าใช้จ่าย เปรียบเทียบไพ่ และกำหนดผู้แพ้ */
   public requestShow(playerId: string): void {
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
@@ -550,6 +559,7 @@ export class GameState {
     }
   }
 
+  /** ตรวจว่ามีผู้เล่นที่ยังอยู่ในเกมเหลือสองคนและบังคับ Show ได้หรือไม่ */
   public canForceShow(): boolean {
     // บังคับ Show ได้เมื่อเหลือผู้เล่นที่ยังเล่นอยู่ 2 คน
     const remainingPlayers = this.activePlayers.filter(
@@ -559,6 +569,7 @@ export class GameState {
     return remainingPlayers.length === 2;
   }
 
+  /** คืนผู้เล่นที่ยังอยู่ในเกมเมื่อเหลือคนเดียว มิฉะนั้นคืน null */
   public checkLastManStanding(): Player | null {
     // ค้นหาผู้เล่นที่ยังอยู่ในเกม
     const remainingPlayers = this.activePlayers.filter(
@@ -574,6 +585,7 @@ export class GameState {
     return null;
   }
 
+  /** หมุนตำแหน่ง Dealer ไปยังที่นั่งถัดไป */
   public rotateDealer(): void {
     // ถ้าไม่มีผู้เล่น ก็ไม่ต้องเปลี่ยนตำแหน่ง Dealer
     if (this.activePlayers.length === 0) {
@@ -584,6 +596,7 @@ export class GameState {
     this.dealerIndex = (this.dealerIndex + 1) % this.activePlayers.length;
   }
 
+  /** จัดการการหลุดหรือออกจากเกม และคืนค่าว่าเหลือผู้เล่นคนเดียวหรือไม่ */
   public handlePlayerDisconnect(playerId: string, isPermanent: boolean = false): boolean {
     const player = this.activePlayers.find(
       (activePlayer) => activePlayer.id === playerId,
@@ -637,6 +650,7 @@ export class GameState {
     return this.checkLastManStanding() !== null;
   }
 
+  /** หมอบผู้เล่นปัจจุบันเมื่อหมดเวลา แล้วตรวจเงื่อนไขจบรอบ */
   public autoFoldTimeout(): void {
     if (this.activePlayers.length === 0) {
       return;
