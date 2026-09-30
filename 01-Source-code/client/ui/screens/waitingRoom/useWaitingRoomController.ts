@@ -24,8 +24,10 @@ export function useWaitingRoomController({
   onLeave,
   serverError,
 }: UseWaitingRoomControllerParams) {
+  // เก็บข้อความผิดพลาดที่จะแสดงในหน้าห้องพักรอ
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // แสดง error ที่เกิดจากการกดปุ่มผิดเงื่อนไข แล้วล้างข้อความหลัง 3 วินาที
   const triggerError = useCallback((message: string) => {
     setErrorMessage(message);
     setTimeout(() => {
@@ -33,6 +35,7 @@ export function useWaitingRoomController({
     }, 3000);
   }, []);
 
+  // แสดง error จาก server และยกเลิก timer เก่าหากข้อความเปลี่ยนหรือ component ถูกถอด
   useEffect(() => {
     if (!serverError) return;
     setErrorMessage(serverError);
@@ -42,6 +45,7 @@ export function useWaitingRoomController({
     return () => clearTimeout(timer);
   }, [serverError]);
 
+  // แปลงปุ่มคีย์บอร์ดเป็นคำสั่งของห้อง และตรวจสิทธิ์ก่อนเริ่มเกม
   useInput((input, key) => {
     const normalizedKey = input.toLowerCase();
 
@@ -58,5 +62,6 @@ export function useWaitingRoomController({
     }
   });
 
+  // ส่งข้อความ error กลับให้ component ใช้แสดงผล
   return { errorMessage };
 }
