@@ -1,76 +1,72 @@
-# Core Functions for TDD
+# ฟังก์ชันหลักสำหรับการพัฒนาด้วยการทดสอบ (Core Functions for TDD)
 
-ฟังก์ชันหลักสำหรับระบบ Indian Poker Online (Teen Patti)
-เอกสารนี้จัดทำขึ้นเพื่อรวบรวมฟังก์ชันหลักๆที่ต้องใช้ในการพัฒนาระบบ Indian Poker Online (Teen Patti)
-โดยจะแบ่งฟังก์ชันออกมาเป็นส่วนต่างๆ เพื่อให้ง่ายต่อการแบ่งงานให้เพื่อนในทีมได้นำไปพัฒนากันต่อ และนำไปใช้สำหรับการทำ TDD (Test-Driven Development)
+เอกสารฉบับนี้กำหนดรายการฟังก์ชันหลัก (Function Signatures & Specifications) สำหรับการพัฒนาเกม **Indian Poker Online (Teen Patti)** โดยมุ่งเน้นการออกแบบเพื่อรองรับกระบวนการพัฒนาที่ขับเคลื่อนด้วยชุดทดสอบ (Test-Driven Development - TDD)
 
-1. Core Game Logic (กติกาของเกม)
+---
 
-- createDeck() => Card[]
-  สร้างไพ่ 1 สำรับ 52 ใบ ไม่รวม Joker
+## 1. ตรรกะกติกาของเกม (Core Game Logic)
 
-- shuffleDeck(deck: Card[]) => Card[]
-  สับไพ่แบบสุ่ม โดยควรคืนค่าสำรับไพ่ใหม่มา
+ฟังก์ชันทั้งหมดในส่วนนี้ถูกออกแบบเป็น **ฟังก์ชันบริสุทธิ์ (Pure Functions)** ที่ไม่เปลี่ยนแปลงข้อมูลนำเข้าและปราศจากผลข้างเคียง (Side Effects):
 
-- dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number) => { hands: Card[][], remainingDeck: Card[] }
-  ดึงไพ่ออกจากสำรับและแจกไพ่ให้ผู้เล่น โดยในเกมนี้ผู้เล่นจะได้ได้รับไพ่คนละ 3 ใบ
+- `createDeck(): Card[]`  
+  สร้างสำรับไพ่มาตรฐานจำนวน 52 ใบ (ไม่รวม Joker) โดยคืนค่าเป็นอาร์เรย์ของออบเจกต์ไพ่
+- `shuffleDeck(deck: Card[], rng?: () => number): Card[]`  
+  สับเปลี่ยนตำแหน่งไพ่ในสำรับ รองรับการกำหนดฟังก์ชันสุ่ม (Custom RNG / Seed) เพื่อให้สามารถควบคุมผลลัพธ์ในการทดสอบระบบได้
+- `dealCards(deck: Card[], playerCount: number, cardsPerPlayer: number): { hands: Card[][], remainingDeck: Card[] }`  
+  แจกไพ่ออกจากสำรับตามจำนวนผู้เล่น (คนละ 3 ใบ) และคืนค่าชุดไพ่ของผู้เล่นแต่ละคนพร้อมไพ่ที่เหลืออยู่ในสำรับ
+- `evaluateHand(cards: Card[]): { rank: HandRank, rankValue: number, kickers: number[] }`  
+  ประเมินชุดไพ่ 3 ใบตามลำดับกติกา Teen Patti (Trail, Pure Sequence, Sequence, Color, Pair, High Card) พร้อมคำนวณคะแนนแต้มสำหรับใช้เปรียบเทียบ
+- `compareHands(handA: Card[], handB: Card[]): number`  
+  เปรียบเทียบแต้มระหว่างชุดไพ่สองชุด โดยคืนค่า `1` เมื่อชุด A ชนะ, `-1` เมื่อชุด B ชนะ และ `0` เมื่อแต้มเสมอกัน
+- `determineWinners(players: Player[]): Player[]`  
+  ประเมินหาผู้ชนะจากกลุ่มผู้เล่นที่ยังคงอยู่ในเกม (ยกเว้นผู้เล่นที่มีสถานะ `FOLDED` หรือ `DISCONNECTED`)
+- `calculateSplitPot(pot: number, winnerCount: number): { share: number, remainder: number }`  
+  คำนวณส่วนแบ่งเงินรางวัล Pot ในกรณีที่มีผู้ชนะหลายคน พร้อมทั้งจัดการเศษชิปตามข้อกำหนด
 
-- evaluateHand(cards: Card[]) => { rank: HandRank, rankValue: number }
-  ตรวจสอบไพ่ 3 ใบของผู้เล่นว่าเป็นรูปแบบไหน พร้อมคำนวณคะแนนสำหรับเปรียบเทียบในกรณีที่ผู้เล่นได้ไพ่รูปแบบเดียวกัน
+---
 
-- compareHands(handA: Card[], handB: Card[]) => number
-  เปรียบเทียบไพ่ 2 ชุด ว่าใครชนะ โดยจะคืนค่า 1 ถ้า A ชนะ , คืนค่า -1 ถ้า B ชนะ และคืนค่า 0 ถ้าเสมอ
+## 2. การจัดการห้องแข่งขัน (Room & Session Management)
 
-- determineWinners(players: ServerPlayer[]) => ServerPlayer[]
-  คำนวณหาผู้ชนะจากกลุ่มผู้เล่นที่ยังอยู่ในเกม ไม่รวมผู้เล่นที่มีสถานะเป็น FOLDED/DISCONNECTED
+- `createRoom(host: Player, maxPlayers: number, bootAmount: number): Room`  
+  สร้างห้องแข่งขันใหม่ กำหนดรหัสห้อง เพิ่มหัวหน้าห้องเข้าสู่ระบบ และกำหนดสถานะเริ่มต้นของห้องเป็น `LOBBY`
+- `joinRoom(roomId: string, player: Player): boolean`  
+  ตรวจสอบความมีอยู่ของห้อง จำนวนผู้เล่นปัจจุบัน และสถานะความพร้อม ก่อนเพิ่มผู้เล่นเข้าสู่ห้องแข่งขัน (รองรับ 2–4 คน)
+- `leaveRoom(roomId: string, playerId: string): void`  
+  นำผู้เล่นออกจากห้องแข่งขัน หากผู้เล่นที่ออกเป็นหัวหน้าห้อง ระบบจะทำการโอนสิทธิ์หัวหน้าห้องให้ผู้เล่นคนถัดไป หรือทำลายห้องหากไม่มีผู้เล่นเหลืออยู่
+- `startGame(roomId: string): void`  
+  ตรวจสอบเงื่อนไขก่อนเริ่มเกม (ผู้เล่นอย่างน้อย 2 คนขึ้นไปและทุกคนพร้อม) จากนั้นเปลี่ยนสถานะห้องเป็น `PLAYING` และเริ่มรอบการแจกไพ่
 
-2. Room & Match Management (ระบบจัดการห้องเกม)
+---
 
-- createRoom(host: ServerPlayer) => string
-  สร้างห้องใหม่ สร้าง Room ID เพิ่ม Host เข้าไปในห้อง และกำหนด (RoomPhase) เริ่มต้นเป็น (LOBBY)
+## 3. การจัดการสถานะและวงรอบเทิร์น (Game State & Turn Management)
 
-- joinRoom(roomId: string, player: ServerPlayer) => boolean
-  ตรวจสอบว่าห้องมีอยู่จริง ห้องยังไม่เต็ม และห้องอยู่ในสถานะที่สามารถเข้าร่วมได้ จากนั้นเพิ่มผู้เล่นเข้าไปในห้อง ในห้องสามารถมีผู้เล่นได้สูงสุด 4 คน
+- `processPlayerAction(roomId: string, playerId: string, action: PlayerAction): ActionResult`  
+  รับคำสั่งการกระทำจากผู้เล่น (`BET`, `CALL`, `RAISE`, `FOLD`, `SEEN`, `SHOW`) ตรวจสอบความถูกต้องของสิทธิ์ และประมวลผลการเปลี่ยนแปลงสถานะ
+- `processBet(player: Player, amount: number): void`  
+  ตรวจสอบยอดชิปคงเหลือของผู้เล่น หักเงินเดิมพันเข้าสู่ยอดรวมของ Pot และบันทึกยอดเงินเดิมพันสะสมในรอบปัจจุบัน
+- `moveToNextTurn(roomId: string): void`  
+  สลับเทิร์นไปยังผู้เล่นคนถัดไปตามลำดับ โดยข้ามผู้เล่นที่มีสถานะ `FOLDED` หรือ `DISCONNECTED`
+- `checkEndCondition(roomId: string): boolean`  
+  ตรวจสอบเงื่อนไขการสิ้นสุดรอบ เช่น เหลือผู้เล่นที่ยังไม่หมอบเพียง 1 คน หรือมีการดำเนินการ `SHOW` เมื่อเหลือผู้เล่น 2 คน
+- `endGame(roomId: string): void`  
+  ประมวลผลเมื่อสิ้นสุดรอบการแข่งขัน ค้นหาผู้ชนะ โอนเงิน Pot สรุปผลการเปิดไพ่ และเปลี่ยนสถานะห้องเป็น `ENDED`
 
-- leaveRoom(roomId: string, playerId: string) => void
-  นำผู้เล่นออกจากห้อง หากผู้เล่นที่ออกเป็น Host จะต้องเปลี่ยนสิทธิ์ Host ให้ผู้เล่นคนอื่น หรือทำลายห้องหากไม่มีผู้เล่นเหลืออยู่
+---
 
-- startGame(roomId: string) => void
-  ตรวจสอบเงื่อนไขก่อนเริ่มเกม เช่น ต้องมีผู้เล่นอย่างน้อย 2 คนขึ้นไป
-  เปลี่ยน (RoomPhase) เป็น (PLAYING), ล้างเงินใน Pot, แจกไพ่, และสุ่มผู้เล่นที่จะได้เล่นเป็นคนแรก
+## 4. การแปลงข้อมูลและสัญญาข้อมูลร่วม (Data Transformers & DTOs)
 
-3. Game State & Turn Management (ระบบจัดการเทิร์นและการเดิมพัน)
+- `toPublicPlayerDTO(player: Player): PublicPlayerDTO`  
+  แปลงออบเจกต์ผู้เล่นฝั่งเซิร์ฟเวอร์เป็นข้อมูลสาธารณะ โดยตัดข้อมูลไพ่ส่วนบุคคล (`cards`) ออกเพื่อความปลอดภัยและป้องกันการทุจริต
+- `generateRoomId(): string`  
+  สร้างรหัสห้องแข่งขันแบบสุ่มที่ไม่ซ้ำซ้อน
+- `generateSessionToken(): string`  
+  สร้างโทเค็นประจำตัวผู้เล่นเพื่อสนับสนุนการกู้คืนการเชื่อมต่อ (Reconnection)
 
-- processPlayerAction(roomId: string, playerId: string, action: GameActionType, amount?: number) => void
-  ฟังก์ชันหลักที่รับ Action (BET, CALL, RAISE, FOLD, SHOW) จากผู้เล่น ตรวจสอบว่าถึงคิวของผู้เล่นคนนั้นจริงหรือไม่ และ Action ที่ส่งมาสามารถทำได้หรือไม่
+---
 
-- processBet(player: ServerPlayer, amount: number) => void
-  ตรวจสอบว่าผู้เล่นมี chip พอต่อการเดิมพันไหม จากนั้นหัก chip ตามเงินที่เดิมพพัน และอัปเดตเงินเดิมพัน
+## 5. การสื่อสารผ่านระบบเครือข่าย (Network Socket Handlers)
 
-- moveToNextTurn(roomId: string) => void
-  เปลี่ยนคิวไปยังผู้เล่นคนถัดไปตามลำดับ โดยข้ามคนที่มีสถานะเป็น FOLDED/DISCONNECTED
-
-- checkEndCondition(roomId: string) => boolean
-  ตรวจสอบว่ารอบเกมปัจจุบันจบหรือยัง เช่น มีคน FOLD จนเหลือผู้เล่นคนเดียว หรือมีผู้เล่นกด SHOW ในกรณีที่เหลือผู้เล่น 2 คน
-
-- endGame(roomId: string) => void
-  จัดการเมื่อเกมจบ โดยค้นหาผู้ชนะด้วย (determineWinners), โอนเงินใน Pot ให้ผู้ชนะ, รวบรวมข้อมูลไพ่ของทุกคน (exposedCards) และเปลี่ยน (RoomPhase) เป็น (ENDED)
-
-4. Utilities & Data Transformers (การจัดการข้อมูลและสร้างIDต่างๆของระบบ)
-
-- toPublicPlayerDTO(player: ServerPlayer) => PublicPlayerDTO
-  แปลงข้อมูลฝั่ง Server เป็น DTO โดยตัดข้อมูลที่ไม่ควรเปิดเผยออก เช่น (privateCards) เพื่อไม่ให้ผู้เล่นคนอื่นเห็นไพ่ในมือ
-
-- generateRoomId() => string
-  สร้างรหัสห้องแบบสุ่มให้จำง่ายและไม่ซ้ำกัน เช่น ตัวอักษรปนกับตัวเลข
-
-- generatePlayerId() => string
-  สร้าง ID แบบสุ่มสำหรับผู้เล่นแต่ละคนตอนเชื่อมต่อเข้าระบบมาใหม่
-
-5. Network / Socket Interface (ส่วนเชื่อมต่อ WebSocket)
-
-- handleClientMessage(wsClient, message: ClientEvent) => void
-  รับคำสั่งจาก Client เช่น (CREATE_ROOM) จากนั้นตรวจสอบความถูกต้องและเรียกใช้งานฟังก์ชันที่เกี่ยวข้อง
-
-- broadcastGameStateUpdate(roomId: string) => void
-  ส่งสถานะล่าสุดของเกมให้ผู้เล่นในห้อง ต้องส่งไพ่ (myCards) ให้แค่เจ้าของไพ่ และไม่เปิดเผยไพ่ของผู้เล่นคนอื่นก่อนจบเกม
+- `handleClientMessage(ws: WebSocket, message: ClientEvent): void`  
+  รับข้อความคำสั่งจากไคลเอนต์ ดำเนินการตรวจสอบความถูกต้องของ Schema ผ่าน `validator` และส่งต่อการทำงานไปยังโมดูลที่เกี่ยวข้อง
+- `broadcastGameStateUpdate(roomId: string): void`  
+  ส่งกระจายสถานะล่าสุดของเกมให้แก่ผู้เล่นทุกคนในห้อง โดยจะส่งข้อมูลไพ่ส่วนตัวเฉพาะผู้เล่นที่เป็นเจ้าของเท่านั้น

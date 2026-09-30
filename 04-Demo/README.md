@@ -1,10 +1,10 @@
-# Demo & UI Presentation 🎮
+# Demo & UI Presentation
 
 โฟลเดอร์นี้รวบรวมภาพหน้าจอการทำงาน (Screenshots) และคำแนะนำสำหรับการสาธิต (Demo) เกม **Indian Poker Online (Console Game)**
 
 ---
 
-## 📸 ภาพหน้าจอจำลองการทำงาน (UI Screenshots)
+## ภาพหน้าจอการทำงาน (UI Screenshots)
 
 สามารถรับชมภาพหน้าจอการทำงานจริงในแต่ละขั้นตอนได้ที่โฟลเดอร์ `UI-DEMO/`:
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 🕹️ คำสั่งรันโหมดพรีวิวหน้าจอ (Preview / Demo Mode)
+## คำสั่งรันโหมดพรีวิวหน้าจอ (Preview / Demo Mode)
 
 สามารถทดสอบรันหน้าจอเกมแบบ Standalone Preview ได้โดยไม่ต้องเปิดเซิร์ฟเวอร์ ผ่านคำสั่งต่อไปนี้:
 

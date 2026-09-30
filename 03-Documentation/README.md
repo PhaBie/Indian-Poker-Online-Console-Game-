@@ -1,10 +1,10 @@
-# เอกสารโครงการ (Project Documentation) 📚
+# เอกสารโครงการ (Project Documentation)
 
 ไดเรกทอรีนี้รวบรวมเอกสารทางเทคนิคและแผนภาพสถาปัตยกรรมทั้งหมดของโครงการ **Indian Poker Online (Teen Patti)** ตามข้อกำหนดการส่งมอบงาน
 
 ---
 
-## 📑 สารบัญเอกสารหลัก (Mandatory Documentation)
+## สารบัญเอกสารหลัก (Mandatory Documentation)
 
 ตามเกณฑ์การประเมินของรายวิชา เอกสารประกอบด้วย 4 ส่วนสำคัญ ดังนี้:
 
@@ -17,8 +17,10 @@
 
 ---
 
-## 📖 เอกสารอ้างอิงเพิ่มเติม (Supporting Documentation)
+## เอกสารอ้างอิงเพิ่มเติม (Supporting Documentation)
 
+- **[docs/project_structure.md](docs/project_structure.md):** โครงสร้างและวงจรการทำงานของระบบ (System Lifecycle & Sequence)
+- **[docs/core_functions_for_tdd.md](docs/core_functions_for_tdd.md):** ฟังก์ชันหลักสำหรับการพัฒนาด้วยการทดสอบ (Core Functions for TDD)
 - **[docs/game_rules.md](docs/game_rules.md):** รายละเอียดกติกาการเล่น ลำดับแต้มไพ่ และการเดิมพันแบบ Teen Patti
 - **[docs/requirements.md](docs/requirements.md):** ข้อกำหนดของระบบทั้งด้านฟังก์ชันการทำงานและความปลอดภัย
 - **[docs/testing.md](docs/testing.md):** คู่มือและคำสั่งสำหรับการรันชุดทดสอบ
@@ -27,7 +29,7 @@
 
 ---
 
-## 🖼️ แผนภาพสถาปัตยกรรมและ UML (Diagrams & Assets)
+## แผนภาพสถาปัตยกรรมและ UML (Diagrams & Assets)
 
 - **โฟลเดอร์แผนภาพภาพรวมระบบ:** [Diagram/](Diagram/)
   - `1.Server Architecture & Game Domain.png`

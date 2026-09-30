@@ -1,4 +1,4 @@
-# Indian Poker Online (Console Game) 🃏
+# Indian Poker Online (Console Game)
 
 ## Game Overview
 
