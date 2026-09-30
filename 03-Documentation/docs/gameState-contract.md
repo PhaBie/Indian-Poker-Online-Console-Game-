@@ -162,7 +162,7 @@
 
 - ต้องมี `ACTIVE` มากกว่า 2 คน
 - `ACTIVE` ทุกคนต้องดูไพ่แล้ว (`isBlind === false`)
-- ต้องเป็นตาของผู้ขอ (`challenger`) และมีชิปพอจ่าย `currentStake * 2`
+- ต้องเป็นตาของผู้ขอ (`Duel`) และมีชิปพอจ่าย `currentStake * 2`
 - เป้าหมาย (`target`) คือผู้เล่นคนก่อนหน้าที่ยัง `ACTIVE`
 
 ### การตอบรับ
@@ -185,8 +185,8 @@
 ## มาตรฐานการตรวจรับ (Verification Plan)
 
 1. รายงานผล Pass / Fail / Skip ตามจริง พร้อมสาเหตุ (เช่น ขาด Implementation หรือกติกาขัดกัน)
-2. รัน `bun run test:game-state`
+2. รัน `bun run test`
 3. รัน `bunx tsc --noEmit`
 4. รัน `bun run lint`
-5. รัน `bunx prettier --check Test/server/domain/gameState Documentation/contracts/gameState-contract.md`
+5. รัน `bunx prettier --check 02-Tests/server/domain/gameState 03-Documentation/docs/gameState-contract.md`
 6. แยก Commit ระหว่าง "อัปเดต Contract" กับ "เพิ่มเทสต์" ให้ชัดเจน
