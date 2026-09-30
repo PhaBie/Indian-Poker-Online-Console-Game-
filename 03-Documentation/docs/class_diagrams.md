@@ -1,12 +1,12 @@
 # Class Diagrams & System Relationships (แผนภาพคลาสและความสัมพันธ์ของระบบ)
 
-เอกสารฉบับนี้จัดทำขึ้นเพื่ออธิบายการออกแบบเชิงวัตถุ (Object-Oriented Design) แสดงโครงสร้างคลาส (Classes), อินเทอร์เฟซ (Interfaces) และความสัมพันธ์ระหว่างคอมโพเนนต์ภายในระบบ **Indian Poker Online (Teen Patti)** ตามข้อกำหนดการส่งมอบงาน
+เอกสารฉบับนี้จัดทำขึ้นเพื่ออธิบายการออกแบบเชิงวัตถุ (Object-Oriented Design) แสดงโครงสร้างคลาส (Classes), อินเทอร์เฟซ (Interfaces) และความสัมพันธ์ระหว่างคอมโพเนนต์ภายในระบบ **Indian Poker Online (Teen Patti)** โดยอ้างอิงตรงตามโครงสร้างซอร์สโค้ดจริงใน `01-Source-code/server/domain/` และ `01-Source-code/shared/`
 
 ---
 
 ## 1. แผนภาพคลาสระดับโดเมน (Domain Class Diagram)
 
-สถาปัตยกรรมฝั่งเซิร์ฟเวอร์ใน `01-Source-code/server/domain/` ได้รับการออกแบบตามหลักการห่อหุ้มข้อมูล (Encapsulation) และการแบ่งแยกหน้าที่ความรับผิดชอบ (Single Responsibility Principle):
+โครงสร้างคลาสฝั่งเซิร์ฟเวอร์ได้รับการออกแบบตามหลักการห่อหุ้มข้อมูล (Encapsulation) และการแบ่งแยกหน้าที่ความรับผิดชอบ (Single Responsibility Principle):
 
 ```mermaid
 classDiagram
@@ -14,52 +14,56 @@ classDiagram
 
     class RoomManager {
         -rooms: Map~string, Room~
-        +createRoom(hostPlayer: Player, maxPlayers: number, bootAmount: number): Room
+        +createRoom(hostPlayer: Player, maxPlayers?: number, bootAmount?: number): Room
         +getRoom(roomId: string): Room
         +deleteRoom(roomId: string): boolean
         +getAllRooms(): Room[]
     }
 
     class Room {
-        +id: string
-        +maxPlayers: number
-        +bootAmount: number
+        +roomId: string
+        +phase: RoomPhase
         +hostId: string
         +players: Map~string, Player~
         +gameState: GameState
+        +maxPlayers: number
+        +bootAmount: number
         +addPlayer(player: Player): void
         +removePlayer(playerId: string): void
         +startGame(): void
-        +resetRoom(): void
+        +startNextRound(): void
+        +resetToLobby(): void
     }
 
     class Player {
         +id: string
         +name: string
         +chips: number
-        +currentBet: number
+        +bet: number
+        +status: PlayerStatus
+        +privateCards: Card[]
         +isBlind: boolean
-        +isFolded: boolean
-        +isReady: boolean
-        +cards: Card[]
+        +receiveCards(cards: Card[]): void
         +payBet(amount: number): void
         +addChips(amount: number): void
-        +setReady(ready: boolean): void
+        +seeCards(): void
+        +fold(): void
         +resetForNewRound(): void
     }
 
     class GameState {
-        +roomId: string
         +pot: number
-        +currentBet: number
-        +turnPlayerId: string
-        +phase: GamePhase
+        +currentStake: number
+        +currentPlayerIndex: number
         +deck: Card[]
-        +winners: Player[]
-        +startRound(players: Player[], bootAmount: number): void
-        +processAction(action: PlayerAction): ActionResult
-        +resolveShowdown(): ShowdownResult
-        +distributePot(): void
+        +activePlayers: Player[]
+        +bootAmount: number
+        +dealerIndex: number
+        +lastGameResult: GameResult
+        +startGame(): void
+        +processAction(playerId: string, action: ActionPayload): ActionResult
+        +nextTurn(): void
+        +endGame(): void
     }
 
     class GameError {
@@ -69,40 +73,41 @@ classDiagram
     }
 
     RoomManager "1" *-- "0..*" Room : ประกอบด้วย (Composition)
-    Room "1" *-- "1" GameState : ถือครองสถานะ (Composition)
+    Room "1" *-- "0..1" GameState : ถือครองสถานะ (Composition)
     Room "1" o-- "1..4" Player : รวบรวมผู้เล่น (Aggregation)
     GameState --> "1..*" Player : ประเมินและจัดสรรชิป (Association)
     GameState ..> GameError : โยนข้อผิดพลาด (Dependency)
     Player ..> GameError : โยนข้อผิดพลาด (Dependency)
+    Room ..> GameError : โยนข้อผิดพลาด (Dependency)
 ```
 
 ### คำอธิบายหน้าที่และความรับผิดชอบของแต่ละคลาส (Class Responsibilities)
 
-| คลาส (Class)      | เลเยอร์ / ตำแหน่งไฟล์     | หน้าที่ความรับผิดชอบหลัก                                                                                                                                                              |
-| :---------------- | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`RoomManager`** | `server/domain/services/` | จัดการสารบบห้องแข่งขันส่วนกลาง (Lobby Registry) ให้บริการสร้าง ค้นหา ลบ และแสดงรายการห้องแข่งขันทั้งหมดในเซิร์ฟเวอร์                                                                  |
-| **`Room`**        | `server/domain/models/`   | บริบทของห้องแข่งขัน (Game Session Context) ควบคุมผู้เข้าร่วมห้อง กำหนดค่าธรรมเนียม Boot และควบคุมวงจรชีวิตการเริ่มรอบใหม่                                                             |
-| **`Player`**      | `server/domain/models/`   | เอนทิตีผู้เล่น (Domain Entity) ห่อหุ้มข้อมูลส่วนบุคคล เช่น ชิป (`chips`), เงินเดิมพันสะสม (`currentBet`), สถานะความพร้อม (`isReady`), สถานะการหมอบ (`isFolded`) และไพ่ในมือ (`cards`) |
-| **`GameState`**   | `server/domain/models/`   | ตัวควบคุมวัฏจักรสถานะเกม (Game Lifecycle Controller) จัดการลำดับเทิร์น ตรวจสอบความถูกต้องของการกระทำ (Actions) คำนวณเงิน Pot และตัดสินผล Showdown                                     |
-| **`GameError`**   | `server/domain/errors/`   | คลาสข้อยกเว้นทางธุรกิจ (Domain Exception) สืบทอดจากคลาส `Error` มาตรฐาน เพื่อระบุรหัสข้อผิดพลาดและบริบทเมื่อเกิดการละเมิดกติกา                                                        |
+| คลาส (Class)      | ตำแหน่งไฟล์ใน Source Code               | หน้าที่ความรับผิดชอบหลักตามโค้ดจริง                                                                                                                                                      |
+| :---------------- | :-------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`RoomManager`** | `server/domain/services/roomManager.ts` | บริการจัดการสารบบห้องแข่งขันส่วนกลาง (Lobby Registry) ทำหน้าที่สร้าง ค้นหา ลบ และแสดงรายการห้องแข่งขันทั้งหมดในหน่วยความจำเซิร์ฟเวอร์                                                    |
+| **`Room`**        | `server/domain/models/Room.ts`          | บริบทของห้องแข่งขัน (Game Session Context) ควบคุมผู้เข้าร่วมห้อง (`players: Map<string, Player>`), ค่า Boot และถือครองอินสแตนซ์ของ `gameState`                                           |
+| **`Player`**      | `server/domain/models/Player.ts`        | เอนทิตีผู้เล่น (Domain Entity) ห่อหุ้มข้อมูลและสถานะ เช่น ชิปคงเหลือ (`chips`), เงินเดิมพันสะสมในรอบ (`bet`), ไพ่ส่วนตัว (`privateCards`), สถานะความพร้อม และสถานะ Blind/Seen            |
+| **`GameState`**   | `server/domain/models/GameState.ts`     | ตัวควบคุมวัฏจักรสถานะเกม (Game Lifecycle Controller) จัดการลำดับเทิร์น (`currentPlayerIndex`), อัตราเงินเดิมพันปัจจุบัน (`currentStake`), ตรวจสอบความถูกต้องของการกระทำ และคำนวณเงิน Pot |
+| **`GameError`**   | `server/domain/errors/GameError.ts`     | คลาสข้อยกเว้นทางธุรกิจ (Domain Exception) สืบทอดจากคลาส `Error` มาตรฐาน เพื่อระบุรหัสข้อผิดพลาดและบริบทเมื่อเกิดการละเมิดกติกา                                                           |
 
 ### คำอธิบายความสัมพันธ์เชิงสถาปัตยกรรม (Relationship Types)
 
 1. **ความสัมพันธ์แบบประกอบขึ้น (Composition - `*--`):**
-   - `RoomManager` กับ `Room`: คลาส `RoomManager` เป็นผู้สร้างและถือครองออบเจกต์ `Room` หากเซิร์ฟเวอร์ถูกรีเซ็ตหรือตัวจัดการห้องถูกทำลาย ห้องแข่งขันทั้งหมดจะสิ้นสุดลง
-   - `Room` กับ `GameState`: ในหนึ่งห้องแข่งขันจะมีอินสแตนซ์ของ `GameState` ประจำอยู่ 1 อินสแตนซ์ตลอดอายุของห้อง
+   - `RoomManager` กับ `Room`: คลาส `RoomManager` เป็นผู้สร้างและถือครองออบเจกต์ `Room` หากเซิร์ฟเวอร์ถูกรีเซ็ต ห้องแข่งขันทั้งหมดจะสิ้นสุดลง
+   - `Room` กับ `GameState`: ในหนึ่งห้องแข่งขันจะมีอินสแตนซ์ของ `GameState` ประจำอยู่เพื่อควบคุมรอบการเล่น
 2. **ความสัมพันธ์แบบรวมกลุ่ม (Aggregation - `o--`):**
    - `Room` กับ `Player`: ห้องแข่งขันรวบรวมผู้เล่นจำนวน 1 ถึง 4 คน โดยที่ตัวตนของผู้เล่น (`Player`) ไม่ได้ผูกติดกับห้องอย่างถาวร สามารถออกจากห้องหรือย้ายห้องได้
 3. **ความสัมพันธ์แบบเชื่อมโยง (Association - `-->`):**
-   - `GameState` กับ `Player`: `GameState` อ้างอิงออบเจกต์ `Player` เพื่อตรวจสอบสถานะในแต่ละเทิร์น หักเงินเดิมพัน และมอบเงินรางวัลใน Pot เมื่อสิ้นสุดรอบ
+   - `GameState` กับ `Player`: `GameState` อ้างอิงออบเจกต์ `Player` ใน `activePlayers` เพื่อตรวจสอบสถานะในแต่ละเทิร์น หักเงินเดิมพัน และมอบเงินรางวัลใน Pot เมื่อสิ้นสุดรอบ
 4. **ความสัมพันธ์แบบขึ้นต่อกัน (Dependency - `..>`):**
-   - เมธอดต่างๆ ใน `GameState` และ `Player` มีการพึ่งพาคลาส `GameError` เพื่อโยนข้อผิดพลาดในกรณีที่เกิดข้อมูลผิดรูปแบบหรือการกระทำผิดกติกา
+   - เมธอดต่างๆ ใน `GameState`, `Room` และ `Player` มีการพึ่งพาคลาส `GameError` เพื่อโยนข้อผิดพลาดในกรณีที่เกิดข้อมูลผิดรูปแบบหรือการกระทำผิดกติกา
 
 ---
 
 ## 2. โครงสร้างข้อมูลร่วมและสัญญาการสื่อสาร (Shared Interfaces & Types)
 
-กำหนดไว้ใน `01-Source-code/shared/` เพื่อเป็นสัญญาข้อมูลกลาง (Single Source of Truth) ระหว่างเซิร์ฟเวอร์และไคลเอนต์:
+กำหนดไว้ใน `01-Source-code/shared/types.ts` เพื่อเป็นสัญญาข้อมูลกลาง (Single Source of Truth) ระหว่างเซิร์ฟเวอร์และไคลเอนต์:
 
 ```mermaid
 classDiagram
@@ -120,7 +125,7 @@ classDiagram
         +topRanks: number[]
     }
 
-    class PlayerPublicState {
+    class PublicPlayerDTO {
         +id: string
         +name: string
         +chips: number
@@ -135,18 +140,18 @@ classDiagram
         +roomId: string
         +phase: GamePhase
         +pot: number
-        +currentBet: number
+        +currentStake: number
         +turnPlayerId: string
-        +players: PlayerPublicState[]
+        +players: PublicPlayerDTO[]
     }
 
-    GameStateSnapshot o-- PlayerPublicState : ประกอบด้วยข้อมูลผู้เล่นสาธารณะ
+    GameStateSnapshot o-- PublicPlayerDTO : ประกอบด้วยข้อมูลผู้เล่นสาธารณะ
     HandEvaluation --> Card : ประเมินจากชุดไพ่
 ```
 
 ### สาระสำคัญของสัญญาข้อมูล (Contract Significance):
 
-- **`PlayerPublicState`:** โครงสร้างข้อมูลผู้เล่นที่เปิดเผยต่อสาธารณะ โดยจะตัดข้อมูลไพ่ส่วนตัว (`cards`) ออกและแสดงเพียงจำนวนใบไพ่ (`cardCount`) เพื่อรักษาความลับและป้องกันการดักจับข้อมูลไพ่ของคู่แข่ง
+- **`PublicPlayerDTO`:** โครงสร้างข้อมูลผู้เล่นที่เปิดเผยต่อสาธารณะ โดยจะตัดข้อมูลไพ่ส่วนตัว (`privateCards`) ออกและแสดงเพียงจำนวนใบไพ่ (`cardCount`) เพื่อรักษาความลับและป้องกันการดักจับข้อมูลไพ่ของคู่แข่ง
 - **`GameStateSnapshot`:** ชุดข้อมูลสถานะปัจจุบันที่เซิร์ฟเวอร์บรอดแคสต์ส่งให้ไคลเอนต์ทุกคนใช้ในการเรนเดอร์หน้าจอเกม
 
 ---
