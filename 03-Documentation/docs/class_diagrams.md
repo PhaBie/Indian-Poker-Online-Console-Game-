@@ -13,25 +13,27 @@ classDiagram
     direction TB
 
     class RoomManager {
-        -rooms: Map~string, Room~
-        +createRoom(hostPlayer: Player, maxPlayers?: number, bootAmount?: number): Room
-        +getRoom(roomId: string): Room
-        +deleteRoom(roomId: string): boolean
+        -checkRoomId: Map~string, Room~
+        +createRoom(roomId: string, host: Player, maxPlayers?: number): Room
+        +getRoom(roomId: string): Room | undefined
+        +deleteRoom(roomId: string): void
         +getAllRooms(): Room[]
     }
 
     class Room {
         +roomId: string
         +phase: RoomPhase
-        +hostId: string
+        +hostId: string | null
         +players: Map~string, Player~
-        +gameState: GameState
-        +maxPlayers: number
         +bootAmount: number
-        +addPlayer(player: Player): void
-        +removePlayer(playerId: string): void
-        +startGame(): void
-        +startNextRound(): void
+        +gameState: GameState | null
+        +MAX_PLAYERS: number
+        +join(player: Player): void
+        +reconnect(playerId: string): void
+        +leave(playerId: string): void
+        +startGame(requestingPlayerId: string): void
+        +endGame(forceShowdown?: boolean): RoundResult | null
+        +startNextRound(requestingPlayerId: string): void
         +resetToLobby(): void
     }
 
@@ -48,6 +50,7 @@ classDiagram
         +addChips(amount: number): void
         +seeCards(): void
         +fold(): void
+        +showCards(): Card[]
         +resetForNewRound(): void
     }
 
@@ -59,17 +62,16 @@ classDiagram
         +activePlayers: Player[]
         +bootAmount: number
         +dealerIndex: number
-        +lastGameResult: GameResult
-        +startGame(): void
-        +processAction(playerId: string, action: ActionPayload): ActionResult
+        +lastGameResult: GameResult | null
+        +startGame(firstPlayerIndex?: number): void
+        +processAction(playerId: string, action: GameActionType, amount?: number): boolean
         +nextTurn(): void
-        +endGame(): void
+        +endGame(forceShowdown?: boolean): GameResult | null
     }
 
     class GameError {
-        +code: ErrorCode
+        +code: string
         +message: string
-        +statusCode: number
     }
 
     RoomManager "1" *-- "0..*" Room : ประกอบด้วย (Composition)
